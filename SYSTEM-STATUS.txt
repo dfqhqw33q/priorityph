@@ -1,0 +1,525 @@
+PRIORITY HANDLING LOGISTICS, INC.
+PERFORMANCE EVALUATION SYSTEM
+CURRENT SYSTEM STATUS
+
+Generated: 2026-08-27
+Repository: dfqhqw33q/performance-pulse-15
+Branch: main
+Supabase project: opgphfvdqdhxicrebfuk
+Supabase region: ap-southeast-2
+Production host: performance-pulse-15.vercel.app
+
+======================================================================
+1. SYSTEM OVERVIEW
+======================================================================
+
+The system is an internal performance evaluation workflow for Priority
+Handling Logistics, Inc.
+
+Technology:
+- React 19
+- TypeScript
+- Vite
+- TanStack Start
+- TanStack Router
+- TanStack Query
+- Tailwind CSS
+- shadcn/ui and Radix UI components
+- React Hook Form
+- Zod validation
+- TanStack Table components where applicable
+- Supabase Auth
+- Supabase PostgreSQL
+- PostgreSQL Row Level Security
+- Application-level permission-based RBAC
+- Server-side scoring and finalization logic
+
+Employees/ratees do not receive accounts. They use a public annual
+QR/link assessment and submit Step 1 without a login.
+
+======================================================================
+2. USER ROLES
+======================================================================
+
+ADMINISTRATOR
+- Manage internal users.
+- Create and edit accounts.
+- Activate, deactivate, lock, and unlock accounts.
+- Reset passwords and require password changes.
+- Revoke sessions.
+- Assign roles.
+- View effective permissions.
+- Manage roles and permissions.
+- View employee records.
+- Manage scoring configuration.
+- View audit logs.
+- View scores.
+- Return evaluations for correction.
+
+HR / PERSONNEL
+- Access the HR dashboard.
+- Create and manage evaluation cycles.
+- Select evaluation templates.
+- Activate, close, disable, and manage cycles.
+- Generate and regenerate annual QR/link tokens.
+- View employee records.
+- Manage evaluation templates where authorized.
+- View reports.
+- View permanent evaluation history.
+- View scores and scoring results.
+
+SUPERVISOR
+- Access the Supervisor dashboard.
+- View the all-Supervisors review queue.
+- Receive every eligible submitted employee Step 1 assessment.
+- Save supervisor rating drafts.
+- Submit supervisor ratings to the President.
+- Reopen supervisor submissions when authorized.
+- View employee records needed for review.
+- View evaluation history.
+- View scores where authorized.
+
+PRESIDENT
+- Access the President dashboard.
+- View the President evaluation queue.
+- Open submitted supervisor evaluations.
+- Complete President Step 2.
+- Complete President Step 3.
+- View employee and supervisor ratings separately.
+- View evaluation history.
+- View scores.
+- Return an evaluation for correction with a required reason.
+- Finalize eligible evaluations with a required reason.
+
+ROLE ISOLATION
+- Navigation is filtered by assigned application role and permission.
+- Direct URLs for another role's area are blocked and redirect to
+  /unauthorized.
+- Shared evaluation history is available to HR, Supervisors, and the
+  President.
+- Server functions independently enforce permissions; hiding a link is
+  not the security boundary.
+
+======================================================================
+3. ROUTES
+======================================================================
+
+PUBLIC
+- /evaluation/:cycleToken       Public employee Step 1 assessment.
+- /evaluation-submitted         Successful submission page.
+- /                            Authenticated landing/role redirect.
+- /unauthorized                 Access denied page.
+- Not Found                     Root not-found page.
+
+AUTHENTICATION
+- /login                        Internal user login.
+- /forgot-password              Password reset request.
+- /reset-password               Set a new password.
+- /setup                       Initial administrator bootstrap flow.
+
+ADMINISTRATOR
+- /admin                        Administrator dashboard.
+- /admin/users                  User management.
+- /admin/roles                  Role and permission matrix.
+- /admin/employees              Employee records.
+- /admin/scoring                Scoring configuration.
+- /admin/audit-logs             Read-only audit log.
+
+HR / PERSONNEL
+- /hr                          HR dashboard.
+- /hr/cycles                    Evaluation cycle list.
+- /hr/cycles/:cycleId           Evaluation cycle detail and actions.
+- /hr/reports                   Reports and summary results.
+- /hr/evaluation-history        Permanent evaluation history list.
+- /hr/evaluation-history/:id    Permanent evaluation history detail.
+
+SUPERVISOR
+- /supervisor                   Supervisor dashboard.
+- /supervisor/evaluations       All-Supervisors review queue.
+- /supervisor/evaluations/:id   Supervisor evaluation detail.
+
+PRESIDENT
+- /president                   President dashboard.
+- /president/evaluations        President queue.
+- /president/evaluations/:id   President review detail.
+
+======================================================================
+4. APPROVED WORKFLOW
+======================================================================
+
+1. HR creates an annual evaluation cycle.
+2. HR selects the official Performance Evaluation Factors template.
+3. HR activates the cycle.
+4. The system generates one annual QR/link token.
+5. An employee opens the public link.
+6. The employee completes and submits Step 1.
+7. The assessment becomes available to every authorized Supervisor.
+8. No employee, department, division, section, unit, position, or
+   assignment filtering is used for Supervisor access.
+9. A Supervisor reviews the employee assessment.
+10. The Supervisor enters ratings and remarks.
+11. The Supervisor submits the assessment to the President.
+12. The President opens the evaluation.
+13. The President completes Step 2 and Step 3.
+14. The system calculates and validates scores.
+15. An authorized user finalizes an eligible evaluation.
+16. Finalization locks the evaluation and records the final result.
+
+Correction workflow:
+- The President can return an evaluation for correction with a required
+  reason.
+- Existing responses and ratings are preserved.
+- The record changes to RETURNED_FOR_CORRECTION.
+- The event, previous status, new status, actor, reason, and timestamp
+  are recorded.
+- Returned records remain visible to the all-Supervisors queue for the
+  authorized correction workflow.
+
+======================================================================
+5. WORKFLOW STATUSES
+======================================================================
+
+Cycle statuses:
+- DRAFT
+- ACTIVE
+- CLOSED
+- DISABLED
+
+Evaluation statuses:
+- EMPLOYEE_SUBMITTED        Awaiting supervisor review.
+- SUPERVISOR_DRAFT          Supervisor work in progress.
+- SUPERVISOR_SUBMITTED      Submitted to President.
+- PRESIDENT_REVIEW          President review in progress.
+- PRESIDENT_SUBMITTED       President Step 3 submitted.
+- READY_FOR_FINALIZATION    All required data and scoring are ready.
+- RETURNED_FOR_CORRECTION    Correction requested.
+- FINALIZED                 Locked historical record.
+
+Scoring statuses:
+- DRAFT
+- ACTIVE
+- RETIRED
+
+Calculation statuses:
+- PENDING
+- CALCULATED
+- INVALID
+
+======================================================================
+6. FEATURES AND SERVER FUNCTIONS
+======================================================================
+
+ACCESS AND AUTHENTICATION
+- getMyAccess
+- recordLoginEvent
+- recordAuthFailure
+- needsBootstrap
+- bootstrapAdministrator
+- Supabase Auth token validation
+- Active/locked account validation
+- First-login password change support
+
+ADMINISTRATION
+- listUsers
+- createUser
+- updateUser
+- applyUserAccessAction
+- assignRoles
+- listRoleMatrix
+- setRolePermissions
+- listAuditLogs
+- listAuditEvents
+- listEmployees
+- getEmployeeRecord
+- getUserSecurityDetail
+- getAdminStats
+
+EVALUATION CYCLES
+- listTemplates
+- listCycles
+- getCycle
+- saveCycle
+- changeCycleStatus
+- regenerateCycleToken
+- deleteDraftCycle
+
+EVALUATION QUEUES AND SUPERVISOR WORKFLOW
+- listSupervisorQueue
+- listPresidentQueue
+- listQueueFilterOptions
+- getSupervisorStats
+- getEvaluation
+- saveSupervisorDraft
+- submitToPresident
+- reopenSupervisorStage
+- markPresidentReview
+- getDashboardStats
+
+PRESIDENT WORKFLOW
+- getPresidentStats
+- getPresidentSteps
+- savePresidentStepAnswers
+- Step 2 and Step 3 required-item validation
+- Step locking after submission
+
+PUBLIC EMPLOYEE STEP 1
+- getPublicCycle
+- submitStep1
+- Employee identity snapshot creation
+- Employee rating capture
+- Public cycle token validation
+- Submission completion page
+
+REPORTS AND HISTORY
+- getReport
+- getEvaluationHistory
+- Server-side report permission checks
+- Report search and status filtering
+- Score summaries and final-rating distribution
+- Workflow event timeline
+- Audit timeline
+- Notification event history
+
+SCORING AND FINALIZATION
+- listScoringRules
+- saveScoringRule
+- activateScoringRule
+- getEvaluationScore
+- recalculateScore
+- finalizeEvaluation
+- returnForCorrection
+- loadScoringRule
+- loadActiveScoringRule
+- computeScore
+- persistScore
+- loadScore
+- checkFinalizationEligibility
+- emitNotification
+
+======================================================================
+7. SCORING
+======================================================================
+
+- Scoring rules are versioned.
+- Rules are associated with an evaluation template.
+- Rules support equal or weighted factor calculation.
+- Employee and Supervisor weights are configurable.
+- Factor weights are configurable.
+- Rating bands define final-rating labels.
+- Rounding precision is configurable.
+- Calculation status and calculation notes are stored.
+- Employee, Supervisor, President, and final score values remain separate.
+- Scores are calculated server-side.
+- Finalization rechecks eligibility server-side.
+- Finalization persists the scoring rule version used.
+- Finalized scores are locked.
+
+Finalization checks include the existing server-side eligibility logic,
+record version checking, required workflow data, valid scoring rules,
+calculated scores, and finalized/locked state protection.
+
+======================================================================
+8. DATABASE AND SUPABASE SECURITY
+======================================================================
+
+Core database entities include:
+- internal_users
+- roles
+- permissions
+- role_permissions
+- user_roles
+- employees
+- evaluation_templates
+- evaluation_criteria
+- evaluation_cycles
+- evaluations
+- evaluation_ratings
+- evaluation_events
+- president_step_templates
+- president_step_items
+- president_responses
+- scoring_rules
+- scoring_rule_factor_weights
+- scoring_rule_bands
+- evaluation_scores
+- notification_events
+- audit_logs
+- login_events
+- password_reset_events
+
+Security controls:
+- Supabase Auth is used for internal accounts.
+- Service-role access is server-only.
+- Publishable keys are used by the browser.
+- No service-role key is included in frontend source.
+- Server functions validate Bearer tokens.
+- Server functions enforce permission checks.
+- RLS is enabled on application tables.
+- RLS policies are deny-by-default by operation and role context.
+- Account usability requires an active, unlocked internal profile.
+- The last active Administrator cannot be removed or deactivated.
+- Finalized evaluations cannot be modified.
+- Locked ratings and responses cannot be modified without the existing
+  authorized correction flow.
+- Optimistic version checks prevent stale writes.
+- Database operations use Supabase query APIs and validated inputs.
+- UTC timestamps are used for stored workflow events.
+- Passwords, raw tokens, private keys, and reset tokens are not written
+  to audit logs.
+
+======================================================================
+9. VALIDATION AND DATA INTEGRITY
+======================================================================
+
+Zod schemas validate:
+- Employee information and public Step 1 submissions.
+- Cycle creation and cycle status actions.
+- Login and password reset forms.
+- User creation and updates.
+- Access actions and role assignment.
+- Queue filters.
+- President answers and submissions.
+- Audit filters.
+- Scoring rules, weights, and rating bands.
+- Finalization requests.
+- Correction requests.
+- Report filters.
+
+Workflow protections:
+- Required President questions must be completed before submission.
+- President Step 2 must be submitted before Step 3.
+- Supervisor ratings are validated before submission.
+- Employee snapshots are stored on the evaluation and are not rewritten
+  by later profile changes.
+- Finalized evaluations become read-only.
+- Duplicate finalization is rejected.
+- Stale record versions are rejected.
+- Correction reasons are required and recorded.
+- Finalization reasons are recorded.
+- Mutation buttons disable while requests are pending.
+- Query caches refresh after workflow mutations.
+
+======================================================================
+10. AUDIT AND NOTIFICATIONS
+======================================================================
+
+Audit coverage includes:
+- Login and logout events.
+- Authentication failures.
+- Password changes and password resets.
+- User creation and updates.
+- User activation/deactivation and lock/unlock.
+- Password reset and session revocation.
+- Role assignments.
+- Permission matrix updates.
+- Cycle changes and cycle-link operations.
+- Queue access.
+- President review access.
+- Supervisor and President submissions.
+- Supervisor reopen/correction operations.
+- Score recalculation.
+- Finalization attempts and successful finalization.
+- Return-for-correction.
+- Report access.
+- Evaluation history access.
+- Unauthorized access attempts.
+
+Notification event types include:
+- EMPLOYEE_STEP1_SUBMITTED
+- SUPERVISOR_SUBMISSION_REQUIRED
+- SUPERVISOR_SUBMITTED_TO_PRESIDENT
+- PRESIDENT_STEP2_REQUIRED
+- PRESIDENT_STEP3_REQUIRED
+- EVALUATION_FINALIZED
+- EVALUATION_RETURNED_FOR_CORRECTION
+
+Notification events use dedupe keys where supported to prevent duplicate
+workflow notifications.
+
+======================================================================
+11. UI AND ACCESSIBILITY
+======================================================================
+
+- Shared AppShell with responsive desktop/mobile navigation.
+- Permission- and role-aware navigation.
+- Shared headers, cards, tables, badges, dialogs, loading blocks, and
+  empty states.
+- Confirmation dialogs for sensitive actions.
+- Search and filter controls on queues, reports, history, users, and
+  audit logs.
+- Read-only rendering for finalized history.
+- Accessible labels, table captions, and button states in the existing
+  shared components.
+- Company branding uses the Priority Handling Logistics logo.
+- Browser favicon and Apple touch icon use the company logo.
+
+======================================================================
+12. CURRENT VALIDATION STATE
+======================================================================
+
+Completed checks during implementation:
+- TypeScript diagnostics passed for the changed source files.
+- Route tree generation includes the reports and history routes.
+- Production build completed successfully after the Phase 10 changes.
+- Supabase migration 20260827120000_phase10_permissions.sql was pushed
+  and confirmed present remotely.
+- Git whitespace checks passed for published changes.
+- Role-isolation runtime issue was fixed and pushed.
+- Authenticated shell runtime error was fixed and pushed.
+- Supabase Auth credential control test returned HTTP 200 for the seeded
+  Administrator account on the correct project.
+
+Published commits include:
+- 9cbf5df  Complete reports history and workflow hardening
+- bfc8060  Replace Lovable branding with company identity
+- b256cde  Restrict navigation by assigned role
+- 9d0e4a8  Fix authenticated shell access profile error
+
+Current deployment:
+- Vercel production deployment was successfully created.
+- Production alias: https://performance-pulse-15.vercel.app
+
+======================================================================
+13. KNOWN LIMITATIONS
+======================================================================
+
+- There is no dedicated automated test suite configured in package.json.
+- Browser-level role, accessibility, mobile, concurrent-edit, and RLS
+  tests still require a test runner or manual verification.
+- Report filtering currently provides the implemented search/status
+  controls; additional requested filters such as date range, division,
+  section, cycle, and final rating may require extending the UI beyond
+  the current server-function support.
+- Evaluation history list filtering and sorting are more limited than
+  the full requested specification and can be expanded with dedicated
+  server-side pagination/filter contracts.
+- Notification events are recorded server-side; a full notification
+  inbox UI is not currently present.
+- The Vite build still uses the existing @lovable.dev/vite-tanstack-config
+  adapter because it is part of the current build pipeline. Lovable
+  branding/runtime files and visible metadata were removed, but replacing
+  this build adapter would require a separate build-tool migration.
+- The existing project includes local secret-bearing environment files;
+  these must remain uncommitted and must be configured separately in
+  deployment environments.
+- PDF generation, AI recommendations, employee accounts, external email,
+  SMS, OCR, and paper workflow are intentionally not implemented.
+
+======================================================================
+14. NEXT OPERATIONAL CHECKLIST
+======================================================================
+
+Before production acceptance:
+- Verify Vercel production environment variables point to
+  https://opgphfvdqdhxicrebfuk.supabase.co.
+- Test one login for each role.
+- Confirm each role sees only its permitted sidebar groups.
+- Try direct URLs from another role and confirm /unauthorized.
+- Submit a public Step 1 assessment.
+- Confirm all Supervisors receive it without assignment filtering.
+- Complete Supervisor and President workflow stages.
+- Recalculate and finalize a test evaluation.
+- Confirm finalized data is read-only.
+- Return a test evaluation for correction and verify the audit trail.
+- Review Admin audit logs.
+- Confirm no environment secrets are committed.
