@@ -181,3 +181,12 @@ export function formatCompactDateTime(value: string | null | undefined) {
     timeStyle: "short",
   });
 }
+
+export function formatCompactDateTimeParts(value: string | null | undefined) {
+  if (!value) return ["—"];
+  const date = new Date(value);
+  return [
+    date.toLocaleDateString(undefined, { dateStyle: "short" }),
+    date.toLocaleTimeString(undefined, { timeStyle: "short" }),
+  ];
+}

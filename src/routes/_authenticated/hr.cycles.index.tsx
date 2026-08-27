@@ -30,8 +30,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  ResponsiveTableValue,
 } from "@/components/ui/table";
-import { CycleStatusBadge, EmptyState, LoadingBlock, PageHeader, formatCompactDateTime } from "@/components/ui-bits";
+import { CycleStatusBadge, EmptyState, LoadingBlock, PageHeader, formatCompactDateTime, formatCompactDateTimeParts } from "@/components/ui-bits";
 import { listCycles, listTemplates, saveCycle } from "@/lib/cycles.functions";
 import { useAccess } from "@/hooks/use-access";
 
@@ -130,11 +131,15 @@ function CyclesPage() {
                   <TableCell>
                     <CycleStatusBadge status={cycle.status} />
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                    {formatCompactDateTime(cycle.starts_at)}
+                  <TableCell data-responsive-table-cell className="text-xs text-muted-foreground">
+                    <ResponsiveTableValue mobileLines={formatCompactDateTimeParts(cycle.starts_at)}>
+                      {formatCompactDateTime(cycle.starts_at)}
+                    </ResponsiveTableValue>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                    {formatCompactDateTime(cycle.ends_at)}
+                  <TableCell data-responsive-table-cell className="text-xs text-muted-foreground">
+                    <ResponsiveTableValue mobileLines={formatCompactDateTimeParts(cycle.ends_at)}>
+                      {formatCompactDateTime(cycle.ends_at)}
+                    </ResponsiveTableValue>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">{cycle.step1_count}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">{cycle.supervisor_count}</TableCell>
