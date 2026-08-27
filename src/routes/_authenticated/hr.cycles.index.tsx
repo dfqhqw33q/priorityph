@@ -31,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CycleStatusBadge, EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/ui-bits";
+import { CycleStatusBadge, EmptyState, LoadingBlock, PageHeader, formatCompactDateTime } from "@/components/ui-bits";
 import { listCycles, listTemplates, saveCycle } from "@/lib/cycles.functions";
 import { useAccess } from "@/hooks/use-access";
 
@@ -109,13 +109,14 @@ function CyclesPage() {
         <EmptyState title="No cycles yet" description="Create an annual cycle to get started." />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-          <Table>
+          <Table className="min-w-[720px] table-fixed">
             <TableHeader>
               <TableRow>
                 <TableHead>Cycle</TableHead>
                 <TableHead>Year</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Open dates</TableHead>
+                <TableHead>Opens</TableHead>
+                <TableHead>Closes</TableHead>
                 <TableHead className="text-right">Self-assessments</TableHead>
                 <TableHead className="text-right">Supervisor reviews</TableHead>
                 <TableHead />
@@ -129,12 +130,15 @@ function CyclesPage() {
                   <TableCell>
                     <CycleStatusBadge status={cycle.status} />
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {formatDateTime(cycle.starts_at)} → {formatDateTime(cycle.ends_at)}
+                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                    {formatCompactDateTime(cycle.starts_at)}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{cycle.step1_count}</TableCell>
-                  <TableCell className="text-right tabular-nums">{cycle.supervisor_count}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                    {formatCompactDateTime(cycle.ends_at)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{cycle.step1_count}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">{cycle.supervisor_count}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right">
                     <Button variant="outline" size="sm" asChild>
                       <Link to="/hr/cycles/$cycleId" params={{ cycleId: cycle.id }}>
                         Open
