@@ -297,8 +297,31 @@
 }
 
 @media (max-width: 549px) {
+  .responsive-table-mobile {
+    display: inline;
+  }
+
+  .responsive-table-desktop {
+    display: none;
+  }
+
+  [data-responsive-table-cell] {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   body {
     zoom: 0.96;
+  }
+}
+
+@media (min-width: 550px) {
+  .responsive-table-mobile {
+    display: none;
+  }
+
+  .responsive-table-desktop {
+    display: inline;
   }
 }
 

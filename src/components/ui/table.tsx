@@ -83,6 +83,29 @@ const TableCell = React.forwardRef<
 ));
 TableCell.displayName = "TableCell";
 
+type ResponsiveTableValueProps = {
+  children: React.ReactNode;
+  mobileLines?: React.ReactNode[];
+};
+
+function ResponsiveTableValue({ children, mobileLines }: ResponsiveTableValueProps) {
+  if (!mobileLines?.length) return <>{children}</>;
+
+  return (
+    <>
+      <span className="responsive-table-desktop">{children}</span>
+      <span className="responsive-table-mobile">
+        {mobileLines.map((line, index) => (
+          <span key={index} className="block whitespace-nowrap">
+            {line}
+          </span>
+        ))}
+      </span>
+    </>
+  );
+}
+ResponsiveTableValue.displayName = "ResponsiveTableValue";
+
 const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,
   React.HTMLAttributes<HTMLTableCaptionElement>
@@ -91,4 +114,14 @@ const TableCaption = React.forwardRef<
 ));
 TableCaption.displayName = "TableCaption";
 
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+  ResponsiveTableValue,
+};
