@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type Theme = "light" | "dark" | "system";
+export type Theme = "light" | "dark";
 export type ResolvedTheme = "light" | "dark";
 
 type ThemeContextType = {
@@ -12,11 +12,6 @@ type ThemeContextType = {
 const STORAGE_KEY = "phl_theme";
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
-
-function getSystemTheme(): ResolvedTheme {
-  if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
 
 function applyTheme(resolved: ResolvedTheme) {
   if (typeof document === "undefined") return;
@@ -35,13 +30,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return "system";
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === "light" || stored === "dark" || stored === "system") {
+      if (stored === "light" || stored === "dark") {
         return stored;
       }
     } catch {
       // localStorage may be inaccessible in certain environments
     }
-    return "system";
+    return "light";
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
@@ -53,27 +48,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       // Fallback
     }
-    return getSystemTheme();
+    return "light";
   });
 
   useEffect(() => {
-    const computed = theme === "system" ? getSystemTheme() : theme;
-    setResolvedTheme(computed);
-    applyTheme(computed);
-  }, [theme]);
-
-  useEffect(() => {
-    if (theme !== "system") return;
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (event: MediaQueryListEvent) => {
-      const nextResolved: ResolvedTheme = event.matches ? "dark" : "light";
-      setResolvedTheme(nextResolved);
-      applyTheme(nextResolved);
-    };
-
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
+    setResolvedTheme(theme);
+    applyTheme(theme);
   }, [theme]);
 
   function setTheme(nextTheme: Theme) {
