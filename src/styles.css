@@ -296,6 +296,30 @@
   }
 }
 
+@media (max-width: 549px) {
+  body {
+    zoom: 0.96;
+  }
+}
+
+@media (max-width: 479px) {
+  body {
+    zoom: 0.92;
+  }
+}
+
+@media (max-width: 429px) {
+  body {
+    zoom: 0.88;
+  }
+}
+
+@media (max-width: 389px) {
+  body {
+    zoom: 0.84;
+  }
+}
+
 
 @media print {
   /* Only the official evaluation sheet prints. */
