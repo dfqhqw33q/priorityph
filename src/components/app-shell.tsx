@@ -117,10 +117,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                     to={item.to}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                      "flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                       active
-                        ? "bg-primary text-primary-foreground font-semibold shadow-sm"
-                        : "text-foreground hover:bg-accent hover:text-accent-foreground",
+                        ? "border-primary bg-primary font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover hover:text-primary-foreground"
+                        : "border-transparent text-foreground hover:border-border hover:bg-muted hover:text-foreground",
                     )}
                   >
                     <Icon className={cn("size-4 shrink-0", active ? "text-primary-foreground" : "text-muted-foreground")} />

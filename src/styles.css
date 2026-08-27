@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Source+Sans+3:wght@600;700&display=swap");
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
@@ -227,8 +228,19 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: "Atkinson Hyperlegible", sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
     min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Source Sans 3", "Atkinson Hyperlegible", sans-serif;
+    letter-spacing: 0;
   }
 
   ::selection {
