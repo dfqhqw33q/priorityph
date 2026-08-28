@@ -195,7 +195,8 @@ export const listPhase2Queue = createServerFn({ method: "GET" })
       PERSONNEL: "personnel_user_id",
       COMMITTEE: "committee_user_id",
     }[data.stage];
-    const { data: assignments } = await getAdmin()
+    const admin = await getAdmin();
+    const { data: assignments } = await admin
       .from(stageTable)
       .select(`evaluation_id,${ownerField}`)
       .in(

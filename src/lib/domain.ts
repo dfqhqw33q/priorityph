@@ -265,6 +265,8 @@ export type QueueFilters = {
 export function roleLandingPath(roles: AppRole[]): string {
   if (roles.includes("HR")) return "/hr/cycles";
   if (roles.includes("SUPERVISOR")) return "/supervisor";
+  if (roles.includes("REVIEWING_SUPERVISOR")) return "/reviewing-supervisor";
+  if (roles.includes("COMMITTEE")) return "/committee";
   if (roles.includes("PRESIDENT")) return "/president";
   if (roles.includes("ADMINISTRATOR")) return "/admin";
   return "/unauthorized";
