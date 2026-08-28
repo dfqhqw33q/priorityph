@@ -100,32 +100,173 @@ export const supervisorSubmitSchema = z.object({
   ratings: z.array(ratingEntrySchema).length(10),
 });
 
-export const raterStep2Schema = z.object({
+export const raterStep2Schema = z
+  .object({
+    evaluationId: z.string().uuid(),
+    version: z.number().int().positive(),
+    strengths: z.string().max(4000).default(""),
+    weaknesses: z.string().max(4000).default(""),
+    development: z.string().max(4000).default(""),
+    advancement: z.string().max(4000).default(""),
+    careerTransfer: z.string().max(4000).default(""),
+    recommendations: z.string().max(4000).default(""),
+    submit: z.boolean().default(false),
+    signature: z
+      .object({
+        method: z.enum(["DRAWN", "UPLOAD", "TYPED"]),
+        data: z.string().min(2).max(700_000),
+      })
+      .optional(),
+  })
+  .superRefine((value, context) => {
+    if (!value.submit) return;
+    for (const [key, label] of [
+      ["strengths", "Strengths"],
+      ["weaknesses", "Weaknesses"],
+      ["development", "Development"],
+      ["advancement", "Advancement"],
+      ["careerTransfer", "Career / transfer"],
+      ["recommendations", "Other recommendations"],
+    ] as const) {
+      if (!value[key].trim())
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `${label} is required`,
+        });
+    }
+  });
+
+export const reviewingSupervisorReviewSchema = z
+  .object({
+    evaluationId: z.string().uuid(),
+    version: z.number().int().positive(),
+    comments: z.string().max(4000).default(""),
+    recommendations: z.string().max(4000).default(""),
+    submit: z.boolean().default(false),
+    signature: z
+      .object({
+        method: z.enum(["DRAWN", "UPLOAD", "TYPED"]),
+        data: z.string().min(2).max(700_000),
+      })
+      .optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.submit && !value.comments.trim())
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["comments"],
+        message: "Comments are required",
+      });
+    if (value.submit && !value.recommendations.trim())
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["recommendations"],
+        message: "Recommendations are required",
+      });
+  });
+
+export const personnelProcessingSchema = z
+  .object({
+    evaluationId: z.string().uuid(),
+    version: z.number().int().positive(),
+    presentSalary: z.number().nonnegative().nullable().default(null),
+    lastIncreaseDate: z.string().max(20).nullable().default(null),
+    lastIncreaseNature: z.string().max(1000).default(""),
+    lastIncreaseAmount: z.number().nonnegative().nullable().default(null),
+    totalPoints: z.number().nonnegative().nullable().default(null),
+    adjectiveRating: z.string().max(160).default(""),
+    recommendedIncreaseBonus: z.string().max(2000).default(""),
+    submit: z.boolean().default(false),
+    signature: z
+      .object({
+        method: z.enum(["DRAWN", "UPLOAD", "TYPED"]),
+        data: z.string().min(2).max(700_000),
+      })
+      .optional(),
+  })
+  .superRefine((value, context) => {
+    if (!value.submit) return;
+    if (value.presentSalary === null)
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["presentSalary"],
+        message: "Present salary is required",
+      });
+    if (value.totalPoints === null)
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["totalPoints"],
+        message: "Total points are required",
+      });
+    if (!value.adjectiveRating.trim())
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["adjectiveRating"],
+        message: "Adjective rating is required",
+      });
+    if (!value.recommendedIncreaseBonus.trim())
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["recommendedIncreaseBonus"],
+        message: "Increase or bonus recommendation is required",
+      });
+  });
+
+export const committeeReviewSchema = z
+  .object({
+    evaluationId: z.string().uuid(),
+    version: z.number().int().positive(),
+    finalAction: z.enum([
+      "RETAIN",
+      "TRANSFER",
+      "PROMOTE",
+      "INCREASE_SALARY",
+      "TRAINING_REQUIRED",
+      "OTHER",
+    ]),
+    actionDetails: z.string().max(2000).default(""),
+    recommendation: z.string().max(4000).default(""),
+    submit: z.boolean().default(false),
+    signature: z
+      .object({
+        method: z.enum(["DRAWN", "UPLOAD", "TYPED"]),
+        data: z.string().min(2).max(700_000),
+      })
+      .optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.submit && !value.recommendation.trim())
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["recommendation"],
+        message: "Committee recommendation is required",
+      });
+    if (value.submit && value.finalAction === "OTHER" && !value.actionDetails.trim())
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["actionDetails"],
+        message: "Action details are required for Other",
+      });
+  });
+
+export const correctionStageSchema = z.enum([
+  "SUPERVISOR_DRAFT",
+  "REVIEWING_SUPERVISOR_REVIEW",
+  "PERSONNEL_PROCESSING",
+  "COMMITTEE_REVIEW",
+]);
+
+export const presidentApprovalSchema = z.object({
   evaluationId: z.string().uuid(),
   version: z.number().int().positive(),
-  strengths: z.string().max(4000).default(""),
-  weaknesses: z.string().max(4000).default(""),
-  development: z.string().max(4000).default(""),
-  advancement: z.string().max(4000).default(""),
-  careerTransfer: z.string().max(4000).default(""),
-  recommendations: z.string().max(4000).default(""),
-  submit: z.boolean().default(false),
-  signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional(),
+  approve: z.boolean(),
+  reason: z.string().trim().max(500).default(""),
+  correctionStage: correctionStageSchema.optional(),
+  signature: z
+    .object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) })
+    .optional(),
 });
-
-export const reviewingSupervisorReviewSchema = z.object({
-  evaluationId: z.string().uuid(), version: z.number().int().positive(), comments: z.string().max(4000).default(""), recommendations: z.string().max(4000).default(""), submit: z.boolean().default(false), signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional(),
-});
-
-export const personnelProcessingSchema = z.object({
-  evaluationId: z.string().uuid(), version: z.number().int().positive(), presentSalary: z.number().nonnegative().nullable().default(null), lastIncreaseDate: z.string().max(20).nullable().default(null), lastIncreaseNature: z.string().max(1000).default(""), lastIncreaseAmount: z.number().nonnegative().nullable().default(null), totalPoints: z.number().nonnegative().nullable().default(null), adjectiveRating: z.string().max(160).default(""), recommendedIncreaseBonus: z.string().max(2000).default(""), submit: z.boolean().default(false), signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional(),
-});
-
-export const committeeReviewSchema = z.object({
-  evaluationId: z.string().uuid(), version: z.number().int().positive(), finalAction: z.enum(["RETAIN", "TRANSFER", "PROMOTE", "INCREASE_SALARY", "TRAINING_REQUIRED", "OTHER"]), actionDetails: z.string().max(2000).default(""), recommendation: z.string().max(4000).default(""), submit: z.boolean().default(false), signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional(),
-});
-
-export const presidentApprovalSchema = z.object({ evaluationId: z.string().uuid(), version: z.number().int().positive(), approve: z.boolean(), reason: z.string().trim().max(500).default(""), signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional() });
 
 export const reopenSchema = z.object({
   evaluationId: z.string().uuid(),
@@ -155,7 +296,6 @@ export const userFormSchema = z.object({
   jobTitle: z.string().max(160).default(""),
   // Exactly one role per internal user.
   roles: z.array(z.enum(APP_ROLES)).length(1, "Select exactly one role"),
-
 });
 export type UserFormValues = z.infer<typeof userFormSchema>;
 
@@ -184,7 +324,6 @@ export const assignRolesSchema = z.object({
   // A user may hold exactly one role; assigning a role replaces the previous one.
   roles: z.array(z.enum(APP_ROLES)).length(1, "Select exactly one role"),
   reason: reasonSchema,
-
 });
 
 export const rolePermissionsSchema = z.object({

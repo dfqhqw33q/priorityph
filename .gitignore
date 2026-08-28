@@ -38,3 +38,6 @@ supabase/.temp/
 
 .vercel
 .env*
+
+.vercel
+.env*
