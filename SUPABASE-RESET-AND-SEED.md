@@ -35,45 +35,20 @@ Applying migration ...
 
 ## Seed Internal Accounts
 
-The reset creates roles, permissions, and the evaluation template, but it does not create Supabase Auth users. Use the following PowerShell command to create or reset the four internal accounts and assign their application roles.
+The reset creates roles, permissions, and the evaluation template, but it does not create Supabase Auth users. Run the repository script below after every reset to create or reset all six internal test accounts and assign their application roles.
 
-Replace the passwords before use when appropriate. Do not commit real passwords or service keys to the repository.
-
-```powershell
-$ErrorActionPreference = 'Stop'
-$projectRef = 'opgphfvdqdhxicrebfuk'
-$supabaseUrl = "https://$projectRef.supabase.co"
-$keyJson = npx.cmd supabase projects api-keys --project-ref $projectRef --reveal --output json | Out-String
-$serviceKey = (($keyJson | ConvertFrom-Json) | Where-Object { $_.name -eq 'service_role' }).api_key
-if ([string]::IsNullOrWhiteSpace($serviceKey)) { throw 'Could not obtain service role key' }
-$headers = @{ apikey = $serviceKey; Authorization = "Bearer $serviceKey" }
-
-$accounts = @(
-  @{ email = 'admin@performance-pulse.local'; full_name = 'System Administrator'; job_title = 'Administrator'; role = 'ADMINISTRATOR'; password = 'CHANGE_ME_ADMIN' },
-  @{ email = 'president@performance-pulse.local'; full_name = 'Performance President'; job_title = 'President'; role = 'PRESIDENT'; password = 'CHANGE_ME_PRESIDENT' },
-  @{ email = 'supervisor@performance-pulse.local'; full_name = 'Performance Supervisor'; job_title = 'Supervisor'; role = 'SUPERVISOR'; password = 'CHANGE_ME_SUPERVISOR' },
-  @{ email = 'hr@performance-pulse.local'; full_name = 'HR Personnel'; job_title = 'HR/Personnel'; role = 'HR'; password = 'CHANGE_ME_HR' }
-)
-
-$existing = Invoke-RestMethod -Method Get -Uri "$supabaseUrl/auth/v1/admin/users?per_page=1000" -Headers $headers
-foreach ($account in $accounts) {
-  $match = @($existing.users | Where-Object { $_.email -eq $account.email }) | Select-Object -First 1
-  $body = @{ email = $account.email; password = $account.password; email_confirm = $true; user_metadata = @{ full_name = $account.full_name } } | ConvertTo-Json -Depth 5
-
-  if ($match) {
-    $user = Invoke-RestMethod -Method Put -Uri "$supabaseUrl/auth/v1/admin/users/$($match.id)" -Headers $headers -ContentType 'application/json' -Body $body
-  } else {
-    $user = Invoke-RestMethod -Method Post -Uri "$supabaseUrl/auth/v1/admin/users" -Headers $headers -ContentType 'application/json' -Body $body
-  }
-
-  $profile = @{ id = $user.id; email = $account.email; full_name = $account.full_name; job_title = $account.job_title; is_active = $true; is_locked = $false; must_change_password = $true } | ConvertTo-Json
-  Invoke-RestMethod -Method Post -Uri "$supabaseUrl/rest/v1/internal_users" -Headers ($headers + @{ Prefer = 'resolution=merge-duplicates' }) -ContentType 'application/json' -Body $profile | Out-Null
-
-  $roleRow = @{ user_id = $user.id; role = $account.role } | ConvertTo-Json
-  Invoke-RestMethod -Method Post -Uri "$supabaseUrl/rest/v1/user_roles" -Headers ($headers + @{ Prefer = 'resolution=merge-duplicates' }) -ContentType 'application/json' -Body $roleRow | Out-Null
-  Write-Output "$($account.role): $($account.email) provisioned"
-}
+$env:PHASE2_TEST_PASSWORD = 'replace-with-a-test-password'
+.\scripts\seed-test-accounts.ps1
 ```
+
+The script uses `SUPABASE_PROJECT_REF` when set, otherwise the linked project above. It is idempotent and never writes the service-role key to disk. The default account emails are:
+
+- `adminpriorityph@gmail.com`
+- `presidentpriorityph@gmail.com`
+- `supervisorpriorityph@gmail.com`
+- `hrpriorityph@gmail.com`
+- `revsupervisorpriorityph@gmail.com`
+- `committeepriorityph@gmail.com`
 
 ## Verify Profiles and Roles
 
