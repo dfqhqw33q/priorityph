@@ -178,7 +178,10 @@ export async function requirePermissionAny(
 ): Promise<void> {
   const admin = await getAdmin();
   for (const permission of permissions) {
-    const { data } = await admin.rpc("has_permission", { _user_id: userId, _permission: permission });
+    const { data } = await admin.rpc("has_permission", {
+      _user_id: userId,
+      _permission: permission,
+    });
     if (data === true) return;
   }
   const roles = await getActorRoles(userId);
@@ -204,7 +207,13 @@ export async function cycleCounts(cycleId: string) {
     return value ?? 0;
   };
   const [step1, supervisor, president] = await Promise.all([
-    count(["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT", "SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW", "FINALIZED"]),
+    count([
+      "EMPLOYEE_SUBMITTED",
+      "SUPERVISOR_DRAFT",
+      "SUPERVISOR_SUBMITTED",
+      "PRESIDENT_REVIEW",
+      "FINALIZED",
+    ]),
     count(["SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW", "FINALIZED"]),
     count(["SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW"]),
   ]);
@@ -217,6 +226,7 @@ export type EvaluationQueueFilters = {
   division?: string;
   section?: string;
   status?: string | null;
+  correctionStage?: string;
 };
 
 /**
@@ -230,7 +240,7 @@ export async function listEvaluations(statuses: string[], filters: EvaluationQue
   let query = admin
     .from("evaluations")
     .select(
-      "id, status, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, employee_submitted_at, supervisor_submitted_at, evaluation_cycles!inner(name, year)",
+      "id, status, correction_stage, supervisor_user_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, employee_submitted_at, supervisor_submitted_at, evaluation_cycles!inner(name, year)",
     )
     .in("status", effective as never)
     .order("employee_submitted_at", { ascending: false });
@@ -243,11 +253,12 @@ export async function listEvaluations(statuses: string[], filters: EvaluationQue
   if (filters.division?.trim()) query = query.eq("division_snapshot", filters.division.trim());
   if (filters.section?.trim()) query = query.eq("section_snapshot", filters.section.trim());
   if (filters.year) query = query.eq("evaluation_cycles.year", filters.year);
+  if (filters.correctionStage) query = query.eq("correction_stage", filters.correctionStage);
 
   const { data } = await query;
   return (data ?? []).map((row) => {
     const record = row as unknown as Record<string, unknown>;
-    const cycle = record['evaluation_cycles'] as { name: string; year: number } | null;
+    const cycle = record["evaluation_cycles"] as { name: string; year: number } | null;
     const { evaluation_cycles: _ignored, ...rest } = record;
     return {
       ...rest,
@@ -274,9 +285,7 @@ export async function queueFilterOptions() {
   return { divisions, sections, years };
 }
 
-export async function loadEvaluationDetail(
-  evaluationId: string,
-): Promise<EvaluationDetail | null> {
+export async function loadEvaluationDetail(evaluationId: string): Promise<EvaluationDetail | null> {
   const admin = await getAdmin();
   const { data: row } = await admin
     .from("evaluations")
@@ -407,20 +416,21 @@ export async function dashboardStats(userId: string) {
       .in("status", statuses as never);
     return count ?? 0;
   };
-  const [activeCycles, employees, awaitingSupervisor, awaitingPresident, finalized] = await Promise.all([
-    admin
-      .from("evaluation_cycles")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "ACTIVE")
-      .then((r) => r.count ?? 0),
-    admin
-      .from("employees")
-      .select("id", { count: "exact", head: true })
-      .then((r) => r.count ?? 0),
-    evaluationCount(["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"]),
-    evaluationCount(["SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW"]),
-    evaluationCount(["FINALIZED"]),
-  ]);
+  const [activeCycles, employees, awaitingSupervisor, awaitingPresident, finalized] =
+    await Promise.all([
+      admin
+        .from("evaluation_cycles")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "ACTIVE")
+        .then((r) => r.count ?? 0),
+      admin
+        .from("employees")
+        .select("id", { count: "exact", head: true })
+        .then((r) => r.count ?? 0),
+      evaluationCount(["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"]),
+      evaluationCount(["SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW"]),
+      evaluationCount(["FINALIZED"]),
+    ]);
   return { roles, activeCycles, employees, awaitingSupervisor, awaitingPresident, finalized };
 }
 

@@ -32,8 +32,8 @@ import {
   getEvaluation,
   reopenSupervisorStage,
   saveSupervisorDraft,
-  submitToPresident,
 } from "@/lib/evaluations.functions";
+import { saveRaterStep2 } from "@/lib/phase2.functions";
 
 export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$evaluationId")({
   head: () => ({
@@ -60,11 +60,13 @@ function SupervisorReviewPage() {
 
   const fetchEvaluation = useServerFn(getEvaluation);
   const saveDraft = useServerFn(saveSupervisorDraft);
-  const submit = useServerFn(submitToPresident);
+  const submitStep2 = useServerFn(saveRaterStep2);
   const reopen = useServerFn(reopenSupervisorStage);
 
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
   const [remarks, setRemarks] = useState("");
+  const [step2, setStep2] = useState({ strengths: "", weaknesses: "", development: "", advancement: "", careerTransfer: "", recommendations: "" });
+  const [signature, setSignature] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [reopenOpen, setReopenOpen] = useState(false);
@@ -86,6 +88,8 @@ function SupervisorReviewPage() {
     }
     setRatings(next);
     setRemarks(detail.supervisor_remarks);
+    const source = detail as typeof detail & Record<string, string | null>;
+    setStep2({ strengths: source.supervisor_step2_strengths ?? "", weaknesses: source.supervisor_step2_weaknesses ?? "", development: source.supervisor_step2_development ?? "", advancement: source.supervisor_step2_advancement ?? "", careerTransfer: source.supervisor_step2_career_transfer ?? "", recommendations: source.supervisor_step2_recommendations ?? "" });
     setDirty(false);
   }, [detail]);
 
@@ -113,15 +117,17 @@ function SupervisorReviewPage() {
       .map(([criterionId, value]) => ({ criterionId, rating: value as number }));
 
   const draftMutation = useMutation({
-    mutationFn: () =>
-      saveDraft({
+    mutationFn: async () => {
+      await saveDraft({
         data: {
           evaluationId,
           version: detail?.version ?? 1,
           remarks,
           ratings: ratingPayload(),
         },
-      }),
+      });
+      return saveStep2({ data: { evaluationId, version: detail?.version ?? 1, ...step2, submit: false } });
+    },
     onSuccess: async () => {
       toast.success("Draft saved");
       setDirty(false);
@@ -131,17 +137,12 @@ function SupervisorReviewPage() {
   });
 
   const submitMutation = useMutation({
-    mutationFn: () =>
-      submit({
-        data: {
-          evaluationId,
-          version: detail?.version ?? 1,
-          remarks,
-          ratings: ratingPayload(),
-        },
-      }),
+    mutationFn: async () => {
+      await saveDraft({ data: { evaluationId, version: detail?.version ?? 1, remarks, ratings: ratingPayload() } });
+      return submitStep2({ data: { evaluationId, version: detail?.version ?? 1, ...step2, submit: true, signature: { method: "TYPED", data: signature } } });
+    },
     onSuccess: async () => {
-      toast.success("Submitted to the President");
+      toast.success("Step 2 submitted for Reviewing Supervisor review");
       setDirty(false);
       await queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
       await queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] });
@@ -167,6 +168,10 @@ function SupervisorReviewPage() {
     setErrors(missing);
     if (missing.length > 0) {
       toast.error("Rate all ten factors before submitting");
+      return;
+    }
+    if (!signature.trim()) {
+      toast.error("Provide your signature before submitting Step 2");
       return;
     }
     setConfirmOpen(true);
@@ -242,6 +247,28 @@ function SupervisorReviewPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Step 2 — Conclusions and development</CardTitle>
+          <CardDescription>Complete the Rater development fields before submission.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          {([
+            ["strengths", "Strengths"], ["weaknesses", "Weaknesses"], ["development", "Development"],
+            ["advancement", "Advancement"], ["careerTransfer", "Career / transfer"], ["recommendations", "Other recommendations"],
+          ] as const).map(([key, label]) => (
+            <div key={key} className="space-y-1.5">
+              <Label htmlFor={`step2-${key}`}>{label}</Label>
+              <Textarea id={`step2-${key}`} rows={3} value={step2[key]} disabled={!editable || !can("evaluations.step2")} onChange={(event) => { setStep2((current) => ({ ...current, [key]: event.target.value })); setDirty(true); }} />
+            </div>
+          ))}
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="rater-signature">Rater signature</Label>
+            <Input id="rater-signature" placeholder="Type your full name as signature" value={signature} disabled={!editable} onChange={(event) => { setSignature(event.target.value); setDirty(true); }} />
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex flex-wrap gap-3">
         {editable && can("evaluations.rate_supervisor") ? (
           <Button
@@ -252,7 +279,7 @@ function SupervisorReviewPage() {
             {draftMutation.isPending ? "Saving…" : "Save draft"}
           </Button>
         ) : null}
-        {editable && can("evaluations.submit_president") ? (
+        {editable && can("evaluations.submit_president") && can("evaluations.step2") ? (
           <Button onClick={handleSubmitClick} disabled={submitMutation.isPending}>
             {submitMutation.isPending ? "Submitting…" : "Submit to President"}
           </Button>
