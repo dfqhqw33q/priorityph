@@ -100,6 +100,33 @@ export const supervisorSubmitSchema = z.object({
   ratings: z.array(ratingEntrySchema).length(10),
 });
 
+export const raterStep2Schema = z.object({
+  evaluationId: z.string().uuid(),
+  version: z.number().int().positive(),
+  strengths: z.string().max(4000).default(""),
+  weaknesses: z.string().max(4000).default(""),
+  development: z.string().max(4000).default(""),
+  advancement: z.string().max(4000).default(""),
+  careerTransfer: z.string().max(4000).default(""),
+  recommendations: z.string().max(4000).default(""),
+  submit: z.boolean().default(false),
+  signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional(),
+});
+
+export const reviewingSupervisorReviewSchema = z.object({
+  evaluationId: z.string().uuid(), version: z.number().int().positive(), comments: z.string().max(4000).default(""), recommendations: z.string().max(4000).default(""), submit: z.boolean().default(false), signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional(),
+});
+
+export const personnelProcessingSchema = z.object({
+  evaluationId: z.string().uuid(), version: z.number().int().positive(), presentSalary: z.number().nonnegative().nullable().default(null), lastIncreaseDate: z.string().max(20).nullable().default(null), lastIncreaseNature: z.string().max(1000).default(""), lastIncreaseAmount: z.number().nonnegative().nullable().default(null), totalPoints: z.number().nonnegative().nullable().default(null), adjectiveRating: z.string().max(160).default(""), recommendedIncreaseBonus: z.string().max(2000).default(""), submit: z.boolean().default(false), signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional(),
+});
+
+export const committeeReviewSchema = z.object({
+  evaluationId: z.string().uuid(), version: z.number().int().positive(), finalAction: z.enum(["RETAIN", "TRANSFER", "PROMOTE", "INCREASE_SALARY", "TRAINING_REQUIRED", "OTHER"]), actionDetails: z.string().max(2000).default(""), recommendation: z.string().max(4000).default(""), submit: z.boolean().default(false), signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional(),
+});
+
+export const presidentApprovalSchema = z.object({ evaluationId: z.string().uuid(), version: z.number().int().positive(), approve: z.boolean(), reason: z.string().trim().max(500).default(""), signature: z.object({ method: z.enum(["DRAWN", "UPLOAD", "TYPED"]), data: z.string().min(2).max(700_000) }).optional() });
+
 export const reopenSchema = z.object({
   evaluationId: z.string().uuid(),
   reason: reasonSchema,

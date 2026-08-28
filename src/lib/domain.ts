@@ -2,7 +2,7 @@
 
 export const APP_NAME = "Priority Handling Logistics, Inc.";
 
-export const APP_ROLES = ["ADMINISTRATOR", "PRESIDENT", "HR", "SUPERVISOR"] as const;
+export const APP_ROLES = ["ADMINISTRATOR", "PRESIDENT", "HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE"] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
 export const ROLE_LABELS: Record<AppRole, string> = {
@@ -10,6 +10,8 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   PRESIDENT: "President",
   HR: "HR/Personnel",
   SUPERVISOR: "Supervisor",
+  REVIEWING_SUPERVISOR: "Reviewing Supervisor / Division Head",
+  COMMITTEE: "Performance Evaluation Committee",
 };
 
 export const PERMISSIONS = [
@@ -22,6 +24,11 @@ export const PERMISSIONS = [
   "permissions.manage",
   "employees.view",
   "employees.manage",
+  "evaluations.step2",
+  "evaluations.review_step3",
+  "personnel.process",
+  "committee.review",
+  "president.approve",
   "templates.manage",
   "cycles.view",
   "cycles.manage",
@@ -57,6 +64,11 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "permissions.manage": "Manage Permissions",
   "employees.view": "View Employee Records",
   "employees.manage": "Manage Employee Profiles",
+  "evaluations.step2": "Complete Rater Step 2",
+  "evaluations.review_step3": "Complete Reviewing Supervisor Step 3",
+  "personnel.process": "Process Personnel Information",
+  "committee.review": "Review And Recommend Final Action",
+  "president.approve": "Approve Or Return Evaluations",
   "templates.manage": "Manage Evaluation Templates",
   "cycles.view": "View Evaluation Cycles",
   "cycles.manage": "Manage Evaluation Cycles",
@@ -108,6 +120,11 @@ export const EVALUATION_STATUSES = [
   "EMPLOYEE_SUBMITTED",
   "SUPERVISOR_DRAFT",
   "SUPERVISOR_SUBMITTED",
+  "REVIEWING_SUPERVISOR_REVIEW",
+  "PERSONNEL_PROCESSING",
+  "COMMITTEE_REVIEW",
+  "PRESIDENT_APPROVAL",
+  "RESUBMITTED",
   "PRESIDENT_REVIEW",
   "PRESIDENT_SUBMITTED",
   "READY_FOR_FINALIZATION",
@@ -120,6 +137,11 @@ export const EVALUATION_STATUS_LABELS: Record<EvaluationStatus, string> = {
   EMPLOYEE_SUBMITTED: "Waiting for supervisor",
   SUPERVISOR_DRAFT: "Supervisor in progress",
   SUPERVISOR_SUBMITTED: "Sent to President",
+  REVIEWING_SUPERVISOR_REVIEW: "Reviewing Supervisor review",
+  PERSONNEL_PROCESSING: "Personnel processing",
+  COMMITTEE_REVIEW: "Committee review",
+  PRESIDENT_APPROVAL: "President approval",
+  RESUBMITTED: "Resubmitted for review",
   PRESIDENT_REVIEW: "Needs President review",
   PRESIDENT_SUBMITTED: "President review completed",
   READY_FOR_FINALIZATION: "Ready to finalize",
