@@ -21,6 +21,7 @@ import { Route as EvaluationCycleTokenRouteImport } from './routes/evaluation.$c
 import { Route as AuthenticatedAccountPasswordRouteImport } from './routes/_authenticated/account.password'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAuditLogsRouteImport } from './routes/_authenticated/admin.audit-logs'
+import { Route as AuthenticatedAdminEmployeeProfilesRouteImport } from './routes/_authenticated/admin.employee-profiles'
 import { Route as AuthenticatedAdminEmployeesRouteImport } from './routes/_authenticated/admin.employees'
 import { Route as AuthenticatedAdminRolesRouteImport } from './routes/_authenticated/admin.roles'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
@@ -96,6 +97,12 @@ const AuthenticatedAdminAuditLogsRoute =
   AuthenticatedAdminAuditLogsRouteImport.update({
     id: '/admin/audit-logs',
     path: '/admin/audit-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminEmployeeProfilesRoute =
+  AuthenticatedAdminEmployeeProfilesRouteImport.update({
+    id: '/admin/employee-profiles',
+    path: '/admin/employee-profiles',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminEmployeesRoute =
@@ -197,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/evaluation/$cycleToken': typeof EvaluationCycleTokenRoute
   '/account/password': typeof AuthenticatedAccountPasswordRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
+  '/admin/employee-profiles': typeof AuthenticatedAdminEmployeeProfilesRoute
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -225,6 +233,7 @@ export interface FileRoutesByTo {
   '/evaluation/$cycleToken': typeof EvaluationCycleTokenRoute
   '/account/password': typeof AuthenticatedAccountPasswordRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
+  '/admin/employee-profiles': typeof AuthenticatedAdminEmployeeProfilesRoute
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -255,6 +264,7 @@ export interface FileRoutesById {
   '/evaluation/$cycleToken': typeof EvaluationCycleTokenRoute
   '/_authenticated/account/password': typeof AuthenticatedAccountPasswordRoute
   '/_authenticated/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
+  '/_authenticated/admin/employee-profiles': typeof AuthenticatedAdminEmployeeProfilesRoute
   '/_authenticated/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/_authenticated/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/evaluation/$cycleToken'
     | '/account/password'
     | '/admin/audit-logs'
+    | '/admin/employee-profiles'
     | '/admin/employees'
     | '/admin/roles'
     | '/admin/users'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/evaluation/$cycleToken'
     | '/account/password'
     | '/admin/audit-logs'
+    | '/admin/employee-profiles'
     | '/admin/employees'
     | '/admin/roles'
     | '/admin/users'
@@ -342,6 +354,7 @@ export interface FileRouteTypes {
     | '/evaluation/$cycleToken'
     | '/_authenticated/account/password'
     | '/_authenticated/admin/audit-logs'
+    | '/_authenticated/admin/employee-profiles'
     | '/_authenticated/admin/employees'
     | '/_authenticated/admin/roles'
     | '/_authenticated/admin/users'
@@ -458,6 +471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/employee-profiles': {
+      id: '/_authenticated/admin/employee-profiles'
+      path: '/admin/employee-profiles'
+      fullPath: '/admin/employee-profiles'
+      preLoaderRoute: typeof AuthenticatedAdminEmployeeProfilesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/employees': {
       id: '/_authenticated/admin/employees'
       path: '/admin/employees'
@@ -569,6 +589,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountPasswordRoute: typeof AuthenticatedAccountPasswordRoute
   AuthenticatedAdminAuditLogsRoute: typeof AuthenticatedAdminAuditLogsRoute
+  AuthenticatedAdminEmployeeProfilesRoute: typeof AuthenticatedAdminEmployeeProfilesRoute
   AuthenticatedAdminEmployeesRoute: typeof AuthenticatedAdminEmployeesRoute
   AuthenticatedAdminRolesRoute: typeof AuthenticatedAdminRolesRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
@@ -590,6 +611,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountPasswordRoute: AuthenticatedAccountPasswordRoute,
   AuthenticatedAdminAuditLogsRoute: AuthenticatedAdminAuditLogsRoute,
+  AuthenticatedAdminEmployeeProfilesRoute:
+    AuthenticatedAdminEmployeeProfilesRoute,
   AuthenticatedAdminEmployeesRoute: AuthenticatedAdminEmployeesRoute,
   AuthenticatedAdminRolesRoute: AuthenticatedAdminRolesRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,

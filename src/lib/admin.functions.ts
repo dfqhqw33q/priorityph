@@ -9,6 +9,7 @@ import {
   userFormSchema,
   userUpdateSchema,
   auditFiltersSchema,
+  employeeProfileSchema,
 } from "./schemas";
 import type { AppRole, Permission } from "./domain";
 
@@ -310,6 +311,84 @@ export const listEmployees = createServerFn({ method: "GET" })
       .select("*")
       .order("employee_number");
     return data ?? [];
+  });
+
+export const createEmployeeProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => employeeProfileSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } = await import(
+      "./server-core.server"
+    );
+    await requirePermission(context.userId, "employees.manage", "Employee Profiles");
+    const admin = await getAdmin();
+    const fullName = [data.firstName, data.middleName, data.lastName].filter(Boolean).join(" ");
+    const { data: employee, error } = await admin
+      .from("employees")
+      .insert({
+        employee_number: data.employeeNumber,
+        full_name: fullName,
+        first_name: data.firstName,
+        middle_name: data.middleName,
+        last_name: data.lastName,
+        job_title: data.jobTitle,
+        division: data.division,
+        section: data.section,
+      } as never)
+      .select("id")
+      .single();
+    if (error || !employee) {
+      if (error?.code === "23505") throw validationError("An employee profile with that number already exists");
+      throw validationError(error?.message ?? "Could not create employee profile");
+    }
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "EMPLOYEE_PROFILE_CREATED",
+      module: "Employee Profiles",
+      entityType: "employee",
+      entityId: employee.id,
+      employeeId: employee.id,
+      newValue: { employee_number: data.employeeNumber, first_name: data.firstName, middle_name: data.middleName, last_name: data.lastName },
+    });
+    return { employeeId: employee.id };
+  });
+
+export const updateEmployeeProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => employeeProfileSchema.extend({ employeeId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } = await import(
+      "./server-core.server"
+    );
+    await requirePermission(context.userId, "employees.manage", "Employee Profiles");
+    const admin = await getAdmin();
+    const { data: previous } = await admin.from("employees").select("*").eq("id", data.employeeId).maybeSingle();
+    if (!previous) throw validationError("Employee profile not found");
+    const fullName = [data.firstName, data.middleName, data.lastName].filter(Boolean).join(" ");
+    const { error } = await admin.from("employees").update({
+      employee_number: data.employeeNumber,
+      full_name: fullName,
+      first_name: data.firstName,
+      middle_name: data.middleName,
+      last_name: data.lastName,
+      job_title: data.jobTitle,
+      division: data.division,
+      section: data.section,
+    } as never).eq("id", data.employeeId);
+    if (error) throw validationError(error.code === "23505" ? "An employee profile with that number already exists" : error.message);
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "EMPLOYEE_PROFILE_UPDATED",
+      module: "Employee Profiles",
+      entityType: "employee",
+      entityId: data.employeeId,
+      employeeId: data.employeeId,
+      previousValue: previous,
+      newValue: { employee_number: data.employeeNumber, first_name: data.firstName, middle_name: data.middleName, last_name: data.lastName },
+    });
+    return { employeeId: data.employeeId };
   });
 
 export const getAdminStats = createServerFn({ method: "GET" })
