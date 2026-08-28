@@ -37,6 +37,9 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
   { prefix: "/hr", roles: ["HR"], permission: "cycles.view" },
   { prefix: "/supervisor", roles: ["SUPERVISOR"], permission: "evaluations.view_step1" },
   { prefix: "/president", roles: ["PRESIDENT"], permission: "president.view" },
+  { prefix: "/reviewing-supervisor", roles: ["REVIEWING_SUPERVISOR"], permission: "evaluations.review_step3" },
+  { prefix: "/personnel", roles: ["HR"], permission: "personnel.process" },
+  { prefix: "/committee", roles: ["COMMITTEE"], permission: "committee.review" },
 ];
 
 function routeAccess(pathname: string) {
@@ -76,6 +79,18 @@ const NAV: { group: string; items: NavItem[] }[] = [
       { to: "/president/employees", label: "Employee records", icon: Users, permission: "employees.view", roles: ["PRESIDENT"] },
     ],
 
+  },
+  {
+    group: "Reviewing Supervisor / Division Head",
+    items: [{ to: "/reviewing-supervisor", label: "Evaluations for review", icon: BadgeCheck, permission: "evaluations.review_step3", roles: ["REVIEWING_SUPERVISOR"] }],
+  },
+  {
+    group: "Personnel Office",
+    items: [{ to: "/personnel", label: "Personnel processing", icon: ClipboardList, permission: "personnel.process", roles: ["HR"] }],
+  },
+  {
+    group: "Performance Evaluation Committee",
+    items: [{ to: "/committee", label: "Evaluations for review", icon: BadgeCheck, permission: "committee.review", roles: ["COMMITTEE"] }],
   },
   {
     group: "Administration",

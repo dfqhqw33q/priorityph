@@ -17,7 +17,7 @@ const SUPERVISOR_QUEUE_STATUSES = [
   "PRESIDENT_REVIEW",
 ];
 
-const PRESIDENT_QUEUE_STATUSES = ["SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW", "PRESIDENT_SUBMITTED"];
+const PRESIDENT_QUEUE_STATUSES = ["PRESIDENT_APPROVAL", "SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW", "PRESIDENT_SUBMITTED"];
 
 /**
  * Supervisor queue. Every authorised Supervisor sees every eligible Step 1
@@ -178,7 +178,7 @@ export const submitToPresident = createServerFn({ method: "POST" })
     const { error } = await admin
       .from("evaluations")
       .update({
-        status: "SUPERVISOR_SUBMITTED",
+        status: "REVIEWING_SUPERVISOR_REVIEW",
         supervisor_remarks: data.remarks,
         supervisor_user_id: context.userId,
         supervisor_submitted_at: new Date().toISOString(),
@@ -190,19 +190,19 @@ export const submitToPresident = createServerFn({ method: "POST" })
       evaluation_id: data.evaluationId,
       event_type: "SUPERVISOR_SUBMITTED",
       from_status: evaluation.status,
-      to_status: "SUPERVISOR_SUBMITTED",
+      to_status: "REVIEWING_SUPERVISOR_REVIEW",
       actor_user_id: context.userId,
     });
     await writeAudit({
       actorUserId: context.userId,
       actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "SUPERVISOR_SUBMITTED",
-      module: "Supervisor Review",
+      action: "RATER_STEP2_SUBMITTED",
+      module: "Rater Step 2",
       entityType: "evaluation",
       entityId: data.evaluationId,
       evaluationId: data.evaluationId,
       previousValue: { status: evaluation.status },
-      newValue: { status: "SUPERVISOR_SUBMITTED" },
+      newValue: { status: "REVIEWING_SUPERVISOR_REVIEW" },
     });
     return { ok: true };
   });
