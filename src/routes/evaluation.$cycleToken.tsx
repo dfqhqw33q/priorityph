@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingBlock } from "@/components/ui-bits";
-import { getPublicCycle, submitStep1 } from "@/lib/public.functions";
+import { getPublicCycle, submitStep1, verifyEmployeeProfile } from "@/lib/public.functions";
 import { APP_NAME, RATING_SCALE } from "@/lib/domain";
 import { step1FormSchema } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
@@ -42,17 +42,77 @@ function PublicEvaluationPage() {
   const navigate = useNavigate();
   const fetchCycle = useServerFn(getPublicCycle);
   const submit = useServerFn(submitStep1);
+  const verify = useServerFn(verifyEmployeeProfile);
 
   const submissionId = useMemo(() => crypto.randomUUID(), []);
   const [pending, setPending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [signatureMethod, setSignatureMethod] = useState<"UPLOAD" | "DRAWN">("DRAWN");
+  const [signatureData, setSignatureData] = useState("");
+  const [deviceSessionId] = useState(() => {
+    const key = "phl-evaluation-device-session";
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+    const value = crypto.randomUUID();
+    sessionStorage.setItem(key, value);
+    return value;
+  });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingRef = useRef(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [identity, setIdentity] = useState({
     employeeNumber: "",
-    fullName: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
     jobTitle: "",
     division: "",
     section: "",
   });
+
+  function clearSignature() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+    setSignatureData("");
+  }
+
+  function drawSignature(event: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = canvasRef.current;
+    if (!canvas || !drawingRef.current) return;
+    const rect = canvas.getBoundingClientRect();
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.lineWidth = 2;
+    context.lineCap = "round";
+    context.strokeStyle = "#080B3D";
+    context.lineTo((event.clientX - rect.left) * (canvas.width / rect.width), (event.clientY - rect.top) * (canvas.height / rect.height));
+    context.stroke();
+    setSignatureData(canvas.toDataURL("image/png"));
+  }
+
+  async function verifyProfile() {
+    const identityFields = { employeeNumber: identity.employeeNumber, firstName: identity.firstName, middleName: identity.middleName, lastName: identity.lastName, cycleToken, deviceSessionId };
+    setVerifying(true);
+    setVerificationMessage("");
+    try {
+      const result = await verify({ data: identityFields });
+      if (result.status === "VERIFIED") {
+        setVerified(true);
+        setVerificationMessage("Profile verified. You may continue.");
+      } else if (result.status === "DUPLICATE") {
+        setVerificationMessage("A submission for this employee already exists for this evaluation cycle.");
+      } else {
+        setVerificationMessage("Profile could not be verified. Please contact the System Administrator.");
+      }
+    } catch (error) {
+      setVerificationMessage(error instanceof Error ? error.message.replace("VALIDATION:", "").trim() : "Profile verification failed");
+    } finally {
+      setVerifying(false);
+    }
+  }
   const [ratings, setRatings] = useState<Record<string, number>>({});
 
   const query = useQuery({
@@ -86,7 +146,7 @@ function PublicEvaluationPage() {
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const parsed = step1FormSchema.safeParse({ ...identity, ratings });
+    const parsed = step1FormSchema.safeParse({ ...identity, deviceSessionId, ratings, signature: { method: signatureMethod, data: signatureData, contentType: "image/png" } });
     const missing = cycle.criteria.filter((criterion) => !ratings[criterion.id]);
     if (!parsed.success || missing.length > 0) {
       const fieldErrors: Record<string, string> = {};
@@ -102,6 +162,10 @@ function PublicEvaluationPage() {
       return;
     }
     setErrors({});
+    if (!verified) {
+      setVerificationMessage("Verify your employee profile before submitting.");
+      return;
+    }
     setPending(true);
     try {
       const response = await submit({
@@ -125,7 +189,9 @@ function PublicEvaluationPage() {
 
   const fields: { key: keyof typeof identity; label: string }[] = [
     { key: "employeeNumber", label: "Employee number" },
-    { key: "fullName", label: "Full name" },
+    { key: "firstName", label: "First name" },
+    { key: "middleName", label: "Middle name" },
+    { key: "lastName", label: "Last name" },
     { key: "jobTitle", label: "Job title" },
     { key: "division", label: "Division" },
     { key: "section", label: "Section" },
@@ -179,9 +245,14 @@ function PublicEvaluationPage() {
                 {errors[field.key] ? <p className="text-xs text-destructive">{errors[field.key]}</p> : null}
               </div>
             ))}
+            <Button type="button" variant="outline" onClick={verifyProfile} disabled={verifying}>
+              {verifying ? "Verifying..." : "Verify employee profile"}
+            </Button>
+            {verificationMessage ? <p className={cn("text-sm", verified ? "text-emerald-600" : "text-destructive")}>{verificationMessage}</p> : null}
           </CardContent>
         </Card>
 
+        {verified ? <>
         <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-bold">Performance factors</CardTitle>
@@ -229,9 +300,20 @@ function PublicEvaluationPage() {
           </CardContent>
         </Card>
 
+        <Card className="border border-border bg-card shadow-sm">
+          <CardHeader><CardTitle className="text-base font-bold">E-signature</CardTitle><CardDescription>Provide your signature before submitting this assessment.</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2"><Button type="button" variant={signatureMethod === "DRAWN" ? "default" : "outline"} onClick={() => { setSignatureMethod("DRAWN"); setSignatureData(""); }}>Draw signature</Button><Button type="button" variant={signatureMethod === "UPLOAD" ? "default" : "outline"} onClick={() => { setSignatureMethod("UPLOAD"); setSignatureData(""); }}>Upload image</Button></div>
+            {signatureMethod === "DRAWN" ? <><canvas ref={canvasRef} width={720} height={180} className="h-36 w-full touch-none rounded-md border border-input bg-white" onPointerDown={(event) => { drawingRef.current = true; const context = event.currentTarget.getContext("2d"); const rect = event.currentTarget.getBoundingClientRect(); context?.beginPath(); context?.moveTo((event.clientX - rect.left) * (event.currentTarget.width / rect.width), (event.clientY - rect.top) * (event.currentTarget.height / rect.height)); event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={drawSignature} onPointerUp={(event) => { drawingRef.current = false; event.currentTarget.releasePointerCapture(event.pointerId); }} /><Button type="button" variant="ghost" onClick={clearSignature}>Clear signature</Button></> : <Input type="file" accept="image/png,image/jpeg" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 500_000) { setErrors((previous) => ({ ...previous, signature: "Signature image must be 500 KB or smaller" })); return; } const reader = new FileReader(); reader.onload = () => setSignatureData(String(reader.result)); reader.readAsDataURL(file); }} />}
+            {errors.signature ? <p className="text-xs text-destructive">{errors.signature}</p> : null}
+            {!signatureData ? <p className="text-xs text-muted-foreground">A signature is required.</p> : null}
+          </CardContent>
+        </Card>
+
         <Button type="submit" className="w-full text-base font-semibold shadow-md py-6" size="lg" disabled={pending}>
           {pending ? "Submitting…" : "Submit assessment"}
         </Button>
+        </> : <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Verify your employee profile to begin the assessment.</CardContent></Card>}
       </form>
     </div>
   );

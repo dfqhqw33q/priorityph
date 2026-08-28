@@ -21,7 +21,9 @@ export const ratingEntrySchema = z.object({
 
 export const employeeInfoSchema = z.object({
   employeeNumber: trimmed(1, 40),
-  fullName: trimmed(2, 160),
+  firstName: trimmed(1, 80),
+  middleName: trimmed(0, 80),
+  lastName: trimmed(1, 80),
   jobTitle: trimmed(2, 160),
   division: trimmed(2, 160),
   section: trimmed(2, 160),
@@ -30,13 +32,36 @@ export const employeeInfoSchema = z.object({
 export const step1SubmissionSchema = employeeInfoSchema.extend({
   cycleToken: z.string().min(16).max(128),
   submissionId: z.string().uuid(),
+  deviceSessionId: z.string().min(16).max(128),
   ratings: z.array(ratingEntrySchema).length(10),
+  signature: z.object({
+    method: z.enum(["UPLOAD", "DRAWN"]),
+    data: z.string().min(32).max(700_000),
+    contentType: z.string().max(80).default("image/png"),
+  }),
 });
 export type Step1Submission = z.infer<typeof step1SubmissionSchema>;
 
 export const step1FormSchema = employeeInfoSchema.extend({
+  deviceSessionId: z.string().min(16).max(128),
   ratings: z.record(z.string().uuid(), ratingValueSchema),
+  signature: z.object({
+    method: z.enum(["UPLOAD", "DRAWN"]),
+    data: z.string().min(32).max(700_000),
+    contentType: z.string().max(80).default("image/png"),
+  }),
 });
+
+export const employeeProfileSchema = z.object({
+  employeeNumber: trimmed(1, 40),
+  firstName: trimmed(1, 80),
+  middleName: trimmed(0, 80),
+  lastName: trimmed(1, 80),
+  jobTitle: z.string().max(160).default(""),
+  division: z.string().max(160).default(""),
+  section: z.string().max(160).default(""),
+});
+export type EmployeeProfileValues = z.infer<typeof employeeProfileSchema>;
 
 export const cycleFormSchema = z
   .object({

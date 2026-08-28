@@ -32,10 +32,11 @@ export async function createFinalEvaluationDocument(evaluationId: string, userId
     .maybeSingle();
   if (!evaluation) throw validationError("Evaluation not found");
   const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number } }).evaluation_cycles;
-  const [{ data: criteria }, { data: ratings }, { data: score }] = await Promise.all([
+  const [{ data: criteria }, { data: ratings }, { data: score }, { data: signature }] = await Promise.all([
     admin.from("evaluation_criteria").select("id, letter, title").eq("template_id", (await admin.from("evaluation_cycles").select("template_id").eq("id", evaluation.cycle_id).single()).data?.template_id ?? "").order("position"),
     admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
     admin.from("evaluation_scores").select("final_score, final_rating_label, president_average, rule_version").eq("evaluation_id", evaluationId).maybeSingle(),
+    admin.from("employee_signatures").select("method, storage_path, signature_data, content_type, signed_at").eq("evaluation_id", evaluationId).maybeSingle(),
   ]);
 
   const pdf = await PDFDocument.create();
@@ -71,6 +72,27 @@ export async function createFinalEvaluationDocument(evaluationId: string, userId
   draw(`Final rating: ${score?.final_rating_label ?? "-"}`);
   draw(`Scoring rule version: ${score?.rule_version ?? "-"}`);
   draw("This document represents the finalized, locked evaluation record.", 9);
+  if (signature) {
+    draw("RATEE SIGNATURE", 10, true);
+    try {
+      let signatureBytes: Uint8Array;
+      if (signature.method === "UPLOAD" && signature.storage_path) {
+        const { data: blob, error } = await admin.storage.from("employee-files").download(signature.storage_path);
+        if (error || !blob) throw validationError("Could not load ratee signature");
+        signatureBytes = new Uint8Array(await blob.arrayBuffer());
+      } else if (signature.signature_data) {
+        const base64 = signature.signature_data.split(",")[1];
+        signatureBytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+      } else throw validationError("Ratee signature is unavailable");
+      const image = signature.content_type === "image/jpeg" ? await pdf.embedJpg(signatureBytes) : await pdf.embedPng(signatureBytes);
+      page.drawImage(image, { x: 42, y: Math.max(y - 60, 70), width: 180, height: 45 });
+      y = Math.max(y - 75, 55);
+      draw(`Signed on: ${signature.signed_at ?? ""}`, 9);
+      draw(`Printed name: ${evaluation.full_name_snapshot}`, 9);
+    } catch (error) {
+      console.error("[documents] ratee signature omitted", error);
+    }
+  }
 
   const bytes = await pdf.save();
   const path = `employees/${evaluation.employee_id}/evaluations/${cycle.year}-evaluation.pdf`;

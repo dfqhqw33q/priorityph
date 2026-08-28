@@ -84,6 +84,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
       { to: "/admin/users", label: "User accounts", icon: Users, permission: "users.view", roles: ["ADMINISTRATOR"] },
       { to: "/admin/roles", label: "Roles & permissions", icon: UserCog, permission: "roles.manage", roles: ["ADMINISTRATOR"] },
       { to: "/admin/employees", label: "Employee records", icon: Users, permission: "employees.view", roles: ["ADMINISTRATOR"] },
+      { to: "/admin/employee-profiles", label: "Employee profiles", icon: UserCog, permission: "employees.manage", roles: ["ADMINISTRATOR"] },
       { to: "/admin/audit-logs", label: "Audit logs", icon: FileClock, permission: "audit.view", roles: ["ADMINISTRATOR"] },
     ],
   },

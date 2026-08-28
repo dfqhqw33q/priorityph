@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { step1SubmissionSchema } from "./schemas";
+import { employeeProfileSchema, step1SubmissionSchema } from "./schemas";
 import type { PublicCycleInfo, Criterion } from "./domain";
 import { z } from "zod";
 
@@ -46,6 +46,38 @@ export const getPublicCycle = createServerFn({ method: "GET" })
 
 export type Step1Result = { status: "SUBMITTED" | "DUPLICATE" };
 
+export type ProfileVerificationResult =
+  | { status: "VERIFIED"; employeeId: string; alreadySubmitted: boolean }
+  | { status: "NOT_FOUND" | "INACTIVE" | "DUPLICATE" };
+
+export const verifyEmployeeProfile = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => employeeProfileSchema.pick({ employeeNumber: true, firstName: true, middleName: true, lastName: true }).extend({ cycleToken: z.string().min(16).max(128), deviceSessionId: z.string().min(16).max(128) }).parse(input))
+  .handler(async ({ data }): Promise<ProfileVerificationResult> => {
+    const { getAdmin, getRequestMeta, validationError } = await import("./server-core.server");
+    const admin = await getAdmin();
+    const meta = getRequestMeta();
+    if (meta.ip) {
+      const { count } = await admin.from("public_submission_attempts").select("id", { count: "exact", head: true }).eq("ip_address", meta.ip).gte("occurred_at", new Date(Date.now() - 15 * 60_000).toISOString());
+      if ((count ?? 0) >= 20) throw validationError("Too many attempts. Please try again later.");
+    }
+    const { data: employee } = await admin.from("employees").select("id, first_name, middle_name, last_name, employment_status").eq("employee_number", data.employeeNumber).maybeSingle();
+    if (!employee) {
+      await admin.from("public_submission_attempts").insert({ attempt_type: "VERIFICATION", outcome: "DENIED", device_session_id: data.deviceSessionId, ip_address: meta.ip, user_agent: meta.userAgent } as never);
+      return { status: "NOT_FOUND" };
+    }
+    if (employee.employment_status !== "ACTIVE") return { status: "INACTIVE" };
+    const normalize = (value: string) => value.trim().toLocaleLowerCase();
+    if (normalize(employee.first_name) !== normalize(data.firstName) || normalize(employee.middle_name) !== normalize(data.middleName) || normalize(employee.last_name) !== normalize(data.lastName)) {
+      await admin.from("public_submission_attempts").insert({ employee_id: employee.id, attempt_type: "VERIFICATION", outcome: "DENIED", device_session_id: data.deviceSessionId, ip_address: meta.ip, user_agent: meta.userAgent } as never);
+      return { status: "NOT_FOUND" };
+    }
+    const { data: cycle } = await admin.from("evaluation_cycles").select("id").eq("cycle_token", data.cycleToken).maybeSingle();
+    const { data: existing } = cycle ? await admin.from("evaluations").select("id").eq("cycle_id", cycle.id).eq("employee_id", employee.id).maybeSingle() : { data: null };
+    if (existing) return { status: "DUPLICATE" };
+    await admin.from("public_submission_attempts").insert({ cycle_id: cycle?.id ?? null, employee_id: employee.id, attempt_type: "VERIFICATION", outcome: "SUCCESS", device_session_id: data.deviceSessionId, ip_address: meta.ip, user_agent: meta.userAgent } as never);
+    return { status: "VERIFIED", employeeId: employee.id, alreadySubmitted: false };
+  });
+
 export const submitStep1 = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => step1SubmissionSchema.parse(input))
   .handler(async ({ data }): Promise<Step1Result> => {
@@ -54,6 +86,10 @@ export const submitStep1 = createServerFn({ method: "POST" })
     );
     const admin = await getAdmin();
     const meta = getRequestMeta();
+    if (meta.ip) {
+      const { count } = await admin.from("public_submission_attempts").select("id", { count: "exact", head: true }).eq("ip_address", meta.ip).gte("occurred_at", new Date(Date.now() - 15 * 60_000).toISOString());
+      if ((count ?? 0) >= 20) throw validationError("Too many attempts. Please try again later.");
+    }
 
     const { data: cycle } = await admin
       .from("evaluation_cycles")
@@ -79,59 +115,22 @@ export const submitStep1 = createServerFn({ method: "POST" })
       throw validationError("Please rate every factor exactly once");
     }
 
-    // Employee records are permanent: match by employee number, create when new.
-    let employeeId: string | null = null;
+    // Master employee records are created only by authorized administrators.
     const { data: employee } = await admin
       .from("employees")
-      .select("id, full_name")
+      .select("id, first_name, middle_name, last_name, full_name, job_title, division, section, employment_status")
       .eq("employee_number", data.employeeNumber)
       .maybeSingle();
+    if (!employee || employee.employment_status !== "ACTIVE") throw validationError("Employee profile could not be verified. Please contact the System Administrator.");
+    const normalize = (value: string) => value.trim().toLocaleLowerCase();
+    if (normalize(employee.first_name) !== normalize(data.firstName) || normalize(employee.middle_name) !== normalize(data.middleName) || normalize(employee.last_name) !== normalize(data.lastName)) throw validationError("Employee profile could not be verified. Please contact the System Administrator.");
+    const employeeId = employee.id;
 
-    if (employee) {
-      employeeId = employee.id;
-      await admin
-        .from("employees")
-        .update({
-          full_name: data.fullName,
-          job_title: data.jobTitle,
-          division: data.division,
-          section: data.section,
-        })
-        .eq("id", employeeId);
-    } else {
-      const { data: created, error } = await admin
-        .from("employees")
-        .insert({
-          employee_number: data.employeeNumber,
-          full_name: data.fullName,
-          job_title: data.jobTitle,
-          division: data.division,
-          section: data.section,
-        })
-        .select("id")
-        .single();
-      if (error || !created) {
-        const { data: retry } = await admin
-          .from("employees")
-          .select("id")
-          .eq("employee_number", data.employeeNumber)
-          .maybeSingle();
-        if (!retry) throw validationError("Could not save your details, please try again");
-        employeeId = retry.id;
-      } else {
-        employeeId = created.id;
-        await writeAudit(
-          {
-            action: "EMPLOYEE_CREATED",
-            module: "Employees",
-            entityType: "employee",
-            entityId: employeeId,
-            employeeId,
-            newValue: { employee_number: data.employeeNumber, full_name: data.fullName },
-          },
-          meta,
-        );
-      }
+    const { data: existing } = await admin.from("evaluations").select("id").eq("cycle_id", cycle.id).eq("employee_id", employeeId).maybeSingle();
+    if (existing) {
+      await admin.from("public_submission_attempts").insert({ cycle_id: cycle.id, employee_id: employeeId, submission_id: data.submissionId, device_session_id: data.deviceSessionId, attempt_type: "SUBMISSION", outcome: "DUPLICATE", ip_address: meta.ip, user_agent: meta.userAgent } as never);
+      await writeAudit({ action: "STEP1_DUPLICATE_ATTEMPT", module: "Step 1 Submission", entityType: "employee", entityId: employeeId, employeeId, newValue: { employee_number: data.employeeNumber, submission_id: data.submissionId }, result: "DENIED" }, meta);
+      return { status: "DUPLICATE" };
     }
 
     const { data: evaluation, error: evalError } = await admin
@@ -141,15 +140,16 @@ export const submitStep1 = createServerFn({ method: "POST" })
         employee_id: employeeId,
         status: "EMPLOYEE_SUBMITTED",
         employee_number_snapshot: data.employeeNumber,
-        full_name_snapshot: data.fullName,
-        job_title_snapshot: data.jobTitle,
-        division_snapshot: data.division,
-        section_snapshot: data.section,
+        full_name_snapshot: employee.full_name,
+        job_title_snapshot: employee.job_title,
+        division_snapshot: employee.division,
+        section_snapshot: employee.section,
         employee_submitted_at: new Date().toISOString(),
       })
       .select("id")
       .single();
 
+    if (evalError && evalError.code !== "23505") throw validationError("Could not save your evaluation, please try again");
     if (evalError || !evaluation) {
       await writeAudit(
         {
@@ -164,6 +164,25 @@ export const submitStep1 = createServerFn({ method: "POST" })
         meta,
       );
       return { status: "DUPLICATE" };
+    }
+
+    const signatureData = data.signature.data;
+    if (!signatureData.startsWith("data:image/")) throw validationError("A valid signature image is required");
+    let storagePath: string | null = null;
+    let inlineSignature: string | null = signatureData;
+    if (data.signature.method === "UPLOAD") {
+      const match = signatureData.match(/^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) throw validationError("Signature upload must be a PNG or JPEG image");
+      const bytes = Uint8Array.from(atob(match[2]), (character) => character.charCodeAt(0));
+      storagePath = `employees/${employeeId}/signatures/${evaluation.id}.png`;
+      const { error } = await admin.storage.from("employee-files").upload(storagePath, bytes, { contentType: match[1], upsert: false });
+      if (error) throw validationError("Could not securely store the signature");
+      inlineSignature = null;
+    }
+    const { error: signatureError } = await admin.from("employee_signatures").insert({ evaluation_id: evaluation.id, employee_id: employeeId, method: data.signature.method, storage_path: storagePath, signature_data: inlineSignature, content_type: data.signature.contentType, file_size: signatureData.length, source_version: 1 } as never);
+    if (signatureError) {
+      await admin.from("evaluations").delete().eq("id", evaluation.id);
+      throw validationError("Could not record your signature");
     }
 
     const { error: ratingError } = await admin.from("evaluation_ratings").insert(
@@ -185,6 +204,7 @@ export const submitStep1 = createServerFn({ method: "POST" })
       event_type: "STEP1_SUBMITTED",
       to_status: "EMPLOYEE_SUBMITTED",
     });
+    await admin.from("public_submission_attempts").insert({ cycle_id: cycle.id, employee_id: employeeId, submission_id: data.submissionId, device_session_id: data.deviceSessionId, attempt_type: "SUBMISSION", outcome: "SUCCESS", ip_address: meta.ip, user_agent: meta.userAgent } as never);
 
     await writeAudit(
       {
