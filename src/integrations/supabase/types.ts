@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -11,6 +11,31 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.17"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -74,6 +99,63 @@ export type Database = {
         }
         Relationships: []
       }
+      committee_reviews: {
+        Row: {
+          action_details: string
+          committee_user_id: string
+          created_at: string
+          evaluation_id: string
+          final_action: string
+          id: string
+          recommendation: string
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          action_details?: string
+          committee_user_id: string
+          created_at?: string
+          evaluation_id: string
+          final_action: string
+          id?: string
+          recommendation?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          action_details?: string
+          committee_user_id?: string
+          created_at?: string
+          evaluation_id?: string
+          final_action?: string
+          id?: string
+          recommendation?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "committee_reviews_committee_user_id_fkey"
+            columns: ["committee_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "committee_reviews_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: true
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_documents: {
         Row: {
           category: string
@@ -135,15 +217,75 @@ export type Database = {
           },
         ]
       }
+      employee_signatures: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          employee_id: string
+          evaluation_id: string
+          file_size: number | null
+          id: string
+          method: string
+          signature_data: string | null
+          signed_at: string
+          source_version: number
+          storage_path: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          employee_id: string
+          evaluation_id: string
+          file_size?: number | null
+          id?: string
+          method: string
+          signature_data?: string | null
+          signed_at?: string
+          source_version?: number
+          storage_path?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          employee_id?: string
+          evaluation_id?: string
+          file_size?: number | null
+          id?: string
+          method?: string
+          signature_data?: string | null
+          signed_at?: string
+          source_version?: number
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_signatures_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_signatures_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: true
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           created_at: string
           division: string
           employee_number: string
           employment_status: Database["public"]["Enums"]["employment_status"]
+          first_name: string
           full_name: string
           id: string
           job_title: string
+          last_name: string
+          middle_name: string
           section: string
           updated_at: string
         }
@@ -152,9 +294,12 @@ export type Database = {
           division?: string
           employee_number: string
           employment_status?: Database["public"]["Enums"]["employment_status"]
+          first_name?: string
           full_name: string
           id?: string
           job_title?: string
+          last_name?: string
+          middle_name?: string
           section?: string
           updated_at?: string
         }
@@ -163,9 +308,12 @@ export type Database = {
           division?: string
           employee_number?: string
           employment_status?: Database["public"]["Enums"]["employment_status"]
+          first_name?: string
           full_name?: string
           id?: string
           job_title?: string
+          last_name?: string
+          middle_name?: string
           section?: string
           updated_at?: string
         }
@@ -466,6 +614,57 @@ export type Database = {
           },
         ]
       }
+      evaluation_stage_signatures: {
+        Row: {
+          evaluation_id: string
+          id: string
+          method: string
+          signature_data: string | null
+          signed_at: string
+          signer_user_id: string | null
+          source_version: number
+          stage: string
+          storage_path: string | null
+        }
+        Insert: {
+          evaluation_id: string
+          id?: string
+          method: string
+          signature_data?: string | null
+          signed_at?: string
+          signer_user_id?: string | null
+          source_version?: number
+          stage: string
+          storage_path?: string | null
+        }
+        Update: {
+          evaluation_id?: string
+          id?: string
+          method?: string
+          signature_data?: string | null
+          signed_at?: string
+          signer_user_id?: string | null
+          source_version?: number
+          stage?: string
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_stage_signatures_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_stage_signatures_signer_user_id_fkey"
+            columns: ["signer_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evaluation_templates: {
         Row: {
           created_at: string
@@ -500,6 +699,7 @@ export type Database = {
           ai_generated_at: string | null
           ai_source_version: number | null
           correction_reason: string
+          correction_stage: string | null
           created_at: string
           cycle_id: string
           division_snapshot: string
@@ -519,6 +719,13 @@ export type Database = {
           section_snapshot: string
           status: Database["public"]["Enums"]["evaluation_status"]
           supervisor_remarks: string
+          supervisor_step2_advancement: string
+          supervisor_step2_career_transfer: string
+          supervisor_step2_development: string
+          supervisor_step2_recommendations: string
+          supervisor_step2_strengths: string
+          supervisor_step2_submitted_at: string | null
+          supervisor_step2_weaknesses: string
           supervisor_submitted_at: string | null
           supervisor_user_id: string | null
           updated_at: string
@@ -530,6 +737,7 @@ export type Database = {
           ai_generated_at?: string | null
           ai_source_version?: number | null
           correction_reason?: string
+          correction_stage?: string | null
           created_at?: string
           cycle_id: string
           division_snapshot: string
@@ -549,6 +757,13 @@ export type Database = {
           section_snapshot: string
           status?: Database["public"]["Enums"]["evaluation_status"]
           supervisor_remarks?: string
+          supervisor_step2_advancement?: string
+          supervisor_step2_career_transfer?: string
+          supervisor_step2_development?: string
+          supervisor_step2_recommendations?: string
+          supervisor_step2_strengths?: string
+          supervisor_step2_submitted_at?: string | null
+          supervisor_step2_weaknesses?: string
           supervisor_submitted_at?: string | null
           supervisor_user_id?: string | null
           updated_at?: string
@@ -560,6 +775,7 @@ export type Database = {
           ai_generated_at?: string | null
           ai_source_version?: number | null
           correction_reason?: string
+          correction_stage?: string | null
           created_at?: string
           cycle_id?: string
           division_snapshot?: string
@@ -579,6 +795,13 @@ export type Database = {
           section_snapshot?: string
           status?: Database["public"]["Enums"]["evaluation_status"]
           supervisor_remarks?: string
+          supervisor_step2_advancement?: string
+          supervisor_step2_career_transfer?: string
+          supervisor_step2_development?: string
+          supervisor_step2_recommendations?: string
+          supervisor_step2_strengths?: string
+          supervisor_step2_submitted_at?: string | null
+          supervisor_step2_weaknesses?: string
           supervisor_submitted_at?: string | null
           supervisor_user_id?: string | null
           updated_at?: string
@@ -802,6 +1025,75 @@ export type Database = {
         }
         Relationships: []
       }
+      personnel_processing: {
+        Row: {
+          adjective_rating: string
+          created_at: string
+          evaluation_id: string
+          id: string
+          last_increase_amount: number | null
+          last_increase_date: string | null
+          last_increase_nature: string
+          personnel_user_id: string
+          present_salary: number | null
+          recommended_increase_bonus: string
+          status: string
+          submitted_at: string | null
+          total_points: number | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          adjective_rating?: string
+          created_at?: string
+          evaluation_id: string
+          id?: string
+          last_increase_amount?: number | null
+          last_increase_date?: string | null
+          last_increase_nature?: string
+          personnel_user_id: string
+          present_salary?: number | null
+          recommended_increase_bonus?: string
+          status?: string
+          submitted_at?: string | null
+          total_points?: number | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          adjective_rating?: string
+          created_at?: string
+          evaluation_id?: string
+          id?: string
+          last_increase_amount?: number | null
+          last_increase_date?: string | null
+          last_increase_nature?: string
+          personnel_user_id?: string
+          present_salary?: number | null
+          recommended_increase_bonus?: string
+          status?: string
+          submitted_at?: string | null
+          total_points?: number | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personnel_processing_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: true
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personnel_processing_personnel_user_id_fkey"
+            columns: ["personnel_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       president_responses: {
         Row: {
           created_at: string
@@ -939,6 +1231,114 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      public_submission_attempts: {
+        Row: {
+          attempt_type: string
+          cycle_id: string | null
+          device_session_id: string | null
+          employee_id: string | null
+          id: string
+          ip_address: string | null
+          occurred_at: string
+          outcome: string
+          submission_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          attempt_type: string
+          cycle_id?: string | null
+          device_session_id?: string | null
+          employee_id?: string | null
+          id?: string
+          ip_address?: string | null
+          occurred_at?: string
+          outcome: string
+          submission_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          attempt_type?: string
+          cycle_id?: string | null
+          device_session_id?: string | null
+          employee_id?: string | null
+          id?: string
+          ip_address?: string | null
+          occurred_at?: string
+          outcome?: string
+          submission_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_submission_attempts_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_submission_attempts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviewing_supervisor_reviews: {
+        Row: {
+          comments: string
+          created_at: string
+          evaluation_id: string
+          id: string
+          recommendations: string
+          reviewer_user_id: string
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          comments?: string
+          created_at?: string
+          evaluation_id: string
+          id?: string
+          recommendations?: string
+          reviewer_user_id: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          comments?: string
+          created_at?: string
+          evaluation_id?: string
+          id?: string
+          recommendations?: string
+          reviewer_user_id?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviewing_supervisor_reviews_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: true
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviewing_supervisor_reviews_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_permissions: {
         Row: {
@@ -1215,7 +1615,13 @@ export type Database = {
       is_account_usable: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "ADMINISTRATOR" | "PRESIDENT" | "HR" | "SUPERVISOR"
+      app_role:
+        | "ADMINISTRATOR"
+        | "PRESIDENT"
+        | "HR"
+        | "SUPERVISOR"
+        | "REVIEWING_SUPERVISOR"
+        | "COMMITTEE"
       calculation_status: "PENDING" | "CALCULATED" | "INVALID"
       cycle_status: "DRAFT" | "ACTIVE" | "CLOSED" | "DISABLED"
       employment_status: "ACTIVE" | "INACTIVE"
@@ -1228,6 +1634,11 @@ export type Database = {
         | "PRESIDENT_SUBMITTED"
         | "READY_FOR_FINALIZATION"
         | "RETURNED_FOR_CORRECTION"
+        | "REVIEWING_SUPERVISOR_REVIEW"
+        | "PERSONNEL_PROCESSING"
+        | "COMMITTEE_REVIEW"
+        | "PRESIDENT_APPROVAL"
+        | "RESUBMITTED"
       evaluator_type: "EMPLOYEE" | "SUPERVISOR" | "PRESIDENT"
       scoring_rule_status: "DRAFT" | "ACTIVE" | "RETIRED"
       weighting_mode: "EQUAL" | "WEIGHTED"
@@ -1356,9 +1767,19 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
-      app_role: ["ADMINISTRATOR", "PRESIDENT", "HR", "SUPERVISOR"],
+      app_role: [
+        "ADMINISTRATOR",
+        "PRESIDENT",
+        "HR",
+        "SUPERVISOR",
+        "REVIEWING_SUPERVISOR",
+        "COMMITTEE",
+      ],
       calculation_status: ["PENDING", "CALCULATED", "INVALID"],
       cycle_status: ["DRAFT", "ACTIVE", "CLOSED", "DISABLED"],
       employment_status: ["ACTIVE", "INACTIVE"],
@@ -1371,6 +1792,11 @@ export const Constants = {
         "PRESIDENT_SUBMITTED",
         "READY_FOR_FINALIZATION",
         "RETURNED_FOR_CORRECTION",
+        "REVIEWING_SUPERVISOR_REVIEW",
+        "PERSONNEL_PROCESSING",
+        "COMMITTEE_REVIEW",
+        "PRESIDENT_APPROVAL",
+        "RESUBMITTED",
       ],
       evaluator_type: ["EMPLOYEE", "SUPERVISOR", "PRESIDENT"],
       scoring_rule_status: ["DRAFT", "ACTIVE", "RETIRED"],
