@@ -57,7 +57,7 @@ function SupervisorDashboard() {
           <StatCard label="Employee self-assessments" value={query.data?.totalStep1 ?? 0} />
           <StatCard label="Waiting for your review" value={query.data?.pending ?? 0} />
           <StatCard label="Your drafts" value={query.data?.drafts ?? 0} />
-          <StatCard label="Sent to President" value={query.data?.submitted ?? 0} />
+          <StatCard label="Sent to Reviewing Supervisor" value={query.data?.submitted ?? 0} />
           <StatCard label="With the President" value={query.data?.withPresident ?? 0} />
         </div>
       )}

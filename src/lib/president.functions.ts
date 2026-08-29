@@ -114,7 +114,6 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
       const admin = await getAdmin();
       const evaluation = await assertVersion(data.evaluationId, data.version);
       if (
-        evaluation.status !== "SUPERVISOR_SUBMITTED" &&
         evaluation.status !== "PRESIDENT_REVIEW" &&
         evaluation.status !== "PRESIDENT_SUBMITTED"
       )
@@ -148,7 +147,6 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
       } = { president_user_id: context.userId };
 
       const now = new Date().toISOString();
-      if (evaluation.status === "SUPERVISOR_SUBMITTED") patch.status = "PRESIDENT_REVIEW";
       if (data.submit && data.step === 2) patch.president_step2_submitted_at = now;
       if (data.submit && data.step === 3) {
         patch.president_step3_submitted_at = now;
