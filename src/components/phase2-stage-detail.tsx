@@ -346,14 +346,10 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                 <h3 className="font-semibold">STEP 1 — Performance Evaluation (read-only)</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
-                  values={Object.fromEntries(
-                    detail.criteria.map((criterion) => [
-                      criterion.id,
-                      ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR"),
-                    ])
-                  )}
+                  values={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, null]))}
                   employeeValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
                   supervisorValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "SUPERVISOR")]))}
+                  reviewingValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR")]))}
                   readOnly={true}
                   onChange={() => {}}
                 />
