@@ -106,12 +106,19 @@ export const raterStep2Schema = z
     version: z.number().int().positive(),
     ratings: z.array(ratingEntrySchema).max(10).default([]),
     remarks: z.string().max(2000).default(""),
+    overallExplanation: z.string().max(4000).default(""),
     strengths: z.string().max(4000).default(""),
     weaknesses: z.string().max(4000).default(""),
-    development: z.string().max(4000).default(""),
-    advancement: z.string().max(4000).default(""),
-    careerTransfer: z.string().max(4000).default(""),
-    recommendations: z.string().max(4000).default(""),
+    effectiveness: z.string().max(4000).default(""),
+    developmentPotential: z.string().max(4000).default(""),
+    advancementOutlook: z.string().max(4000).default(""),
+    growthSuggestions: z.string().max(4000).default(""),
+    transferInterest: z.enum(["YES", "NO", "NOT_AWARE"]).or(z.literal("")).default(""),
+    transferJob: z.string().max(1000).default(""),
+    transferWhere: z.string().max(1000).default(""),
+    transferQualified: z.string().max(1000).default(""),
+    otherComments: z.string().max(4000).default(""),
+    date: z.string().max(20).default(""),
     submit: z.boolean().default(false),
     signature: z
       .object({
@@ -123,12 +130,15 @@ export const raterStep2Schema = z
   .superRefine((value, context) => {
     if (!value.submit) return;
     for (const [key, label] of [
+      ["overallExplanation", "Overall rating explanation"],
       ["strengths", "Strengths"],
       ["weaknesses", "Weaknesses"],
-      ["development", "Development"],
-      ["advancement", "Advancement"],
-      ["careerTransfer", "Career / transfer"],
-      ["recommendations", "Other recommendations"],
+      ["effectiveness", "Present-job effectiveness"],
+      ["developmentPotential", "Development potential"],
+      ["advancementOutlook", "Advancement outlook"],
+      ["growthSuggestions", "Growth suggestions"],
+      ["transferInterest", "Transfer interest"],
+      ["otherComments", "Other comments and recommendations"],
     ] as const) {
       if (!value[key].trim())
         context.addIssue({
@@ -137,6 +147,10 @@ export const raterStep2Schema = z
           message: `${label} is required`,
         });
     }
+    if (value.submit && !value.date.trim())
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["date"], message: "Date is required" });
+    if (value.submit && value.transferInterest === "YES" && !value.transferJob.trim() && !value.transferWhere.trim() && !value.transferQualified.trim())
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["transferJob"], message: "Complete the transfer details" });
   });
 
 export const reviewingSupervisorReviewSchema = z

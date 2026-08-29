@@ -94,6 +94,15 @@ function PublicEvaluationPage() {
   }
 
   async function verifyProfile() {
+    const missing = [
+      ["employeeNumber", "Employee number"],
+      ["firstName", "First name"],
+      ["lastName", "Last name"],
+    ].filter(([key]) => !identity[key as "employeeNumber" | "firstName" | "lastName"].trim());
+    if (missing.length > 0) {
+      setVerificationMessage(`Enter ${missing.map(([, label]) => label).join(", ")} to verify your profile.`);
+      return;
+    }
     const identityFields = { employeeNumber: identity.employeeNumber, firstName: identity.firstName, middleName: identity.middleName, lastName: identity.lastName, cycleToken, deviceSessionId };
     setVerifying(true);
     setVerificationMessage("");
@@ -107,8 +116,8 @@ function PublicEvaluationPage() {
       } else {
         setVerificationMessage("Profile could not be verified. Please contact the System Administrator.");
       }
-    } catch (error) {
-      setVerificationMessage(error instanceof Error ? error.message.replace("VALIDATION:", "").trim() : "Profile verification failed");
+    } catch {
+      setVerificationMessage("We could not verify those details. Check the required fields and try again.");
     } finally {
       setVerifying(false);
     }
@@ -229,7 +238,7 @@ function PublicEvaluationPage() {
         <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-bold">Your details</CardTitle>
-            <CardDescription>All fields are required.</CardDescription>
+            <CardDescription>Employee number, first name, and last name are required for verification.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {fields.map((field) => (
@@ -239,7 +248,7 @@ function PublicEvaluationPage() {
                   id={field.key}
                   value={identity[field.key]}
                   onChange={(event) =>
-                    setIdentity((prev) => ({ ...prev, [field.key]: event.target.value }))
+                    setIdentity((prev) => ({ ...prev, [field.key]: event.target.value.toUpperCase() }))
                   }
                 />
                 {errors[field.key] ? <p className="text-xs text-destructive">{errors[field.key]}</p> : null}

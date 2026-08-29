@@ -53,7 +53,8 @@ export type ProfileVerificationResult =
 export const verifyEmployeeProfile = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     employeeProfileSchema
-      .pick({ employeeNumber: true, firstName: true, middleName: true, lastName: true })
+      .pick({ employeeNumber: true, firstName: true, lastName: true })
+      .extend({ middleName: z.string().max(80).default("") })
       .extend({
         cycleToken: z.string().min(16).max(128),
         deviceSessionId: z.string().min(16).max(128),
@@ -93,7 +94,7 @@ export const verifyEmployeeProfile = createServerFn({ method: "POST" })
     const normalize = (value: string) => value.trim().toLocaleLowerCase();
     if (
       normalize(employee.first_name) !== normalize(data.firstName) ||
-      normalize(employee.middle_name) !== normalize(data.middleName) ||
+      (data.middleName && normalize(employee.middle_name) !== normalize(data.middleName)) ||
       normalize(employee.last_name) !== normalize(data.lastName)
     ) {
       await admin
@@ -278,11 +279,13 @@ export const submitStep1 = createServerFn({ method: "POST" })
     if (data.signature.method === "UPLOAD") {
       const match = signatureData.match(/^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/);
       if (!match) throw validationError("Signature upload must be a PNG or JPEG image");
-      const bytes = Uint8Array.from(atob(match[2]), (character) => character.charCodeAt(0));
+      const contentType = String(match[1]);
+      const encoded = String(match[2]);
+      const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
       storagePath = `employees/${employeeId}/signatures/${evaluation.id}.png`;
       const { error } = await admin.storage
         .from("employee-files")
-        .upload(storagePath, bytes, { contentType: match[1], upsert: false });
+        .upload(storagePath, bytes, { contentType, upsert: false });
       if (error) throw validationError("Could not securely store the signature");
       inlineSignature = null;
     }

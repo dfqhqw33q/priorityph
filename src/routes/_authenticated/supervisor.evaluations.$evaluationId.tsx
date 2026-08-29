@@ -49,6 +49,21 @@ export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$ev
   component: SupervisorReviewPage,
 });
 
+type Step2State = Record<string, string>;
+type Step2Props = { field: string; label: string; step2: Step2State; setStep2: React.Dispatch<React.SetStateAction<Step2State>>; editable: boolean; canEdit: boolean; setDirty: (dirty: boolean) => void };
+
+function Step2Textarea({ field, label, step2, setStep2, editable, canEdit, setDirty }: Step2Props) {
+  return <div className="space-y-1.5"><Label htmlFor={`step2-${field}`}>{label}</Label><Textarea id={`step2-${field}`} rows={3} value={step2[field] ?? ""} disabled={!editable || !canEdit} onChange={(event) => { setStep2((current) => ({ ...current, [field]: event.target.value })); setDirty(true); }} /></div>;
+}
+
+function Step2Input(props: Step2Props) {
+  return <div className="space-y-1.5"><Label htmlFor={`step2-${props.field}`}>{props.label}</Label><input id={`step2-${props.field}`} className="h-10 w-full rounded-md border border-input bg-background px-3" value={props.step2[props.field] ?? ""} disabled={!props.editable || !props.canEdit} onChange={(event) => { props.setStep2((current) => ({ ...current, [props.field]: event.target.value })); props.setDirty(true); }} /></div>;
+}
+
+function Step2Choice({ field, label, options, ...props }: Step2Props & { options: string[] }) {
+  return <fieldset className="space-y-2"><legend className="text-sm font-medium">{label}</legend>{options.map((option) => <label key={option} className="flex items-start gap-2 text-sm"><input type="radio" name={`step2-${field}`} value={option} checked={props.step2[field] === option} disabled={!props.editable || !props.canEdit} onChange={() => { props.setStep2((current) => ({ ...current, [field]: option })); props.setDirty(true); }} /><span>{option}</span></label>)}</fieldset>;
+}
+
 function SupervisorReviewPage() {
   const { evaluationId } = Route.useParams();
   const navigate = useNavigate();
@@ -61,7 +76,7 @@ function SupervisorReviewPage() {
 
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
   const [remarks, setRemarks] = useState("");
-  const [step2, setStep2] = useState({ strengths: "", weaknesses: "", development: "", advancement: "", careerTransfer: "", recommendations: "" });
+  const [step2, setStep2] = useState<Step2State>({ overallExplanation: "", strengths: "", weaknesses: "", effectiveness: "", developmentPotential: "", advancementOutlook: "", growthSuggestions: "", transferInterest: "", transferJob: "", transferWhere: "", transferQualified: "", otherComments: "", date: "" });
   const [signature, setSignature] = useState<{ method: "DRAWN" | "UPLOAD"; data: string } | undefined>();
   const [errors, setErrors] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -85,7 +100,7 @@ function SupervisorReviewPage() {
     setRatings(next);
     setRemarks(detail.supervisor_remarks);
     const source = detail as typeof detail & Record<string, string | null>;
-    setStep2({ strengths: source["supervisor_step2_strengths"] ?? "", weaknesses: source["supervisor_step2_weaknesses"] ?? "", development: source["supervisor_step2_development"] ?? "", advancement: source["supervisor_step2_advancement"] ?? "", careerTransfer: source["supervisor_step2_career_transfer"] ?? "", recommendations: source["supervisor_step2_recommendations"] ?? "" });
+    setStep2({ overallExplanation: source["supervisor_step2_overall_explanation"] ?? "", strengths: source["supervisor_step2_strengths"] ?? "", weaknesses: source["supervisor_step2_weaknesses"] ?? "", effectiveness: source["supervisor_step2_effectiveness"] ?? "", developmentPotential: source["supervisor_step2_development_potential"] ?? "", advancementOutlook: source["supervisor_step2_advancement_outlook"] ?? "", growthSuggestions: source["supervisor_step2_growth_suggestions"] ?? "", transferInterest: source["supervisor_step2_transfer_interest"] ?? "", transferJob: source["supervisor_step2_transfer_job"] ?? "", transferWhere: source["supervisor_step2_transfer_where"] ?? "", transferQualified: source["supervisor_step2_transfer_qualified"] ?? "", otherComments: source["supervisor_step2_other_comments"] ?? "", date: source["supervisor_step2_date"] ?? "" });
     const savedSignature = source["rater_signature"] as { method: "DRAWN" | "UPLOAD"; signature_data: string | null } | null;
     if (savedSignature?.signature_data) setSignature({ method: savedSignature.method, data: savedSignature.signature_data });
     setDirty(false);
@@ -236,22 +251,35 @@ function SupervisorReviewPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Step 2 — Conclusions and development</CardTitle>
-          <CardDescription>Complete the Rater development fields before submission.</CardDescription>
+          <CardTitle className="text-base">CONCLUSIONS AND COMMENTS</CardTitle>
+          <CardDescription>(CONFIDENTIAL: NOT TO BE SHOWN TO RATEE)</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          {([
-            ["strengths", "Strengths"], ["weaknesses", "Weaknesses"], ["development", "Development"],
-            ["advancement", "Advancement"], ["careerTransfer", "Career / transfer"], ["recommendations", "Other recommendations"],
-          ] as const).map(([key, label]) => (
-            <div key={key} className="space-y-1.5">
-              <Label htmlFor={`step2-${key}`}>{label}</Label>
-              <Textarea id={`step2-${key}`} rows={3} value={step2[key]} disabled={!editable || !can("evaluations.step2")} onChange={(event) => { setStep2((current) => ({ ...current, [key]: event.target.value })); setDirty(true); }} />
-            </div>
-          ))}
+        <CardContent className="space-y-5">
+          <h3 className="font-semibold">STEP TWO: Develop conclusion and comments</h3>
+          <Step2Textarea label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents." field="overallExplanation" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          <p className="font-semibold">2. Summarize the principal strengths and weakness of the employee.</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Step2Textarea label="Principal Strengths" field="strengths" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+            <Step2Textarea label="Principal Weakness" field="weaknesses" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          </div>
+          <Step2Textarea label="To be more effective on present job the employee should:" field="effectiveness" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          <Step2Choice label="3. The employee's development potential on present job is:" field="developmentPotential" options={["Very marked growth expected on present job", "Considerable improvement expected on present job", "Only moderate improvement ahead on present job", "Likely to maintain present performance level on present job", "Likely to become less effective on present job"]} step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          <Step2Choice label="4. The employee's advancement outlook is:" field="advancementOutlook" options={["Promising. Should be able to advance to jobs several levels beyond his present one.", "Fairly Promising. Should be able to advance to job in the next higher level.", "Present job or jobs within the same grade represent his advancement.", "Employee has difficulty in advancing to his job ceiling.", "Employee should be transferred. Not suited to this job; would fit better in some other jobs."]} step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          <Step2Textarea label="5. Suggest ways to accelerate employee's growth and development." field="growthSuggestions" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          <Step2Choice label="6. Has the employee expressed any interest in assuming another job or transferring to another company / division / department / section?" field="transferInterest" options={["YES", "NO", "NOT_AWARE"]} step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          {step2["transferInterest"] === "YES" ? <div className="grid gap-4 sm:grid-cols-3">
+            <Step2Input label="What job?" field="transferJob" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+            <Step2Input label="Where?" field="transferWhere" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+            <Step2Input label="Is he qualified?" field="transferQualified" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          </div> : null}
+          <Step2Textarea label="7. Other comments and recommendations" field="otherComments" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="rater-signature">Rater signature</Label>
-            <SignatureField value={signature} disabled={!editable} onChange={(value) => { setSignature(value); setDirty(true); }} />
+            <Label htmlFor="rater-signature">Signature of Rater</Label>
+            <SignatureField {...(signature ? { value: signature } : {})} disabled={!editable} onChange={(value) => { setSignature(value); setDirty(true); }} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="step2-date">Date</Label>
+            <input id="step2-date" type="date" className="h-10 rounded-md border border-input bg-background px-3" value={step2["date"]} disabled={!editable || !can("evaluations.step2")} onChange={(event) => { setStep2((current) => ({ ...current, date: event.target.value })); setDirty(true); }} />
           </div>
         </CardContent>
       </Card>
