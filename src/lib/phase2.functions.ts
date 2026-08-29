@@ -56,7 +56,7 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
       REVIEWING_SUPERVISOR: ["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW", "RETURNED_FOR_CORRECTION"],
       PERSONNEL: ["PERSONNEL_PROCESSING", "RETURNED_FOR_CORRECTION"],
       COMMITTEE: ["COMMITTEE_REVIEW", "RETURNED_FOR_CORRECTION"],
-      PRESIDENT: ["PRESIDENT_APPROVAL"],
+      PRESIDENT: ["PRESIDENT_APPROVAL", "RETURNED_FOR_CORRECTION"],
     }[data.stage];
     const targetStatus =
       data.stage === "RATER"
@@ -212,22 +212,28 @@ export const listPhase2Queue = createServerFn({ method: "GET" })
           ? "PERSONNEL_PROCESSING"
           : data.stage === "COMMITTEE"
             ? "COMMITTEE_REVIEW"
-            : undefined;
+            : data.stage === "PRESIDENT"
+              ? "PRESIDENT_APPROVAL"
+              : undefined;
     const [current, returned] = await Promise.all([
       listEvaluations(config.statuses, filters),
       listEvaluations(["RETURNED_FOR_CORRECTION"], { ...filters, correctionStage }),
     ]);
     const rows = [...current, ...returned];
+
     const stageTable = {
       REVIEWING_SUPERVISOR: "reviewing_supervisor_reviews",
       PERSONNEL: "personnel_processing",
       COMMITTEE: "committee_reviews",
-    }[data.stage];
+    }[data.stage as "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE"];
     const ownerField = {
       REVIEWING_SUPERVISOR: "reviewer_user_id",
       PERSONNEL: "personnel_user_id",
       COMMITTEE: "committee_user_id",
-    }[data.stage];
+    }[data.stage as "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE"];
+
+    if (!stageTable || !ownerField) return rows;
+
     const admin = await getAdmin();
     const { data: assignments } = await admin
       .from(stageTable)
