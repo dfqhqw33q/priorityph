@@ -28,7 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioRatingMatrix, ratingFor } from "@/components/rating-matrix";
+import { EvaluationRatingCards, ratingFor } from "@/components/rating-matrix";
 import { SignatureField, type SignatureValue } from "@/components/signature-field";
 import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader } from "@/components/ui-bits";
 import {
@@ -246,19 +246,12 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
         <CardHeader>
           <CardTitle className="text-base">Employee information</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
-          <p>
-            <b>Name:</b> {detail.full_name_snapshot}
-          </p>
-          <p>
-            <b>Job title:</b> {detail.job_title_snapshot}
-          </p>
-          <p>
-            <b>Division:</b> {detail.division_snapshot}
-          </p>
-          <p>
-            <b>Section:</b> {detail.section_snapshot}
-          </p>
+        <CardContent className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+          <Field label="Employee number" value={detail.employee_number_snapshot} />
+          <Field label="Full name" value={detail.full_name_snapshot} />
+          <Field label="Job title" value={detail.job_title_snapshot} />
+          <Field label="Division / department" value={detail.division_snapshot} />
+          <Field label="Section / unit" value={detail.section_snapshot} />
         </CardContent>
       </Card>
       <Card>
@@ -280,8 +273,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             <>
               <div>
                 <h3 className="mb-3 text-sm font-semibold">STEP 1 — Performance Evaluation</h3>
-                <RadioRatingMatrix
-                  name="reviewing-supervisor"
+                <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={ratings}
                   employeeValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
