@@ -421,6 +421,29 @@ export async function upsertPresidentRatings(
   }
 }
 
+export async function upsertReviewingSupervisorRatings(
+  evaluationId: string,
+  ratings: { criterionId: string; rating: number }[],
+  userId: string,
+  lock: boolean,
+) {
+  const admin = await getAdmin();
+  const { data: existing } = await admin
+    .from("evaluation_ratings")
+    .select("id, criterion_id, is_locked")
+    .eq("evaluation_id", evaluationId)
+    .eq("evaluator_type", "REVIEWING_SUPERVISOR" as never);
+  const byCriterion = new Map((existing ?? []).map((row) => [row.criterion_id, row]));
+  for (const entry of ratings) {
+    const current = byCriterion.get(entry.criterionId);
+    if (current?.is_locked) throw validationError("Locked Reviewing Supervisor ratings cannot be changed");
+    const result = current
+      ? await admin.from("evaluation_ratings").update({ rating: entry.rating, is_locked: lock, evaluator_user_id: userId }).eq("id", current.id)
+      : await admin.from("evaluation_ratings").insert({ evaluation_id: evaluationId, criterion_id: entry.criterionId, evaluator_type: "REVIEWING_SUPERVISOR" as never, rating: entry.rating, is_locked: lock, evaluator_user_id: userId });
+    if (result.error) throw validationError(result.error.message);
+  }
+}
+
 export async function dashboardStats(userId: string) {
   const admin = await getAdmin();
   const roles = await getActorRoles(userId);

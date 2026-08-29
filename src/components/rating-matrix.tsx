@@ -12,6 +12,7 @@ export function RatingMatrix({
   readOnly,
   employeeValues,
   supervisorValues,
+  reviewingValues,
 }: {
   criteria: Criterion[];
   values: Record<string, number>;
@@ -19,6 +20,7 @@ export function RatingMatrix({
   readOnly?: boolean;
   employeeValues?: Record<string, number | null>;
   supervisorValues?: Record<string, number | null>;
+  reviewingValues?: Record<string, number | null>;
 }) {
   return (
     <div className="space-y-5">
@@ -164,6 +166,11 @@ export function RadioRatingMatrix({
                 Supervisor
               </th>
             ) : null}
+            {reviewingValues ? (
+              <th scope="col" className="p-3.5 text-center font-semibold text-foreground whitespace-nowrap">
+                Reviewing Supervisor
+              </th>
+            ) : null}
             {RATING_SCALE.map((scale) => (
               <th key={scale.value} scope="col" className="p-2 text-center text-foreground">
                 <span className="block font-bold">{scale.value}</span>
@@ -211,6 +218,11 @@ export function RadioRatingMatrix({
                 {supervisorValues ? (
                   <td className="p-3.5 text-center tabular-nums font-medium text-foreground">
                     {supervisorValues[criterion.id] ?? "—"}
+                  </td>
+                ) : null}
+                {reviewingValues ? (
+                  <td className="p-3.5 text-center tabular-nums font-medium text-foreground">
+                    {reviewingValues[criterion.id] ?? "—"}
                   </td>
                 ) : null}
                 {RATING_SCALE.map((scale) => (

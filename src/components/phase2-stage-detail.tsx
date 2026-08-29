@@ -11,6 +11,7 @@ type Phase2Values = {
   advancement?: string;
   careerTransfer?: string;
   recommendations?: string;
+  date?: string;
   comments?: string;
   presentSalary?: string;
   lastIncreaseDate?: string;
@@ -27,6 +28,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioRatingMatrix, ratingFor } from "@/components/rating-matrix";
+import { SignatureField, type SignatureValue } from "@/components/signature-field";
 import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader } from "@/components/ui-bits";
 import {
   getPhase2Evaluation,
@@ -50,7 +53,8 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   });
   const detail = query.data;
   const [values, setValues] = useState<Phase2Values>({});
-  const [signature, setSignature] = useState("");
+  const [ratings, setRatings] = useState<Record<string, number | null>>({});
+  const [signature, setSignature] = useState<SignatureValue | undefined>();
   const [action, setAction] = useState("RETAIN");
   const [reason, setReason] = useState("");
   const [correctionStage, setCorrectionStage] = useState("SUPERVISOR_DRAFT");
@@ -81,6 +85,9 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
     const record = (detail as typeof detail & { stageRecord?: Record<string, unknown> })
       .stageRecord;
     const source = detail as typeof detail & Record<string, unknown>;
+    const savedStageSignature = source["stageSignature"] as { method: "DRAWN" | "UPLOAD"; signature_data: string | null } | null;
+    if (savedStageSignature?.signature_data && (savedStageSignature.method === "DRAWN" || savedStageSignature.method === "UPLOAD"))
+      setSignature({ method: savedStageSignature.method, data: savedStageSignature.signature_data });
     if (stage === "RATER")
       setValues({
         strengths: String(source["supervisor_step2_strengths"] ?? ""),
@@ -90,11 +97,17 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
         careerTransfer: String(source["supervisor_step2_career_transfer"] ?? ""),
         recommendations: String(source["supervisor_step2_recommendations"] ?? ""),
       });
-    if (stage === "REVIEWING_SUPERVISOR" && record)
+    if (stage === "REVIEWING_SUPERVISOR" && record) {
       setValues({
         comments: String(record["comments"] ?? ""),
         recommendations: String(record["recommendations"] ?? ""),
+        date: String(record["reviewing_supervisor_date"] ?? ""),
       });
+      const nextRatings: Record<string, number | null> = {};
+      for (const criterion of detail.criteria)
+        nextRatings[criterion.id] = ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR");
+      setRatings(nextRatings);
+    }
     if (stage === "PERSONNEL" && record)
       setValues({
         presentSalary: String(record["present_salary"] ?? ""),
@@ -122,7 +135,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
         evaluationId,
         version: detail.version,
         submit,
-        signature: signature ? { method: "TYPED" as const, data: signature } : undefined,
+        signature,
       };
       if (stage === "RATER")
         return saveRaterStep2({
@@ -140,8 +153,10 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
         return submitReviewingSupervisor({
           data: {
             ...base,
+            ratings: Object.entries(ratings).filter(([, rating]) => rating !== null).map(([criterionId, rating]) => ({ criterionId, rating: rating! })),
             comments: values.comments ?? "",
             recommendations: values.recommendations ?? "",
+            date: values.date ?? "",
           },
         });
       if (stage === "PERSONNEL")
@@ -261,6 +276,55 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {stage === "REVIEWING_SUPERVISOR" ? (
+            <>
+              <div>
+                <h3 className="mb-3 text-sm font-semibold">STEP 1 — Performance Evaluation</h3>
+                <RadioRatingMatrix
+                  name="reviewing-supervisor"
+                  criteria={detail.criteria}
+                  values={ratings}
+                  employeeValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
+                  supervisorValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "SUPERVISOR")]))}
+                  readOnly={!editable}
+                  onChange={(criterionId, value) => setRatings((current) => ({ ...current, [criterionId]: value }))}
+                />
+              </div>
+              <div className="space-y-2 rounded-md border border-border p-4">
+                <h3 className="font-semibold">STEP 2 — Conclusions and comments (read-only)</h3>
+                {[
+                  ["Overall rating explanation", "supervisor_step2_overall_explanation"],
+                  ["Principal Strengths", "supervisor_step2_strengths"],
+                  ["Principal Weakness", "supervisor_step2_weaknesses"],
+                  ["Present-job effectiveness", "supervisor_step2_effectiveness"],
+                  ["Development Potential", "supervisor_step2_development_potential"],
+                  ["Advancement Outlook", "supervisor_step2_advancement_outlook"],
+                  ["Growth and development suggestions", "supervisor_step2_growth_suggestions"],
+                  ["Job / Transfer Interest", "supervisor_step2_transfer_interest"],
+                  ["What Job?", "supervisor_step2_transfer_job"],
+                  ["Where?", "supervisor_step2_transfer_where"],
+                  ["Is Qualified?", "supervisor_step2_transfer_qualified"],
+                  ["Other Comments and Recommendations", "supervisor_step2_other_comments"],
+                  ["Rater Signature Date", "supervisor_step2_date"],
+                ].map(([label, key]) => (
+                  <div key={key}>
+                    <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+                    <p className="whitespace-pre-wrap text-sm">{String((detail as Record<string, unknown>)[key] ?? "—")}</p>
+                  </div>
+                ))}
+                {(detail as Record<string, unknown>)["rater_signature"] ? (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground">Rater Signature</p>
+                    <img
+                      src={String(((detail as Record<string, unknown>)["rater_signature"] as Record<string, unknown>)?.["signature_data"] ?? "")}
+                      alt="Rater electronic signature"
+                      className="mt-1 h-20 max-w-xs object-contain"
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </>
+          ) : null}
           {stage === "RATER" ? (
             <>
               {field("strengths", "Strengths")} {field("weaknesses", "Weaknesses")}{" "}
@@ -271,6 +335,10 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
           ) : stage === "REVIEWING_SUPERVISOR" ? (
             <>
               {field("comments", "Comments")} {field("recommendations", "Recommendations")}
+              <div className="space-y-1.5">
+                <Label htmlFor="phase2-date">Date *</Label>
+                <Input id="phase2-date" type="date" value={values.date ?? ""} onChange={(event) => update("date", event.target.value)} disabled={!editable} />
+              </div>
             </>
           ) : stage === "PERSONNEL" ? (
             <>
@@ -375,15 +443,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
               ) : null}
             </>
           )}
-          <div className="space-y-1.5">
-            <Label htmlFor="phase2-signature">Signature</Label>
-            <Input
-              id="phase2-signature"
-              placeholder="Type your full name as signature"
-              value={signature}
-              onChange={(event) => setSignature(event.target.value)}
-            />
-          </div>
+          <SignatureField {...(signature ? { value: signature } : {})} disabled={!editable} onChange={setSignature} />
           <div className="flex gap-2">
             <Button
               onClick={() => mutation.mutate(true)}
