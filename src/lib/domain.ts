@@ -149,7 +149,7 @@ export const EVALUATION_STATUS_LABELS: Record<EvaluationStatus, string> = {
   FINALIZED: "Finalized",
 };
 
-export type EvaluatorType = "EMPLOYEE" | "SUPERVISOR" | "PRESIDENT";
+export type EvaluatorType = "EMPLOYEE" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "PRESIDENT";
 
 export const RATING_SCALE = [
   { value: 1, label: "Poor" },

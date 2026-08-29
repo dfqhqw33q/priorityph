@@ -157,8 +157,10 @@ export const reviewingSupervisorReviewSchema = z
   .object({
     evaluationId: z.string().uuid(),
     version: z.number().int().positive(),
+    ratings: z.array(ratingEntrySchema).max(10).default([]),
     comments: z.string().max(4000).default(""),
     recommendations: z.string().max(4000).default(""),
+    date: z.string().max(20).default(""),
     submit: z.boolean().default(false),
     signature: z
       .object({
@@ -168,6 +170,8 @@ export const reviewingSupervisorReviewSchema = z
       .optional(),
   })
   .superRefine((value, context) => {
+    if (value.submit && value.ratings.length !== 10)
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratings"], message: "Rate all ten performance factors" });
     if (value.submit && !value.comments.trim())
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -180,6 +184,8 @@ export const reviewingSupervisorReviewSchema = z
         path: ["recommendations"],
         message: "Recommendations are required",
       });
+    if (value.submit && !value.date.trim())
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["date"], message: "Date is required" });
   });
 
 export const personnelProcessingSchema = z

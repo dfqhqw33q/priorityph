@@ -143,12 +143,29 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
       throw (await import("./server-core.server")).validationError(
         "This evaluation is assigned to another workflow user",
       );
+    let stageSignature = null;
+    if (data.stage === "REVIEWING_SUPERVISOR") {
+      const signature = await admin
+        .from("evaluation_stage_signatures")
+        .select("method, signature_data, storage_path, signed_at")
+        .eq("evaluation_id", data.evaluationId)
+        .eq("stage", "REVIEWING_SUPERVISOR_STEP3")
+        .maybeSingle();
+      stageSignature = signature.data;
+      if (stageSignature?.storage_path) {
+        const { data: signed } = await admin.storage
+          .from("employee-files")
+          .createSignedUrl(stageSignature.storage_path, 300);
+        stageSignature = { ...stageSignature, signature_data: signed?.signedUrl ?? null };
+      }
+    }
     return {
       ...detail,
       status: row?.status ?? detail.status,
       version: row?.version ?? detail.version,
       is_finalized: row?.is_finalized ?? detail.is_finalized,
       stageRecord,
+      stageSignature,
     };
   });
 
@@ -441,7 +458,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => reviewingSupervisorReviewSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, validationError, upsertReviewingSupervisorRatings } = await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.review_step3", "Reviewing Supervisor");
     if (data.submit && !data.signature)
       throw validationError("A Reviewing Supervisor signature is required before submission");
@@ -456,6 +473,8 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       evaluation.correction_stage !== "REVIEWING_SUPERVISOR_REVIEW"
     )
       throw validationError("This evaluation is assigned to another correction stage");
+    if (data.ratings.length > 0)
+      await upsertReviewingSupervisorRatings(data.evaluationId, data.ratings, context.userId, data.submit);
     const result = await transition(
       data.evaluationId,
       data.version,
@@ -469,6 +488,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
         reviewer_user_id: context.userId,
         comments: data.comments,
         recommendations: data.recommendations,
+        reviewing_supervisor_date: data.date || null,
         status: data.submit ? "SUBMITTED" : "DRAFT",
         submitted_at: data.submit ? new Date().toISOString() : null,
         version: data.version,
@@ -476,7 +496,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       { onConflict: "evaluation_id" },
     );
     if (stageError) throw validationError(stageError.message);
-    if (data.submit)
+    if (data.signature)
       await saveStageSignature(
         data.evaluationId,
         "REVIEWING_SUPERVISOR_STEP3",
