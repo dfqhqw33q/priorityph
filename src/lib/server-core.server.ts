@@ -144,8 +144,18 @@ export async function requireUsableAccount(userId: string): Promise<void> {
 
 export function safeMessage(error: unknown, fallback: string): string {
   if (error instanceof AuthorizationError) return error.message;
-  if (error instanceof Error && error.message.startsWith("VALIDATION:")) {
-    return error.message.replace("VALIDATION:", "").trim();
+  if (error instanceof Error) {
+    const normalized = error.message.replace(/^VALIDATION:\s*/i, "").trim();
+    if (normalized) return normalized;
+  }
+  if (typeof error === "string" && error.trim()) {
+    const normalized = error.replace(/^VALIDATION:\s*/i, "").trim();
+    if (normalized) return normalized;
+  }
+  if (error && typeof error === "object" && "issues" in error && Array.isArray((error as { issues?: unknown[] }).issues)) {
+    const issues = (error as { issues?: { message?: string }[] }).issues ?? [];
+    const message = issues.map((issue) => issue.message).filter(Boolean).join("; ");
+    if (message) return message;
   }
   console.error(error);
   return fallback;

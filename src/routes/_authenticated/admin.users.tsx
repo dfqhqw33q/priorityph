@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+
+import { userErrorMessage } from "@/lib/validation";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -192,7 +194,7 @@ function AdminUsersPage() {
       setPendingAction(null);
       await refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Access update failed")),
   });
 
   const rolesMutation = useMutation({
@@ -203,7 +205,7 @@ function AdminUsersPage() {
       setRolesDialogOpen(false);
       await refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Role update failed")),
   });
 
   const profileMutation = useMutation({
@@ -219,7 +221,7 @@ function AdminUsersPage() {
       toast.success("Profile updated");
       await refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Profile update failed")),
   });
 
   const createMutation = useMutation({
@@ -232,7 +234,7 @@ function AdminUsersPage() {
       setCreateOpen(false);
       await refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "User account could not be created")),
   });
 
   if (usersQuery.isError) {
@@ -609,7 +611,8 @@ function CreateUserDialog({
   function submit() {
     const parsed = userFormSchema.safeParse({ email, fullName, jobTitle, roles });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Check the form");
+      const message = parsed.error.issues[0]?.message ?? "Please complete all required fields.";
+      setError(message);
       return;
     }
     setError(null);

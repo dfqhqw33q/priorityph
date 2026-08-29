@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { EmptyState, LoadingBlock, PageHeader } from "@/components/ui-bits";
 import { createEmployeeProfile, listEmployees, updateEmployeeProfile } from "@/lib/admin.functions";
 import { employeeProfileSchema, type EmployeeProfileValues } from "@/lib/schemas";
+import { userErrorMessage } from "@/lib/validation";
 
 const emptyForm: EmployeeProfileValues = {
   employeeNumber: "",
@@ -51,7 +52,7 @@ export function EmployeeProfileManagementPage() {
       setEditingId(null);
       queryClient.invalidateQueries({ queryKey: ["employee-profiles"] });
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message.replace("VALIDATION:", "").trim() : "Could not save employee profile"),
+    onError: (error) => toast.error(userErrorMessage(error, "Could not save employee profile")),
   });
 
   function edit(row: EmployeeProfileRow) {
