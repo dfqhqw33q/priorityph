@@ -77,6 +77,7 @@ export function EvaluationRatingCards({
   onChange,
   readOnly,
   employeeValues,
+  supervisorValues,
   errorCriterionIds = [],
 }: {
   criteria: Criterion[];
@@ -84,6 +85,7 @@ export function EvaluationRatingCards({
   onChange?: (criterionId: string, value: number) => void;
   readOnly?: boolean;
   employeeValues?: Record<string, number | null>;
+  supervisorValues?: Record<string, number | null>;
   errorCriterionIds?: string[];
 }) {
   return (
@@ -98,7 +100,10 @@ export function EvaluationRatingCards({
                 <legend className="text-sm font-semibold text-foreground">{criterion.letter}. {criterion.title}</legend>
                 <p className="mt-1 text-xs text-muted-foreground">{criterion.description}</p>
               </div>
-              {employeeValues ? <span className="rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground">Employee: {employeeValues[criterion.id] ?? "—"}</span> : null}
+              <div className="flex flex-wrap gap-2">
+                {employeeValues ? <span className="rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground">Employee: {employeeValues[criterion.id] ?? "—"}</span> : null}
+                {supervisorValues ? <span className="rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground">Supervisor: {supervisorValues[criterion.id] ?? "—"}</span> : null}
+              </div>
             </div>
             <div className="mt-4 grid grid-cols-5 gap-2">
               {RATING_SCALE.map((scale) => {
