@@ -87,9 +87,10 @@ const EVAL_VARIANTS: Record<EvaluationStatus, string> = {
   EMPLOYEE_SUBMITTED: "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300 font-medium",
   SUPERVISOR_DRAFT: "border-border bg-muted/60 text-muted-foreground font-medium",
   SUPERVISOR_SUBMITTED: "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 font-medium",
-  PRESIDENT_REVIEW: "border-purple-500/20 bg-purple-500/10 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 font-medium",
-  PRESIDENT_SUBMITTED: "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-700 dark:bg-fuchsia-500/20 dark:text-fuchsia-300 font-medium",
-  READY_FOR_FINALIZATION: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 font-medium",
+  REVIEWING_SUPERVISOR_REVIEW: "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300 font-medium",
+  PERSONNEL_PROCESSING: "border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300 font-medium",
+  COMMITTEE_REVIEW: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 font-medium",
+  PRESIDENT_APPROVAL: "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-700 dark:bg-fuchsia-500/20 dark:text-fuchsia-300 font-medium",
   RETURNED_FOR_CORRECTION: "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 font-medium",
   FINALIZED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 font-medium",
 };

@@ -34,7 +34,7 @@ function PresidentQueuePage() {
       <EvaluationQueue
         queryKey="president-queue"
         fetcher={fetchQueue}
-        statuses={["PRESIDENT_REVIEW", "PRESIDENT_SUBMITTED", "FINALIZED"]}
+        statuses={["PRESIDENT_APPROVAL", "FINALIZED"]}
         detailPath="/president/evaluations/$evaluationId"
         emptyTitle="No evaluations awaiting the President"
       />

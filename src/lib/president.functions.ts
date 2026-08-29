@@ -49,7 +49,7 @@ export const savePresidentRatings = createServerFn({ method: "POST" })
     const { computeScore, persistScore } = await import("./scoring.server");
     await requirePermission(context.userId, "president.view", "President Review");
     const evaluation = await assertVersion(data.evaluationId, data.version);
-    if (evaluation.is_finalized || evaluation.status === "PRESIDENT_SUBMITTED")
+    if (evaluation.is_finalized || evaluation.status === "FINALIZED")
       throw validationError("This evaluation can no longer be edited");
     await upsertPresidentRatings(data.evaluationId, data.ratings, context.userId);
     const admin = await getAdmin();
@@ -113,12 +113,9 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
     try {
       const admin = await getAdmin();
       const evaluation = await assertVersion(data.evaluationId, data.version);
-      if (
-        evaluation.status !== "PRESIDENT_REVIEW" &&
-        evaluation.status !== "PRESIDENT_SUBMITTED"
-      )
+      if (evaluation.status !== "PRESIDENT_APPROVAL")
         throw validationError("This evaluation is not available for President review yet");
-      if (evaluation.status === "PRESIDENT_SUBMITTED")
+      if (evaluation.status === "FINALIZED")
         throw validationError("The President assessment has already been submitted");
 
       if (data.step === 3) {
@@ -140,7 +137,7 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
       );
 
       const patch: {
-        status?: "PRESIDENT_REVIEW" | "PRESIDENT_SUBMITTED";
+        status?: "PRESIDENT_APPROVAL" | "FINALIZED";
         president_user_id: string;
         president_step2_submitted_at?: string;
         president_step3_submitted_at?: string;
@@ -150,7 +147,7 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
       if (data.submit && data.step === 2) patch.president_step2_submitted_at = now;
       if (data.submit && data.step === 3) {
         patch.president_step3_submitted_at = now;
-        patch.status = "PRESIDENT_SUBMITTED";
+        patch.status = "PRESIDENT_APPROVAL";
       }
 
       const { error } = await admin
@@ -164,9 +161,6 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
         const { computeScore, persistScore } = await import("./scoring.server");
         const score = await computeScore(data.evaluationId);
         await persistScore(data.evaluationId, score, context.userId);
-        if (score.status === "CALCULATED" && score.finalRatingLabel) {
-          await admin.from("evaluations").update({ status: "READY_FOR_FINALIZATION" }).eq("id", data.evaluationId);
-        }
       }
 
       if (data.submit) {

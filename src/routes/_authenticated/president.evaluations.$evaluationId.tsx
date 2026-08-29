@@ -239,7 +239,7 @@ function PresidentReviewPage() {
 
   const step2Locked = steps?.step2?.isLocked ?? false;
   const step3Locked = steps?.step3?.isLocked ?? false;
-  const canFinalize = can("evaluations.finalize") && detail.status === "READY_FOR_FINALIZATION" && !detail.is_finalized;
+  const canFinalize = can("evaluations.finalize") && detail.status === "PRESIDENT_APPROVAL" && !detail.is_finalized;
   const canReturn = can("evaluations.correct") && !detail.is_finalized && detail.status !== "RETURNED_FOR_CORRECTION";
 
   return (

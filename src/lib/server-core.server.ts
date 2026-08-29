@@ -144,19 +144,45 @@ export async function requireUsableAccount(userId: string): Promise<void> {
 
 export function safeMessage(error: unknown, fallback: string): string {
   if (error instanceof AuthorizationError) return error.message;
-  if (error instanceof Error) {
-    const normalized = error.message.replace(/^VALIDATION:\s*/i, "").trim();
-    if (normalized) return normalized;
-  }
-  if (typeof error === "string" && error.trim()) {
-    const normalized = error.replace(/^VALIDATION:\s*/i, "").trim();
-    if (normalized) return normalized;
-  }
+
   if (error && typeof error === "object" && "issues" in error && Array.isArray((error as { issues?: unknown[] }).issues)) {
     const issues = (error as { issues?: { message?: string }[] }).issues ?? [];
     const message = issues.map((issue) => issue.message).filter(Boolean).join("; ");
     if (message) return message;
   }
+
+  if (error instanceof Error) {
+    const raw = error.message.replace(/^VALIDATION:\s*/i, "").trim();
+    if (!raw) return fallback;
+    if (raw.startsWith("[") && raw.includes('"message"')) {
+      try {
+        const parsed = JSON.parse(raw) as Array<{ message?: string }>;
+        const message = parsed.map((issue) => issue.message).filter(Boolean).join("; ");
+        if (message) return message;
+      } catch {
+        // Ignore and fall through to readable fallback.
+      }
+      return "Please complete all required fields before submitting.";
+    }
+    return raw;
+  }
+
+  if (typeof error === "string" && error.trim()) {
+    const normalized = error.replace(/^VALIDATION:\s*/i, "").trim();
+    if (!normalized) return fallback;
+    if (normalized.startsWith("[") && normalized.includes('"message"')) {
+      try {
+        const parsed = JSON.parse(normalized) as Array<{ message?: string }>;
+        const message = parsed.map((issue) => issue.message).filter(Boolean).join("; ");
+        if (message) return message;
+      } catch {
+        // Ignore and fall through.
+      }
+      return "Please complete all required fields before submitting.";
+    }
+    return normalized;
+  }
+
   console.error(error);
   return fallback;
 }
@@ -222,11 +248,20 @@ export async function cycleCounts(cycleId: string) {
       "SUPERVISOR_DRAFT",
       "SUPERVISOR_SUBMITTED",
       "REVIEWING_SUPERVISOR_REVIEW",
-      "PRESIDENT_REVIEW",
+      "PERSONNEL_PROCESSING",
+      "COMMITTEE_REVIEW",
+      "PRESIDENT_APPROVAL",
       "FINALIZED",
     ]),
-    count(["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW", "PRESIDENT_REVIEW", "FINALIZED"]),
-    count(["SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW"]),
+    count([
+      "SUPERVISOR_SUBMITTED",
+      "REVIEWING_SUPERVISOR_REVIEW",
+      "PERSONNEL_PROCESSING",
+      "COMMITTEE_REVIEW",
+      "PRESIDENT_APPROVAL",
+      "FINALIZED",
+    ]),
+    count(["PRESIDENT_APPROVAL", "FINALIZED"]),
   ]);
   return { step1_count: step1, supervisor_count: supervisor, president_count: president };
 }
@@ -476,7 +511,7 @@ export async function dashboardStats(userId: string) {
         .select("id", { count: "exact", head: true })
         .then((r) => r.count ?? 0),
       evaluationCount(["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"]),
-      evaluationCount(["SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW"]),
+      evaluationCount(["SUPERVISOR_SUBMITTED", "PRESIDENT_APPROVAL"]),
       evaluationCount(["FINALIZED"]),
     ]);
   return { roles, activeCycles, employees, awaitingSupervisor, awaitingPresident, finalized };
@@ -651,14 +686,16 @@ export async function supervisorStats() {
       "EMPLOYEE_SUBMITTED",
       "SUPERVISOR_DRAFT",
       "SUPERVISOR_SUBMITTED",
-      "PRESIDENT_REVIEW",
-      "PRESIDENT_SUBMITTED",
+      "REVIEWING_SUPERVISOR_REVIEW",
+      "PERSONNEL_PROCESSING",
+      "COMMITTEE_REVIEW",
+      "PRESIDENT_APPROVAL",
       "FINALIZED",
     ]),
     countEvaluations(["EMPLOYEE_SUBMITTED"]),
     countEvaluations(["SUPERVISOR_DRAFT"]),
     countEvaluations(["SUPERVISOR_SUBMITTED"]),
-    countEvaluations(["PRESIDENT_REVIEW", "PRESIDENT_SUBMITTED", "FINALIZED"]),
+    countEvaluations(["REVIEWING_SUPERVISOR_REVIEW", "PERSONNEL_PROCESSING", "COMMITTEE_REVIEW", "PRESIDENT_APPROVAL", "FINALIZED"]),
   ]);
   return { totalStep1, pending, drafts, submitted, withPresident };
 }
@@ -666,9 +703,9 @@ export async function supervisorStats() {
 export async function presidentStats() {
   const admin = await getAdmin();
   const [awaiting, inReview, submitted, finalized] = await Promise.all([
-    countEvaluations(["SUPERVISOR_SUBMITTED"]),
-    countEvaluations(["PRESIDENT_REVIEW"]),
-    countEvaluations(["PRESIDENT_SUBMITTED"]),
+    countEvaluations(["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW", "PERSONNEL_PROCESSING", "COMMITTEE_REVIEW"]),
+    countEvaluations(["PRESIDENT_APPROVAL"]),
+    countEvaluations(["FINALIZED"]),
     countEvaluations(["FINALIZED"]),
   ]);
   const [{ count: step2 }, { count: step3 }] = await Promise.all([
