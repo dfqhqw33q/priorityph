@@ -1629,17 +1629,13 @@ export type Database = {
         | "EMPLOYEE_SUBMITTED"
         | "SUPERVISOR_DRAFT"
         | "SUPERVISOR_SUBMITTED"
-        | "PRESIDENT_REVIEW"
-        | "FINALIZED"
-        | "PRESIDENT_SUBMITTED"
-        | "READY_FOR_FINALIZATION"
-        | "RETURNED_FOR_CORRECTION"
         | "REVIEWING_SUPERVISOR_REVIEW"
         | "PERSONNEL_PROCESSING"
         | "COMMITTEE_REVIEW"
         | "PRESIDENT_APPROVAL"
-        | "RESUBMITTED"
-      evaluator_type: "EMPLOYEE" | "SUPERVISOR" | "PRESIDENT"
+        | "RETURNED_FOR_CORRECTION"
+        | "FINALIZED"
+      evaluator_type: "EMPLOYEE" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "PRESIDENT"
       scoring_rule_status: "DRAFT" | "ACTIVE" | "RETIRED"
       weighting_mode: "EQUAL" | "WEIGHTED"
     }
@@ -1787,18 +1783,14 @@ export const Constants = {
         "EMPLOYEE_SUBMITTED",
         "SUPERVISOR_DRAFT",
         "SUPERVISOR_SUBMITTED",
-        "PRESIDENT_REVIEW",
-        "FINALIZED",
-        "PRESIDENT_SUBMITTED",
-        "READY_FOR_FINALIZATION",
-        "RETURNED_FOR_CORRECTION",
         "REVIEWING_SUPERVISOR_REVIEW",
         "PERSONNEL_PROCESSING",
         "COMMITTEE_REVIEW",
         "PRESIDENT_APPROVAL",
-        "RESUBMITTED",
+        "RETURNED_FOR_CORRECTION",
+        "FINALIZED",
       ],
-      evaluator_type: ["EMPLOYEE", "SUPERVISOR", "PRESIDENT"],
+      evaluator_type: ["EMPLOYEE", "SUPERVISOR", "REVIEWING_SUPERVISOR", "PRESIDENT"],
       scoring_rule_status: ["DRAFT", "ACTIVE", "RETIRED"],
       weighting_mode: ["EQUAL", "WEIGHTED"],
     },
