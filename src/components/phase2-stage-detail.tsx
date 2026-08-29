@@ -285,13 +285,13 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
               : stage === "REVIEWING_SUPERVISOR"
                 ? "Step 3 — Review"
                 : stage === "PERSONNEL"
-                  ? "Personnel processing"
+                  ? "Complete evaluation file (for review)"
                   : stage === "COMMITTEE"
-                    ? "Committee recommendation"
-                    : "President final approval"}
+                    ? "Complete evaluation file (for review)"
+                    : "Complete evaluation file (for review)"}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {stage === "REVIEWING_SUPERVISOR" ? (
             <>
               <div>
@@ -340,6 +340,145 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
               </div>
             </>
           ) : null}
+          {["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(stage) ? (
+            <>
+              <div className="space-y-2 rounded-md border border-border p-4">
+                <h3 className="font-semibold">STEP 1 — Performance Evaluation (read-only)</h3>
+                <EvaluationRatingCards
+                  criteria={detail.criteria}
+                  values={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
+                  employeeValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
+                  supervisorValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "SUPERVISOR")]))}
+                  readOnly={true}
+                  onChange={() => {}}
+                />
+              </div>
+              <div className="space-y-2 rounded-md border border-border p-4">
+                <h3 className="font-semibold">STEP 2 — Supervisor conclusions and comments (read-only)</h3>
+                {[
+                  ["Overall rating explanation", "supervisor_step2_overall_explanation"],
+                  ["Principal Strengths", "supervisor_step2_strengths"],
+                  ["Principal Weakness", "supervisor_step2_weaknesses"],
+                  ["Present-job effectiveness", "supervisor_step2_effectiveness"],
+                  ["Development Potential", "supervisor_step2_development_potential"],
+                  ["Advancement Outlook", "supervisor_step2_advancement_outlook"],
+                  ["Growth and development suggestions", "supervisor_step2_growth_suggestions"],
+                  ["Job / Transfer Interest", "supervisor_step2_transfer_interest"],
+                  ["What Job?", "supervisor_step2_transfer_job"],
+                  ["Where?", "supervisor_step2_transfer_where"],
+                  ["Is Qualified?", "supervisor_step2_transfer_qualified"],
+                  ["Other Comments and Recommendations", "supervisor_step2_other_comments"],
+                  ["Rater Signature Date", "supervisor_step2_date"],
+                ].map(([label, key]) => (
+                  <div key={key}>
+                    <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+                    <p className="whitespace-pre-wrap text-sm">{String((detail as Record<string, unknown>)[key] ?? "—")}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-2 rounded-md border border-border p-4">
+                <h3 className="font-semibold">STEP 3 — Reviewing Supervisor review (read-only)</h3>
+                {(() => {
+                  const accStages = (detail as Record<string, unknown> & { accumulatedStages?: Record<string, unknown> })
+                    ?.accumulatedStages as Record<string, unknown> | undefined;
+                  const revSupReview = accStages?.reviewingSupervisorReview as Record<string, unknown> | undefined;
+                  return (
+                    <>
+                      {revSupReview ? (
+                        <>
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground">Reviewing Supervisor Ratings</p>
+                            <EvaluationRatingCards
+                              criteria={detail.criteria}
+                              values={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR")]))}
+                              employeeValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
+                              supervisorValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "SUPERVISOR")]))}
+                              readOnly={true}
+                              onChange={() => {}}
+                            />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground">Comments</p>
+                            <p className="whitespace-pre-wrap text-sm">{String(revSupReview["comments"] ?? "—")}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground">Recommendations</p>
+                            <p className="whitespace-pre-wrap text-sm">{String(revSupReview["recommendations"] ?? "—")}</p>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Reviewing Supervisor review not yet completed</p>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+              {["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(stage) && (() => {
+                const accStages = (detail as Record<string, unknown> & { accumulatedStages?: Record<string, unknown> })
+                  ?.accumulatedStages as Record<string, unknown> | undefined;
+                const personnel = accStages?.personnelProcessing as Record<string, unknown> | undefined;
+                return personnel ? (
+                  <div className="space-y-2 rounded-md border border-border p-4">
+                    <h3 className="font-semibold">Personnel Office processing (read-only)</h3>
+                    <div className="grid gap-4 sm:grid-cols-2 text-sm">
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Present Salary</p>
+                        <p>{String(personnel["present_salary"] ?? "—")}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Last Increase Date</p>
+                        <p>{String(personnel["last_increase_date"] ?? "—")}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Last Increase Amount</p>
+                        <p>{String(personnel["last_increase_amount"] ?? "—")}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Total Points</p>
+                        <p>{String(personnel["total_points"] ?? "—")}</p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <p className="text-xs font-semibold text-muted-foreground">Nature of Last Increase</p>
+                        <p className="whitespace-pre-wrap">{String(personnel["last_increase_nature"] ?? "—")}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Adjective Rating</p>
+                        <p>{String(personnel["adjective_rating"] ?? "—")}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Recommended Increase / Bonus</p>
+                        <p className="whitespace-pre-wrap">{String(personnel["recommended_increase_bonus"] ?? "—")}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+              {["COMMITTEE", "PRESIDENT"].includes(stage) && (() => {
+                const accStages = (detail as Record<string, unknown> & { accumulatedStages?: Record<string, unknown> })
+                  ?.accumulatedStages as Record<string, unknown> | undefined;
+                const committee = accStages?.committeeReview as Record<string, unknown> | undefined;
+                return committee ? (
+                  <div className="space-y-2 rounded-md border border-border p-4">
+                    <h3 className="font-semibold">Committee recommendation (read-only)</h3>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Final Action</p>
+                        <p>{String(committee["final_action"] ?? "—")}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Action Details</p>
+                        <p className="whitespace-pre-wrap">{String(committee["action_details"] ?? "—")}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Committee Recommendation</p>
+                        <p className="whitespace-pre-wrap">{String(committee["recommendation"] ?? "—")}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+            </>
+          ) : null}
           {stage === "RATER" ? (
             <>
               {field("strengths", "Strengths")} {field("weaknesses", "Weaknesses")}{" "}
@@ -357,6 +496,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             </>
           ) : stage === "PERSONNEL" ? (
             <>
+              <h3 className="text-sm font-semibold">Personnel Office section — editable</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label>Present salary</Label>
@@ -364,6 +504,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                     type="number"
                     value={values.presentSalary ?? ""}
                     onChange={(event) => update("presentSalary", event.target.value)}
+                    disabled={!editable}
                   />
                 </div>
                 <div>
@@ -372,6 +513,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                     type="date"
                     value={values.lastIncreaseDate ?? ""}
                     onChange={(event) => update("lastIncreaseDate", event.target.value)}
+                    disabled={!editable}
                   />
                 </div>
                 <div>
@@ -380,6 +522,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                     type="number"
                     value={values.lastIncreaseAmount ?? ""}
                     onChange={(event) => update("lastIncreaseAmount", event.target.value)}
+                    disabled={!editable}
                   />
                 </div>
                 <div>
@@ -388,6 +531,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                     type="number"
                     value={values.totalPoints ?? ""}
                     onChange={(event) => update("totalPoints", event.target.value)}
+                    disabled={!editable}
                   />
                 </div>
               </div>
@@ -397,12 +541,14 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             </>
           ) : stage === "COMMITTEE" ? (
             <>
+              <h3 className="text-sm font-semibold">Committee recommendation — editable</h3>
               <div>
                 <Label>Final action *</Label>
                 <select
                   className="h-10 w-full rounded-md border border-input bg-background px-3"
                   value={action}
                   onChange={(event) => setAction(event.target.value)}
+                  disabled={!editable}
                 >
                   {[
                     ["RETAIN", "Retain"],
@@ -423,12 +569,14 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             </>
           ) : (
             <>
+              <h3 className="text-sm font-semibold">President final approval — editable</h3>
               <div>
                 <Label>Decision *</Label>
                 <select
                   className="h-10 w-full rounded-md border border-input bg-background px-3"
                   value={values.approve ?? "true"}
                   onChange={(event) => update("approve", event.target.value)}
+                  disabled={!editable}
                 >
                   <option value="true">Approve and finalize</option>
                   <option value="false">Return for correction</option>
@@ -441,6 +589,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
                     rows={3}
+                    disabled={!editable}
                   />
                   <Label htmlFor="phase2-correction-stage">Return to stage *</Label>
                   <select
@@ -448,6 +597,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                     className="h-10 w-full rounded-md border border-input bg-background px-3"
                     value={correctionStage}
                     onChange={(event) => setCorrectionStage(event.target.value)}
+                    disabled={!editable}
                   >
                     <option value="SUPERVISOR_DRAFT">Rater Step 2</option>
                     <option value="REVIEWING_SUPERVISOR_REVIEW">Reviewing Supervisor Step 3</option>
