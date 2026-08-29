@@ -211,10 +211,11 @@ export async function cycleCounts(cycleId: string) {
       "EMPLOYEE_SUBMITTED",
       "SUPERVISOR_DRAFT",
       "SUPERVISOR_SUBMITTED",
+      "REVIEWING_SUPERVISOR_REVIEW",
       "PRESIDENT_REVIEW",
       "FINALIZED",
     ]),
-    count(["SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW", "FINALIZED"]),
+    count(["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW", "PRESIDENT_REVIEW", "FINALIZED"]),
     count(["SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW"]),
   ]);
   return { step1_count: step1, supervisor_count: supervisor, president_count: president };

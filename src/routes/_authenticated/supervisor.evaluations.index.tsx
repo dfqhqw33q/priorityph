@@ -34,7 +34,7 @@ function SupervisorQueuePage() {
       <EvaluationQueue
         queryKey="supervisor-queue"
         fetcher={fetchQueue}
-        statuses={["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT", "SUPERVISOR_SUBMITTED", "PRESIDENT_REVIEW", "RETURNED_FOR_CORRECTION"]}
+        statuses={["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT", "SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW", "PRESIDENT_REVIEW", "RETURNED_FOR_CORRECTION"]}
         detailPath="/supervisor/evaluations/$evaluationId"
         emptyTitle="No employee submissions to review"
       />

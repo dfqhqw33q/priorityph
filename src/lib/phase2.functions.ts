@@ -11,8 +11,8 @@ import {
 import type { EvaluationStatus } from "./domain";
 
 const transitions: Partial<Record<EvaluationStatus, EvaluationStatus[]>> = {
-  EMPLOYEE_SUBMITTED: ["SUPERVISOR_DRAFT", "SUPERVISOR_SUBMITTED"],
-  SUPERVISOR_DRAFT: ["SUPERVISOR_DRAFT", "SUPERVISOR_SUBMITTED"],
+  EMPLOYEE_SUBMITTED: ["SUPERVISOR_DRAFT", "SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW"],
+  SUPERVISOR_DRAFT: ["SUPERVISOR_DRAFT", "SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW"],
   SUPERVISOR_SUBMITTED: ["REVIEWING_SUPERVISOR_REVIEW"],
   REVIEWING_SUPERVISOR_REVIEW: ["REVIEWING_SUPERVISOR_REVIEW", "PERSONNEL_PROCESSING"],
   PERSONNEL_PROCESSING: ["PERSONNEL_PROCESSING", "COMMITTEE_REVIEW"],
@@ -355,7 +355,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
       )
     )
       throw validationError("This evaluation is not available for Rater Step 2");
-    const nextStatus = data.submit ? "SUPERVISOR_SUBMITTED" : "SUPERVISOR_DRAFT";
+    const nextStatus = data.submit ? "REVIEWING_SUPERVISOR_REVIEW" : "SUPERVISOR_DRAFT";
     if (!(transitions[evaluation.status as EvaluationStatus] ?? []).includes(nextStatus))
       throw validationError(
         `Invalid workflow transition from ${evaluation.status} to ${nextStatus}`,
