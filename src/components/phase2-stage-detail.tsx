@@ -42,6 +42,15 @@ import {
 
 type Stage = "RATER" | "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE" | "PRESIDENT";
 
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-0.5 font-medium text-foreground">{value || "—"}</p>
+    </div>
+  );
+}
+
 export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evaluationId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
