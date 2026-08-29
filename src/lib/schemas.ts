@@ -64,9 +64,24 @@ export const employeeProfileSchema = z.object({
   firstName: uppercaseText(1, 80),
   middleName: uppercaseText(0, 80),
   lastName: uppercaseText(1, 80),
-  jobTitle: z.string().trim().transform((value) => normalizeDisplayText(value)).max(160).default(""),
-  division: z.string().trim().transform((value) => normalizeDisplayText(value)).max(160).default(""),
-  section: z.string().trim().transform((value) => normalizeDisplayText(value)).max(160).default(""),
+  jobTitle: z
+    .string()
+    .trim()
+    .transform((value) => normalizeDisplayText(value))
+    .pipe(z.string().max(160))
+    .default(""),
+  division: z
+    .string()
+    .trim()
+    .transform((value) => normalizeDisplayText(value))
+    .pipe(z.string().max(160))
+    .default(""),
+  section: z
+    .string()
+    .trim()
+    .transform((value) => normalizeDisplayText(value))
+    .pipe(z.string().max(160))
+    .default(""),
 });
 export type EmployeeProfileValues = z.infer<typeof employeeProfileSchema>;
 
