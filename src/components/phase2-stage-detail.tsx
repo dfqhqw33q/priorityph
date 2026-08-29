@@ -39,6 +39,7 @@ import {
   submitPersonnelProcessing,
   submitReviewingSupervisor,
 } from "@/lib/phase2.functions";
+import { userErrorMessage } from "@/lib/validation";
 
 type Stage = "RATER" | "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE" | "PRESIDENT";
 
@@ -67,6 +68,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   const [action, setAction] = useState("RETAIN");
   const [reason, setReason] = useState("");
   const [correctionStage, setCorrectionStage] = useState("SUPERVISOR_DRAFT");
+  const workflowDate = () => new Date().toISOString().slice(0, 10);
   const editableStatuses = {
     RATER: ["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"],
     REVIEWING_SUPERVISOR: ["REVIEWING_SUPERVISOR_REVIEW"],
@@ -107,10 +109,11 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
         recommendations: String(source["supervisor_step2_recommendations"] ?? ""),
       });
     if (stage === "REVIEWING_SUPERVISOR" && record) {
+      const nextDate = String(record["reviewing_supervisor_date"] ?? workflowDate());
       setValues({
         comments: String(record["comments"] ?? ""),
         recommendations: String(record["recommendations"] ?? ""),
-        date: String(record["reviewing_supervisor_date"] ?? ""),
+        date: nextDate,
       });
       const nextRatings: Record<string, number | null> = {};
       for (const criterion of detail.criteria)
@@ -156,6 +159,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             advancement: values.advancement ?? "",
             careerTransfer: values.careerTransfer ?? "",
             recommendations: values.recommendations ?? "",
+            date: submit ? values.date || workflowDate() : values.date || "",
           },
         });
       if (stage === "REVIEWING_SUPERVISOR")
@@ -165,7 +169,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             ratings: Object.entries(ratings).filter(([, rating]) => rating !== null).map(([criterionId, rating]) => ({ criterionId, rating: rating! })),
             comments: values.comments ?? "",
             recommendations: values.recommendations ?? "",
-            date: values.date ?? "",
+            date: submit ? values.date || workflowDate() : values.date || "",
           },
         });
       if (stage === "PERSONNEL")
@@ -204,7 +208,17 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
       });
     },
     onSuccess: async () => {
-      toast.success("Workflow stage saved");
+      const message =
+        stage === "RATER"
+          ? "Evaluation submitted for Reviewing Supervisor review."
+          : stage === "REVIEWING_SUPERVISOR"
+            ? "Evaluation submitted for Personnel Office review."
+            : stage === "PERSONNEL"
+              ? "Evaluation submitted for Committee Review."
+              : stage === "COMMITTEE"
+                ? "Evaluation submitted for President review."
+                : "Evaluation approved and finalized.";
+      toast.success(message);
       await queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] });
       navigate({
         to:
@@ -219,7 +233,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                   : "/president/evaluations",
       });
     },
-    onError: (error: Error) => toast.error(error.message.replace("VALIDATION:", "").trim()),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Could not save this workflow stage.")),
   });
   if (query.isLoading) return <LoadingBlock rows={6} />;
   if (query.isError || !detail)
@@ -338,7 +352,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
               {field("comments", "Comments")} {field("recommendations", "Recommendations")}
               <div className="space-y-1.5">
                 <Label htmlFor="phase2-date">Date *</Label>
-                <Input id="phase2-date" type="date" value={values.date ?? ""} onChange={(event) => update("date", event.target.value)} disabled={!editable} />
+                <Input id="phase2-date" type="date" value={values.date ?? workflowDate()} onChange={(event) => update("date", event.target.value)} disabled={!editable} readOnly />
               </div>
             </>
           ) : stage === "PERSONNEL" ? (

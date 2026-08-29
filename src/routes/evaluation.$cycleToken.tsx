@@ -161,13 +161,18 @@ function PublicEvaluationPage() {
       const fieldErrors: Record<string, string> = {};
       if (!parsed.success) {
         for (const issue of parsed.error.issues) {
-          const key = String(issue.path[0]);
-          if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+          const key = String(issue.path[0] ?? "form");
+          const message = issue.message.trim();
+          if (!fieldErrors[key]) fieldErrors[key] = message;
         }
       }
       if (missing.length > 0) fieldErrors["ratings"] = `Rate every factor (${missing.length} remaining)`;
       setErrors(fieldErrors);
-      toast.error("Please complete every required field");
+      toast.error(
+        parsed.success || missing.length === 0
+          ? "Please complete every required field"
+          : "Please complete all required fields before submitting.",
+      );
       return;
     }
     setErrors({});
@@ -190,7 +195,7 @@ function PublicEvaluationPage() {
       });
       navigate({ to: "/evaluation-submitted", search: { duplicate: response.status === "DUPLICATE" } });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Submission failed, please try again");
+      toast.error(error instanceof Error ? error.message.replace(/^VALIDATION:\s*/i, "").trim() || "Submission failed, please try again" : "Submission failed, please try again");
     } finally {
       setPending(false);
     }

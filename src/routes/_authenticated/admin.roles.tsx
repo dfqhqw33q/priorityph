@@ -90,7 +90,7 @@ function AdminRolesPage() {
       await queryClient.invalidateQueries({ queryKey: ["role-matrix"] });
       await queryClient.invalidateQueries({ queryKey: ["access"] });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Action failed")),
   });
 
   if (matrixQuery.isError) {

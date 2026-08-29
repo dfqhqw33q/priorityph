@@ -377,6 +377,8 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
       throw validationError(
         `Invalid workflow transition from ${evaluation.status} to ${nextStatus}`,
       );
+    const workflowDate = new Date().toISOString().slice(0, 10);
+    const submissionDate = data.submit ? (data.date || workflowDate) : data.date || "";
     if (data.submit && !data.signature)
       throw validationError("A Rater signature is required before submission");
     if (data.ratings.length > 0) {
@@ -398,7 +400,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
         supervisor_step2_transfer_where: data.transferWhere,
         supervisor_step2_transfer_qualified: data.transferQualified,
         supervisor_step2_other_comments: data.otherComments,
-        supervisor_step2_date: data.date || null,
+        supervisor_step2_date: submissionDate || null,
         supervisor_remarks: data.remarks,
         status: nextStatus,
         supervisor_user_id: context.userId,
@@ -475,6 +477,8 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       throw validationError("This evaluation is assigned to another correction stage");
     if (data.ratings.length > 0)
       await upsertReviewingSupervisorRatings(data.evaluationId, data.ratings, context.userId, data.submit);
+    const workflowDate = new Date().toISOString().slice(0, 10);
+    const submissionDate = data.submit ? (data.date || workflowDate) : data.date || "";
     const result = await transition(
       data.evaluationId,
       data.version,
@@ -488,7 +492,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
         reviewer_user_id: context.userId,
         comments: data.comments,
         recommendations: data.recommendations,
-        reviewing_supervisor_date: data.date || null,
+        reviewing_supervisor_date: submissionDate || null,
         status: data.submit ? "SUBMITTED" : "DRAFT",
         submitted_at: data.submit ? new Date().toISOString() : null,
         version: data.version,
@@ -526,6 +530,8 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       evaluation.correction_stage !== "PERSONNEL_PROCESSING"
     )
       throw validationError("This evaluation is assigned to another correction stage");
+    const workflowDate = new Date().toISOString().slice(0, 10);
+    const submissionDate = data.submit ? (data.lastIncreaseDate || workflowDate) : data.lastIncreaseDate || null;
     const result = await transition(
       data.evaluationId,
       data.version,
@@ -538,7 +544,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
         evaluation_id: data.evaluationId,
         personnel_user_id: context.userId,
         present_salary: data.presentSalary,
-        last_increase_date: data.lastIncreaseDate,
+        last_increase_date: submissionDate,
         last_increase_nature: data.lastIncreaseNature,
         last_increase_amount: data.lastIncreaseAmount,
         total_points: data.totalPoints,

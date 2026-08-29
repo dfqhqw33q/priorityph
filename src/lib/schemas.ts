@@ -1,11 +1,18 @@
 import { z } from "zod";
 
 import { APP_ROLES, CYCLE_STATUSES, EVALUATION_STATUSES, PERMISSIONS } from "./domain";
+import { normalizeDisplayText } from "./validation";
 
 const trimmed = (min: number, max: number) =>
   z
     .string()
-    .transform((value) => value.trim())
+    .transform((value) => normalizeDisplayText(value))
+    .pipe(z.string().min(min).max(max));
+
+const uppercaseText = (min: number, max: number) =>
+  z
+    .string()
+    .transform((value) => normalizeDisplayText(value))
     .pipe(z.string().min(min).max(max));
 
 export const ratingValueSchema = z
@@ -20,13 +27,13 @@ export const ratingEntrySchema = z.object({
 });
 
 export const employeeInfoSchema = z.object({
-  employeeNumber: trimmed(1, 40),
-  firstName: trimmed(1, 80),
-  middleName: trimmed(0, 80),
-  lastName: trimmed(1, 80),
-  jobTitle: trimmed(2, 160),
-  division: trimmed(2, 160),
-  section: trimmed(2, 160),
+  employeeNumber: z.string().trim().max(40),
+  firstName: uppercaseText(1, 80),
+  middleName: uppercaseText(0, 80),
+  lastName: uppercaseText(1, 80),
+  jobTitle: uppercaseText(2, 160),
+  division: uppercaseText(2, 160),
+  section: uppercaseText(2, 160),
 });
 
 export const step1SubmissionSchema = employeeInfoSchema.extend({
@@ -53,13 +60,13 @@ export const step1FormSchema = employeeInfoSchema.extend({
 });
 
 export const employeeProfileSchema = z.object({
-  employeeNumber: trimmed(1, 40),
-  firstName: trimmed(1, 80),
-  middleName: trimmed(0, 80),
-  lastName: trimmed(1, 80),
-  jobTitle: z.string().max(160).default(""),
-  division: z.string().max(160).default(""),
-  section: z.string().max(160).default(""),
+  employeeNumber: z.string().trim().max(40),
+  firstName: uppercaseText(1, 80),
+  middleName: uppercaseText(0, 80),
+  lastName: uppercaseText(1, 80),
+  jobTitle: z.string().trim().transform((value) => normalizeDisplayText(value)).max(160).default(""),
+  division: z.string().trim().transform((value) => normalizeDisplayText(value)).max(160).default(""),
+  section: z.string().trim().transform((value) => normalizeDisplayText(value)).max(160).default(""),
 });
 export type EmployeeProfileValues = z.infer<typeof employeeProfileSchema>;
 

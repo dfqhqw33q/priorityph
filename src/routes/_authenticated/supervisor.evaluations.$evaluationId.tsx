@@ -30,6 +30,7 @@ import { useAccess } from "@/hooks/use-access";
 import { getEvaluation } from "@/lib/evaluations.functions";
 import { saveRaterStep2 } from "@/lib/phase2.functions";
 import { SignatureField } from "@/components/signature-field";
+import { userErrorMessage } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$evaluationId")({
   head: () => ({
@@ -133,7 +134,7 @@ function SupervisorReviewPage() {
       setDirty(false);
       await queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Draft could not be saved")),
   });
 
   const submitMutation = useMutation({
@@ -147,7 +148,7 @@ function SupervisorReviewPage() {
       await queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] });
       navigate({ to: "/supervisor/evaluations" });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Step 2 submission failed")),
   });
 
   function handleSubmitClick() {

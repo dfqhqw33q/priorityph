@@ -30,6 +30,7 @@ import { PresidentStepFields } from "@/components/president-step-form";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluation } from "@/lib/evaluations.functions";
 import { getPresidentSteps, savePresidentRatings, savePresidentStepAnswers } from "@/lib/president.functions";
+import { userErrorMessage } from "@/lib/validation";
 import { getEvaluationScore } from "@/lib/scoring.functions";
 import { recordAiSuggestionDecision, suggestPresidentField } from "@/lib/ai.functions";
 import type { AiSuggestionResult } from "@/lib/ai-suggestions";
@@ -149,7 +150,7 @@ function PresidentReviewPage() {
       await queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
       await queryClient.invalidateQueries({ queryKey: ["president-queue"] });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Step could not be saved")),
   });
 
   const ratingsMutation = useMutation({
@@ -171,7 +172,7 @@ function PresidentReviewPage() {
         queryClient.invalidateQueries({ queryKey: ["evaluation-score", evaluationId] }),
       ]);
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "President ratings could not be saved")),
   });
 
   /**
@@ -184,7 +185,7 @@ function PresidentReviewPage() {
         data: { evaluationId, version: detail?.version ?? 1, itemId, step, currentValue },
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "AI suggestion unavailable");
+      toast.error(userErrorMessage(error, "AI suggestion unavailable"));
       throw error;
     }
   }
@@ -209,7 +210,7 @@ function PresidentReviewPage() {
         queryClient.invalidateQueries({ queryKey: ["evaluation-history"] }),
       ]);
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Evaluation update failed")),
   });
 
   function requestSubmit(step: 2 | 3) {
