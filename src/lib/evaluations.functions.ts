@@ -4,8 +4,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   supervisorDraftSchema,
-  supervisorSubmitSchema,
-  reopenSchema,
   queueFiltersSchema,
 } from "./schemas";
 import type { EvaluationDetail, EvaluationListItem } from "./domain";
@@ -21,7 +19,6 @@ const SUPERVISOR_QUEUE_STATUSES = [
 
 const PRESIDENT_QUEUE_STATUSES = [
   "PRESIDENT_APPROVAL",
-  "SUPERVISOR_SUBMITTED",
   "PRESIDENT_REVIEW",
   "PRESIDENT_SUBMITTED",
 ];
@@ -166,135 +163,6 @@ export const saveSupervisorDraft = createServerFn({ method: "POST" })
       entityId: data.evaluationId,
       evaluationId: data.evaluationId,
       newValue: { ratings: data.ratings.length, remarks: data.remarks },
-    });
-    return { ok: true };
-  });
-
-export const submitToPresident = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => supervisorSubmitSchema.parse(input))
-  .handler(async ({ data, context }) => {
-    const {
-      getAdmin,
-      requirePermission,
-      writeAudit,
-      getActorRoles,
-      validationError,
-      assertVersion,
-      upsertSupervisorRatings,
-    } = await import("./server-core.server");
-    await requirePermission(context.userId, "evaluations.submit_president", "Supervisor Review");
-    const admin = await getAdmin();
-    const evaluation = await assertVersion(data.evaluationId, data.version);
-    if (evaluation.status !== "EMPLOYEE_SUBMITTED" && evaluation.status !== "SUPERVISOR_DRAFT")
-      throw validationError("This evaluation has already been submitted");
-
-    await upsertSupervisorRatings(data.evaluationId, data.ratings, context.userId, true);
-    const { error } = await admin
-      .from("evaluations")
-      .update({
-        status: "REVIEWING_SUPERVISOR_REVIEW",
-        supervisor_remarks: data.remarks,
-        supervisor_user_id: context.userId,
-        supervisor_submitted_at: new Date().toISOString(),
-      })
-      .eq("id", data.evaluationId);
-    if (error) throw validationError(error.message);
-
-    await admin.from("evaluation_events").insert({
-      evaluation_id: data.evaluationId,
-      event_type: "SUPERVISOR_SUBMITTED",
-      from_status: evaluation.status,
-      to_status: "REVIEWING_SUPERVISOR_REVIEW",
-      actor_user_id: context.userId,
-    });
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "RATER_STEP2_SUBMITTED",
-      module: "Rater Step 2",
-      entityType: "evaluation",
-      entityId: data.evaluationId,
-      evaluationId: data.evaluationId,
-      previousValue: { status: evaluation.status },
-      newValue: { status: "REVIEWING_SUPERVISOR_REVIEW" },
-    });
-    return { ok: true };
-  });
-
-export const reopenSupervisorStage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => reopenSchema.parse(input))
-  .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
-      await import("./server-core.server");
-    await requirePermission(context.userId, "evaluations.reopen_supervisor", "Supervisor Review");
-    const admin = await getAdmin();
-    const { data: evaluation } = await admin
-      .from("evaluations")
-      .select("id, status, is_finalized")
-      .eq("id", data.evaluationId)
-      .maybeSingle();
-    if (!evaluation) throw validationError("Evaluation not found");
-    if (evaluation.is_finalized) throw validationError("Finalized evaluations cannot be reopened");
-    if (evaluation.status !== "SUPERVISOR_SUBMITTED")
-      throw validationError("Only submitted supervisor assessments can be reopened");
-
-    await admin
-      .from("evaluation_ratings")
-      .update({ is_locked: false })
-      .eq("evaluation_id", data.evaluationId)
-      .eq("evaluator_type", "SUPERVISOR");
-    const { error } = await admin
-      .from("evaluations")
-      .update({ status: "SUPERVISOR_DRAFT", supervisor_submitted_at: null })
-      .eq("id", data.evaluationId);
-    if (error) throw validationError(error.message);
-
-    await admin.from("evaluation_events").insert({
-      evaluation_id: data.evaluationId,
-      event_type: "SUPERVISOR_REOPENED",
-      from_status: "SUPERVISOR_SUBMITTED",
-      to_status: "SUPERVISOR_DRAFT",
-      actor_user_id: context.userId,
-      reason: data.reason,
-    });
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "SUPERVISOR_REOPENED",
-      module: "Supervisor Review",
-      entityType: "evaluation",
-      entityId: data.evaluationId,
-      evaluationId: data.evaluationId,
-      previousValue: { status: "SUPERVISOR_SUBMITTED" },
-      newValue: { status: "SUPERVISOR_DRAFT" },
-      reason: data.reason,
-    });
-    return { ok: true };
-  });
-
-export const markPresidentReview = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles } =
-      await import("./server-core.server");
-    await requirePermission(context.userId, "president.view", "President Review");
-    const admin = await getAdmin();
-    await admin
-      .from("evaluations")
-      .update({ status: "PRESIDENT_REVIEW", president_user_id: context.userId })
-      .eq("id", data.evaluationId)
-      .eq("status", "SUPERVISOR_SUBMITTED");
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "PRESIDENT_REVIEW_OPENED",
-      module: "President Review",
-      entityType: "evaluation",
-      entityId: data.evaluationId,
-      evaluationId: data.evaluationId,
     });
     return { ok: true };
   });

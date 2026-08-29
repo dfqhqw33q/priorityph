@@ -75,7 +75,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "cycles.manage_link": "Manage Assessment Links",
   "evaluations.view_step1": "View Step 1 Submissions",
   "evaluations.rate_supervisor": "Provide Supervisor Ratings",
-  "evaluations.submit_president": "Submit To President",
+  "evaluations.submit_president": "Submit To Reviewing Supervisor",
   "evaluations.reopen_supervisor": "Reopen Supervisor Review",
   "evaluations.view_history": "View Evaluation History",
   "president.view": "View President Review",

@@ -23,12 +23,11 @@ import {
   EvaluationStatusBadge,
   LoadingBlock,
   PageHeader,
-  ReasonDialog,
   formatDateTime,
 } from "@/components/ui-bits";
 import { EvaluationRatingCards, ratingFor } from "@/components/rating-matrix";
 import { useAccess } from "@/hooks/use-access";
-import { getEvaluation, reopenSupervisorStage } from "@/lib/evaluations.functions";
+import { getEvaluation } from "@/lib/evaluations.functions";
 import { saveRaterStep2 } from "@/lib/phase2.functions";
 import { SignatureField } from "@/components/signature-field";
 
@@ -38,10 +37,10 @@ export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$ev
       { title: "Supervisor review | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Review an employee Step 1 assessment, rate all ten factors and submit to the President.",
+        content: "Review an employee Step 1 assessment, rate all ten factors and submit to the Reviewing Supervisor.",
       },
       { property: "og:title", content: "Supervisor review" },
-      { property: "og:description", content: "Rate performance factors A–J and submit to the President." },
+      { property: "og:description", content: "Rate performance factors A–J and submit to the Reviewing Supervisor." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -72,7 +71,6 @@ function SupervisorReviewPage() {
 
   const fetchEvaluation = useServerFn(getEvaluation);
   const submitStep2 = useServerFn(saveRaterStep2);
-  const reopen = useServerFn(reopenSupervisorStage);
 
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
   const [remarks, setRemarks] = useState("");
@@ -80,7 +78,6 @@ function SupervisorReviewPage() {
   const [signature, setSignature] = useState<{ method: "DRAWN" | "UPLOAD"; data: string } | undefined>();
   const [errors, setErrors] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [reopenOpen, setReopenOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
 
   const query = useQuery({
@@ -149,16 +146,6 @@ function SupervisorReviewPage() {
       await queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
       await queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] });
       navigate({ to: "/supervisor/evaluations" });
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
-  const reopenMutation = useMutation({
-    mutationFn: (reason: string) => reopen({ data: { evaluationId, reason } }),
-    onSuccess: async () => {
-      toast.success("Returned to supervisor draft");
-      setReopenOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -293,14 +280,9 @@ function SupervisorReviewPage() {
             {draftMutation.isPending ? "Saving…" : "Save draft"}
           </Button>
         ) : null}
-        {editable && can("evaluations.submit_president") && can("evaluations.step2") ? (
+        {editable && can("evaluations.step2") ? (
           <Button onClick={handleSubmitClick} disabled={submitMutation.isPending}>
             {submitMutation.isPending ? "Submitting…" : "Submit for Reviewing Supervisor"}
-          </Button>
-        ) : null}
-        {detail.status === "SUPERVISOR_SUBMITTED" && can("evaluations.reopen_supervisor") ? (
-          <Button variant="outline" onClick={() => setReopenOpen(true)}>
-            Reopen supervisor stage
           </Button>
         ) : null}
         <Button variant="ghost" onClick={() => navigate({ to: "/supervisor/evaluations" })}>
@@ -309,15 +291,15 @@ function SupervisorReviewPage() {
       </div>
 
       {!editable ? (
-        <p className="text-sm text-muted-foreground">
-          This assessment is locked because it has already been submitted to the President.
+          <p className="text-sm text-muted-foreground">
+          This assessment is locked because it has already been submitted to the Reviewing Supervisor.
         </p>
       ) : null}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Submit to the President?</AlertDialogTitle>
+            <AlertDialogTitle>Submit to the Reviewing Supervisor?</AlertDialogTitle>
             <AlertDialogDescription>
               Your ratings and remarks will be locked and forwarded to the Reviewing Supervisor. This action is
               recorded in the audit trail.
@@ -330,15 +312,6 @@ function SupervisorReviewPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <ReasonDialog
-        open={reopenOpen}
-        onOpenChange={setReopenOpen}
-        title="Reopen supervisor stage"
-        description="Explain why this submitted assessment must be edited again."
-        confirmLabel="Reopen"
-        pending={reopenMutation.isPending}
-        onConfirm={(reason) => reopenMutation.mutate(reason)}
-      />
     </div>
   );
 }

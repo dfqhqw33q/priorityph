@@ -31,13 +31,6 @@ Confirm the submitted evaluation appears in the queue.
 Open the evaluation. (the upper part is perfectly working)
 
 
-
-
-
-
-
-
-not working and current at steps and it has error: 
 Confirm employee ratings are read-only.
 Enter Supervisor ratings and all development fields.
 Save a draft and reload the page.
@@ -45,6 +38,13 @@ Confirm draft data persists.
 Try submitting with missing ratings, missing fields, or no signature.
 Confirm submission is rejected.
 Submit valid Step 2 data with a signature.
+
+
+
+
+
+
+not working and current at steps and it has problem :  
 Confirm status becomes REVIEWING_SUPERVISOR_REVIEW.
 Reviewing Supervisor
 

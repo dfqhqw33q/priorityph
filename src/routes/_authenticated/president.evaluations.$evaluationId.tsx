@@ -28,7 +28,7 @@ import {
 import { RadioRatingMatrix, ratingFor } from "@/components/rating-matrix";
 import { PresidentStepFields } from "@/components/president-step-form";
 import { useAccess } from "@/hooks/use-access";
-import { getEvaluation, markPresidentReview } from "@/lib/evaluations.functions";
+import { getEvaluation } from "@/lib/evaluations.functions";
 import { getPresidentSteps, savePresidentRatings, savePresidentStepAnswers } from "@/lib/president.functions";
 import { getEvaluationScore } from "@/lib/scoring.functions";
 import { recordAiSuggestionDecision, suggestPresidentField } from "@/lib/ai.functions";
@@ -67,7 +67,6 @@ function PresidentReviewPage() {
   const fetchScore = useServerFn(getEvaluationScore);
   const suggestAi = useServerFn(suggestPresidentField);
   const recordDecision = useServerFn(recordAiSuggestionDecision);
-  const openReview = useServerFn(markPresidentReview);
   const finalize = useServerFn(finalizeEvaluation);
   const returnCorrection = useServerFn(returnForCorrection);
 
@@ -112,15 +111,6 @@ function PresidentReviewPage() {
     }
     setPresidentRatings(values);
   }, [detail]);
-
-  useEffect(() => {
-    if (detail?.status === "SUPERVISOR_SUBMITTED" && can("president.view")) {
-      openReview({ data: { evaluationId } })
-        .then(() => queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] }))
-        .catch(() => undefined);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [detail?.status]);
 
   const employeeValues = useMemo(() => {
     const map: Record<string, number | null> = {};
