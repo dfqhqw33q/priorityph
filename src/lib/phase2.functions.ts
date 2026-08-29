@@ -362,6 +362,10 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
       );
     if (data.submit && !data.signature)
       throw validationError("A Rater signature is required before submission");
+    if (data.ratings.length > 0) {
+      const { upsertSupervisorRatings } = await import("./server-core.server");
+      await upsertSupervisorRatings(data.evaluationId, data.ratings, context.userId, data.submit);
+    }
     const { error } = await admin
       .from("evaluations")
       .update({
@@ -371,6 +375,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
         supervisor_step2_advancement: data.advancement,
         supervisor_step2_career_transfer: data.careerTransfer,
         supervisor_step2_recommendations: data.recommendations,
+        supervisor_remarks: data.remarks,
         status: nextStatus,
         supervisor_user_id: context.userId,
         supervisor_step2_submitted_at: data.submit ? new Date().toISOString() : null,
@@ -395,7 +400,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
         body: "An evaluation is ready for Reviewing Supervisor review.",
         dedupe_key: `${data.evaluationId}:RATER_STEP2_SUBMITTED:${data.version}`,
       } as never);
-    if (data.submit)
+    if (data.signature)
       await saveStageSignature(
         data.evaluationId,
         "RATER_STEP2",

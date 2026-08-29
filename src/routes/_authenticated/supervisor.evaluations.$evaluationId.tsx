@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -29,12 +28,9 @@ import {
 } from "@/components/ui-bits";
 import { RadioRatingMatrix, ratingFor } from "@/components/rating-matrix";
 import { useAccess } from "@/hooks/use-access";
-import {
-  getEvaluation,
-  reopenSupervisorStage,
-  saveSupervisorDraft,
-} from "@/lib/evaluations.functions";
+import { getEvaluation, reopenSupervisorStage } from "@/lib/evaluations.functions";
 import { saveRaterStep2 } from "@/lib/phase2.functions";
+import { SignatureField } from "@/components/signature-field";
 
 export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$evaluationId")({
   head: () => ({
@@ -60,14 +56,13 @@ function SupervisorReviewPage() {
   const { can } = useAccess();
 
   const fetchEvaluation = useServerFn(getEvaluation);
-  const saveDraft = useServerFn(saveSupervisorDraft);
   const submitStep2 = useServerFn(saveRaterStep2);
   const reopen = useServerFn(reopenSupervisorStage);
 
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
   const [remarks, setRemarks] = useState("");
   const [step2, setStep2] = useState({ strengths: "", weaknesses: "", development: "", advancement: "", careerTransfer: "", recommendations: "" });
-  const [signature, setSignature] = useState("");
+  const [signature, setSignature] = useState<{ method: "DRAWN" | "UPLOAD"; data: string } | undefined>();
   const [errors, setErrors] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [reopenOpen, setReopenOpen] = useState(false);
@@ -90,7 +85,9 @@ function SupervisorReviewPage() {
     setRatings(next);
     setRemarks(detail.supervisor_remarks);
     const source = detail as typeof detail & Record<string, string | null>;
-    setStep2({ strengths: source.supervisor_step2_strengths ?? "", weaknesses: source.supervisor_step2_weaknesses ?? "", development: source.supervisor_step2_development ?? "", advancement: source.supervisor_step2_advancement ?? "", careerTransfer: source.supervisor_step2_career_transfer ?? "", recommendations: source.supervisor_step2_recommendations ?? "" });
+    setStep2({ strengths: source["supervisor_step2_strengths"] ?? "", weaknesses: source["supervisor_step2_weaknesses"] ?? "", development: source["supervisor_step2_development"] ?? "", advancement: source["supervisor_step2_advancement"] ?? "", careerTransfer: source["supervisor_step2_career_transfer"] ?? "", recommendations: source["supervisor_step2_recommendations"] ?? "" });
+    const savedSignature = source["rater_signature"] as { method: "DRAWN" | "UPLOAD"; signature_data: string | null } | null;
+    if (savedSignature?.signature_data) setSignature({ method: savedSignature.method, data: savedSignature.signature_data });
     setDirty(false);
   }, [detail]);
 
@@ -118,17 +115,7 @@ function SupervisorReviewPage() {
       .map(([criterionId, value]) => ({ criterionId, rating: value as number }));
 
   const draftMutation = useMutation({
-    mutationFn: async () => {
-      await saveDraft({
-        data: {
-          evaluationId,
-          version: detail?.version ?? 1,
-          remarks,
-          ratings: ratingPayload(),
-        },
-      });
-      return saveStep2({ data: { evaluationId, version: detail?.version ?? 1, ...step2, submit: false } });
-    },
+    mutationFn: () => submitStep2({ data: { evaluationId, version: detail?.version ?? 1, ratings: ratingPayload(), remarks, ...step2, submit: false } }),
     onSuccess: async () => {
       toast.success("Draft saved");
       setDirty(false);
@@ -139,8 +126,7 @@ function SupervisorReviewPage() {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      await saveDraft({ data: { evaluationId, version: detail?.version ?? 1, remarks, ratings: ratingPayload() } });
-      return submitStep2({ data: { evaluationId, version: detail?.version ?? 1, ...step2, submit: true, signature: { method: "TYPED", data: signature } } });
+      return submitStep2({ data: { evaluationId, version: detail?.version ?? 1, ratings: ratingPayload(), remarks, ...step2, submit: true, signature } });
     },
     onSuccess: async () => {
       toast.success("Step 2 submitted for Reviewing Supervisor review");
@@ -171,8 +157,8 @@ function SupervisorReviewPage() {
       toast.error("Rate all ten factors before submitting");
       return;
     }
-    if (!signature.trim()) {
-      toast.error("Provide your signature before submitting Step 2");
+    if (!signature) {
+      toast.error("Provide your electronic signature before submitting Step 2");
       return;
     }
     setConfirmOpen(true);
@@ -265,7 +251,7 @@ function SupervisorReviewPage() {
           ))}
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="rater-signature">Rater signature</Label>
-            <Input id="rater-signature" placeholder="Type your full name as signature" value={signature} disabled={!editable} onChange={(event) => { setSignature(event.target.value); setDirty(true); }} />
+            <SignatureField value={signature} disabled={!editable} onChange={(value) => { setSignature(value); setDirty(true); }} />
           </div>
         </CardContent>
       </Card>
@@ -282,7 +268,7 @@ function SupervisorReviewPage() {
         ) : null}
         {editable && can("evaluations.submit_president") && can("evaluations.step2") ? (
           <Button onClick={handleSubmitClick} disabled={submitMutation.isPending}>
-            {submitMutation.isPending ? "Submitting…" : "Submit to President"}
+            {submitMutation.isPending ? "Submitting…" : "Submit for Reviewing Supervisor"}
           </Button>
         ) : null}
         {detail.status === "SUPERVISOR_SUBMITTED" && can("evaluations.reopen_supervisor") ? (
@@ -306,7 +292,7 @@ function SupervisorReviewPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Submit to the President?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your ratings and remarks will be locked and forwarded to the President. This action is
+              Your ratings and remarks will be locked and forwarded to the Reviewing Supervisor. This action is
               recorded in the audit trail.
             </AlertDialogDescription>
           </AlertDialogHeader>

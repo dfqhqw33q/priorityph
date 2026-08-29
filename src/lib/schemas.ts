@@ -104,6 +104,8 @@ export const raterStep2Schema = z
   .object({
     evaluationId: z.string().uuid(),
     version: z.number().int().positive(),
+    ratings: z.array(ratingEntrySchema).max(10).default([]),
+    remarks: z.string().max(2000).default(""),
     strengths: z.string().max(4000).default(""),
     weaknesses: z.string().max(4000).default(""),
     development: z.string().max(4000).default(""),
