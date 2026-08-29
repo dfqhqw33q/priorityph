@@ -71,7 +71,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   const workflowDate = () => new Date().toISOString().slice(0, 10);
   const editableStatuses = {
     RATER: ["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"],
-    REVIEWING_SUPERVISOR: ["REVIEWING_SUPERVISOR_REVIEW"],
+    REVIEWING_SUPERVISOR: ["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW"],
     PERSONNEL: ["PERSONNEL_PROCESSING"],
     COMMITTEE: ["COMMITTEE_REVIEW"],
     PRESIDENT: ["PRESIDENT_APPROVAL"],
