@@ -203,7 +203,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
           approve: values.approve === "true",
           reason,
           correctionStage: correctionStage as never,
-          signature: signature ? { method: "TYPED", data: signature } : undefined,
+          signature: signature ? { method: "TYPED", data: signature.data } : undefined,
         },
       });
     },
