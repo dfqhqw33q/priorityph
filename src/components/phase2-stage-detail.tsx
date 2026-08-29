@@ -346,7 +346,12 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                 <h3 className="font-semibold">STEP 1 — Performance Evaluation (read-only)</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
-                  values={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
+                  values={Object.fromEntries(
+                    detail.criteria.map((criterion) => [
+                      criterion.id,
+                      ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR"),
+                    ])
+                  )}
                   employeeValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
                   supervisorValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "SUPERVISOR")]))}
                   readOnly={true}
@@ -382,34 +387,19 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                   const accStages = (detail as Record<string, unknown> & { accumulatedStages?: Record<string, unknown> })
                     ?.accumulatedStages as Record<string, unknown> | undefined;
                   const revSupReview = accStages?.reviewingSupervisorReview as Record<string, unknown> | undefined;
-                  return (
+                  return revSupReview ? (
                     <>
-                      {revSupReview ? (
-                        <>
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground">Reviewing Supervisor Ratings</p>
-                            <EvaluationRatingCards
-                              criteria={detail.criteria}
-                              values={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR")]))}
-                              employeeValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
-                              supervisorValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "SUPERVISOR")]))}
-                              readOnly={true}
-                              onChange={() => {}}
-                            />
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground">Comments</p>
-                            <p className="whitespace-pre-wrap text-sm">{String(revSupReview["comments"] ?? "—")}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground">Recommendations</p>
-                            <p className="whitespace-pre-wrap text-sm">{String(revSupReview["recommendations"] ?? "—")}</p>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Reviewing Supervisor review not yet completed</p>
-                      )}
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Comments</p>
+                        <p className="whitespace-pre-wrap text-sm">{String(revSupReview["comments"] ?? "—")}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">Recommendations</p>
+                        <p className="whitespace-pre-wrap text-sm">{String(revSupReview["recommendations"] ?? "—")}</p>
+                      </div>
                     </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Reviewing Supervisor review not yet completed</p>
                   );
                 })()}
               </div>
