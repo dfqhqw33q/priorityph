@@ -77,14 +77,20 @@ export function SignatureField({ value, disabled = false, onChange }: Props) {
   return (
     <div className="space-y-3 rounded-md border border-border p-3">
       <Label>Electronic signature *</Label>
-      <canvas ref={canvasRef} width={640} height={180} aria-label="Draw your signature" className="h-32 w-full touch-none rounded border border-dashed border-border bg-white" onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerLeave={end} />
+      {value?.method === "UPLOAD" ? (
+        <div className="flex h-32 w-full items-center justify-center rounded border border-dashed border-border bg-white p-2">
+          <img src={value.data} alt="Uploaded electronic signature" className="max-h-full max-w-full object-contain" />
+        </div>
+      ) : (
+        <canvas ref={canvasRef} width={640} height={180} aria-label="Draw your signature" className="h-32 w-full touch-none rounded border border-dashed border-border bg-white" onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerLeave={end} />
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" variant="outline" size="sm" onClick={clear} disabled={disabled}>Clear</Button>
         <Label htmlFor="signature-upload" className="cursor-pointer rounded-md border border-input px-3 py-2 text-sm">Upload image</Label>
         <Input id="signature-upload" type="file" accept="image/png,image/jpeg" className="hidden" onChange={upload} disabled={disabled} />
         <span className="text-xs text-muted-foreground">PNG or JPEG, up to 500 KB</span>
       </div>
-      {value?.method === "UPLOAD" ? <p className="text-xs text-muted-foreground">Uploaded signature selected.</p> : null}
+      {value?.method === "UPLOAD" ? <p className="text-xs text-muted-foreground">Uploaded signature preview.</p> : null}
     </div>
   );
 }

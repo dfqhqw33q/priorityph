@@ -26,7 +26,7 @@ import {
   ReasonDialog,
   formatDateTime,
 } from "@/components/ui-bits";
-import { RadioRatingMatrix, ratingFor } from "@/components/rating-matrix";
+import { EvaluationRatingCards, ratingFor } from "@/components/rating-matrix";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluation, reopenSupervisorStage } from "@/lib/evaluations.functions";
 import { saveRaterStep2 } from "@/lib/phase2.functions";
@@ -216,8 +216,7 @@ function SupervisorReviewPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <RadioRatingMatrix
-            name="supervisor"
+          <EvaluationRatingCards
             criteria={detail.criteria}
             values={ratings}
             employeeValues={employeeValues}
