@@ -131,6 +131,7 @@ export function RadioRatingMatrix({
   readOnly,
   employeeValues,
   supervisorValues,
+  reviewingValues,
   finalScore,
   name,
   errorCriterionIds = [],
