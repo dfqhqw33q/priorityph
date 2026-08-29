@@ -53,7 +53,7 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
       .maybeSingle();
     const allowedStatus = {
       RATER: ["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT", "RETURNED_FOR_CORRECTION"],
-      REVIEWING_SUPERVISOR: ["REVIEWING_SUPERVISOR_REVIEW", "RETURNED_FOR_CORRECTION"],
+      REVIEWING_SUPERVISOR: ["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW", "RETURNED_FOR_CORRECTION"],
       PERSONNEL: ["PERSONNEL_PROCESSING", "RETURNED_FOR_CORRECTION"],
       COMMITTEE: ["COMMITTEE_REVIEW", "RETURNED_FOR_CORRECTION"],
       PRESIDENT: ["PRESIDENT_APPROVAL"],
@@ -170,7 +170,7 @@ export const listPhase2Queue = createServerFn({ method: "GET" })
     const config = {
       REVIEWING_SUPERVISOR: {
         permission: "evaluations.review_step3" as const,
-        statuses: ["REVIEWING_SUPERVISOR_REVIEW"],
+        statuses: ["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW"],
       },
       PERSONNEL: { permission: "personnel.process" as const, statuses: ["PERSONNEL_PROCESSING"] },
       COMMITTEE: { permission: "committee.review" as const, statuses: ["COMMITTEE_REVIEW"] },
