@@ -299,7 +299,7 @@ export async function loadEvaluationDetail(evaluationId: string): Promise<Evalua
     }
   ).evaluation_cycles;
   const supervisorId = (row as { supervisor_user_id: string | null }).supervisor_user_id;
-  const [{ data: criteria }, { data: ratings }, supervisor] = await Promise.all([
+  const [{ data: criteria }, { data: ratings }, { data: signature }, supervisor] = await Promise.all([
     admin
       .from("evaluation_criteria")
       .select("id, letter, title, description, position")
@@ -309,10 +309,23 @@ export async function loadEvaluationDetail(evaluationId: string): Promise<Evalua
       .from("evaluation_ratings")
       .select("criterion_id, evaluator_type, rating, is_locked")
       .eq("evaluation_id", evaluationId),
+    admin
+      .from("evaluation_stage_signatures")
+      .select("method, signature_data, storage_path, signed_at")
+      .eq("evaluation_id", evaluationId)
+      .eq("stage", "RATER_STEP2")
+      .maybeSingle(),
     supervisorId
       ? admin.from("internal_users").select("full_name").eq("id", supervisorId).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
+  let raterSignature = signature ?? null;
+  if (raterSignature?.storage_path) {
+    const { data: signed } = await admin.storage
+      .from("employee-files")
+      .createSignedUrl(raterSignature.storage_path, 300);
+    raterSignature = { ...raterSignature, signature_data: signed?.signedUrl ?? null };
+  }
   return {
     ...(row as never as Record<string, unknown>),
     cycle_name: cycle.name,
@@ -321,6 +334,7 @@ export async function loadEvaluationDetail(evaluationId: string): Promise<Evalua
     supervisor_name: supervisor?.data?.full_name ?? null,
     criteria: criteria ?? [],
     ratings: ratings ?? [],
+    rater_signature: raterSignature,
   } as never;
 }
 
