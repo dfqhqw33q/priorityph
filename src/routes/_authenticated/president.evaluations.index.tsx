@@ -1,9 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 
-import { EvaluationQueue } from "@/components/evaluation-queue";
-import { PageHeader } from "@/components/ui-bits";
-import { listPresidentQueue } from "@/lib/evaluations.functions";
+import { Phase2QueuePage } from "@/components/phase2-queue";
 
 export const Route = createFileRoute("/_authenticated/president/evaluations/")({
   head: () => ({
@@ -11,33 +8,13 @@ export const Route = createFileRoute("/_authenticated/president/evaluations/")({
       { title: "President review queue | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Evaluations submitted by supervisors and awaiting Step 2 and Step 3 completion.",
+        content: "Final approval queue for evaluations after the committee review stage.",
       },
-      { property: "og:title", content: "President review queue" },
-      { property: "og:description", content: "Supervisor-submitted evaluations awaiting the President." },
+      { property: "og:title", content: "President approval queue" },
+      { property: "og:description", content: "Evaluations awaiting the President's final approval." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: PresidentQueuePage,
+  component: () => <Phase2QueuePage stage="PRESIDENT" />,
 });
-
-function PresidentQueuePage() {
-  const fetchQueue = useServerFn(listPresidentQueue);
-
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="President review queue"
-        description="Only supervisor-submitted evaluations reach this stage."
-      />
-      <EvaluationQueue
-        queryKey="president-queue"
-        fetcher={fetchQueue}
-        statuses={["PRESIDENT_APPROVAL", "FINALIZED"]}
-        detailPath="/president/evaluations/$evaluationId"
-        emptyTitle="No evaluations awaiting the President"
-      />
-    </div>
-  );
-}

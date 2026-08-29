@@ -137,6 +137,10 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
         recommendations: String(record["recommendation"] ?? ""),
       });
     }
+    if (stage === "PRESIDENT")
+      setValues({
+        approve: "true",
+      });
   }, [detail, stage]);
   const update = (key: string, value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
