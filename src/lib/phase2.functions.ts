@@ -468,13 +468,37 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       await upsertReviewingSupervisorRatings(data.evaluationId, data.ratings, context.userId, data.submit);
     const workflowDate = new Date().toISOString().slice(0, 10);
     const submissionDate = data.submit ? (data.date || workflowDate) : data.date || "";
+    
+    let nextStatus: EvaluationStatus;
+    if (evaluation?.status === "SUPERVISOR_SUBMITTED") {
+      nextStatus = data.submit ? "REVIEWING_SUPERVISOR_REVIEW" : "REVIEWING_SUPERVISOR_REVIEW";
+    } else {
+      nextStatus = data.submit ? "PERSONNEL_PROCESSING" : "REVIEWING_SUPERVISOR_REVIEW";
+    }
+    
     const result = await transition(
       data.evaluationId,
       data.version,
-      data.submit ? "PERSONNEL_PROCESSING" : "REVIEWING_SUPERVISOR_REVIEW",
+      nextStatus,
       context.userId,
       "REVIEWING_SUPERVISOR_SUBMITTED",
     );
+    
+    if (data.submit && nextStatus === "REVIEWING_SUPERVISOR_REVIEW") {
+      const { data: updated } = await admin
+        .from("evaluations")
+        .select("status,version")
+        .eq("id", data.evaluationId)
+        .maybeSingle();
+      if (updated?.version)
+        await transition(
+          data.evaluationId,
+          updated.version,
+          "PERSONNEL_PROCESSING",
+          context.userId,
+          "REVIEWING_SUPERVISOR_SUBMITTED",
+        );
+    }
     const { error: stageError } = await admin.from("reviewing_supervisor_reviews").upsert(
       {
         evaluation_id: data.evaluationId,
