@@ -136,8 +136,8 @@ export type EvaluationStatus = (typeof EVALUATION_STATUSES)[number];
 export const EVALUATION_STATUS_LABELS: Record<EvaluationStatus, string> = {
   EMPLOYEE_SUBMITTED: "Waiting for supervisor",
   SUPERVISOR_DRAFT: "Supervisor in progress",
-  SUPERVISOR_SUBMITTED: "Sent to President",
-  REVIEWING_SUPERVISOR_REVIEW: "Reviewing Supervisor review",
+  SUPERVISOR_SUBMITTED: "Supervisor submitted",
+  REVIEWING_SUPERVISOR_REVIEW: "Awaiting Reviewing Supervisor",
   PERSONNEL_PROCESSING: "Personnel processing",
   COMMITTEE_REVIEW: "Committee review",
   PRESIDENT_APPROVAL: "President approval",
