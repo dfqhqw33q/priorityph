@@ -148,6 +148,32 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
         stageSignature = { ...stageSignature, signature_data: signed?.signedUrl ?? null };
       }
     }
+    // Load accumulated stage data for later-stage roles
+    let accumulatedStages: Record<string, unknown> = {};
+    if (["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(data.stage)) {
+      const [reviewingSup, personnel, committee] = await Promise.all([
+        admin
+          .from("reviewing_supervisor_reviews")
+          .select("*")
+          .eq("evaluation_id", data.evaluationId)
+          .maybeSingle(),
+        admin
+          .from("personnel_processing")
+          .select("*")
+          .eq("evaluation_id", data.evaluationId)
+          .maybeSingle(),
+        admin
+          .from("committee_reviews")
+          .select("*")
+          .eq("evaluation_id", data.evaluationId)
+          .maybeSingle(),
+      ]);
+      accumulatedStages = {
+        reviewingSupervisorReview: reviewingSup.data ?? null,
+        personnelProcessing: personnel.data ?? null,
+        committeeReview: committee.data ?? null,
+      };
+    }
     return {
       ...detail,
       status: row?.status ?? detail.status,
@@ -155,6 +181,7 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
       is_finalized: row?.is_finalized ?? detail.is_finalized,
       stageRecord,
       stageSignature,
+      accumulatedStages,
     };
   });
 
