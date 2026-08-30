@@ -45,18 +45,67 @@ function drawField(page: any, font: any, y: number, label: string, value: string
   return y - 16;
 }
 
-export async function createFinalEvaluationDocument(evaluationId: string, userId: string) {
+export type FinalDocumentGenerationOptions = {
+  statusOverride?: string;
+  finalizedAt?: string | null;
+  finalizationReason?: string | null;
+};
+
+export async function ensureFinalizedEvaluationDocument(evaluationId: string, actorUserId: string) {
+  const admin = await getAdmin();
+  const { data: evaluation } = await admin
+    .from("evaluations")
+    .select("id, status, version, employee_id")
+    .eq("id", evaluationId)
+    .maybeSingle();
+  if (!evaluation) throw new Error("Evaluation not found");
+  if (evaluation.status !== "FINALIZED") {
+    throw new Error("Finalized evaluation document is unavailable because the evaluation is not finalized.");
+  }
+  const { data: existing } = await admin
+    .from("employee_documents")
+    .select("id, storage_path, file_name, evaluation_version")
+    .eq("evaluation_id", evaluationId)
+    .eq("category", "PERFORMANCE_EVALUATIONS")
+    .maybeSingle();
+  if (existing && (existing.evaluation_version ?? evaluation.version) === evaluation.version) {
+    return existing;
+  }
+  return createFinalEvaluationDocument(evaluationId, actorUserId, {
+    statusOverride: "FINALIZED",
+    finalizedAt: new Date().toISOString(),
+  });
+}
+
+export async function createFinalEvaluationDocument(
+  evaluationId: string,
+  userId: string,
+  options: FinalDocumentGenerationOptions = {},
+) {
   const admin = await getAdmin();
   const { data: evaluation } = await admin
     .from("evaluations")
     .select(
-      "id, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, status, finalized_at, finalized_by, finalization_reason, supervisor_user_id, supervisor_submitted_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
+      "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, status, finalized_at, finalized_by, finalization_reason, supervisor_user_id, supervisor_submitted_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
     )
     .eq("id", evaluationId)
     .maybeSingle();
-  if (!evaluation) throw validationError("Evaluation not found");
+  if (!evaluation) throw new Error("Evaluation not found");
 
   const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number; starts_at: string; ends_at: string; template_id: string } }).evaluation_cycles;
+  const statusLabel = options.statusOverride ?? evaluation.status ?? "FINALIZED";
+  const finalizedAt = options.finalizedAt ?? evaluation.finalized_at ?? new Date().toISOString();
+  const finalizationReason = options.finalizationReason ?? evaluation.finalization_reason ?? null;
+
+  const existingDocument = await admin
+    .from("employee_documents")
+    .select("id, storage_path, file_name, evaluation_version")
+    .eq("evaluation_id", evaluationId)
+    .eq("category", "PERFORMANCE_EVALUATIONS")
+    .maybeSingle();
+  if (existingDocument.data && (existingDocument.data.evaluation_version ?? evaluation.version) === evaluation.version) {
+    return existingDocument.data;
+  }
 
   const [criteriaResult, ratingsResult, scoreResult, step2Result, step3Result, personnelResult, committeeResult, signaturesResult] = await Promise.all([
     admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
@@ -178,9 +227,9 @@ export async function createFinalEvaluationDocument(evaluationId: string, userId
   draw(`Recommendation: ${committee?.recommendation ?? "—"}`, 8, false, 42);
   drawLine(42, 570);
   draw("PRESIDENT APPROVAL", 10, true, 42);
-  draw(`Final decision: ${evaluation.status === "FINALIZED" ? "APPROVED AND FINALIZED" : "PENDING"}`, 8, false, 42);
-  draw(`Finalization date: ${formatDate(evaluation.finalized_at as string | null | undefined)}`, 8, false, 42);
-  draw(`Finalization reason: ${evaluation.finalization_reason ?? "—"}`, 8, false, 42);
+  draw(`Final decision: ${statusLabel === "FINALIZED" ? "APPROVED AND FINALIZED" : "PENDING"}`, 8, false, 42);
+  draw(`Finalization date: ${formatDate(finalizedAt)}`, 8, false, 42);
+  draw(`Finalization reason: ${finalizationReason ?? "—"}`, 8, false, 42);
 
   const signatures = signaturesResult.data ?? [];
   const signatureByStage = new Map(signatures.map((entry) => [entry.stage, entry]));
@@ -200,9 +249,10 @@ export async function createFinalEvaluationDocument(evaluationId: string, userId
   }
 
   const bytes = await pdf.save();
-  const path = `employees/${evaluation.employee_id}/evaluations/${cycle.year}-final-performance-evaluation.pdf`;
+  const versionLabel = evaluation.version ?? 1;
+  const path = `employees/${evaluation.employee_id}/evaluations/${cycle.year}-final-performance-evaluation-v${versionLabel}.pdf`;
   const { error: uploadError } = await admin.storage.from("employee-files").upload(path, bytes, { contentType: "application/pdf", upsert: true });
-  if (uploadError) throw validationError(uploadError.message);
+  if (uploadError) throw new Error(uploadError.message);
 
   const { data: document, error } = await admin
     .from("employee_documents")
@@ -210,8 +260,9 @@ export async function createFinalEvaluationDocument(evaluationId: string, userId
       {
         employee_id: evaluation.employee_id,
         evaluation_id: evaluationId,
+        evaluation_version: versionLabel,
         category: "PERFORMANCE_EVALUATIONS",
-        file_name: `${cycle.year} Final Performance Evaluation.pdf`,
+        file_name: `${cycle.year} Final Performance Evaluation v${versionLabel}.pdf`,
         storage_path: path,
         content_type: "application/pdf",
         file_size: bytes.length,
@@ -221,6 +272,6 @@ export async function createFinalEvaluationDocument(evaluationId: string, userId
     )
     .select()
     .single();
-  if (error) throw validationError(error.message);
+  if (error) throw new Error(error.message);
   return document;
 }

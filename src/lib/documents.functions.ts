@@ -39,12 +39,43 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermissionAny, writeAudit, getActorRoles, validationError } = await import("./server-core.server");
+    const { ensureFinalizedEvaluationDocument } = await import("./documents.server");
     await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view"], "Final Evaluation");
     const admin = await getAdmin();
-    const { data: document } = await admin.from("employee_documents").select("id, storage_path, file_name").eq("evaluation_id", data.evaluationId).eq("category", "PERFORMANCE_EVALUATIONS").maybeSingle();
-    if (!document) throw validationError("The finalized evaluation document is not available yet");
+    const { data: evaluation } = await admin
+      .from("evaluations")
+      .select("status")
+      .eq("id", data.evaluationId)
+      .maybeSingle();
+    let document: { id: string; storage_path: string; file_name: string } | null = null;
+    if (evaluation?.status === "FINALIZED") {
+      try {
+        document = await ensureFinalizedEvaluationDocument(data.evaluationId, context.userId);
+      } catch {
+        document = null;
+      }
+    }
+    if (!document) {
+      const { data: existing } = await admin
+        .from("employee_documents")
+        .select("id, storage_path, file_name")
+        .eq("evaluation_id", data.evaluationId)
+        .eq("category", "PERFORMANCE_EVALUATIONS")
+        .maybeSingle();
+      document = existing;
+    }
+    if (!document) {
+      if (!evaluation) throw validationError("Evaluation not found");
+      if (evaluation.status !== "FINALIZED") throw validationError("The finalized evaluation document is not available yet.");
+      throw new Error("Unable to load the finalized evaluation document. Please contact HR/System Administrator.");
+    }
     const { data: signed, error } = await admin.storage.from("employee-files").createSignedUrl(document.storage_path, 300);
-    if (error || !signed?.signedUrl) throw validationError(error?.message ?? "Could not create document link");
+    if (error || !signed?.signedUrl) {
+      if (evaluation?.status === "FINALIZED") {
+        throw new Error("Unable to load the finalized evaluation document. Please contact HR/System Administrator.");
+      }
+      throw validationError(error?.message ?? "Could not create document link");
+    }
     await writeAudit({ actorUserId: context.userId, actorRole: (await getActorRoles(context.userId)).join(","), action: "DOCUMENT_VIEWED", module: "Employee Files", entityType: "employee_document", entityId: document.id, evaluationId: data.evaluationId });
     return { url: signed.signedUrl, fileName: document.file_name };
   });

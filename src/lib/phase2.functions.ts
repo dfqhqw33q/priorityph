@@ -322,7 +322,12 @@ async function transition(
   } as never);
   if (next === "FINALIZED") {
     try {
-      await createFinalEvaluationDocument(evaluationId, actorUserId);
+      const finalizationStamp = new Date().toISOString();
+      await createFinalEvaluationDocument(evaluationId, actorUserId, {
+        statusOverride: "FINALIZED",
+        finalizedAt: finalizationStamp,
+        finalizationReason: reason,
+      });
     } catch (error) {
       console.error("[phase2] final evaluation document generation failed", error);
       throw error;
