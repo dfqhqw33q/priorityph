@@ -164,6 +164,7 @@ export type Database = {
           created_by: string | null
           employee_id: string
           evaluation_id: string | null
+          evaluation_version: number | null
           file_name: string
           file_size: number
           id: string
@@ -176,6 +177,7 @@ export type Database = {
           created_by?: string | null
           employee_id: string
           evaluation_id?: string | null
+          evaluation_version?: number | null
           file_name: string
           file_size?: number
           id?: string
@@ -188,6 +190,7 @@ export type Database = {
           created_by?: string | null
           employee_id?: string
           evaluation_id?: string | null
+          evaluation_version?: number | null
           file_name?: string
           file_size?: number
           id?: string
