@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader, formatDateTime } from "@/components/ui-bits";
 import { getEvaluationHistory } from "@/lib/reports.functions";
 import { humanizeToken } from "@/lib/domain";
+import { getEvaluationDocumentUrl } from "@/lib/documents.functions";
 
 export const Route = createFileRoute("/_authenticated/hr/evaluation-history/$evaluationId")({
   component: HistoryDetailPage,
@@ -14,11 +17,28 @@ export const Route = createFileRoute("/_authenticated/hr/evaluation-history/$eva
 function HistoryDetailPage() {
   const { evaluationId } = Route.useParams();
   const fetch = useServerFn(getEvaluationHistory);
+  const getDocumentUrl = useServerFn(getEvaluationDocumentUrl);
+  const [documentAction, setDocumentAction] = useState<"preview" | "print" | null>(null);
   const query = useQuery({
     queryKey: ["evaluation-history-detail", evaluationId],
     queryFn: () => fetch({ data: { evaluationId } }),
     retry: false,
   });
+
+  async function openFinalDocument(mode: "preview" | "print") {
+    setDocumentAction(mode);
+    try {
+      const result = await getDocumentUrl({ data: { evaluationId } });
+      const win = window.open(result.url, "_blank", "noopener,noreferrer");
+      if (mode === "print") {
+        setTimeout(() => win?.print(), 600);
+      }
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The final evaluation document is not available yet.");
+    } finally {
+      setDocumentAction(null);
+    }
+  }
 
   if (query.isLoading) return <LoadingBlock rows={8} />;
   if (query.isError || !query.data?.detail)
@@ -36,7 +56,21 @@ function HistoryDetailPage() {
       <PageHeader
         title={detail.full_name_snapshot}
         description={`${detail.cycle_name} (${detail.cycle_year}) · ${detail.employee_number_snapshot}`}
-        actions={<EvaluationStatusBadge status={detail.status} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <EvaluationStatusBadge status={detail.status} />
+            {detail.status === "FINALIZED" ? (
+              <>
+                <Button variant="outline" size="sm" onClick={() => openFinalDocument("preview")} disabled={documentAction !== null}>
+                  {documentAction === "preview" ? "Opening..." : "Preview"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => openFinalDocument("print")} disabled={documentAction !== null}>
+                  {documentAction === "print" ? "Opening..." : "Print"}
+                </Button>
+              </>
+            ) : null}
+          </div>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

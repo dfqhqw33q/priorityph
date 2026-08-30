@@ -39,7 +39,7 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermissionAny, writeAudit, getActorRoles, validationError } = await import("./server-core.server");
-    await requirePermissionAny(context.userId, ["employees.view", "evaluations.view_history", "president.view"], "Final Evaluation");
+    await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view"], "Final Evaluation");
     const admin = await getAdmin();
     const { data: document } = await admin.from("employee_documents").select("id, storage_path, file_name").eq("evaluation_id", data.evaluationId).eq("category", "PERFORMANCE_EVALUATIONS").maybeSingle();
     if (!document) throw validationError("The finalized evaluation document is not available yet");
