@@ -30,7 +30,7 @@ import {
   formatDateTime,
 } from "@/components/ui-bits";
 import { getEmployeeRecord, listEmployees } from "@/lib/admin.functions";
-import { getEmployeeDocumentUrl, listEmployeeDocuments, uploadEmployeeDocument } from "@/lib/documents.functions";
+import { getEvaluationDocumentUrl, getEmployeeDocumentUrl, listEmployeeDocuments, uploadEmployeeDocument } from "@/lib/documents.functions";
 import type { EvaluationStatus } from "@/lib/domain";
 
 type EmployeeRow = {
@@ -49,6 +49,7 @@ export function EmployeeRecordsPage() {
   const fetchRecord = useServerFn(getEmployeeRecord);
   const fetchDocuments = useServerFn(listEmployeeDocuments);
   const getDocumentUrl = useServerFn(getEmployeeDocumentUrl);
+  const getFinalEvaluationDocumentUrl = useServerFn(getEvaluationDocumentUrl);
   const uploadDocument = useServerFn(uploadEmployeeDocument);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
@@ -96,6 +97,21 @@ export function EmployeeRecordsPage() {
   async function openDocument(documentId: string) {
     const result = await getDocumentUrl({ data: { documentId } });
     window.open(result.url, "_blank", "noopener,noreferrer");
+  }
+
+  async function openFinalEvaluationDocument(evaluationId: string, mode: "preview" | "print" | "export") {
+    try {
+      const result = await getFinalEvaluationDocumentUrl({ data: { evaluationId } });
+      const win = window.open(result.url, "_blank", "noopener,noreferrer");
+      if (mode === "print") {
+        setTimeout(() => win?.print(), 600);
+      }
+      if (mode === "export") {
+        win?.focus();
+      }
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The final evaluation document is not available yet.");
+    }
   }
 
   const rows = useMemo(() => {
@@ -212,6 +228,19 @@ export function EmployeeRecordsPage() {
                     Self-assessment {formatDateTime(item.employee_submitted_at)} · Supervisor{" "}
                     {formatDateTime(item.supervisor_submitted_at)}
                   </p>
+                  {item.status === "FINALIZED" ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "preview")}>
+                        Preview
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "print")}>
+                        Print
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "export")}>
+                        Export
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               ))
             )}
