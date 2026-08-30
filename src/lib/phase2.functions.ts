@@ -269,6 +269,7 @@ async function transition(
 ) {
   const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
     await import("./server-core.server");
+  const { createFinalEvaluationDocument } = await import("./documents.server");
   const admin = await getAdmin();
   const { data: current } = await admin
     .from("evaluations")
@@ -319,6 +320,14 @@ async function transition(
     payload: { fromStatus: current.status, toStatus: next, reason, correctionStage },
     dedupe_key: `${evaluationId}:${action}:${expectedVersion}`,
   } as never);
+  if (next === "FINALIZED") {
+    try {
+      await createFinalEvaluationDocument(evaluationId, actorUserId);
+    } catch (error) {
+      console.error("[phase2] final evaluation document generation failed", error);
+      throw error;
+    }
+  }
   await writeAudit({
     actorUserId,
     actorRole: (await getActorRoles(actorUserId)).join(","),
