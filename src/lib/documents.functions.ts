@@ -34,69 +34,6 @@ export const getEmployeeDocumentUrl = createServerFn({ method: "GET" })
     return { url: signed.signedUrl, fileName: document.file_name };
   });
 
-export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid(), forceRefresh: z.boolean().optional() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermissionAny, writeAudit, getActorRoles, validationError } = await import("./server-core.server");
-    const { createFinalEvaluationDocument, ensureFinalizedEvaluationDocument } = await import("./documents.server");
-    await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view"], "Final Evaluation");
-    const admin = await getAdmin();
-    const { data: evaluation } = await admin
-      .from("evaluations")
-      .select("status, version, employee_id")
-      .eq("id", data.evaluationId)
-      .maybeSingle();
-    let document: { id: string; storage_path: string; file_name: string } | null = null;
-    const shouldForceRefresh = Boolean(data.forceRefresh);
-    if (evaluation?.status === "FINALIZED") {
-      try {
-        document = await ensureFinalizedEvaluationDocument(data.evaluationId, context.userId, shouldForceRefresh);
-      } catch {
-        document = null;
-      }
-    }
-    if (!document && !shouldForceRefresh) {
-      const { data: existing } = await admin
-        .from("employee_documents")
-        .select("id, storage_path, file_name")
-        .eq("evaluation_id", data.evaluationId)
-        .eq("category", "PERFORMANCE_EVALUATIONS")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      document = existing ?? null;
-    }
-    if (!document && evaluation) {
-      try {
-        document = await createFinalEvaluationDocument(data.evaluationId, context.userId, {
-          statusOverride: evaluation.status,
-          finalizedAt: new Date().toISOString(),
-          forceRefresh: shouldForceRefresh,
-        });
-      } catch (error) {
-        if (!evaluation) throw validationError("Evaluation not found");
-        throw new Error(
-          error instanceof Error ? error.message : "Unable to generate a preview of the evaluation document.",
-        );
-      }
-    }
-    if (!document) {
-      if (!evaluation) throw validationError("Evaluation not found");
-      throw new Error("Unable to load the evaluation document. Please contact HR/System Administrator.");
-    }
-    const { data: signed, error } = await admin.storage.from("employee-files").createSignedUrl(document.storage_path, 300);
-    if (error || !signed?.signedUrl) {
-      if (evaluation?.status === "FINALIZED") {
-        throw new Error("Unable to load the finalized evaluation document. Please contact HR/System Administrator.");
-      }
-      throw validationError(error?.message ?? "Could not create document link");
-    }
-    const cacheBustedUrl = new URL(signed.signedUrl);
-    cacheBustedUrl.searchParams.set("t", String(Date.now()));
-    await writeAudit({ actorUserId: context.userId, actorRole: (await getActorRoles(context.userId)).join(","), action: "DOCUMENT_VIEWED", module: "Employee Files", entityType: "employee_document", entityId: document.id, evaluationId: data.evaluationId });
-    return { url: cacheBustedUrl.toString(), fileName: document.file_name };
-  });
 
 export const uploadEmployeeDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -128,7 +65,7 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
       console.log(`[getEvaluationSheetHtml] Starting for evaluation: ${data.evaluationId}`);
       
       // Check both permissions to allow access at different workflow stages
-      await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view", "evaluations.review"], "Evaluation Sheet");
+      await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view", "evaluations.review_step3"], "Evaluation Sheet");
       console.log(`[getEvaluationSheetHtml] Permissions check passed`);
 
       const admin = await getAdmin();
@@ -162,5 +99,40 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
       }
       throw validationError(`Failed to generate evaluation sheet: ${errorMsg}`);
     }
+  });
+
+export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        evaluationId: z.string().uuid(),
+        forceRefresh: z.boolean().optional().default(false),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { getAdmin, requirePermissionAny, validationError } = await import("./server-core.server");
+    const { createFinalEvaluationDocument } = await import("./documents.server");
+
+    await requirePermissionAny(
+      context.userId,
+      ["evaluations.view_history", "president.view", "evaluations.review_step3"],
+      "Final evaluation document",
+    );
+
+    const admin = await getAdmin();
+    const path = `evaluations/${data.evaluationId}/final-document.html`;
+
+    if (data.forceRefresh || true) {
+      await createFinalEvaluationDocument(data.evaluationId, context.userId, { forceRefresh: true });
+    }
+
+    const { data: signed, error } = await admin.storage.from("employee-files").createSignedUrl(path, 300);
+    if (error || !signed?.signedUrl) {
+      throw validationError(error?.message ?? "Final evaluation document is not available yet.");
+    }
+
+    return { url: signed.signedUrl };
   });
 

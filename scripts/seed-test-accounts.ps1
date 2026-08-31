@@ -10,12 +10,12 @@ if ([string]::IsNullOrWhiteSpace($serviceKey)) { throw 'Could not obtain the Sup
 
 $headers = @{ apikey = $serviceKey; Authorization = "Bearer $serviceKey" }
 $accounts = @(
-  @{ email = 'adminpriorityph@gmail.com'; full_name = 'System Administrator'; job_title = 'Administrator'; role = 'ADMINISTRATOR' },
-  @{ email = 'presidentpriorityph@gmail.com'; full_name = 'Performance President'; job_title = 'President'; role = 'PRESIDENT' },
-  @{ email = 'supervisorpriorityph@gmail.com'; full_name = 'Performance Supervisor'; job_title = 'Supervisor'; role = 'SUPERVISOR' },
-  @{ email = 'hrpriorityph@gmail.com'; full_name = 'HR Personnel'; job_title = 'HR/Personnel'; role = 'HR' },
-  @{ email = 'revsupervisorpriorityph@gmail.com'; full_name = 'Reviewing Supervisor'; job_title = 'Division Head'; role = 'REVIEWING_SUPERVISOR' },
-  @{ email = 'committeepriorityph@gmail.com'; full_name = 'Performance Evaluation Committee'; job_title = 'Committee Member'; role = 'COMMITTEE' }
+  @{ email = 'adminpriorityph@gmail.com'; full_name = 'RAI-LI T. BONIFACIO'; job_title = 'Administrator'; role = 'ADMINISTRATOR' },
+  @{ email = 'presidentpriorityph@gmail.com'; full_name = 'JAY M. LITERAL'; job_title = 'President'; role = 'PRESIDENT' },
+  @{ email = 'supervisorpriorityph@gmail.com'; full_name = 'CHARLOTTE V. GALLETA'; job_title = 'Supervisor / Rater / Immediate Supervisor'; role = 'SUPERVISOR' },
+  @{ email = 'hrpriorityph@gmail.com'; full_name = 'MIKAELLA T. ISIP'; job_title = 'HR / Personnel'; role = 'HR' },
+  @{ email = 'revsupervisorpriorityph@gmail.com'; full_name = 'MARK JEROME C. MOLLENA'; job_title = 'Reviewing Supervisor / Division Head'; role = 'REVIEWING_SUPERVISOR' },
+  @{ email = 'committeepriorityph@gmail.com'; full_name = 'ELENA C. SANTOS'; job_title = 'Committee Member'; role = 'COMMITTEE' }
 )
 
 $existing = Invoke-RestMethod -Method Get -Uri "$supabaseUrl/auth/v1/admin/users?per_page=1000" -Headers $headers
