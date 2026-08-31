@@ -239,15 +239,16 @@ export async function createFinalEvaluationDocument(
   }) => {
     const blockY = y;
     currentPage.drawText(label, { x, y: blockY, size: 9, font: bold, color: rgb(0.14, 0.16, 0.2) });
+    const sigLineY = blockY - 28;
     if (signature) {
-      currentPage.drawImage(signature as never, { x: x + 8, y: blockY - 42, width: 120, height: 30 });
+      currentPage.drawImage(signature as never, { x: x + 10, y: blockY - 44, width: 120, height: 30 });
     } else {
-      currentPage.drawLine({ start: { x, y: blockY - 26 }, end: { x: x + 120, y: blockY - 26 }, thickness: 1, color: rgb(0.2, 0.2, 0.2) });
+      currentPage.drawLine({ start: { x: x + 4, y: sigLineY }, end: { x: x + 134, y: sigLineY }, thickness: 1, color: rgb(0.2, 0.2, 0.2) });
     }
-    currentPage.drawText(name || "—", { x, y: blockY - 42, size: 9, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 150 });
-    currentPage.drawText(title || "—", { x, y: blockY - 56, size: 8, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 150 });
-    currentPage.drawText(`Date: ${date ? formatDate(date) : "—"}`, { x, y: blockY - 70, size: 8, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 160 });
-    drawHorizontalRule(x, x + 150, blockY - 82);
+    currentPage.drawText(name || "—", { x, y: blockY - 46, size: 9, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 150 });
+    currentPage.drawText(title || "—", { x, y: blockY - 60, size: 8, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 150 });
+    currentPage.drawText(`Date: ${date ? formatDate(date) : "—"}`, { x, y: blockY - 74, size: 8, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 160 });
+    drawHorizontalRule(x, x + 150, blockY - 86);
   };
 
   const employeeSignature = employeeSignatureResult?.data ?? null;
