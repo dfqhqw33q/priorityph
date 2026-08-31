@@ -173,19 +173,20 @@ export async function createFinalEvaluationDocument(
 
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([612, 792]);
+  const secondPage = pdf.addPage([612, 792]);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
-  const drawText = (text: string, x: number, y: number, size = 9, weight: typeof font = font, color = rgb(0.1, 0.1, 0.1), maxWidth?: number) => {
-    page.drawText(String(text ?? ""), { x, y, size, font: weight, color, maxWidth });
+  const drawText = (text: string, x: number, y: number, size = 9, weight: typeof font = font, color = rgb(0.1, 0.1, 0.1), maxWidth?: number, targetPage = page) => {
+    targetPage.drawText(String(text ?? ""), { x, y, size, font: weight, color, maxWidth });
   };
 
-  const drawLine = (x1: number, y1: number, x2: number, y2: number, thickness = 0.8, color = rgb(0.16, 0.16, 0.16)) => {
-    page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness, color });
+  const drawLine = (x1: number, y1: number, x2: number, y2: number, thickness = 0.8, color = rgb(0.16, 0.16, 0.16), targetPage = page) => {
+    targetPage.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness, color });
   };
 
-  const drawFilledCell = ({ x, y, width, height, fillColor, borderColor, borderWidth = 1 }: { x: number; y: number; width: number; height: number; fillColor?: ReturnType<typeof rgb>; borderColor?: ReturnType<typeof rgb>; borderWidth?: number }) => {
-    page.drawRectangle({
+  const drawFilledCell = ({ x, y, width, height, fillColor, borderColor, borderWidth = 1, targetPage = page }: { x: number; y: number; width: number; height: number; fillColor?: ReturnType<typeof rgb>; borderColor?: ReturnType<typeof rgb>; borderWidth?: number; targetPage?: typeof page }) => {
+    targetPage.drawRectangle({
       x,
       y,
       width,
@@ -381,25 +382,37 @@ export async function createFinalEvaluationDocument(
   drawText("STEP TWO: Develop conclusion and comments", 36, 72, 9, bold);
 
   const comment1 = evaluation.supervisor_step2_overall_explanation ?? "";
-  if (comment1) {
-    drawText("1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents.", 36, 60, 7.2, font, rgb(0.12, 0.12, 0.12), 510);
-    const lines = wrapText(comment1, 110);
-    lines.slice(0, 2).forEach((line, idx) => {
-      drawText(line, 36, 48 - idx * 10, 7.0, font, rgb(0.12, 0.12, 0.12), 510);
-    });
-  }
-
   const strengths = evaluation.supervisor_step2_strengths ?? "";
   const weaknesses = evaluation.supervisor_step2_weaknesses ?? "";
   const recommendation = evaluation.supervisor_step2_development ?? "";
 
-  drawText("2. Summarize the principal strengths and weaknesses of the employee.", 36, 30, 7.2, font, rgb(0.12, 0.12, 0.12), 510);
-  drawText("Principal Strengths:", 36, 18, 7.2, font, rgb(0.12, 0.12, 0.12), 120);
-  drawText(strengths || "", 138, 18, 7.0, font, rgb(0.12, 0.12, 0.12), 150);
-  drawText("Principal Weakness:", 300, 18, 7.2, font, rgb(0.12, 0.12, 0.12), 120);
-  drawText(weaknesses || "", 408, 18, 7.0, font, rgb(0.12, 0.12, 0.12), 150);
-  drawText("To be more effective on present job the employee should:", 36, 8, 7.2, font, rgb(0.12, 0.12, 0.12), 220);
-  drawText(recommendation || "", 272, 8, 7.0, font, rgb(0.12, 0.12, 0.12), 260);
+  const commentsYStart = 62;
+  if (comment1) {
+    drawText("1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents.", 36, commentsYStart, 7.2, font, rgb(0.12, 0.12, 0.12), 510);
+    const lines = wrapText(comment1, 110);
+    lines.slice(0, 3).forEach((line, idx) => {
+      drawText(line, 36, commentsYStart - 12 - idx * 10, 7.0, font, rgb(0.12, 0.12, 0.12), 510);
+    });
+  }
+
+  drawText("2. Summarize the principal strengths and weaknesses of the employee.", 36, commentsYStart - 52, 7.2, font, rgb(0.12, 0.12, 0.12), 510);
+  drawText("Principal Strengths:", 36, commentsYStart - 64, 7.2, font, rgb(0.12, 0.12, 0.12), 120);
+  drawText(strengths || "", 138, commentsYStart - 64, 7.0, font, rgb(0.12, 0.12, 0.12), 150);
+  drawText("Principal Weakness:", 300, commentsYStart - 64, 7.2, font, rgb(0.12, 0.12, 0.12), 120);
+  drawText(weaknesses || "", 408, commentsYStart - 64, 7.0, font, rgb(0.12, 0.12, 0.12), 150);
+  drawText("To be more effective on present job the employee should:", 36, commentsYStart - 82, 7.2, font, rgb(0.12, 0.12, 0.12), 220);
+  drawText(recommendation || "", 272, commentsYStart - 82, 7.0, font, rgb(0.12, 0.12, 0.12), 260);
+
+  drawText("CONTINUED ON PAGE 2", 255, 10, 6.5, font, rgb(0.35, 0.35, 0.35));
+
+  drawText("RECOMMENDATION SUMMARY", 36, 760, 10, bold, rgb(0.12, 0.12, 0.12), undefined, secondPage);
+  drawText("This section continues from page 1 so detailed comments, strengths, weaknesses, and development recommendations can be captured without crowding the form.", 36, 740, 8, font, rgb(0.12, 0.12, 0.12), 500, secondPage);
+  drawText("Optional follow-up notes:", 36, 710, 8.5, bold, rgb(0.12, 0.12, 0.12), undefined, secondPage);
+  drawText(comment1 || "No additional comments recorded.", 36, 694, 7.5, font, rgb(0.12, 0.12, 0.12), 500, secondPage);
+  drawText("Strengths:", 36, 660, 8, bold, rgb(0.12, 0.12, 0.12), undefined, secondPage);
+  drawText(strengths || "—", 110, 660, 7.5, font, rgb(0.12, 0.12, 0.12), 420, secondPage);
+  drawText("Development focus:", 36, 630, 8, bold, rgb(0.12, 0.12, 0.12), undefined, secondPage);
+  drawText(recommendation || "—", 130, 630, 7.5, font, rgb(0.12, 0.12, 0.12), 420, secondPage);
 
   const bytes = await pdf.save();
   const versionLabel = evaluation.version ?? 1;
