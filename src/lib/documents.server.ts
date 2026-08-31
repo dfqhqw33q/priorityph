@@ -358,6 +358,8 @@ async function generateEvaluationData(evaluationId: string) {
     const item = ratingMap.get(criterionKey)!;
     item[row.evaluator_type] = row.rating;
   }
+
+  const officialFactorDefinitions = [
     { letter: "A", title: "QUALITY OF WORK", description: "Consider the neatness, accuracy, and completeness of the employee's work in relation to company standards." },
     { letter: "B", title: "QUANTITY OF WORK", description: "Consider the volume of work done by the employee and the speed at which work was satisfactorily completed." },
     { letter: "C", title: "JOB KNOWLEDGE", description: "Consider the employee's skill, knowledge, and understanding of the details of his regularly assigned work." },
