@@ -39,7 +39,7 @@ import {
   submitPersonnelProcessing,
   submitReviewingSupervisor,
 } from "@/lib/phase2.functions";
-import { getEvaluationDocumentUrl } from "@/lib/documents.functions";
+import { getEvaluationSheetHtml } from "@/lib/documents.functions";
 import { userErrorMessage } from "@/lib/validation";
 
 type Stage = "RATER" | "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE" | "PRESIDENT";
@@ -57,7 +57,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetch = useServerFn(getPhase2Evaluation);
-  const getDocumentUrl = useServerFn(getEvaluationDocumentUrl);
+  const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const query = useQuery({
     queryKey: ["phase2-evaluation", evaluationId],
     queryFn: () => fetch({ data: { evaluationId, stage } }),
@@ -146,10 +146,12 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   }, [detail, stage]);
   const update = (key: string, value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
-  async function openDocument(mode: "preview" | "print", forceRefresh = true) {
+  async function openDocument(mode: "preview" | "print") {
     try {
-      const result = await getDocumentUrl({ data: { evaluationId, forceRefresh } });
-      const win = window.open(result.url, "_blank", "noopener,noreferrer");
+      const result = await getSheetHtml({ data: { evaluationId } });
+      const blob = new Blob([result.html], { type: "text/html; charset=utf-8" });
+      const blobUrl = URL.createObjectURL(blob);
+      const win = window.open(blobUrl, "_blank", "noopener,noreferrer");
       if (mode === "print") {
         setTimeout(() => win?.print(), 600);
       }
@@ -485,9 +487,9 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
           ) : null}
           {stage === "PRESIDENT" ? (
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={() => openDocument("preview", true)}>Preview Evaluation</Button>
-              <Button type="button" variant="outline" onClick={() => openDocument("print", true)}>Print / Export PDF</Button>
-              <Button type="button" variant="secondary" onClick={() => openDocument("preview", true)}>Refresh PDF</Button>
+              <Button type="button" variant="outline" onClick={() => openDocument("preview")}>Preview Evaluation</Button>
+              <Button type="button" variant="outline" onClick={() => openDocument("print")}>Print / Export PDF</Button>
+              <Button type="button" variant="secondary" onClick={() => openDocument("preview")}>Refresh PDF</Button>
             </div>
           ) : null}
           {stage === "RATER" ? (
