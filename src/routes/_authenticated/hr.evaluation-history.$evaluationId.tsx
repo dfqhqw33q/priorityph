@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader, formatDateTime } from "@/components/ui-bits";
 import { getEvaluationHistory } from "@/lib/reports.functions";
 import { humanizeToken } from "@/lib/domain";
-import { getEvaluationDocumentUrl } from "@/lib/documents.functions";
+import { getEvaluationSheetHtml } from "@/lib/documents.functions";
 
 export const Route = createFileRoute("/_authenticated/hr/evaluation-history/$evaluationId")({
   component: HistoryDetailPage,
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/hr/evaluation-history/$eva
 function HistoryDetailPage() {
   const { evaluationId } = Route.useParams();
   const fetch = useServerFn(getEvaluationHistory);
-  const getDocumentUrl = useServerFn(getEvaluationDocumentUrl);
+  const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const [documentAction, setDocumentAction] = useState<"preview" | "print" | null>(null);
   const query = useQuery({
     queryKey: ["evaluation-history-detail", evaluationId],
@@ -25,11 +25,14 @@ function HistoryDetailPage() {
     retry: false,
   });
 
-  async function openFinalDocument(mode: "preview" | "print", forceRefresh = true) {
+  async function openFinalDocument(mode: "preview" | "print") {
     setDocumentAction(mode);
     try {
-      const result = await getDocumentUrl({ data: { evaluationId, forceRefresh } });
-      const win = window.open(result.url, "_blank", "noopener,noreferrer");
+      const result = await getSheetHtml({ data: { evaluationId } });
+      // Create a blob with the HTML content
+      const blob = new Blob([result.html], { type: "text/html; charset=utf-8" });
+      const blobUrl = URL.createObjectURL(blob);
+      const win = window.open(blobUrl, "_blank", "noopener,noreferrer");
       if (mode === "print") {
         setTimeout(() => win?.print(), 600);
       }
@@ -61,13 +64,13 @@ function HistoryDetailPage() {
             <EvaluationStatusBadge status={detail.status} />
             {detail.status === "FINALIZED" ? (
               <>
-                <Button variant="outline" size="sm" onClick={() => openFinalDocument("preview", true)} disabled={documentAction !== null}>
+                <Button variant="outline" size="sm" onClick={() => openFinalDocument("preview")} disabled={documentAction !== null}>
                   {documentAction === "preview" ? "Opening..." : "Preview"}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => openFinalDocument("print", true)} disabled={documentAction !== null}>
+                <Button variant="outline" size="sm" onClick={() => openFinalDocument("print")} disabled={documentAction !== null}>
                   {documentAction === "print" ? "Opening..." : "Print"}
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => openFinalDocument("preview", true)} disabled={documentAction !== null}>
+                <Button variant="secondary" size="sm" onClick={() => openFinalDocument("preview")} disabled={documentAction !== null}>
                   Refresh PDF
                 </Button>
               </>
