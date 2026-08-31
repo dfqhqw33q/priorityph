@@ -15,6 +15,14 @@ export type PrintEvaluationData = {
   periodTo?: string | null;
   raterName?: string | null;
   raterTitle?: string | null;
+  raterSignature?: string | null;
+  raterDate?: string | null;
+  reviewingSupervisorName?: string | null;
+  reviewingSupervisorTitle?: string | null;
+  reviewingSupervisorSignature?: string | null;
+  reviewingSupervisorDate?: string | null;
+  employeeSignature?: string | null;
+  employeeDate?: string | null;
   supervisorRemarks: string;
   criteria: Criterion[];
   ratings: Rating[];
@@ -24,11 +32,8 @@ export type PrintEvaluationData = {
   step3: PresidentStepData | null;
 };
 
-function ratingOf(ratings: Rating[], criterionId: string) {
-  const president = ratings.find((r) => r.criterion_id === criterionId && r.evaluator_type === "PRESIDENT");
-  if (president) return president.rating;
-  const supervisor = ratings.find((r) => r.criterion_id === criterionId && r.evaluator_type === "SUPERVISOR");
-  return supervisor ? supervisor.rating : null;
+function ratingOf(ratings: Rating[], criterionId: string, evaluatorType: "EMPLOYEE" | "SUPERVISOR" | "REVIEWING_SUPERVISOR") {
+  return ratings.find((r) => r.criterion_id === criterionId && r.evaluator_type === evaluatorType)?.rating ?? null;
 }
 
 function formatDate(value?: string | null) {
@@ -79,38 +84,48 @@ export function PrintEvaluationSheet({ data }: { data: PrintEvaluationData }) {
           <Line label="Job Title of Rater" value={data.raterTitle ?? ""} />
         </div>
         <p className="mt-2 font-semibold">
-          RATING: 1 – Poor 2 – Below Average 3 – Average 4 – Above Average 5 - Excellent
+          RATING: 1 – Poor 2 – Below Average 3 – Average 4 – Above Average 5 – Excellent
         </p>
       </section>
 
       <table className="mt-2 w-full border-collapse text-[11px]">
-        <caption className="sr-only">Performance evaluation factors</caption>
+        <caption className="sr-only">Performance evaluation factors with independent ratings</caption>
         <thead>
           <tr>
-            <th className="border border-black px-1 py-1 text-left" colSpan={2}>
+            <th className="border border-black bg-[#d9d9d9] px-1 py-1 text-left font-bold uppercase" colSpan={1}>
               PERFORMANCE EVALUATION FACTOR
             </th>
-            {[1, 2, 3, 4, 5].map((value) => (
-              <th key={value} className="w-7 border border-black px-1 py-1 text-center">
-                {value}
-              </th>
-            ))}
+            <th className="w-28 border border-black bg-[#d9d9d9] px-2 py-1 text-center font-bold uppercase">
+              EMPLOYEE / RATEE
+            </th>
+            <th className="w-28 border border-black bg-[#d9d9d9] px-2 py-1 text-center font-bold uppercase">
+              SUPERVISOR / RATER
+            </th>
+            <th className="w-32 border border-black bg-[#d9d9d9] px-2 py-1 text-center font-bold uppercase">
+              REVIEWING SUPERVISOR / DIVISION HEAD
+            </th>
           </tr>
         </thead>
         <tbody>
           {data.criteria.map((criterion) => {
-            const rating = ratingOf(data.ratings, criterion.id);
+            const employeeRating = ratingOf(data.ratings, criterion.id, "EMPLOYEE");
+            const supervisorRating = ratingOf(data.ratings, criterion.id, "SUPERVISOR");
+            const reviewingRating = ratingOf(data.ratings, criterion.id, "REVIEWING_SUPERVISOR");
             return (
               <tr key={criterion.id}>
-                <td className="w-6 border border-black px-1 py-1 align-top font-semibold">{criterion.letter}.</td>
                 <td className="border border-black px-1 py-1 align-top">
-                  <span className="font-bold uppercase">{criterion.title}.</span> {criterion.description}
+                  <div className="font-bold uppercase">{criterion.letter}. {criterion.title}</div>
+                  <div>{criterion.description}</div>
                 </td>
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <td key={value} className="border border-black px-1 py-1 text-center align-middle font-bold">
-                    {rating === value ? "X" : ""}
-                  </td>
-                ))}
+                <td className="border border-black px-1 py-1 text-center align-middle font-bold tabular-nums">
+                  {employeeRating ?? ""}
+                </td>
+                <td className="border border-black px-1 py-1 text-center align-middle font-bold tabular-nums">
+                  {supervisorRating ?? ""}
+                </td>
+                <td className="border border-black px-1 py-1 text-center align-middle font-bold tabular-nums">
+                  {reviewingRating ?? ""}
+                </td>
               </tr>
             );
           })}
@@ -118,9 +133,41 @@ export function PrintEvaluationSheet({ data }: { data: PrintEvaluationData }) {
       </table>
 
       <div className="mt-3 grid grid-cols-3 gap-4 text-[11px]">
-        <div className="border-t border-black pt-1">APPRAISED BY: Rater</div>
-        <div className="border-t border-black pt-1">REVIEWED BY: Reviewing Supv./ Div. Head</div>
-        <div className="border-t border-black pt-1">REVIEWED WITH ME: Ratee</div>
+        <div className="border-t border-black pt-2 text-left">
+          <div className="font-bold uppercase">APPRAISED BY:</div>
+          <div className="mt-2 flex min-h-[34px] items-end justify-center">
+            {data.raterSignature ? <img src={data.raterSignature} alt="Rater signature" className="max-h-12 w-auto object-contain" /> : <div className="h-12 w-full" />}
+          </div>
+          <div className="mt-2 text-center font-semibold">{data.raterName ?? "—"}</div>
+          <div className="text-center">{data.raterTitle ?? "Rater"}</div>
+          <div className="mt-2 border-t border-black pt-1 text-center">
+            <span className="font-semibold uppercase">Date:</span> {data.raterDate ? formatDate(data.raterDate) : "—"}
+          </div>
+        </div>
+
+        <div className="border-t border-black pt-2 text-left">
+          <div className="font-bold uppercase">REVIEWED BY:</div>
+          <div className="mt-2 flex min-h-[34px] items-end justify-center">
+            {data.reviewingSupervisorSignature ? <img src={data.reviewingSupervisorSignature} alt="Reviewing supervisor signature" className="max-h-12 w-auto object-contain" /> : <div className="h-12 w-full" />}
+          </div>
+          <div className="mt-2 text-center font-semibold">{data.reviewingSupervisorName ?? "—"}</div>
+          <div className="text-center">{data.reviewingSupervisorTitle ?? "Reviewing Supervisor / Division Head"}</div>
+          <div className="mt-2 border-t border-black pt-1 text-center">
+            <span className="font-semibold uppercase">Date:</span> {data.reviewingSupervisorDate ? formatDate(data.reviewingSupervisorDate) : "—"}
+          </div>
+        </div>
+
+        <div className="border-t border-black pt-2 text-left">
+          <div className="font-bold uppercase">REVIEWED WITH ME:</div>
+          <div className="mt-2 flex min-h-[34px] items-end justify-center">
+            {data.employeeSignature ? <img src={data.employeeSignature} alt="Employee signature" className="max-h-12 w-auto object-contain" /> : <div className="h-12 w-full" />}
+          </div>
+          <div className="mt-2 text-center font-semibold">{data.fullName ?? "—"}</div>
+          <div className="text-center">{data.jobTitle ?? "Ratee"}</div>
+          <div className="mt-2 border-t border-black pt-1 text-center">
+            <span className="font-semibold uppercase">Date:</span> {data.employeeDate ? formatDate(data.employeeDate) : "—"}
+          </div>
+        </div>
       </div>
 
       <section className="mt-4 break-before-page text-[11px]">

@@ -143,7 +143,7 @@ export async function createFinalEvaluationDocument(
     return existingDocument.data;
   }
 
-  const [criteriaResult, ratingsResult, scoreResult, employeeSignatureResult, stageSignatureResult, step2Result, step3Result, personnelResult, committeeResult] = await Promise.all([
+  const [criteriaResult, ratingsResult, scoreResult, employeeSignatureResult, stageSignatureResult, step2Result, step3Result, personnelResult, committeeResult, employeeRecordResult] = await Promise.all([
     admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
     admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
     admin.from("evaluation_scores").select("final_score, final_rating_label, president_average, rule_version").eq("evaluation_id", evaluationId).maybeSingle(),
@@ -153,6 +153,7 @@ export async function createFinalEvaluationDocument(
     admin.from("reviewing_supervisor_reviews").select("comments, recommendations, reviewing_supervisor_date, reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
     admin.from("personnel_processing").select("present_salary, last_increase_date, last_increase_nature, last_increase_amount, total_points, adjective_rating, recommended_increase_bonus, personnel_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
     admin.from("committee_reviews").select("final_action, action_details, recommendation, committee_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
+    evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
 
   const userIds = [
@@ -164,7 +165,7 @@ export async function createFinalEvaluationDocument(
   ].filter((value): value is string => Boolean(value));
 
   const { data: userListResult } = userIds.length
-    ? await admin.from("internal_users").select("id, full_name").in("id", userIds)
+    ? await admin.from("internal_users").select("id, full_name, job_title").in("id", userIds)
     : { data: [] };
 
   const criteria = criteriaResult.data ?? [];
@@ -177,12 +178,22 @@ export async function createFinalEvaluationDocument(
     item[row.evaluator_type] = row.rating;
   }
 
-  const userLookup = new Map((userListResult.data ?? []).map((user) => [user.id, user.full_name]));
-  const raterName = evaluation.supervisor_user_id ? userLookup.get(evaluation.supervisor_user_id) ?? "—" : "—";
-  const reviewingSupervisorName = step3Result?.data?.reviewer_user_id ? userLookup.get(step3Result.data.reviewer_user_id) ?? "—" : "—";
-  const personnelName = personnelResult?.data?.personnel_user_id ? userLookup.get(personnelResult.data.personnel_user_id) ?? "—" : "—";
-  const committeeName = committeeResult?.data?.committee_user_id ? userLookup.get(committeeResult.data.committee_user_id) ?? "—" : "—";
-  const presidentName = evaluation.finalized_by ? userLookup.get(evaluation.finalized_by) ?? "—" : "—";
+  const userLookup = new Map((userListResult.data ?? []).map((user) => [user.id, { full_name: user.full_name, job_title: user.job_title ?? null }]));
+  const raterUser = evaluation.supervisor_user_id ? userLookup.get(evaluation.supervisor_user_id) ?? null : null;
+  const reviewingSupervisorUser = step3Result?.data?.reviewer_user_id ? userLookup.get(step3Result.data.reviewer_user_id) ?? null : null;
+  const personnelUser = personnelResult?.data?.personnel_user_id ? userLookup.get(personnelResult.data.personnel_user_id) ?? null : null;
+  const committeeUser = committeeResult?.data?.committee_user_id ? userLookup.get(committeeResult.data.committee_user_id) ?? null : null;
+  const presidentUser = evaluation.finalized_by ? userLookup.get(evaluation.finalized_by) ?? null : null;
+  const raterName = raterUser?.full_name ?? "—";
+  const raterTitle = raterUser?.job_title ?? "Rater";
+  const reviewingSupervisorName = reviewingSupervisorUser?.full_name ?? "—";
+  const reviewingSupervisorTitle = reviewingSupervisorUser?.job_title ?? "Reviewing Supervisor / Division Head";
+  const personnelName = personnelUser?.full_name ?? "—";
+  const committeeName = committeeUser?.full_name ?? "—";
+  const presidentName = presidentUser?.full_name ?? "—";
+  const employeeName = employeeRecordResult?.data?.full_name ?? evaluation.full_name_snapshot ?? "—";
+  const employeeJobTitle = employeeRecordResult?.data?.job_title ?? evaluation.job_title_snapshot ?? "Ratee";
+  const employeeSignatureDate = employeeSignatureResult?.data?.signed_at ?? null;
 
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
@@ -256,18 +267,16 @@ export async function createFinalEvaluationDocument(
   drawLine(42, 570);
 
   drawText("PERFORMANCE EVALUATION FACTOR", 10, 42, bold);
-  drawText("1", 10, 470, bold);
-  drawText("2", 10, 495, bold);
-  drawText("3", 10, 520, bold);
-  drawText("4", 10, 545, bold);
-  drawText("5", 10, 570, bold);
-  y -= 8;
+  drawText("EMPLOYEE / RATEE", 8, 360, bold);
+  drawText("SUPERVISOR / RATER", 8, 430, bold);
+  drawText("REVIEWING SUPERVISOR / DIVISION HEAD", 8, 500, bold);
+  y -= 10;
   for (const criterion of criteria) {
     const row = ratingMap.get(criterion.id) ?? {};
     const rowLabel = `${criterion.letter}. ${criterion.title}`;
-    page.drawText(rowLabel, { x: 42, y, size: 8, font, color: rgb(0.12, 0.15, 0.2), maxWidth: 350 });
-    const values = [row.EMPLOYEE, row.SUPERVISOR, row.REVIEWING_SUPERVISOR, row.PRESIDENT];
-    const positions = [455, 485, 515, 545];
+    page.drawText(rowLabel, { x: 42, y, size: 8, font, color: rgb(0.12, 0.15, 0.2), maxWidth: 280 });
+    const values = [row.EMPLOYEE, row.SUPERVISOR, row.REVIEWING_SUPERVISOR];
+    const positions = [372, 445, 540];
     for (let index = 0; index < values.length; index += 1) {
       const value = values[index];
       page.drawText(value ? String(value) : "", { x: positions[index], y, size: 8, font: bold, color: rgb(0.12, 0.15, 0.2) });
@@ -337,12 +346,57 @@ export async function createFinalEvaluationDocument(
   const committeeSignature = await loadSignatureImage(pdf, admin, stageSignatures.get("COMMITTEE") as never);
   const presidentSignature = await loadSignatureImage(pdf, admin, stageSignatures.get("PRESIDENT") as never);
 
-  if (employeeSig) page.drawImage(employeeSig, { x: 420, y: 658, width: 120, height: 28 });
-  if (raterSignature) page.drawImage(raterSignature, { x: 60, y: 500, width: 120, height: 28 });
-  if (reviewingSignature) page.drawImage(reviewingSignature, { x: 250, y: 500, width: 120, height: 28 });
-  if (personnelSignature) page.drawImage(personnelSignature, { x: 430, y: 500, width: 120, height: 28 });
-  if (committeeSignature) page.drawImage(committeeSignature, { x: 250, y: 330, width: 120, height: 28 });
-  if (presidentSignature) page.drawImage(presidentSignature, { x: 420, y: 330, width: 120, height: 28 });
+  const drawSignatureBlock = ({
+    x,
+    label,
+    name,
+    title,
+    date,
+    signature,
+  }: {
+    x: number;
+    label: string;
+    name: string;
+    title: string;
+    date: string | null;
+    signature: { width?: number; height?: number } | null;
+  }) => {
+    page.drawText(label, { x, y: 620, size: 9, font: bold, color: rgb(0.12, 0.15, 0.2) });
+    if (signature) {
+      page.drawImage(signature as never, { x, y: 585, width: 135, height: 28 });
+    }
+    page.drawText(name || "—", { x, y: 560, size: 9, font, color: rgb(0.12, 0.15, 0.2), maxWidth: 170 });
+    page.drawText(title || "—", { x, y: 545, size: 8, font, color: rgb(0.12, 0.15, 0.2), maxWidth: 170 });
+    page.drawText(`Date: ${date ? formatDate(date) : "—"}`, { x, y: 530, size: 8, font, color: rgb(0.12, 0.15, 0.2), maxWidth: 170 });
+  };
+
+  const raterSignedAt = stageSignatures.get("RATER_STEP2")?.signed_at ?? null;
+  const reviewingSignedAt = stageSignatures.get("REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null;
+
+  drawSignatureBlock({
+    x: 38,
+    label: "APPRAISED BY:",
+    name: raterName,
+    title: raterTitle,
+    date: raterSignedAt,
+    signature: raterSignature,
+  });
+  drawSignatureBlock({
+    x: 225,
+    label: "REVIEWED BY:",
+    name: reviewingSupervisorName,
+    title: reviewingSupervisorTitle,
+    date: reviewingSignedAt,
+    signature: reviewingSignature,
+  });
+  drawSignatureBlock({
+    x: 412,
+    label: "REVIEWED WITH ME:",
+    name: employeeName,
+    title: employeeJobTitle,
+    date: employeeSignatureDate,
+    signature: employeeSig,
+  });
 
   const bytes = await pdf.save();
   const versionLabel = evaluation.version ?? 1;
