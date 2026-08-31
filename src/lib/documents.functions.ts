@@ -36,7 +36,7 @@ export const getEmployeeDocumentUrl = createServerFn({ method: "GET" })
 
 export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid(), forceRefresh: z.boolean().optional() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermissionAny, writeAudit, getActorRoles, validationError } = await import("./server-core.server");
     const { createFinalEvaluationDocument, ensureFinalizedEvaluationDocument } = await import("./documents.server");
@@ -48,14 +48,15 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
       .eq("id", data.evaluationId)
       .maybeSingle();
     let document: { id: string; storage_path: string; file_name: string } | null = null;
+    const shouldForceRefresh = Boolean(data.forceRefresh);
     if (evaluation?.status === "FINALIZED") {
       try {
-        document = await ensureFinalizedEvaluationDocument(data.evaluationId, context.userId);
+        document = await ensureFinalizedEvaluationDocument(data.evaluationId, context.userId, shouldForceRefresh);
       } catch {
         document = null;
       }
     }
-    if (!document) {
+    if (!document && !shouldForceRefresh) {
       const { data: existing } = await admin
         .from("employee_documents")
         .select("id, storage_path, file_name")
@@ -71,6 +72,7 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
         document = await createFinalEvaluationDocument(data.evaluationId, context.userId, {
           statusOverride: evaluation.status,
           finalizedAt: new Date().toISOString(),
+          forceRefresh: shouldForceRefresh,
         });
       } catch (error) {
         if (!evaluation) throw validationError("Evaluation not found");
