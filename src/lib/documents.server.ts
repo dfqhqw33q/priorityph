@@ -36,6 +36,7 @@ export function generateEvaluationHTML(params: {
   principalStrengths: string;
   principalWeakness: string;
   effectivenessRecommendation: string;
+  formDate?: string;
 }): string {
   const factorRows = params.factors
     .map(
@@ -81,8 +82,8 @@ export function generateEvaluationHTML(params: {
     body { font-family: Arial, sans-serif; color: #1a1a1a; background: white; margin: 0; padding: 20px; }
     .container { max-width: 8.5in; margin: 0 auto; background: white; }
     .header { margin-bottom: 20px; }
-    .company-name { text-align: center; font-size: 18px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
-    .company-address { text-align: center; font-size: 11px; margin-bottom: 16px; }
+    .company-name { text-align: left; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+    .company-address { text-align: left; font-size: 9px; margin-bottom: 16px; color: #666; }
     .title { text-align: center; margin: 16px 0; }
     .title h1 { font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; }
     .title h2 { font-size: 14px; font-weight: bold; text-transform: uppercase; margin: 4px 0 0 0; }
@@ -100,11 +101,11 @@ export function generateEvaluationHTML(params: {
     
     .table-container { margin-bottom: 12px; }
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    thead tr { background-color: #d4d4d4; }
-    th { border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 11px; }
-    th:nth-child(2) { background-color: #dce8ff; }
-    th:nth-child(3) { background-color: #dff3df; }
-    th:nth-child(4) { background-color: #f9e8cf; }
+    thead tr { background-color: #080B3D; }
+    th { border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 11px; color: white; }
+    th:nth-child(2) { background-color: #3B82F6; }
+    th:nth-child(3) { background-color: #0000FE; }
+    th:nth-child(4) { background-color: #3B82F6; }
     
     .signatures { border-top: 1px solid #000; border-bottom: 1px solid #000; display: flex; margin-bottom: 12px; }
     .sig-block { flex: 1; padding: 12px; border-left: 1px solid #000; text-align: center; }
@@ -151,6 +152,7 @@ export function generateEvaluationHTML(params: {
       <div class="input" style="max-width: 150px;">${params.periodFrom}</div>
       <span>TO</span>
       <div class="input" style="max-width: 150px;">${params.periodTo}</div>
+      <span style="margin-left: auto;">Date: ${params.formDate || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
     </div>
     
     <div class="info-grid">
@@ -193,10 +195,10 @@ export function generateEvaluationHTML(params: {
       <table>
         <thead>
           <tr>
-            <th style="width: 55%; text-align: left;">Performance Evaluation Factor</th>
-            <th>Employee / Ratee<br><span style="font-size: 10px; font-weight: normal;">(Self Rating)</span></th>
-            <th>Supervisor / Rater<br><span style="font-size: 10px; font-weight: normal;">(Rating)</span></th>
-            <th>Reviewing Supervisor /<br>Division Head<br><span style="font-size: 10px; font-weight: normal;">(Rating)</span></th>
+            <th style="width: 55%; text-align: center;">Performance Evaluation Factor</th>
+            <th>Employee / Ratee</th>
+            <th>Supervisor / Rater</th>
+            <th>Reviewing Supervisor /<br>Division Head</th>
           </tr>
         </thead>
         <tbody>
@@ -432,6 +434,7 @@ export async function generateEvaluationData(evaluationId: string) {
       principalStrengths: normalizeText(evaluation.supervisor_step2_strengths) || "",
       principalWeakness: normalizeText(evaluation.supervisor_step2_weaknesses) || "",
       effectivenessRecommendation: normalizeText(evaluation.supervisor_step2_development) || "",
+      formDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
