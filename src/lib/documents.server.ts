@@ -197,6 +197,7 @@ export async function createFinalEvaluationDocument(
   };
 
   const employeeSignature = employeeSignatureResult?.data ?? null;
+  const employeeSignatureDate = employeeSignature?.signed_at ?? null;
   const employeeSig = employeeSignature ? await loadSignatureImage(pdf, admin, employeeSignature) : null;
   const raterSig = stageSignatures.get("RATER_STEP2") ? await loadSignatureImage(pdf, admin, stageSignatures.get("RATER_STEP2") as never) : null;
   const reviewingSupervisorSig = stageSignatures.get("REVIEWING_SUPERVISOR_STEP3") ? await loadSignatureImage(pdf, admin, stageSignatures.get("REVIEWING_SUPERVISOR_STEP3") as never) : null;

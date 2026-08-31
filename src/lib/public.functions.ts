@@ -480,6 +480,7 @@ export const submitStep1 = createServerFn({ method: "POST" })
         signature_data: inlineSignature,
         content_type: data.signature.contentType,
         file_size: signatureData.length,
+        signed_at: new Date().toISOString(),
         source_version: 1,
       } as never);
     if (signatureError) {
