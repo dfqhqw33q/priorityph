@@ -43,16 +43,34 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
     .maybeSingle();
   if (!evaluation) return { status: "SKIPPED" as const };
 
-  const { data: access } = await admin
+  const { data: accessRows } = await admin
     .from("public_evaluation_access_sessions" as never)
     .select("email")
-    .eq("cycle_id", evaluation.cycle_id)
     .eq("employee_id", evaluation.employee_id)
     .order("last_verified_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(10);
 
-  if (!access?.email) return { status: "SKIPPED" as const };
+  const accessEmail = accessRows?.find((row) => typeof row.email === "string" && row.email.includes("@"))?.email;
+
+  if (!accessEmail) {
+    const idempotencyKey = `step1-finalized:${evaluationId}`;
+    await admin
+      .from("employee_email_deliveries" as never)
+      .upsert(
+        {
+          evaluation_id: evaluation.id,
+          employee_id: evaluation.employee_id,
+          recipient_email: "unknown@not-found",
+          document_type: "STEP1_FINALIZED",
+          mail_status: "SKIPPED",
+          idempotency_key: idempotencyKey,
+          provider_message: "No verified Google email was found for this employee.",
+        },
+        { onConflict: "idempotency_key" },
+      )
+      .select("id");
+    return { status: "SKIPPED" as const };
+  }
 
   const idempotencyKey = `step1-finalized:${evaluationId}`;
   const { data: existing } = await admin
@@ -69,7 +87,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
       {
         evaluation_id: evaluation.id,
         employee_id: evaluation.employee_id,
-        recipient_email: access.email,
+        recipient_email: accessEmail,
         document_type: "STEP1_FINALIZED",
         mail_status: "PENDING",
         idempotency_key: idempotencyKey,
@@ -84,12 +102,12 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   const apiKey = process.env["BREVO_API_KEY"];
   const fromAddress = process.env["EMAIL_FROM"] ?? "noreply@priorityhandling.local";
 
-  if (!apiKey) {
+  if (!apiKey || !fromAddress || !fromAddress.includes("@")) {
     await admin
       .from("employee_email_deliveries" as never)
-      .update({ mail_status: "SKIPPED", provider_message: "BREVO_API_KEY is not configured" })
+      .update({ mail_status: "FAILED", provider_message: "BREVO_API_KEY or EMAIL_FROM is not configured." })
       .eq("id", delivery.id);
-    return { status: "SKIPPED" as const };
+    return { status: "FAILED" as const };
   }
 
   const subject = "Your Step 1 performance evaluation is finalized";
@@ -113,7 +131,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
           name: "Priority Handling Logistics",
           email: fromAddress,
         },
-        to: [{ email: access.email }],
+        to: [{ email: accessEmail }],
         subject,
         htmlContent: html,
         textContent: "Your completed Step 1 evaluation has been finalized and is available for review.",
