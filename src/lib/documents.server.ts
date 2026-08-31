@@ -163,6 +163,18 @@ export async function createFinalEvaluationDocument(
     evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
 
+  const stageSignatures = new Map((stageSignatureResult.data ?? []).map((row) => [row.stage, row]));
+
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const page = pdf.addPage([612, 792]);
+
+  const employeeSignature = employeeSignatureResult?.data ?? null;
+  const employeeSig = employeeSignature ? await loadSignatureImage(pdf, admin, employeeSignature) : null;
+  const raterSig = stageSignatures.get("RATER_STEP2") ? await loadSignatureImage(pdf, admin, stageSignatures.get("RATER_STEP2") as never) : null;
+  const reviewingSupervisorSig = stageSignatures.get("REVIEWING_SUPERVISOR_STEP3") ? await loadSignatureImage(pdf, admin, stageSignatures.get("REVIEWING_SUPERVISOR_STEP3") as never) : null;
+
   const userIds = [
     evaluation.supervisor_user_id,
     step3Result?.data?.reviewer_user_id,
@@ -201,11 +213,6 @@ export async function createFinalEvaluationDocument(
   const employeeName = employeeRecordResult?.data?.full_name ?? evaluation.full_name_snapshot ?? "—";
   const employeeJobTitle = employeeRecordResult?.data?.job_title ?? evaluation.job_title_snapshot ?? "Ratee";
   const employeeSignatureDate = employeeSignatureResult?.data?.signed_at ?? null;
-
-  const pdf = await PDFDocument.create();
-  const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const page = pdf.addPage([612, 792]);
 
   const drawText = (text: string, size = 10, x = 42, fontVariant = font, color = rgb(0.08, 0.12, 0.18), maxWidth?: number) => {
     page.drawText(text, { x, y: 0, size, font: fontVariant, color, maxWidth });
@@ -334,8 +341,8 @@ export async function createFinalEvaluationDocument(
   }
 
   const signatureTop = 200;
-  drawSignatureBlock({ x: 42, label: "APPRAISED BY:", name: raterName, title: raterTitle, date: stageSignatures.get("RATER_STEP2")?.signed_at ?? null, signature: await loadSignatureImage(pdf, admin, stageSignatures.get("RATER_STEP2") as never), yPos: signatureTop });
-  drawSignatureBlock({ x: 220, label: "REVIEWED BY:", name: reviewingSupervisorName, title: reviewingSupervisorTitle, date: stageSignatures.get("REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null, signature: await loadSignatureImage(pdf, admin, stageSignatures.get("REVIEWING_SUPERVISOR_STEP3") as never), yPos: signatureTop });
+  drawSignatureBlock({ x: 42, label: "APPRAISED BY:", name: raterName, title: raterTitle, date: stageSignatures.get("RATER_STEP2")?.signed_at ?? null, signature: raterSig, yPos: signatureTop });
+  drawSignatureBlock({ x: 220, label: "REVIEWED BY:", name: reviewingSupervisorName, title: reviewingSupervisorTitle, date: stageSignatures.get("REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null, signature: reviewingSupervisorSig, yPos: signatureTop });
   drawSignatureBlock({ x: 398, label: "REVIEWED WITH ME:", name: employeeName, title: employeeJobTitle, date: employeeSignatureDate, signature: employeeSig, yPos: signatureTop });
 
   page.drawText("CONCLUSIONS AND COMMENTS (CONFIDENTIAL: NOT TO BE SHOWN TO RATEE)", { x: 92, y: 150, size: 11, font: bold, color: rgb(0.12, 0.16, 0.2) });

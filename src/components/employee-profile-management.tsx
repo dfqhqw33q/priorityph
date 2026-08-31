@@ -33,6 +33,11 @@ export function EmployeeProfileManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
+  const normalizeFieldValue = (key: keyof EmployeeProfileValues, value: string) => {
+    if (key === "employeeNumber") return value.toUpperCase();
+    return value.toUpperCase();
+  };
+
   const query = useQuery({ queryKey: ["employee-profiles"], queryFn: () => fetchEmployees(), retry: false });
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -85,7 +90,12 @@ export function EmployeeProfileManagementPage() {
           ] as const).map(([key, label]) => (
             <div key={key} className="space-y-1.5">
               <Label htmlFor={`profile-${key}`}>{label}{["employeeNumber", "firstName", "lastName"].includes(key) ? " *" : ""}</Label>
-              <Input id={`profile-${key}`} value={form[key]} onChange={(event) => setForm((previous) => ({ ...previous, [key]: event.target.value }))} />
+              <Input
+                id={`profile-${key}`}
+                className="uppercase"
+                value={form[key]}
+                onChange={(event) => setForm((previous) => ({ ...previous, [key]: normalizeFieldValue(key, event.target.value) }))}
+              />
             </div>
           ))}
           <div className="flex items-end gap-2">

@@ -39,6 +39,7 @@ import {
   submitPersonnelProcessing,
   submitReviewingSupervisor,
 } from "@/lib/phase2.functions";
+import { getEvaluationDocumentUrl } from "@/lib/documents.functions";
 import { userErrorMessage } from "@/lib/validation";
 
 type Stage = "RATER" | "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE" | "PRESIDENT";
@@ -56,6 +57,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetch = useServerFn(getPhase2Evaluation);
+  const getDocumentUrl = useServerFn(getEvaluationDocumentUrl);
   const query = useQuery({
     queryKey: ["phase2-evaluation", evaluationId],
     queryFn: () => fetch({ data: { evaluationId, stage } }),
@@ -144,6 +146,18 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   }, [detail, stage]);
   const update = (key: string, value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
+  async function openDocument(mode: "preview" | "print") {
+    try {
+      const result = await getDocumentUrl({ data: { evaluationId } });
+      const win = window.open(result.url, "_blank", "noopener,noreferrer");
+      if (mode === "print") {
+        setTimeout(() => win?.print(), 600);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The evaluation document is not available yet.");
+    }
+  }
+
   const mutation = useMutation({
     mutationFn: async (submit: boolean) => {
       if (!detail) throw new Error("Evaluation unavailable");
@@ -403,11 +417,11 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                   );
                 })()}
               </div>
-              {["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(stage) && (() => {
+              {stage !== "PERSONNEL" && (() => {
                 const accStages = (detail as Record<string, unknown> & { accumulatedStages?: Record<string, unknown> })
                   ?.accumulatedStages as Record<string, unknown> | undefined;
                 const personnel = accStages?.personnelProcessing as Record<string, unknown> | undefined;
-                return personnel ? (
+                return personnel && detail.status !== "PERSONNEL_PROCESSING" ? (
                   <div className="space-y-2 rounded-md border border-border p-4">
                     <h3 className="font-semibold">Personnel Office processing (read-only)</h3>
                     <div className="grid gap-4 sm:grid-cols-2 text-sm">
@@ -443,11 +457,11 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                   </div>
                 ) : null;
               })()}
-              {["COMMITTEE", "PRESIDENT"].includes(stage) && (() => {
+              {stage !== "COMMITTEE" && (() => {
                 const accStages = (detail as Record<string, unknown> & { accumulatedStages?: Record<string, unknown> })
                   ?.accumulatedStages as Record<string, unknown> | undefined;
                 const committee = accStages?.committeeReview as Record<string, unknown> | undefined;
-                return committee ? (
+                return committee && detail.status !== "COMMITTEE_REVIEW" ? (
                   <div className="space-y-2 rounded-md border border-border p-4">
                     <h3 className="font-semibold">Committee recommendation (read-only)</h3>
                     <div className="space-y-2 text-sm">
@@ -468,6 +482,12 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                 ) : null;
               })()}
             </>
+          ) : null}
+          {stage === "PRESIDENT" ? (
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={() => openDocument("preview")}>Preview Evaluation</Button>
+              <Button type="button" variant="outline" onClick={() => openDocument("print")}>Print / Export PDF</Button>
+            </div>
           ) : null}
           {stage === "RATER" ? (
             <>

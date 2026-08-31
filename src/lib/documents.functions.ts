@@ -39,12 +39,12 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermissionAny, writeAudit, getActorRoles, validationError } = await import("./server-core.server");
-    const { ensureFinalizedEvaluationDocument } = await import("./documents.server");
+    const { createFinalEvaluationDocument, ensureFinalizedEvaluationDocument } = await import("./documents.server");
     await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view"], "Final Evaluation");
     const admin = await getAdmin();
     const { data: evaluation } = await admin
       .from("evaluations")
-      .select("status")
+      .select("status, version, employee_id")
       .eq("id", data.evaluationId)
       .maybeSingle();
     let document: { id: string; storage_path: string; file_name: string } | null = null;
@@ -62,12 +62,24 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
         .eq("evaluation_id", data.evaluationId)
         .eq("category", "PERFORMANCE_EVALUATIONS")
         .maybeSingle();
-      document = existing;
+      document = existing ?? null;
+    }
+    if (!document && evaluation) {
+      try {
+        document = await createFinalEvaluationDocument(data.evaluationId, context.userId, {
+          statusOverride: evaluation.status,
+          finalizedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        if (!evaluation) throw validationError("Evaluation not found");
+        throw new Error(
+          error instanceof Error ? error.message : "Unable to generate a preview of the evaluation document.",
+        );
+      }
     }
     if (!document) {
       if (!evaluation) throw validationError("Evaluation not found");
-      if (evaluation.status !== "FINALIZED") throw validationError("The finalized evaluation document is not available yet.");
-      throw new Error("Unable to load the finalized evaluation document. Please contact HR/System Administrator.");
+      throw new Error("Unable to load the evaluation document. Please contact HR/System Administrator.");
     }
     const { data: signed, error } = await admin.storage.from("employee-files").createSignedUrl(document.storage_path, 300);
     if (error || !signed?.signedUrl) {
