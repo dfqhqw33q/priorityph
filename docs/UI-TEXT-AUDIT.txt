@@ -1,0 +1,280 @@
+PRIORITY HANDLING LOGISTICS, INC. — PERFORMANCE EVALUATION SYSTEM
+SYSTEM-WIDE UI TEXT & LABELING AUDIT
+Date: 27 August 2026
+Scope: user-facing labels, headers, card titles, statuses, subtexts, buttons,
+table columns, empty states and navigation only.
+No database values, enums, routes, permissions or business logic were changed.
+
+=================================================================
+0. TERMINOLOGY STANDARDS ADOPTED
+=================================================================
+The following words are now used consistently everywhere:
+
+  "Self-assessment"        - what the employee fills in (previously "Step 1",
+                             "Step 1 assessment", "Step 1 submission")
+  "Supervisor review"      - the supervisor's ratings and remarks
+  "Step 2 — Conclusions"   - President's conclusions section
+  "Step 3 — Reviewing supervisor" - President's reviewing-supervisor section
+  "Evaluations to review"  - a person's work list (previously "queue",
+                             "review queue", "President queue")
+  "Employee records"       - the permanent employee registry (previously also
+                             called "Employee profiles" and "Digital Employee File")
+  "Activity history"       - user-visible log of actions (previously
+                             "Audit timeline", "audit trail")
+  "Area"                   - functional part of the system in logs
+                             (previously "Module")
+  "Record" / "Record type" - the item an action applied to
+                             (previously "Entity" / "Entity type")
+  "User"                   - the person who performed an action
+                             (previously "Actor")
+  "Dashboard"              - role home page (no role prefix inside the role's
+                             own navigation group)
+
+Step numbers are kept where they appear on the official printed evaluation
+form (Steps 1–3), because the paper form uses them. Elsewhere plain language
+is used.
+
+=================================================================
+1. STATUS LABELS  (src/lib/domain.ts — shown on every queue, badge, filter,
+   dashboard and history screen; database values unchanged)
+=================================================================
+CURRENT                        PROPOSED / APPLIED            REASON
+"Awaiting supervisor"          "Waiting for supervisor"      Plainer.
+"Supervisor draft"             "Supervisor in progress"      "Draft" reads as
+                                                             a document state,
+                                                             not progress.
+"Submitted to President"       "Sent to President"           Simpler verb.
+"President review"             "Needs President review"      States the action
+                                                             required, not a
+                                                             system state.
+"President submitted"          "President review completed"  "President
+                                                             submitted" is
+                                                             ambiguous.
+"Ready for finalization"       "Ready to finalize"           Removes noun
+                                                             stacking.
+"Returned for correction"      unchanged                     Already clear.
+"Finalized"                    unchanged                     Official term on
+                                                             the form.
+
+=================================================================
+2. SUPERVISOR — EVALUATION DETAIL
+   (src/routes/_authenticated/supervisor.evaluations.$evaluationId.tsx)
+=================================================================
+"Employee identity (snapshot)"            -> "Employee information"
+   Reason: "snapshot" is database language.
+"Captured when the employee submitted Step 1; permanently retained."
+                                          -> REMOVED
+   Reason: internal storage detail; no value to the reviewer.
+"Step 1 — performance evaluation factors" -> "Performance factors"
+"Step 1 submitted"                        -> "Self-assessment submitted"
+
+=================================================================
+3. PRESIDENT — EVALUATION DETAIL
+   (src/routes/_authenticated/president.evaluations.$evaluationId.tsx)
+=================================================================
+"Employee identity (snapshot)"            -> "Employee information"
+"Recorded at Step 1 submission and permanently retained."  -> REMOVED
+"Step 1 (read-only)" tab                  -> "Ratings"
+"Step 2" tab                              -> "Step 2 — Conclusions"
+"Step 3" tab                              -> "Step 3 — Reviewing supervisor"
+   Reason: bare step numbers give no clue what the tab contains.
+"Supervisor submitted"                    -> "Supervisor review submitted"
+"Step 2 must be submitted first"          -> "Complete Step 2 first"
+"Complete and submit Step 2 conclusions before the reviewing supervisor
+ section."                                -> "Submit your Step 2 conclusions
+                                              before starting the reviewing
+                                              supervisor section."
+"Your answers will be locked and recorded in the audit trail. Step 1 data is
+ never modified."                         -> "Once submitted, your answers can
+                                              no longer be edited. Employee and
+                                              supervisor ratings are not
+                                              affected."
+   Reason: says the consequence in user terms instead of system terms.
+
+=================================================================
+4. PRESIDENT DASHBOARD (president.index.tsx)
+=================================================================
+"Review supervisor submissions, then complete Step 2 and Step 3."
+      -> "Review evaluations sent by supervisors, then complete Step 2 and Step 3."
+"Open review queue"        -> "Open evaluations to review"
+"Awaiting President"       -> "Waiting for your review"   (the President is
+                                                           the reader; third
+                                                           person is odd)
+"In review"                -> "In progress"
+"President submitted"      -> "Completed by you"
+"Finalized"                -> unchanged
+
+=================================================================
+5. SUPERVISOR DASHBOARD (supervisor.index.tsx)
+=================================================================
+"Every authorised supervisor sees all completed employee Step 1 assessments."
+      -> "All submitted employee self-assessments are available to every supervisor."
+"Open review queue"                 -> "Open evaluations to review"
+"Employee Step 1 submissions"       -> "Employee self-assessments"
+"Pending supervisor review"         -> "Waiting for your review"
+"Supervisor drafts"                 -> "Your drafts"
+"Submitted to President"            -> "Sent to President"
+
+=================================================================
+6. EVALUATION LIST / QUEUE TABLE (src/components/evaluation-queue.tsx —
+   used by both Supervisor and President)
+=================================================================
+"Employee submitted"                -> "Self-assessment submitted"
+"Supervisor submitted"              -> "Supervisor review submitted"
+"You do not have access to this queue" -> "You do not have access to this list"
+"Could not load the queue"          -> "This list could not be loaded"
+"Adjust the filters or check back later." -> "Try changing the filters, or
+                                              check back later."
+
+=================================================================
+7. EVALUATION HISTORY (HR / Supervisor)
+   (hr.evaluation-history.index.tsx and .$evaluationId.tsx)
+=================================================================
+"Permanent, read-only evaluation records with reporting summaries."
+      -> "Completed evaluation records and summary figures."
+"Calculated" (stat card)            -> "Scored evaluations"
+"Employee avg" / "Supervisor avg"   -> "Employee average" / "Supervisor average"
+"Unable to load evaluation history" -> "Evaluation history could not be loaded"
+                                       / "This evaluation could not be opened"
+"Completed evaluations will appear here." -> "Evaluations appear here once they
+                                              are completed."
+"Employee snapshot"                 -> "Employee information"
+"Calculated scores"                 -> "Scores"
+"Employee average" (detail)         -> "Employee self-rating average"
+"Supervisor average" (detail)       -> "Supervisor rating average"
+"Rule version"                      -> "Scoring version"
+"Workflow timeline"                 -> "Evaluation progress"
+"Audit timeline"                    -> "Activity history"
+"No workflow events."               -> "No progress recorded yet."
+"No audit records."                 -> "No activity recorded yet."
+"Employee submitted" / "Supervisor submitted"
+      -> "Self-assessment submitted" / "Supervisor review submitted"
+
+=================================================================
+8. EMPLOYEE RECORDS (src/components/employee-records.tsx — President and
+   Administrator)
+=================================================================
+"Employees never have logins. Records are created on first Step 1 submission
+ and are permanent."
+      -> "Employee records are created automatically the first time an employee
+          submits a self-assessment."
+"Records appear after Step 1 submissions."
+      -> "Records appear once employees submit their self-assessments."
+"Snapshot history across evaluation cycles." -> "Evaluation history across all cycles."
+"Digital Employee File"             -> "Employee file"
+"Permanent employee records" (table caption) -> "Employee records"
+"Step 1 <date>" in history rows     -> "Self-assessment <date>"
+
+=================================================================
+9. EVALUATION CYCLES (HR)
+=================================================================
+hr.cycles.index.tsx
+"One annual cycle produces one shared QR link for all employees."
+      -> "Each yearly cycle has one assessment link and QR code shared with all employees."
+"The cycle starts as a draft; activate it to publish the link."
+      -> "New cycles start as a draft. Activate the cycle to share the employee link."
+"Window" (column)                   -> "Open dates"
+"Step 1" (column)                   -> "Self-assessments"
+"Supervisor" (column)               -> "Supervisor reviews"
+"Opens (local time)"                -> "Opens on"
+
+hr.cycles.$cycleId.tsx
+"Step 1 submissions"                -> "Employee self-assessments"
+"Supervisor submissions"            -> "Supervisor reviews submitted"
+"President queue"                   -> "Waiting for the President"
+"Shared employee link"              -> "Employee assessment link"
+"A reason is recorded in the audit log."
+      -> "Please give a short reason. This is kept in the activity history."
+
+=================================================================
+10. AUDIT LOGS (admin.audit-logs.tsx)
+=================================================================
+"Read-only and append-only. Audit records cannot be edited or deleted from the
+ application."
+      -> "A permanent record of important actions. Entries cannot be edited or deleted."
+"Actor" / "All actors" / "Actor role"   -> "User" / "All users" / "User role"
+"Module" / "All modules"                -> "Area" / "All areas"
+"Entity" / "Entity type" / "Entity ID"  -> "Record" / "Record type" / "Record ID"
+"Correlation ID"                        -> "Reference ID"
+"Action, module, entity or reason" (search placeholder)
+                                        -> "Action, area, record or reason"
+"You do not have access to the audit trail" -> "You do not have access to audit logs"
+"No audit events match these filters" / "Adjust the filters above."
+      -> "No activity matches these filters" / "Try changing the filters above."
+"Audit trail of sensitive actions" (caption) -> "Record of important actions"
+NOTE: action codes such as DOCUMENT_DOWNLOADED are already displayed without
+underscores through the shared humanizeToken() helper; stored values unchanged.
+
+=================================================================
+11. USER ACCOUNTS (admin.users.tsx)
+=================================================================
+"Internal users" (page title and navigation) -> "User accounts"
+"Only internal staff have accounts. Employees never sign in to this system."
+      -> "Accounts for Administrators, HR, Supervisors and the President.
+          Employees do not sign in."
+"Create internal user"              -> "Create a user account"
+"Effective permissions"             -> "What this user can do"
+"Revoke active sessions"            -> "Sign out of all devices"
+"This action is enforced server-side and recorded in the audit trail."
+      -> "This change takes effect immediately and is kept in the activity history."
+"Update role assignment"            -> "Change this user's role"
+"A user holds exactly one role. The selected role replaces the previous
+ assignment."                       -> "Each user has one role. The role you
+                                        choose replaces the current one."
+"Password reset" (badge)            -> "Password change required"
+   Reason: the old badge read as if a reset had been done, not required.
+
+=================================================================
+12. ROLES & PERMISSIONS (admin.roles.tsx)
+=================================================================
+"Administrator and President authority stay separate — evaluation permissions
+ are never granted implicitly."
+      -> "Choose what each role is allowed to do. Administrator and President
+          access stay separate."
+"Administrators must always retain permission management access; the server
+ enforces this."
+      -> "Administrators must always keep permission management access."
+Permission codes (users.view, audit.view, …) continue to display through the
+shared PERMISSION_LABELS map ("View Users", "View Audit Logs"); database codes
+unchanged.
+
+=================================================================
+13. NAVIGATION (src/components/app-shell.tsx)
+=================================================================
+"Supervisor dashboard"  -> "Dashboard"              (already inside the
+"President dashboard"   -> "Dashboard"               Supervisor / President
+"Admin overview"        -> "Overview"                navigation group)
+"Review queue"          -> "Evaluations to review"
+"President queue"       -> "Evaluations to review"
+"Employee profiles"     -> "Employee records"        (one name system-wide)
+"Internal users"        -> "User accounts"
+
+=================================================================
+14. SHARED COMPONENTS
+=================================================================
+src/components/ui-bits.tsx (reason box used by every confirmation dialog)
+"Explain why this change is being made"
+      -> "Briefly explain why you are making this change"
+
+=================================================================
+15. REVIEWED AND LEFT UNCHANGED
+=================================================================
+- Sign in, Forgot password, Reset password, Initial setup pages: already short
+  and plain.
+- Public employee assessment page ("Your details", "Performance factors",
+  "Select one rating per factor: 1 (Poor) to 5 (Excellent)."): clear for a
+  first-time reader.
+- Rating scale wording (Poor, Below Average, Average, Above Average,
+  Excellent): matches the official printed form and must not change.
+- Printed evaluation sheet: wording is fixed by the official DOCX template.
+- Role names (Administrator, President, HR/Personnel, Supervisor): official.
+- "Finalized", "Returned for correction", Steps 1–3 on the printed form:
+  official terminology retained.
+
+=================================================================
+16. NOT CHANGED BY DESIGN
+=================================================================
+Database enum values, audit action codes, permission codes, route paths,
+server validation messages tied to business rules, scoring formulas and the
+finalization workflow are all untouched. Every change above is presentation
+text only.
