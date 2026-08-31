@@ -26,12 +26,15 @@ export function generateEvaluationHTML(params: {
   appraisedByName: string;
   appraisedByTitle: string;
   appraisedByDate: string;
+  appraisedBySignature?: string;
   reviewedByName: string;
   reviewedByTitle: string;
   reviewedByDate: string;
+  reviewedBySignature?: string;
   reviewedWithMeName: string;
   reviewedWithMeTitle: string;
   reviewedWithMeDate: string;
+  reviewedWithMeSignature?: string;
   overallRatingExplanation: string;
   principalStrengths: string;
   principalWeakness: string;
@@ -103,15 +106,16 @@ export function generateEvaluationHTML(params: {
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     thead tr { background-color: #080B3D; }
     th { border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 11px; color: white; }
-    th:nth-child(2) { background-color: #3B82F6; }
+    th:nth-child(2) { background-color: #0000FE; }
     th:nth-child(3) { background-color: #0000FE; }
-    th:nth-child(4) { background-color: #3B82F6; }
+    th:nth-child(4) { background-color: #0000FE; }
     
     .signatures { border-top: 1px solid #000; border-bottom: 1px solid #000; display: flex; margin-bottom: 12px; }
     .sig-block { flex: 1; padding: 12px; border-left: 1px solid #000; text-align: center; }
     .sig-block:first-child { border-left: none; }
     .sig-block h3 { font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 0 0 12px 0; }
-    .sig-line { min-height: 40px; border-bottom: 2px solid #000; margin-bottom: 8px; }
+    .sig-line { min-height: 40px; border-bottom: 2px solid #000; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
+    .sig-image { max-width: 100%; max-height: 40px; object-fit: contain; }
     .sig-name { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
     .sig-title { font-size: 10px; margin-bottom: 8px; }
     .sig-date { font-size: 10px; }
@@ -152,7 +156,6 @@ export function generateEvaluationHTML(params: {
       <div class="input" style="max-width: 150px;">${params.periodFrom}</div>
       <span>TO</span>
       <div class="input" style="max-width: 150px;">${params.periodTo}</div>
-      <span style="margin-left: auto;">Date: ${params.formDate || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
     </div>
     
     <div class="info-grid">
@@ -210,21 +213,21 @@ export function generateEvaluationHTML(params: {
     <div class="signatures">
       <div class="sig-block">
         <h3>Appraised By:</h3>
-        <div class="sig-line"></div>
+        <div class="sig-line">${params.appraisedBySignature ? `<img src="${params.appraisedBySignature}" class="sig-image" alt="Signature">` : ""}</div>
         <div class="sig-name">${params.appraisedByName || "—"}</div>
         <div class="sig-title">${params.appraisedByTitle || "—"}</div>
         <div class="sig-date">Date: <span>${params.appraisedByDate || "—"}</span></div>
       </div>
       <div class="sig-block">
         <h3>Reviewed By:</h3>
-        <div class="sig-line"></div>
+        <div class="sig-line">${params.reviewedBySignature ? `<img src="${params.reviewedBySignature}" class="sig-image" alt="Signature">` : ""}</div>
         <div class="sig-name">${params.reviewedByName || "—"}</div>
         <div class="sig-title">${params.reviewedByTitle || "—"}</div>
         <div class="sig-date">Date: <span>${params.reviewedByDate || "—"}</span></div>
       </div>
       <div class="sig-block">
         <h3>Reviewed With Me:</h3>
-        <div class="sig-line"></div>
+        <div class="sig-line">${params.reviewedWithMeSignature ? `<img src="${params.reviewedWithMeSignature}" class="sig-image" alt="Signature">` : ""}</div>
         <div class="sig-name">${params.reviewedWithMeName || "—"}</div>
         <div class="sig-title">${params.reviewedWithMeTitle || "—"}</div>
         <div class="sig-date">Date: <span>${params.reviewedWithMeDate || "—"}</span></div>
@@ -327,7 +330,7 @@ export async function generateEvaluationData(evaluationId: string) {
     const { data: evaluation, error: evalError } = (await admin
       .from("evaluations")
       .select(
-        "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, status, finalized_at, finalized_by, finalization_reason, supervisor_user_id, supervisor_submitted_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_overall_explanation, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
+        "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, status, finalized_at, finalized_by, finalization_reason, employee_submitted_at, supervisor_user_id, supervisor_submitted_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_overall_explanation, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
       )
       .eq("id", evaluationId)
       .maybeSingle()) as any;
@@ -342,11 +345,12 @@ export async function generateEvaluationData(evaluationId: string) {
     const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number; starts_at: string; ends_at: string; template_id: string } }).evaluation_cycles;
 
     // First batch of queries
-    const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult] = await Promise.all([
+    const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult, employeeSignaturesResult] = await Promise.all([
       admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
       admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
       admin.from("evaluation_stage_signatures").select("stage, signed_at").eq("evaluation_id", evaluationId),
       evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
+      admin.from("employee_signatures").select("method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
     ]);
 
     console.log(`[generateEvaluationData] Criteria: ${criteriaResult.data?.length || 0}, Ratings: ${ratingsResult.data?.length || 0}, Signatures: ${stageSignatureResult.data?.length || 0}, Employee: ${!!employeeRecordResult?.data}`);
@@ -402,6 +406,31 @@ export async function generateEvaluationData(evaluationId: string) {
     const periodFrom = formatFormDate(cycle.starts_at) || `January 1, ${cycle.year}`;
     const periodTo = formatFormDate(cycle.ends_at) || `December 31, ${cycle.year}`;
 
+    // Convert employee signature to base64 data URL
+    let reviewedWithMeSignature: string | undefined;
+    const empSig = employeeSignaturesResult.data?.[0];
+    if (empSig) {
+      if (empSig.method === "DRAWN" && empSig.signature_data) {
+        reviewedWithMeSignature = empSig.signature_data;
+      } else if (empSig.method === "UPLOAD" && empSig.storage_path) {
+        try {
+          const { data, error } = await admin.storage.from("employee-files").download(empSig.storage_path);
+          if (!error && data) {
+            const buffer = await data.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+            const binaryString = bytes.reduce((acc, byte) => acc + String.fromCharCode(byte), "");
+            const base64 = btoa(binaryString);
+            reviewedWithMeSignature = `data:${empSig.content_type || "image/png"};base64,${base64}`;
+          }
+        } catch (err) {
+          console.log(`[generateEvaluationData] Failed to fetch signature from storage: ${err}`);
+        }
+      }
+    }
+
+    // Get employee submission date
+    const reviewedWithMeDateStr = evaluation.employee_submitted_at ? formatDate(evaluation.employee_submitted_at) : "—";
+
     return {
       companyName: "PRIORITY HANDLING LOGISTICS, INC.",
       companyAddress: "1618-B Copernico St., San Isidro, Makati City",
@@ -424,12 +453,15 @@ export async function generateEvaluationData(evaluationId: string) {
       appraisedByName: raterName,
       appraisedByTitle: raterTitle,
       appraisedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at),
+      appraisedBySignature: undefined,
       reviewedByName: reviewingSupervisorName,
       reviewedByTitle: reviewingSupervisorTitle,
       reviewedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at),
+      reviewedBySignature: undefined,
       reviewedWithMeName: employeeName,
       reviewedWithMeTitle: employeeJobTitle,
-      reviewedWithMeDate: "—",
+      reviewedWithMeDate: reviewedWithMeDateStr,
+      reviewedWithMeSignature,
       overallRatingExplanation: normalizeText(evaluation.supervisor_step2_overall_explanation) || "",
       principalStrengths: normalizeText(evaluation.supervisor_step2_strengths) || "",
       principalWeakness: normalizeText(evaluation.supervisor_step2_weaknesses) || "",
