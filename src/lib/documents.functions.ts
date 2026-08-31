@@ -124,21 +124,19 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
     const { getAdmin, requirePermissionAny, validationError } = await import("./server-core.server");
     const { generateEvaluationData, generateEvaluationHTML } = await import("./documents.server");
 
-    await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view"], "Final Evaluation");
+    // Check both permissions to allow access at different workflow stages
+    await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view", "evaluations.review"], "Evaluation Sheet");
 
     const admin = await getAdmin();
     const { data: evaluation } = await admin
       .from("evaluations")
-      .select("status")
+      .select("id, status")
       .eq("id", data.evaluationId)
       .maybeSingle();
 
-    if (!evaluation) throw validationError("Evaluation not found");
-    if (evaluation.status !== "FINALIZED") {
-      throw validationError("Finalized evaluation document is unavailable because the evaluation is not finalized.");
-    }
+    if (!evaluation) throw validationError("Object not found");
 
-    // Generate the HTML on-demand
+    // Generate the HTML on-demand - allow at any stage where user has permission
     const evaluationData = await generateEvaluationData(data.evaluationId);
     const html = generateEvaluationHTML(evaluationData);
 
