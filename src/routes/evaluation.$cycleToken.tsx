@@ -358,6 +358,13 @@ function PublicEvaluationPage() {
                 {errors[field.key] ? <p className="text-xs text-destructive">{errors[field.key]}</p> : null}
               </div>
             ))}
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <div className="rounded-md border border-input bg-muted px-3 py-2 text-sm text-foreground cursor-not-allowed opacity-75">
+                {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+              <p className="text-xs text-muted-foreground">Auto-populated with today's date</p>
+            </div>
             <Button type="button" variant="outline" onClick={verifyProfile} disabled={verifying || !googleReady}>
               {verifying ? "Verifying..." : "Verify employee profile"}
             </Button>
