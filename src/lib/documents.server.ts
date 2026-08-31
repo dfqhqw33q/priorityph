@@ -16,7 +16,48 @@ function formatDate(value: string | null | undefined) {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
-async function loadSignatureImage(pdf: PDFDocument, admin: Awaited<ReturnType<typeof getAdmin>>, entry: { method: string; signature_data: string | null; storage_path: string | null; content_type?: string | null } | null) {
+function normalizeText(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
+function wrapText(text: string, maxCharsPerLine: number) {
+  const stripped = text.replace(/\r\n/g, "\n").trim();
+  if (!stripped) return ["—"];
+
+  const lines: string[] = [];
+  for (const paragraph of stripped.split(/\n+/)) {
+    const words = paragraph.split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+      lines.push("");
+      continue;
+    }
+
+    let line = "";
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (candidate.length <= maxCharsPerLine) {
+        line = candidate;
+      } else {
+        if (line) lines.push(line);
+        line = word;
+      }
+    }
+    if (line) lines.push(line);
+  }
+  return lines.length > 0 ? lines : ["—"];
+}
+
+async function loadSignatureImage(
+  pdf: PDFDocument,
+  admin: Awaited<ReturnType<typeof getAdmin>>,
+  entry: {
+    method: string;
+    signature_data: string | null;
+    storage_path: string | null;
+    content_type?: string | null;
+  } | null,
+) {
   if (!entry) return null;
   try {
     let bytes: Uint8Array | null = null;
@@ -37,12 +78,6 @@ async function loadSignatureImage(pdf: PDFDocument, admin: Awaited<ReturnType<ty
   } catch {
     return null;
   }
-}
-
-function drawField(page: any, font: any, y: number, label: string, value: string, x = 42) {
-  page.drawText(label, { x, y, size: 9, font, color: rgb(0.12, 0.15, 0.2) });
-  page.drawText(value || "—", { x: x + 150, y, size: 9, font, color: rgb(0.12, 0.15, 0.2) });
-  return y - 16;
 }
 
 export type FinalDocumentGenerationOptions = {
@@ -83,10 +118,11 @@ export async function createFinalEvaluationDocument(
   options: FinalDocumentGenerationOptions = {},
 ) {
   const admin = await getAdmin();
+
   const { data: evaluation } = await admin
     .from("evaluations")
     .select(
-      "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, status, finalized_at, finalized_by, finalization_reason, supervisor_user_id, supervisor_submitted_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
+      "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, status, finalized_at, finalized_by, finalization_reason, supervisor_user_id, supervisor_submitted_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_overall_explanation, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
     )
     .eq("id", evaluationId)
     .maybeSingle();
@@ -107,16 +143,29 @@ export async function createFinalEvaluationDocument(
     return existingDocument.data;
   }
 
-  const [criteriaResult, ratingsResult, scoreResult, step2Result, step3Result, personnelResult, committeeResult, signaturesResult] = await Promise.all([
+  const [criteriaResult, ratingsResult, scoreResult, employeeSignatureResult, stageSignatureResult, step2Result, step3Result, personnelResult, committeeResult] = await Promise.all([
     admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
     admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
     admin.from("evaluation_scores").select("final_score, final_rating_label, president_average, rule_version").eq("evaluation_id", evaluationId).maybeSingle(),
-    admin.from("evaluations").select("supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks").eq("id", evaluationId).maybeSingle(),
-    admin.from("reviewing_supervisor_reviews").select("comments, recommendations, reviewing_supervisor_date, reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
-    admin.from("personnel_processing").select("present_salary, last_increase_date, last_increase_nature, last_increase_amount, total_points, adjective_rating, recommended_increase_bonus").eq("evaluation_id", evaluationId).maybeSingle(),
-    admin.from("committee_reviews").select("final_action, action_details, recommendation, committee_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
+    admin.from("employee_signatures").select("method, storage_path, signature_data, content_type, signed_at").eq("evaluation_id", evaluationId).maybeSingle(),
     admin.from("evaluation_stage_signatures").select("stage, method, storage_path, signature_data, signed_at, content_type").eq("evaluation_id", evaluationId),
+    admin.from("evaluations").select("supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_overall_explanation, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks").eq("id", evaluationId).maybeSingle(),
+    admin.from("reviewing_supervisor_reviews").select("comments, recommendations, reviewing_supervisor_date, reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
+    admin.from("personnel_processing").select("present_salary, last_increase_date, last_increase_nature, last_increase_amount, total_points, adjective_rating, recommended_increase_bonus, personnel_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
+    admin.from("committee_reviews").select("final_action, action_details, recommendation, committee_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
   ]);
+
+  const userIds = [
+    evaluation.supervisor_user_id,
+    step3Result?.data?.reviewer_user_id,
+    personnelResult?.data?.personnel_user_id,
+    committeeResult?.data?.committee_user_id,
+    evaluation.finalized_by,
+  ].filter((value): value is string => Boolean(value));
+
+  const { data: userListResult } = userIds.length
+    ? await admin.from("internal_users").select("id, full_name").in("id", userIds)
+    : { data: [] };
 
   const criteria = criteriaResult.data ?? [];
   const ratings = ratingsResult.data ?? [];
@@ -128,125 +177,172 @@ export async function createFinalEvaluationDocument(
     item[row.evaluator_type] = row.rating;
   }
 
+  const userLookup = new Map((userListResult.data ?? []).map((user) => [user.id, user.full_name]));
+  const raterName = evaluation.supervisor_user_id ? userLookup.get(evaluation.supervisor_user_id) ?? "—" : "—";
+  const reviewingSupervisorName = step3Result?.data?.reviewer_user_id ? userLookup.get(step3Result.data.reviewer_user_id) ?? "—" : "—";
+  const personnelName = personnelResult?.data?.personnel_user_id ? userLookup.get(personnelResult.data.personnel_user_id) ?? "—" : "—";
+  const committeeName = committeeResult?.data?.committee_user_id ? userLookup.get(committeeResult.data.committee_user_id) ?? "—" : "—";
+  const presidentName = evaluation.finalized_by ? userLookup.get(evaluation.finalized_by) ?? "—" : "—";
+
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
+  const pages: { page: any; y: number }[] = [];
   let page = pdf.addPage([612, 792]);
   let y = 760;
+  const addPage = () => {
+    page = pdf.addPage([612, 792]);
+    y = 760;
+    pages.push({ page, y });
+  };
+  pages.push({ page, y });
 
-  const draw = (text: string, size = 10, boldText = false, x = 42) => {
-    if (y < 52) {
-      page = pdf.addPage([612, 792]);
-      y = 760;
+  const ensureSpace = (needed = 18) => {
+    if (y <= needed) {
+      addPage();
     }
-    page.drawText(text, { x, y, size, font: boldText ? bold : font, color: rgb(0.08, 0.1, 0.15) });
+  };
+
+  const drawText = (text: string, size = 10, x = 42, fontVariant = font, color = rgb(0.08, 0.12, 0.18), maxWidth?: number) => {
+    ensureSpace(size + 8);
+    page.drawText(text, { x, y, size, font: fontVariant, color, maxWidth });
     y -= size + 5;
   };
 
   const drawLine = (startX: number, endX: number, startY = y) => {
-    page.drawLine({ start: { x: startX, y: startY }, end: { x: endX, y: startY }, thickness: 0.7, color: rgb(0.7, 0.72, 0.76) });
+    page.drawLine({ start: { x: startX, y: startY }, end: { x: endX, y: startY }, thickness: 0.7, color: rgb(0.72, 0.73, 0.76) });
     y -= 12;
   };
 
-  draw("PRIORITY HANDLING LOGISTICS, INC.", 16, true, 150);
-  draw("PERFORMANCE EVALUATION SHEET", 13, true, 185);
-  draw(`FOR NON-SUPERVISORY STAFF • ${cycle.name} (${cycle.year})`, 10, false, 120);
-  drawLine(42, 570);
-  y = drawField(page, font, y, "Employee number", evaluation.employee_number_snapshot) || y;
-  y = drawField(page, font, y, "Employee name", evaluation.full_name_snapshot) || y;
-  y = drawField(page, font, y, "Job title", evaluation.job_title_snapshot) || y;
-  y = drawField(page, font, y, "Division", evaluation.division_snapshot) || y;
-  y = drawField(page, font, y, "Section", evaluation.section_snapshot) || y;
-  y = drawField(page, font, y, "Finalized", formatDate(evaluation.finalized_at as string | null | undefined)) || y;
+  const drawLabelValue = (label: string, value: unknown, x = 42, valueX = 190) => {
+    const displayValue = normalizeText(value) || "—";
+    drawText(label, 9, x, font, rgb(0.12, 0.15, 0.2), 140);
+    page.drawText(displayValue, { x: valueX, y, size: 9, font, color: rgb(0.12, 0.15, 0.2), maxWidth: 360 });
+    y -= 16;
+  };
+
+  const drawParagraph = (label: string, textValue: unknown, options?: { maxWidth?: number; labelX?: number; valueX?: number; size?: number; labelBold?: boolean; indent?: number }) => {
+    const safeValue = normalizeText(textValue) || "—";
+    const size = options?.size ?? 9;
+    const labelX = options?.labelX ?? 42;
+    const valueX = options?.valueX ?? 190;
+    const maxWidth = options?.maxWidth ?? 350;
+
+    ensureSpace(28);
+    page.drawText(label, { x: labelX, y, size, font: options?.labelBold ? bold : font, color: rgb(0.12, 0.15, 0.2) });
+    const wrapped = wrapText(safeValue, 90);
+    let currentY = y;
+    for (let index = 0; index < wrapped.length; index += 1) {
+      const line = wrapped[index] ?? "";
+      page.drawText(line, { x: valueX, y: currentY, size, font, color: rgb(0.12, 0.15, 0.2), maxWidth });
+      currentY -= size + 4;
+    }
+    y = currentY - 8;
+  };
+
+  drawText("PRIORITY HANDLING LOGISTICS, INC.", 16, 150, bold);
+  drawText("PERFORMANCE EVALUATION SHEET", 13, 170, bold);
+  drawText(`FOR NON-SUPERVISORY STAFF • ${cycle.name} (${cycle.year})`, 10, 160, font);
   drawLine(42, 570);
 
-  page.drawText("PERFORMANCE EVALUATION FACTOR", { x: 42, y, size: 10, font: bold });
-  page.drawText("1", { x: 470, y, size: 10, font: bold });
-  page.drawText("2", { x: 495, y, size: 10, font: bold });
-  page.drawText("3", { x: 520, y, size: 10, font: bold });
-  page.drawText("4", { x: 545, y, size: 10, font: bold });
-  page.drawText("5", { x: 570, y, size: 10, font: bold });
-  y -= 18;
+  drawLabelValue("Employee number", evaluation.employee_number_snapshot);
+  drawLabelValue("Employee name", evaluation.full_name_snapshot);
+  drawLabelValue("Job title", evaluation.job_title_snapshot);
+  drawLabelValue("Division / department", evaluation.division_snapshot);
+  drawLabelValue("Section / unit", evaluation.section_snapshot);
+  drawLabelValue("Period covered", `${cycle.starts_at ? formatDate(cycle.starts_at) : "—"} to ${cycle.ends_at ? formatDate(cycle.ends_at) : "—"}`);
+  drawLabelValue("Status", statusLabel);
+  drawLine(42, 570);
+
+  drawText("PERFORMANCE EVALUATION FACTOR", 10, 42, bold);
+  drawText("1", 10, 470, bold);
+  drawText("2", 10, 495, bold);
+  drawText("3", 10, 520, bold);
+  drawText("4", 10, 545, bold);
+  drawText("5", 10, 570, bold);
+  y -= 8;
   for (const criterion of criteria) {
     const row = ratingMap.get(criterion.id) ?? {};
-    const cellX = [470, 495, 520, 545, 570];
-    page.drawText(`${criterion.letter}. ${criterion.title}`, { x: 42, y, size: 8, font });
-    for (let index = 0; index < 5; index += 1) {
-      const value = index + 1;
-      const marked = row.EMPLOYEE === value || row.SUPERVISOR === value || row.REVIEWING_SUPERVISOR === value || row.PRESIDENT === value ? "X" : "";
-      page.drawText(marked, { x: cellX[index], y, size: 8, font: bold });
+    const rowLabel = `${criterion.letter}. ${criterion.title}`;
+    page.drawText(rowLabel, { x: 42, y, size: 8, font, color: rgb(0.12, 0.15, 0.2), maxWidth: 350 });
+    const values = [row.EMPLOYEE, row.SUPERVISOR, row.REVIEWING_SUPERVISOR, row.PRESIDENT];
+    const positions = [455, 485, 515, 545];
+    for (let index = 0; index < values.length; index += 1) {
+      const value = values[index];
+      page.drawText(value ? String(value) : "", { x: positions[index], y, size: 8, font: bold, color: rgb(0.12, 0.15, 0.2) });
     }
     y -= 16;
   }
-  y -= 10;
   drawLine(42, 570);
-  draw("CONCLUSIONS AND COMMENTS", 12, true, 190);
-  draw("CONFIDENTIAL: NOT TO BE SHOWN TO RATEE", 9, false, 150);
-  draw("STEP TWO: Develop conclusion and comments", 10, true, 42);
-  const step2 = step2Result?.data ?? (evaluation as never);
-  const step2Blocks = [
-    ["Principal strengths", step2?.supervisor_step2_strengths ?? ""],
-    ["Principal weakness", step2?.supervisor_step2_weaknesses ?? ""],
-    ["Development", step2?.supervisor_step2_development ?? ""],
-    ["Advancement outlook", step2?.supervisor_step2_advancement ?? ""],
-    ["Career transfer", step2?.supervisor_step2_career_transfer ?? ""],
-    ["Growth suggestions", step2?.supervisor_step2_growth_suggestions ?? ""],
-    ["Transfer interest", step2?.supervisor_step2_transfer_interest ?? ""],
-    ["Transfer job", step2?.supervisor_step2_transfer_job ?? ""],
-    ["Transfer where", step2?.supervisor_step2_transfer_where ?? ""],
-    ["Transfer qualified", step2?.supervisor_step2_transfer_qualified ?? ""],
-    ["Other comments", step2?.supervisor_step2_other_comments ?? ""],
-  ] as const;
-  for (const [label, value] of step2Blocks) {
-    if (!value) continue;
-    draw(`${label}: ${value}`, 8, false, 42);
-  }
-  draw(`Rater signature date: ${formatDate(step2?.supervisor_step2_date as string | null | undefined)}`, 8, false, 42);
-  drawLine(42, 570);
-  draw("STEP THREE: Reviewed by the Reviewing Supervisor", 10, true, 42);
-  const step3 = step3Result?.data;
-  draw(`Comments: ${step3?.comments ?? "—"}`, 8, false, 42);
-  draw(`Recommendations: ${step3?.recommendations ?? "—"}`, 8, false, 42);
-  draw(`Reviewing supervisor date: ${formatDate(step3?.reviewing_supervisor_date as string | null | undefined)}`, 8, false, 42);
-  drawLine(42, 570);
-  draw("PERSONNEL OFFICE", 10, true, 42);
-  const personnel = personnelResult?.data;
-  draw(`Present salary: ${personnel?.present_salary ?? "—"}`, 8, false, 42);
-  draw(`Last increase date: ${formatDate(personnel?.last_increase_date as string | null | undefined)}`, 8, false, 42);
-  draw(`Nature of last increase: ${personnel?.last_increase_nature ?? "—"}`, 8, false, 42);
-  draw(`Amount of last increase: ${personnel?.last_increase_amount ?? "—"}`, 8, false, 42);
-  draw(`Total points: ${personnel?.total_points ?? "—"}`, 8, false, 42);
-  draw(`Adjective rating: ${personnel?.adjective_rating ?? "—"}`, 8, false, 42);
-  draw(`Recommended increase / bonus: ${personnel?.recommended_increase_bonus ?? "—"}`, 8, false, 42);
-  drawLine(42, 570);
-  draw("FINAL ACTION RECOMMENDED BY THE PERFORMANCE EVALUATION COMMITTEE", 10, true, 42);
-  const committee = committeeResult?.data;
-  draw(`Final action: ${committee?.final_action ?? "—"}`, 8, false, 42);
-  draw(`Action details: ${committee?.action_details ?? "—"}`, 8, false, 42);
-  draw(`Recommendation: ${committee?.recommendation ?? "—"}`, 8, false, 42);
-  drawLine(42, 570);
-  draw("PRESIDENT APPROVAL", 10, true, 42);
-  draw(`Final decision: ${statusLabel === "FINALIZED" ? "APPROVED AND FINALIZED" : "PENDING"}`, 8, false, 42);
-  draw(`Finalization date: ${formatDate(finalizedAt)}`, 8, false, 42);
-  draw(`Finalization reason: ${finalizationReason ?? "—"}`, 8, false, 42);
 
-  const signatures = signaturesResult.data ?? [];
-  const signatureByStage = new Map(signatures.map((entry) => [entry.stage, entry]));
-  const stageSignaturePositions: [string, number, number][] = [
-    ["RATER_STEP2", 90, 230],
-    ["REVIEWING_SUPERVISOR_STEP3", 220, 230],
-    ["PERSONNEL", 350, 230],
-    ["COMMITTEE", 480, 230],
-    ["PRESIDENT", 260, 120],
-  ];
-  for (const [stage, x, yPos] of stageSignaturePositions) {
-    const signatureEntry = signatureByStage.get(stage);
-    const signatureImage = await loadSignatureImage(pdf, admin, signatureEntry as any);
-    if (signatureImage) {
-      page.drawImage(signatureImage, { x, y: yPos, width: 120, height: 30 });
-    }
-  }
+  drawText("STEP 1 — EMPLOYEE / SUPERVISOR / REVIEWING SUPERVISOR RATINGS", 10, 150, bold);
+  drawText(`Rater: ${raterName}`, 9, 42, font);
+  drawText(`Reviewing supervisor: ${reviewingSupervisorName}`, 9, 300, font);
+  y -= 10;
+
+  drawParagraph("Principal strengths", evaluation.supervisor_step2_strengths ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Principal weaknesses", evaluation.supervisor_step2_weaknesses ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Overall rating explanation", evaluation.supervisor_step2_overall_explanation ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Present-job effectiveness", evaluation.supervisor_step2_effectiveness ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Development potential", evaluation.supervisor_step2_development_potential ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Advancement outlook", evaluation.supervisor_step2_advancement_outlook ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Growth and development suggestions", evaluation.supervisor_step2_growth_suggestions ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Job/transfer interest", evaluation.supervisor_step2_transfer_interest ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Transfer job", evaluation.supervisor_step2_transfer_job ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Transfer where", evaluation.supervisor_step2_transfer_where ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Transfer qualified", evaluation.supervisor_step2_transfer_qualified ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Other comments / recommendations", evaluation.supervisor_step2_other_comments ?? "", { valueX: 190, maxWidth: 330 });
+  drawParagraph("Supervisor remarks", evaluation.supervisor_remarks ?? "", { valueX: 190, maxWidth: 330 });
+
+  const step3 = step3Result?.data ?? null;
+  drawText("STEP 2 — REVIEWING SUPERVISOR / DIVISION HEAD", 10, 150, bold);
+  drawParagraph("Reviewing supervisor comments", step3?.comments ?? "", { valueX: 230, maxWidth: 300 });
+  drawParagraph("Reviewing supervisor recommendations", step3?.recommendations ?? "", { valueX: 230, maxWidth: 300 });
+  drawLabelValue("Reviewing supervisor date", step3?.reviewing_supervisor_date ?? "—");
+  drawLine(42, 570);
+
+  const personnel = personnelResult?.data ?? null;
+  drawText("PERSONNEL OFFICE", 10, 180, bold);
+  drawLabelValue("Present salary", personnel?.present_salary ?? "—");
+  drawLabelValue("Last increase date", personnel?.last_increase_date ?? "—");
+  drawLabelValue("Nature of last increase", personnel?.last_increase_nature ?? "—");
+  drawLabelValue("Amount of last increase", personnel?.last_increase_amount ?? "—");
+  drawLabelValue("Total points", personnel?.total_points ?? "—");
+  drawLabelValue("Adjective rating", personnel?.adjective_rating ?? "—");
+  drawLabelValue("Recommended increase / bonus", personnel?.recommended_increase_bonus ?? "—");
+  drawLabelValue("Personnel reviewer", personnelName);
+  drawLine(42, 570);
+
+  const committee = committeeResult?.data ?? null;
+  drawText("COMMITTEE REVIEW", 10, 200, bold);
+  drawLabelValue("Final action", committee?.final_action ?? "—");
+  drawParagraph("Action details", committee?.action_details ?? "", { valueX: 200, maxWidth: 330 });
+  drawParagraph("Committee recommendation", committee?.recommendation ?? "", { valueX: 200, maxWidth: 330 });
+  drawLabelValue("Committee reviewer", committeeName);
+  drawLine(42, 570);
+
+  drawText("PRESIDENT APPROVAL", 10, 180, bold);
+  drawLabelValue("Final decision", statusLabel === "FINALIZED" ? "APPROVED AND FINALIZED" : "PENDING");
+  drawLabelValue("Date finalized", finalizedAt ? formatDate(finalizedAt) : "—");
+  drawLabelValue("Reason", finalizationReason ?? "—");
+  drawLabelValue("President", presidentName);
+  drawLine(42, 570);
+
+  const stageSignatures = new Map((stageSignatureResult.data ?? []).map((entry) => [entry.stage, entry]));
+  const employeeSig = employeeSignatureResult?.data ? await loadSignatureImage(pdf, admin, employeeSignatureResult.data as never) : null;
+  const raterSignature = await loadSignatureImage(pdf, admin, stageSignatures.get("RATER_STEP2") as never);
+  const reviewingSignature = await loadSignatureImage(pdf, admin, stageSignatures.get("REVIEWING_SUPERVISOR_STEP3") as never);
+  const personnelSignature = await loadSignatureImage(pdf, admin, stageSignatures.get("PERSONNEL") as never);
+  const committeeSignature = await loadSignatureImage(pdf, admin, stageSignatures.get("COMMITTEE") as never);
+  const presidentSignature = await loadSignatureImage(pdf, admin, stageSignatures.get("PRESIDENT") as never);
+
+  if (employeeSig) page.drawImage(employeeSig, { x: 420, y: 658, width: 120, height: 28 });
+  if (raterSignature) page.drawImage(raterSignature, { x: 60, y: 500, width: 120, height: 28 });
+  if (reviewingSignature) page.drawImage(reviewingSignature, { x: 250, y: 500, width: 120, height: 28 });
+  if (personnelSignature) page.drawImage(personnelSignature, { x: 430, y: 500, width: 120, height: 28 });
+  if (committeeSignature) page.drawImage(committeeSignature, { x: 250, y: 330, width: 120, height: 28 });
+  if (presidentSignature) page.drawImage(presidentSignature, { x: 420, y: 330, width: 120, height: 28 });
 
   const bytes = await pdf.save();
   const versionLabel = evaluation.version ?? 1;
