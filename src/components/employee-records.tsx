@@ -99,9 +99,9 @@ export function EmployeeRecordsPage() {
     window.open(result.url, "_blank", "noopener,noreferrer");
   }
 
-  async function openFinalEvaluationDocument(evaluationId: string, mode: "preview" | "print" | "export") {
+  async function openFinalEvaluationDocument(evaluationId: string, mode: "preview" | "print" | "export", forceRefresh = true) {
     try {
-      const result = await getFinalEvaluationDocumentUrl({ data: { evaluationId } });
+      const result = await getFinalEvaluationDocumentUrl({ data: { evaluationId, forceRefresh } });
       const win = window.open(result.url, "_blank", "noopener,noreferrer");
       if (mode === "print") {
         setTimeout(() => win?.print(), 600);
@@ -230,14 +230,17 @@ export function EmployeeRecordsPage() {
                   </p>
                   {item.status === "FINALIZED" ? (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "preview")}>
+                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "preview", true)}>
                         Preview
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "print")}>
+                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "print", true)}>
                         Print
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "export")}>
+                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "export", true)}>
                         Export
+                      </Button>
+                      <Button variant="secondary" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "preview", true)}>
+                        Refresh PDF
                       </Button>
                     </div>
                   ) : null}

@@ -146,9 +146,9 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   }, [detail, stage]);
   const update = (key: string, value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
-  async function openDocument(mode: "preview" | "print") {
+  async function openDocument(mode: "preview" | "print", forceRefresh = true) {
     try {
-      const result = await getDocumentUrl({ data: { evaluationId } });
+      const result = await getDocumentUrl({ data: { evaluationId, forceRefresh } });
       const win = window.open(result.url, "_blank", "noopener,noreferrer");
       if (mode === "print") {
         setTimeout(() => win?.print(), 600);
@@ -485,8 +485,9 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
           ) : null}
           {stage === "PRESIDENT" ? (
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={() => openDocument("preview")}>Preview Evaluation</Button>
-              <Button type="button" variant="outline" onClick={() => openDocument("print")}>Print / Export PDF</Button>
+              <Button type="button" variant="outline" onClick={() => openDocument("preview", true)}>Preview Evaluation</Button>
+              <Button type="button" variant="outline" onClick={() => openDocument("print", true)}>Print / Export PDF</Button>
+              <Button type="button" variant="secondary" onClick={() => openDocument("preview", true)}>Refresh PDF</Button>
             </div>
           ) : null}
           {stage === "RATER" ? (

@@ -25,10 +25,10 @@ function HistoryDetailPage() {
     retry: false,
   });
 
-  async function openFinalDocument(mode: "preview" | "print") {
+  async function openFinalDocument(mode: "preview" | "print", forceRefresh = true) {
     setDocumentAction(mode);
     try {
-      const result = await getDocumentUrl({ data: { evaluationId } });
+      const result = await getDocumentUrl({ data: { evaluationId, forceRefresh } });
       const win = window.open(result.url, "_blank", "noopener,noreferrer");
       if (mode === "print") {
         setTimeout(() => win?.print(), 600);
@@ -61,11 +61,14 @@ function HistoryDetailPage() {
             <EvaluationStatusBadge status={detail.status} />
             {detail.status === "FINALIZED" ? (
               <>
-                <Button variant="outline" size="sm" onClick={() => openFinalDocument("preview")} disabled={documentAction !== null}>
+                <Button variant="outline" size="sm" onClick={() => openFinalDocument("preview", true)} disabled={documentAction !== null}>
                   {documentAction === "preview" ? "Opening..." : "Preview"}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => openFinalDocument("print")} disabled={documentAction !== null}>
+                <Button variant="outline" size="sm" onClick={() => openFinalDocument("print", true)} disabled={documentAction !== null}>
                   {documentAction === "print" ? "Opening..." : "Print"}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => openFinalDocument("preview", true)} disabled={documentAction !== null}>
+                  Refresh PDF
                 </Button>
               </>
             ) : null}

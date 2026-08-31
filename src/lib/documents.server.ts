@@ -91,9 +91,10 @@ export type FinalDocumentGenerationOptions = {
   statusOverride?: string;
   finalizedAt?: string | null;
   finalizationReason?: string | null;
+  forceRefresh?: boolean;
 };
 
-export async function ensureFinalizedEvaluationDocument(evaluationId: string, actorUserId: string) {
+export async function ensureFinalizedEvaluationDocument(evaluationId: string, actorUserId: string, forceRefresh = false) {
   const admin = await getAdmin();
   const { data: evaluation } = await admin
     .from("evaluations")
@@ -112,12 +113,13 @@ export async function ensureFinalizedEvaluationDocument(evaluationId: string, ac
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (existing && (existing.evaluation_version ?? evaluation.version) === evaluation.version) {
+  if (!forceRefresh && existing && (existing.evaluation_version ?? evaluation.version) === evaluation.version) {
     return existing;
   }
   return createFinalEvaluationDocument(evaluationId, actorUserId, {
     statusOverride: "FINALIZED",
     finalizedAt: new Date().toISOString(),
+    forceRefresh,
   });
 }
 
@@ -150,7 +152,7 @@ export async function createFinalEvaluationDocument(
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (existingDocument.data && (existingDocument.data.evaluation_version ?? evaluation.version) === evaluation.version) {
+  if (!options.forceRefresh && existingDocument.data && (existingDocument.data.evaluation_version ?? evaluation.version) === evaluation.version) {
     return existingDocument.data;
   }
 
