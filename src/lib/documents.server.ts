@@ -109,6 +109,8 @@ export async function ensureFinalizedEvaluationDocument(evaluationId: string, ac
     .select("id, storage_path, file_name, evaluation_version")
     .eq("evaluation_id", evaluationId)
     .eq("category", "PERFORMANCE_EVALUATIONS")
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (existing && (existing.evaluation_version ?? evaluation.version) === evaluation.version) {
     return existing;
@@ -145,6 +147,8 @@ export async function createFinalEvaluationDocument(
     .select("id, storage_path, file_name, evaluation_version")
     .eq("evaluation_id", evaluationId)
     .eq("category", "PERFORMANCE_EVALUATIONS")
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (existingDocument.data && (existingDocument.data.evaluation_version ?? evaluation.version) === evaluation.version) {
     return existingDocument.data;

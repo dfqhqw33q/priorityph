@@ -61,6 +61,8 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
         .select("id, storage_path, file_name")
         .eq("evaluation_id", data.evaluationId)
         .eq("category", "PERFORMANCE_EVALUATIONS")
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       document = existing ?? null;
     }
