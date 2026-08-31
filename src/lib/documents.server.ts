@@ -4,7 +4,7 @@ import { getAdmin, validationError } from "./server-core.server";
  * Generate HTML string for the Performance Evaluation Sheet
  * Matches the responsive React component design
  */
-function generateEvaluationHTML(params: {
+export function generateEvaluationHTML(params: {
   companyName: string;
   companyAddress: string;
   periodFrom: string;
@@ -321,7 +321,7 @@ function wrapText(text: string, maxCharsPerLine: number) {
  * Generate evaluation sheet data for rendering
  * Returns structured data that can be used by React component or HTML template
  */
-async function generateEvaluationData(evaluationId: string) {
+export async function generateEvaluationData(evaluationId: string) {
   const admin = await getAdmin();
 
   const { data: evaluation } = await admin
@@ -482,43 +482,31 @@ export async function createFinalEvaluationDocument(
 
   const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number } }).evaluation_cycles;
 
+  // Check if document record already exists
   const existingDocument = await admin
     .from("employee_documents")
-    .select("id, storage_path, file_name, evaluation_version")
+    .select("id, evaluation_version")
     .eq("evaluation_id", evaluationId)
     .eq("category", "PERFORMANCE_EVALUATIONS")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  // Skip if already created for this version (unless forceRefresh)
   if (!options.forceRefresh && existingDocument.data && (existingDocument.data.evaluation_version ?? evaluation.version) === evaluation.version) {
     return existingDocument.data;
   }
 
-  // Get all evaluation data
-  const data = await generateEvaluationData(evaluationId);
-
-  // Generate responsive HTML
-  const html = generateEvaluationHTML(data);
-
-  // Store HTML in storage for preview and client-side PDF generation
-  const htmlPath = `employees/${evaluation.employee_id}/evaluations/${cycle.year}-final-performance-evaluation-v${evaluation.version}.html`;
-  const { error: uploadError } = await admin.storage
-    .from("employee-files")
-    .upload(htmlPath, html, {
-      contentType: "text/html; charset=utf-8",
-      upsert: true,
-    });
-  if (uploadError) throw new Error(uploadError.message);
-
+  // Create or update document record (HTML is generated on-demand via getEvaluationSheetHtml)
   const payload = {
     employee_id: evaluation.employee_id,
     evaluation_id: evaluationId,
     evaluation_version: evaluation.version,
     category: "PERFORMANCE_EVALUATIONS",
-    file_name: `${cycle.year} Final Performance Evaluation v${evaluation.version}.html`,
-    storage_path: htmlPath,
+    file_name: `${cycle.year} Final Performance Evaluation v${evaluation.version}`,
+    storage_path: `evaluations/${evaluationId}/finalized`, // Virtual path for reference
     content_type: "text/html",
-    file_size: html.length,
+    file_size: 0, // Generated on-demand
     created_by: userId,
   };
 

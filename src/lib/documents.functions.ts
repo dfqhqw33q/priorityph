@@ -116,3 +116,32 @@ export const uploadEmployeeDocument = createServerFn({ method: "POST" })
     await writeAudit({ actorUserId: context.userId, actorRole: (await getActorRoles(context.userId)).join(","), action: "DOCUMENT_UPLOADED", module: "Employee Files", entityType: "employee_document", entityId: document.id, newValue: { category: data.category, fileName: data.fileName, fileSize: bytes.length } });
     return document;
   });
+
+export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { getAdmin, requirePermissionAny, validationError } = await import("./server-core.server");
+    const { generateEvaluationData, generateEvaluationHTML } = await import("./documents.server");
+
+    await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view"], "Final Evaluation");
+
+    const admin = await getAdmin();
+    const { data: evaluation } = await admin
+      .from("evaluations")
+      .select("status")
+      .eq("id", data.evaluationId)
+      .maybeSingle();
+
+    if (!evaluation) throw validationError("Evaluation not found");
+    if (evaluation.status !== "FINALIZED") {
+      throw validationError("Finalized evaluation document is unavailable because the evaluation is not finalized.");
+    }
+
+    // Generate the HTML on-demand
+    const evaluationData = await generateEvaluationData(data.evaluationId);
+    const html = generateEvaluationHTML(evaluationData);
+
+    return { html };
+  });
+
