@@ -174,7 +174,7 @@ export const PerformanceEvaluationSheet: React.FC<
           page-break-inside: auto;
         }
       }
-    `}
+    `}</style>
 
     <main className="max-w-5xl mx-auto bg-white text-[12px] leading-normal print:max-w-none print:mx-0">
       {/* ===== HEADER SECTION ===== */}

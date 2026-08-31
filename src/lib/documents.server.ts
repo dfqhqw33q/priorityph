@@ -347,6 +347,48 @@ async function convertSignatureToDataUrl(
  * Generate evaluation sheet data for rendering
  * Returns structured data that can be used by React component or HTML template
  */
+export async function createFinalEvaluationDocument(
+  evaluationId: string,
+  actorUserId: string,
+  options: {
+    statusOverride?: string;
+    finalizedAt?: string;
+    finalizationReason?: string;
+    forceRefresh?: boolean;
+  } = {},
+) {
+  const admin = await getAdmin();
+  const { html } = await generateEvaluationData(evaluationId).then(async (evaluationData) => ({
+    html: generateEvaluationHTML(evaluationData),
+  }));
+
+  const path = `evaluations/${evaluationId}/final-document.html`;
+  const bytes = new TextEncoder().encode(html);
+  const { error } = await admin.storage.from("employee-files").upload(path, bytes, {
+    contentType: "text/html; charset=utf-8",
+    upsert: true,
+  });
+
+  if (error) {
+    throw new Error(`Failed to store the final evaluation document: ${error.message}`);
+  }
+
+  try {
+    await admin.from("evaluation_events").insert({
+      evaluation_id: evaluationId,
+      event_type: "FINAL_DOCUMENT_GENERATED",
+      actor_user_id: actorUserId,
+      from_status: options.statusOverride ?? null,
+      to_status: options.statusOverride ?? null,
+      reason: options.finalizationReason ?? null,
+    } as never);
+  } catch {
+    // Non-blocking; document generation should not fail if the audit event insert is unavailable.
+  }
+
+  return { path, html };
+}
+
 export async function generateEvaluationData(evaluationId: string) {
   const admin = await getAdmin();
 
@@ -355,7 +397,7 @@ export async function generateEvaluationData(evaluationId: string) {
     const { data: evaluation, error: evalError } = (await admin
       .from("evaluations")
       .select(
-        "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, status, finalized_at, finalized_by, finalization_reason, employee_submitted_at, supervisor_user_id, supervisor_submitted_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_overall_explanation, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
+        "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, is_finalized, employee_submitted_at, supervisor_user_id, supervisor_submitted_at, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
       )
       .eq("id", evaluationId)
       .maybeSingle()) as any;
@@ -373,10 +415,14 @@ export async function generateEvaluationData(evaluationId: string) {
     const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult, employeeSignaturesResult, internalUserSignaturesResult] = await Promise.all([
       admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
       admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
-      admin.from("evaluation_stage_signatures").select("stage, signed_at").eq("evaluation_id", evaluationId),
+      admin
+        .from("evaluation_stage_signatures")
+        .select("stage, method, storage_path, signature_data, signer_user_id, signed_at")
+        .eq("evaluation_id", evaluationId)
+        .in("stage", ["RATER_STEP2", "REVIEWING_SUPERVISOR_STEP3"]),
       evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
       admin.from("employee_signatures").select("method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
-      admin.from("internal_user_signatures").select("user_id, stage, method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
+      (admin as any).from("internal_user_signatures").select("user_id, stage, method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
     ]);
 
     console.log(`[generateEvaluationData] Criteria: ${criteriaResult.data?.length || 0}, Ratings: ${ratingsResult.data?.length || 0}, Signatures: ${stageSignatureResult.data?.length || 0}, Employee: ${!!employeeRecordResult?.data}`);
@@ -420,7 +466,7 @@ export async function generateEvaluationData(evaluationId: string) {
       };
     });
 
-    const userLookup = new Map((userListResult ?? []).map((user) => [user.id, { full_name: user.full_name, job_title: user.job_title ?? null }]));
+    const userLookup = new Map((userListResult ?? []).map((user: any) => [user.id, { full_name: user.full_name, job_title: user.job_title ?? null }]));
     const raterUser = evaluation.supervisor_user_id ? userLookup.get(evaluation.supervisor_user_id) ?? null : null;
     const reviewingSupervisorUser = step3Result?.reviewer_user_id ? userLookup.get(step3Result.reviewer_user_id) ?? null : null;
     const employeeName = employeeRecordResult?.data?.full_name ?? evaluation.full_name_snapshot ?? "—";
@@ -433,18 +479,20 @@ export async function generateEvaluationData(evaluationId: string) {
     const periodTo = formatFormDate(cycle.ends_at) || `December 31, ${cycle.year}`;
 
     // Convert employee signature to base64 data URL using helper function
-    const reviewedWithMeSignature = await convertSignatureToDataUrl(admin, employeeSignaturesResult.data?.[0]);
+    const reviewedWithMeSignature = await convertSignatureToDataUrl(admin, (employeeSignaturesResult.data?.[0] ?? null) as any);
 
     // Get employee submission date
     const reviewedWithMeDateStr = evaluation.employee_submitted_at ? formatDate(evaluation.employee_submitted_at) : "—";
 
-    // Get supervisor signatures
-    const internalSigs = internalUserSignaturesResult.data ?? [];
-    const raterStage = internalSigs.find((s) => s.stage === "RATER_STEP2");
-    const reviewerStage = internalSigs.find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3");
+    // Use the actual saved stage signatures from the submitted workflow, with the internal-user table as a fallback only.
+    const stageSignatureMap = new Map((stageSignatureResult.data ?? []).map((signature: any) => [signature.stage, signature]));
+    const internalSignatureMap = new Map((internalUserSignaturesResult.data ?? []).map((signature: any) => [signature.stage, signature]));
 
-    const appraisedBySignature = raterStage ? await convertSignatureToDataUrl(admin, raterStage) : undefined;
-    const reviewedBySignature = reviewerStage ? await convertSignatureToDataUrl(admin, reviewerStage) : undefined;
+    const raterStage = stageSignatureMap.get("RATER_STEP2") ?? internalSignatureMap.get("RATER_STEP2");
+    const reviewerStage = stageSignatureMap.get("REVIEWING_SUPERVISOR_STEP3") ?? internalSignatureMap.get("REVIEWING_SUPERVISOR_STEP3");
+
+    const appraisedBySignature = raterStage ? await convertSignatureToDataUrl(admin, raterStage as any) : undefined;
+    const reviewedBySignature = reviewerStage ? await convertSignatureToDataUrl(admin, reviewerStage as any) : undefined;
 
     return {
       companyName: "PRIORITY HANDLING LOGISTICS, INC.",
@@ -474,13 +522,13 @@ export async function generateEvaluationData(evaluationId: string) {
       reviewedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at),
       reviewedBySignature,
       reviewedWithMeName: employeeName,
-      reviewedWithMeTitle: employeeJobTitle,
+      reviewedWithMeTitle: "Ratee / Employee",
       reviewedWithMeDate: reviewedWithMeDateStr,
       reviewedWithMeSignature,
-      overallRatingExplanation: normalizeText(evaluation.supervisor_step2_overall_explanation) || "",
-      principalStrengths: normalizeText(evaluation.supervisor_step2_strengths) || "",
-      principalWeakness: normalizeText(evaluation.supervisor_step2_weaknesses) || "",
-      effectivenessRecommendation: normalizeText(evaluation.supervisor_step2_development) || "",
+      overallRatingExplanation: "",
+      principalStrengths: "",
+      principalWeakness: "",
+      effectivenessRecommendation: "",
       formDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
     };
   } catch (error) {
@@ -488,107 +536,4 @@ export async function generateEvaluationData(evaluationId: string) {
     console.error(`[generateEvaluationData] Error:`, errorMsg, error);
     throw new Error(`Error generating evaluation data: ${errorMsg}`);
   }
-}
-
-export type FinalDocumentGenerationOptions = {
-  statusOverride?: string;
-  finalizedAt?: string | null;
-  finalizationReason?: string | null;
-  forceRefresh?: boolean;
-};
-
-export async function ensureFinalizedEvaluationDocument(evaluationId: string, actorUserId: string, forceRefresh = false) {
-  const admin = await getAdmin();
-  const { data: evaluation } = await admin
-    .from("evaluations")
-    .select("id, status, version, employee_id")
-    .eq("id", evaluationId)
-    .maybeSingle();
-  if (!evaluation) throw new Error("Evaluation not found");
-  if (evaluation.status !== "FINALIZED") {
-    throw new Error("Finalized evaluation document is unavailable because the evaluation is not finalized.");
-  }
-  const { data: existing } = await admin
-    .from("employee_documents")
-    .select("id, storage_path, file_name, evaluation_version")
-    .eq("evaluation_id", evaluationId)
-    .eq("category", "PERFORMANCE_EVALUATIONS")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!forceRefresh && existing && (existing.evaluation_version ?? evaluation.version) === evaluation.version) {
-    return existing;
-  }
-  return createFinalEvaluationDocument(evaluationId, actorUserId, {
-    statusOverride: "FINALIZED",
-    finalizedAt: new Date().toISOString(),
-    forceRefresh,
-  });
-}
-
-export async function createFinalEvaluationDocument(
-  evaluationId: string,
-  userId: string,
-  options: FinalDocumentGenerationOptions = {},
-) {
-  const admin = await getAdmin();
-
-  const { data: evaluation } = await admin
-    .from("evaluations")
-    .select("id, version, employee_id, cycle_id, evaluation_cycles(name, year)")
-    .eq("id", evaluationId)
-    .maybeSingle();
-  if (!evaluation) throw new Error("Evaluation not found");
-
-  const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number } }).evaluation_cycles;
-
-  // Check if document record already exists
-  const existingDocument = await admin
-    .from("employee_documents")
-    .select("id, evaluation_version")
-    .eq("evaluation_id", evaluationId)
-    .eq("category", "PERFORMANCE_EVALUATIONS")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  // Skip if already created for this version (unless forceRefresh)
-  if (!options.forceRefresh && existingDocument.data && (existingDocument.data.evaluation_version ?? evaluation.version) === evaluation.version) {
-    return existingDocument.data;
-  }
-
-  // Create or update document record (HTML is generated on-demand via getEvaluationSheetHtml)
-  const payload = {
-    employee_id: evaluation.employee_id,
-    evaluation_id: evaluationId,
-    evaluation_version: evaluation.version,
-    category: "PERFORMANCE_EVALUATIONS",
-    file_name: `${cycle.year} Final Performance Evaluation v${evaluation.version}`,
-    storage_path: `evaluations/${evaluationId}/finalized`, // Virtual path for reference
-    content_type: "text/html",
-    file_size: 0, // Generated on-demand
-    created_by: userId,
-  };
-
-  let document;
-  if (existingDocument.data?.id) {
-    const { data: updated, error } = await admin
-      .from("employee_documents")
-      .update(payload)
-      .eq("id", existingDocument.data.id)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    document = updated;
-  } else {
-    const { data: inserted, error } = await admin
-      .from("employee_documents")
-      .insert(payload)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    document = inserted;
-  }
-
-  return document;
 }
