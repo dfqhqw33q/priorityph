@@ -132,6 +132,7 @@ export const PerformanceEvaluationSheet: React.FC<
 }) => {
   return (
     <div className="w-[1024px] mx-auto bg-white text-black border border-black font-sans">
+      {/* ===================== HEADER ===================== */}
       <div className="px-8 pt-6 pb-4">
         <h1 className="text-[26px] font-extrabold tracking-tight leading-none">
           {companyName}
@@ -147,6 +148,7 @@ export const PerformanceEvaluationSheet: React.FC<
           </h2>
         </div>
 
+        {/* Period covered */}
         <div className="flex items-baseline gap-2 mt-6 text-[13px]">
           <span className="font-bold">PERIOD COVERED :</span>
           <span className="font-bold ml-2">FROM</span>
@@ -159,6 +161,7 @@ export const PerformanceEvaluationSheet: React.FC<
           </span>
         </div>
 
+        {/* Ratee / Rater grid */}
         <div className="grid grid-cols-2 gap-x-8 gap-y-2 mt-4">
           <LabeledField
             label="NAME OF RATEE :"
@@ -193,6 +196,7 @@ export const PerformanceEvaluationSheet: React.FC<
         </div>
       </div>
 
+      {/* ===================== RATING LEGEND ===================== */}
       <div className="mx-8 border border-black">
         <div className="flex items-center justify-center gap-8 py-2 text-[13px]">
           <span className="font-bold">RATING:</span>
@@ -204,7 +208,9 @@ export const PerformanceEvaluationSheet: React.FC<
         </div>
       </div>
 
+      {/* ===================== FACTOR TABLE ===================== */}
       <div className="mx-8 mt-4 border border-black border-b-0">
+        {/* Table header row */}
         <div className="grid grid-cols-[36px_1fr_140px_140px_150px] border-b border-black bg-white">
           <div className="border-r border-black" />
           <div className="border-r border-black flex items-center justify-center py-2">
@@ -229,6 +235,7 @@ export const PerformanceEvaluationSheet: React.FC<
           </div>
         </div>
 
+        {/* Factor rows */}
         {factors.map((f, i) => (
           <div
             key={f.letter}
@@ -255,6 +262,7 @@ export const PerformanceEvaluationSheet: React.FC<
         ))}
       </div>
 
+      {/* ===================== SIGNATURE BLOCKS ===================== */}
       <div className="mx-8 mt-6 border border-black grid grid-cols-3 divide-x divide-black">
         <SignatureColumn
           heading="APPRAISED BY:"
@@ -273,13 +281,15 @@ export const PerformanceEvaluationSheet: React.FC<
         />
       </div>
 
+      {/* ===================== CONCLUSIONS ===================== */}
       <div className="mx-8 my-6 pt-4 border-t-2 border-black">
         <p className="text-center font-bold text-[13px]">
           CONCLUSIONS AND COMMENTS (CONFIDENTIAL: NOT TO BE SHOWN TO RATEE)
         </p>
 
         <p className="font-bold text-[13px] mt-3">
-          STEP TWO: <span className="font-normal">Develop conclusion and comments</span>
+          STEP TWO:{" "}
+          <span className="font-normal">Develop conclusion and comments</span>
         </p>
 
         <div className="text-[13px] mt-3 space-y-1">
