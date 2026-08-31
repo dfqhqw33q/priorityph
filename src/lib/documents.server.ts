@@ -198,7 +198,7 @@ export function generateEvaluationHTML(params: {
       <table>
         <thead>
           <tr>
-            <th style="width: 55%; text-align: center;">Performance Evaluation Factor</th>
+            <th style="width: 55%; text-align: center; background-color: #0000FE;">Performance Evaluation Factor</th>
             <th>Employee / Ratee</th>
             <th>Supervisor / Rater</th>
             <th>Reviewing Supervisor /<br>Division Head</th>
