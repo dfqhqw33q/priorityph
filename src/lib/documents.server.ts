@@ -350,24 +350,37 @@ export async function createFinalEvaluationDocument(
   const { error: uploadError } = await admin.storage.from("employee-files").upload(path, bytes, { contentType: "application/pdf", upsert: true });
   if (uploadError) throw new Error(uploadError.message);
 
-  const { data: document, error } = await admin
-    .from("employee_documents")
-    .upsert(
-      {
-        employee_id: evaluation.employee_id,
-        evaluation_id: evaluationId,
-        evaluation_version: versionLabel,
-        category: "PERFORMANCE_EVALUATIONS",
-        file_name: `${cycle.year} Final Performance Evaluation v${versionLabel}.pdf`,
-        storage_path: path,
-        content_type: "application/pdf",
-        file_size: bytes.length,
-        created_by: userId,
-      },
-      { onConflict: "evaluation_id" },
-    )
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
+  const payload = {
+    employee_id: evaluation.employee_id,
+    evaluation_id: evaluationId,
+    evaluation_version: versionLabel,
+    category: "PERFORMANCE_EVALUATIONS",
+    file_name: `${cycle.year} Final Performance Evaluation v${versionLabel}.pdf`,
+    storage_path: path,
+    content_type: "application/pdf",
+    file_size: bytes.length,
+    created_by: userId,
+  };
+
+  let document;
+  if (existingDocument.data?.id) {
+    const { data: updated, error } = await admin
+      .from("employee_documents")
+      .update(payload)
+      .eq("id", existingDocument.data.id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    document = updated;
+  } else {
+    const { data: inserted, error } = await admin
+      .from("employee_documents")
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    document = inserted;
+  }
+
   return document;
 }
