@@ -124,22 +124,31 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
     const { getAdmin, requirePermissionAny, validationError } = await import("./server-core.server");
     const { generateEvaluationData, generateEvaluationHTML } = await import("./documents.server");
 
-    // Check both permissions to allow access at different workflow stages
-    await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view", "evaluations.review"], "Evaluation Sheet");
+    try {
+      // Check both permissions to allow access at different workflow stages
+      await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view", "evaluations.review"], "Evaluation Sheet");
 
-    const admin = await getAdmin();
-    const { data: evaluation } = await admin
-      .from("evaluations")
-      .select("id, status")
-      .eq("id", data.evaluationId)
-      .maybeSingle();
+      const admin = await getAdmin();
+      const { data: evaluation, error: evalError } = await admin
+        .from("evaluations")
+        .select("id, status, cycle_id")
+        .eq("id", data.evaluationId)
+        .maybeSingle();
 
-    if (!evaluation) throw validationError("Object not found");
+      if (evalError) throw validationError(`Database error: ${evalError.message}`);
+      if (!evaluation) throw validationError("Evaluation not found");
 
-    // Generate the HTML on-demand - allow at any stage where user has permission
-    const evaluationData = await generateEvaluationData(data.evaluationId);
-    const html = generateEvaluationHTML(evaluationData);
+      // Generate the HTML on-demand - allow at any stage where user has permission
+      const evaluationData = await generateEvaluationData(data.evaluationId);
+      const html = generateEvaluationHTML(evaluationData);
 
-    return { html };
+      return { html };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("VALIDATION")) {
+        throw error;
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      throw validationError(`Failed to generate evaluation sheet: ${message}`);
+    }
   });
 

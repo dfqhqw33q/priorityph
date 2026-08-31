@@ -324,110 +324,117 @@ function wrapText(text: string, maxCharsPerLine: number) {
 export async function generateEvaluationData(evaluationId: string) {
   const admin = await getAdmin();
 
-  const { data: evaluation } = await admin
-    .from("evaluations")
-    .select(
-      "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, status, finalized_at, finalized_by, finalization_reason, supervisor_user_id, supervisor_submitted_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_overall_explanation, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
-    )
-    .eq("id", evaluationId)
-    .maybeSingle();
+  try {
+    // Fetch evaluation with its cycle
+    const { data: evaluation, error: evalError } = (await admin
+      .from("evaluations")
+      .select(
+        "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, status, finalized_at, finalized_by, finalization_reason, supervisor_user_id, supervisor_submitted_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_development, supervisor_step2_advancement, supervisor_step2_career_transfer, supervisor_step2_recommendations, supervisor_step2_overall_explanation, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
+      )
+      .eq("id", evaluationId)
+      .maybeSingle()) as any;
 
-  if (!evaluation) throw new Error("Evaluation not found");
+    if (evalError) throw new Error(`Failed to fetch evaluation: ${evalError.message}`);
+    if (!evaluation) throw new Error("Evaluation not found");
 
-  const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number; starts_at: string; ends_at: string; template_id: string } }).evaluation_cycles;
+    const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number; starts_at: string; ends_at: string; template_id: string } }).evaluation_cycles;
 
-  // First batch of queries
-  const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult] = await Promise.all([
-    admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
-    admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
-    admin.from("evaluation_stage_signatures").select("stage, method, storage_path, signature_data, signed_at, content_type").eq("evaluation_id", evaluationId),
-    evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
-  ]);
+    // First batch of queries
+    const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult] = await Promise.all([
+      admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
+      admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
+      admin.from("evaluation_stage_signatures").select("stage, signed_at").eq("evaluation_id", evaluationId),
+      evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
+    ]);
 
-  // Get reviewing supervisor info
-  const { data: step3Result } = await admin.from("reviewing_supervisor_reviews").select("comments, recommendations, reviewing_supervisor_date, reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle();
+    // Get reviewing supervisor info
+    const { data: step3Result } = (await admin.from("reviewing_supervisor_reviews").select("reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle()) as any;
 
-  // Fetch internal users that we need
-  const userIds = [evaluation.supervisor_user_id, step3Result?.reviewer_user_id].filter((id): id is string => Boolean(id));
-  const { data: userListResult } = userIds.length ? await admin.from("internal_users").select("id, full_name, job_title").in("id", userIds) : { data: [] };
+    // Fetch internal users that we need
+    const userIds = [evaluation.supervisor_user_id, step3Result?.reviewer_user_id].filter((id): id is string => Boolean(id));
+    const { data: userListResult } = userIds.length ? await admin.from("internal_users").select("id, full_name, job_title").in("id", userIds) : ({ data: [] } as any);
 
-  const ratingMap = new Map<string, Record<string, number | undefined>>();
-  for (const row of ratingsResult.data ?? []) {
-    const criterionKey = row.criterion_id;
-    if (!ratingMap.has(criterionKey)) ratingMap.set(criterionKey, {});
-    const item = ratingMap.get(criterionKey)!;
-    item[row.evaluator_type] = row.rating;
-  }
+    const ratingMap = new Map<string, Record<string, number | undefined>>();
+    for (const row of ratingsResult.data ?? []) {
+      const criterionKey = row.criterion_id;
+      if (!ratingMap.has(criterionKey)) ratingMap.set(criterionKey, {});
+      const item = ratingMap.get(criterionKey)!;
+      item[row.evaluator_type] = row.rating;
+    }
 
-  const officialFactorDefinitions = [
-    { letter: "A", title: "QUALITY OF WORK", description: "Consider the neatness, accuracy, and completeness of the employee's work in relation to company standards." },
-    { letter: "B", title: "QUANTITY OF WORK", description: "Consider the volume of work done by the employee and the speed at which work was satisfactorily completed." },
-    { letter: "C", title: "JOB KNOWLEDGE", description: "Consider the employee's skill, knowledge, and understanding of the details of his regularly assigned work." },
-    { letter: "D", title: "ABILITY TO LEARN", description: "Consider the employee's ability to learn new job procedures and methods and his speed in grasping instructions." },
-    { letter: "E", title: "DEPENDABILITY", description: "Consider the employee's attendance, punctuality and the seriousness with which he performs his duties." },
-    { letter: "F", title: "INITIATIVE", description: "Consider the employee's resourcefulness or ability to develop new approaches to problems as required by his job." },
-    { letter: "G", title: "HUMAN RELATIONS/TEAMWORK", description: "Consider the employee's ability to get along with co-employees and client personal and his sense of organizational loyalty." },
-    { letter: "H", title: "COST CONSCIOUSNESS", description: "Consider the employee's attitude toward cost objectives in relation to his work, his efforts at preventing waste and generating cost savings." },
-    { letter: "I", title: "DISCIPLINE", description: "Consider the employee's conduct on the job, his attitude towards company rules and his efforts at promoting harmonious relationships among others." },
-    { letter: "J", title: "SAFETY CONSCIOUSNESS/CARE OF EQUIPMENT", description: "Consider the manner in which the employee handles himself, the materials, and the equipment in a work situation and his safety consciousness." },
-  ];
+    const officialFactorDefinitions = [
+      { letter: "A", title: "QUALITY OF WORK", description: "Consider the neatness, accuracy, and completeness of the employee's work in relation to company standards." },
+      { letter: "B", title: "QUANTITY OF WORK", description: "Consider the volume of work done by the employee and the speed at which work was satisfactorily completed." },
+      { letter: "C", title: "JOB KNOWLEDGE", description: "Consider the employee's skill, knowledge, and understanding of the details of his regularly assigned work." },
+      { letter: "D", title: "ABILITY TO LEARN", description: "Consider the employee's ability to learn new job procedures and methods and his speed in grasping instructions." },
+      { letter: "E", title: "DEPENDABILITY", description: "Consider the employee's attendance, punctuality and the seriousness with which he performs his duties." },
+      { letter: "F", title: "INITIATIVE", description: "Consider the employee's resourcefulness or ability to develop new approaches to problems as required by his job." },
+      { letter: "G", title: "HUMAN RELATIONS/TEAMWORK", description: "Consider the employee's ability to get along with co-employees and client personal and his sense of organizational loyalty." },
+      { letter: "H", title: "COST CONSCIOUSNESS", description: "Consider the employee's attitude toward cost objectives in relation to his work, his efforts at preventing waste and generating cost savings." },
+      { letter: "I", title: "DISCIPLINE", description: "Consider the employee's conduct on the job, his attitude towards company rules and his efforts at promoting harmonious relationships among others." },
+      { letter: "J", title: "SAFETY CONSCIOUSNESS/CARE OF EQUIPMENT", description: "Consider the manner in which the employee handles himself, the materials, and the equipment in a work situation and his safety consciousness." },
+    ];
 
-  const criteriaByLetter = new Map((criteriaResult.data ?? []).map((criterion) => [criterion.letter, criterion]));
-  const displayCriteria = officialFactorDefinitions.map((factor) => {
-    const persisted = criteriaByLetter.get(factor.letter);
+    const criteriaByLetter = new Map((criteriaResult.data ?? []).map((criterion) => [criterion.letter, criterion]));
+    const displayCriteria = officialFactorDefinitions.map((factor) => {
+      const persisted = criteriaByLetter.get(factor.letter);
+      return {
+        ...factor,
+        id: persisted?.id ?? factor.letter,
+        description: persisted?.description?.trim() || factor.description,
+        title: persisted?.title?.trim() || factor.title,
+      };
+    });
+
+    const userLookup = new Map((userListResult ?? []).map((user) => [user.id, { full_name: user.full_name, job_title: user.job_title ?? null }]));
+    const raterUser = evaluation.supervisor_user_id ? userLookup.get(evaluation.supervisor_user_id) ?? null : null;
+    const reviewingSupervisorUser = step3Result?.reviewer_user_id ? userLookup.get(step3Result.reviewer_user_id) ?? null : null;
+    const employeeName = employeeRecordResult?.data?.full_name ?? evaluation.full_name_snapshot ?? "—";
+    const employeeJobTitle = employeeRecordResult?.data?.job_title ?? evaluation.job_title_snapshot ?? "Ratee / Employee";
+    const raterName = raterUser?.full_name ?? "—";
+    const raterTitle = raterUser?.job_title ?? "Rater / Immediate Supervisor";
+    const reviewingSupervisorName = reviewingSupervisorUser?.full_name ?? "—";
+    const reviewingSupervisorTitle = reviewingSupervisorUser?.job_title ?? "Reviewing Supervisor / Division Head";
+    const periodFrom = formatFormDate(cycle.starts_at) || `January 1, ${cycle.year}`;
+    const periodTo = formatFormDate(cycle.ends_at) || `December 31, ${cycle.year}`;
+
     return {
-      ...factor,
-      id: persisted?.id ?? factor.letter,
-      description: persisted?.description?.trim() || factor.description,
-      title: persisted?.title?.trim() || factor.title,
+      companyName: "PRIORITY HANDLING LOGISTICS, INC.",
+      companyAddress: "1618-B Copernico St., San Isidro, Makati City",
+      periodFrom,
+      periodTo,
+      nameOfRatee: evaluation.full_name_snapshot || employeeName,
+      jobTitleOfRatee: evaluation.job_title_snapshot || employeeJobTitle,
+      division: evaluation.division_snapshot || "—",
+      sectionUnit: evaluation.section_snapshot || "—",
+      nameOfRater: raterName,
+      jobTitleOfRater: raterTitle,
+      factors: displayCriteria.map((c) => ({
+        letter: c.letter,
+        title: c.title,
+        description: c.description,
+        employeeSelfRating: ratingMap.get(c.id)?.["EMPLOYEE"] || "",
+        supervisorRating: ratingMap.get(c.id)?.["SUPERVISOR"] || "",
+        reviewingSupervisorRating: ratingMap.get(c.id)?.["REVIEWING_SUPERVISOR"] || "",
+      })),
+      appraisedByName: raterName,
+      appraisedByTitle: raterTitle,
+      appraisedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at),
+      reviewedByName: reviewingSupervisorName,
+      reviewedByTitle: reviewingSupervisorTitle,
+      reviewedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at),
+      reviewedWithMeName: employeeName,
+      reviewedWithMeTitle: employeeJobTitle,
+      reviewedWithMeDate: "—",
+      overallRatingExplanation: normalizeText(evaluation.supervisor_step2_overall_explanation) || "",
+      principalStrengths: normalizeText(evaluation.supervisor_step2_strengths) || "",
+      principalWeakness: normalizeText(evaluation.supervisor_step2_weaknesses) || "",
+      effectivenessRecommendation: normalizeText(evaluation.supervisor_step2_development) || "",
     };
-  });
-
-  const userLookup = new Map((userListResult ?? []).map((user) => [user.id, { full_name: user.full_name, job_title: user.job_title ?? null }]));
-  const raterUser = evaluation.supervisor_user_id ? userLookup.get(evaluation.supervisor_user_id) ?? null : null;
-  const reviewingSupervisorUser = step3Result?.reviewer_user_id ? userLookup.get(step3Result.reviewer_user_id) ?? null : null;
-  const employeeName = employeeRecordResult?.data?.full_name ?? evaluation.full_name_snapshot ?? "—";
-  const employeeJobTitle = employeeRecordResult?.data?.job_title ?? evaluation.job_title_snapshot ?? "Ratee / Employee";
-  const raterName = raterUser?.full_name ?? "—";
-  const raterTitle = raterUser?.job_title ?? "Rater / Immediate Supervisor";
-  const reviewingSupervisorName = reviewingSupervisorUser?.full_name ?? "—";
-  const reviewingSupervisorTitle = reviewingSupervisorUser?.job_title ?? "Reviewing Supervisor / Division Head";
-  const periodFrom = formatFormDate(cycle.starts_at) || `January 1, ${cycle.year}`;
-  const periodTo = formatFormDate(cycle.ends_at) || `December 31, ${cycle.year}`;
-
-  return {
-    companyName: "PRIORITY HANDLING LOGISTICS, INC.",
-    companyAddress: "1618-B Copernico St., San Isidro, Makati City",
-    periodFrom,
-    periodTo,
-    nameOfRatee: evaluation.full_name_snapshot || employeeName,
-    jobTitleOfRatee: evaluation.job_title_snapshot || employeeJobTitle,
-    division: evaluation.division_snapshot || "—",
-    sectionUnit: evaluation.section_snapshot || "—",
-    nameOfRater: raterName,
-    jobTitleOfRater: raterTitle,
-    factors: displayCriteria.map((c) => ({
-      letter: c.letter,
-      title: c.title,
-      description: c.description,
-      employeeSelfRating: ratingMap.get(c.id)?.["EMPLOYEE"] || "",
-      supervisorRating: ratingMap.get(c.id)?.["SUPERVISOR"] || "",
-      reviewingSupervisorRating: ratingMap.get(c.id)?.["REVIEWING_SUPERVISOR"] || "",
-    })),
-    appraisedByName: raterName,
-    appraisedByTitle: raterTitle,
-    appraisedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at),
-    reviewedByName: reviewingSupervisorName,
-    reviewedByTitle: reviewingSupervisorTitle,
-    reviewedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at),
-    reviewedWithMeName: employeeName,
-    reviewedWithMeTitle: employeeJobTitle,
-    reviewedWithMeDate: "—",
-    overallRatingExplanation: normalizeText(evaluation.supervisor_step2_overall_explanation) || "",
-    principalStrengths: normalizeText(evaluation.supervisor_step2_strengths) || "",
-    principalWeakness: normalizeText(evaluation.supervisor_step2_weaknesses) || "",
-    effectivenessRecommendation: normalizeText(evaluation.supervisor_step2_development) || "",
-  };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Error generating evaluation data: ${errorMsg}`);
+  }
 }
 
 export type FinalDocumentGenerationOptions = {
