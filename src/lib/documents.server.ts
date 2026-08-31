@@ -109,12 +109,11 @@ export function generateEvaluationHTML(params: {
     .signatures { border-top: 1px solid #000; border-bottom: 1px solid #000; display: flex; margin-bottom: 12px; }
     .sig-block { flex: 1; padding: 12px; border-left: 1px solid #000; text-align: center; }
     .sig-block:first-child { border-left: none; }
-    .sig-block h3 { font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 0 0 4px 0; }
-    .sig-block p { font-size: 10px; margin: 0 0 8px 0; }
-    .sig-line { min-height: 32px; border-bottom: 1px solid #000; margin-bottom: 4px; }
-    .sig-name { font-size: 11px; font-weight: bold; }
-    .sig-title { font-size: 10px; }
-    .sig-date { font-size: 10px; margin-top: 8px; }
+    .sig-block h3 { font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 0 0 12px 0; }
+    .sig-line { min-height: 40px; border-bottom: 2px solid #000; margin-bottom: 8px; }
+    .sig-name { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
+    .sig-title { font-size: 10px; margin-bottom: 8px; }
+    .sig-date { font-size: 10px; }
     
     .conclusions { border-top: 1px solid #000; padding-top: 12px; }
     .conclusions h3 { text-align: center; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
@@ -209,7 +208,6 @@ export function generateEvaluationHTML(params: {
     <div class="signatures">
       <div class="sig-block">
         <h3>Appraised By:</h3>
-        <p>Rater / Immediate Supervisor</p>
         <div class="sig-line"></div>
         <div class="sig-name">${params.appraisedByName || "—"}</div>
         <div class="sig-title">${params.appraisedByTitle || "—"}</div>
@@ -217,7 +215,6 @@ export function generateEvaluationHTML(params: {
       </div>
       <div class="sig-block">
         <h3>Reviewed By:</h3>
-        <p>Reviewing Supervisor / Division Head</p>
         <div class="sig-line"></div>
         <div class="sig-name">${params.reviewedByName || "—"}</div>
         <div class="sig-title">${params.reviewedByTitle || "—"}</div>
@@ -225,7 +222,6 @@ export function generateEvaluationHTML(params: {
       </div>
       <div class="sig-block">
         <h3>Reviewed With Me:</h3>
-        <p>Ratee / Employee</p>
         <div class="sig-line"></div>
         <div class="sig-name">${params.reviewedWithMeName || "—"}</div>
         <div class="sig-title">${params.reviewedWithMeTitle || "—"}</div>
