@@ -37,32 +37,69 @@ export interface PerformanceEvaluationSheetProps {
   effectivenessRecommendation?: string;
 }
 
-const UnderlinedField: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex items-center gap-1 min-w-0">
-    <span className="font-bold text-[12px] uppercase tracking-tight whitespace-nowrap">{label}</span>
-    <span className="flex-1 min-w-0 border-b border-black text-[12px] px-1 pb-0.5">{value || " "}</span>
-  </div>
-);
-
-const SigCol: React.FC<{ heading: string; subheading: string; block: SignatureBlock }> = ({ heading, subheading, block }) => (
-  <div className="flex flex-col px-3 pt-2 pb-2">
-    <span className="font-bold uppercase text-[11px] mb-1">{heading}</span>
-    <span className="text-[10px] mb-6">{subheading}</span>
-    <div className="relative h-[52px] flex items-center justify-center border-b border-black mb-1">
-      {block.signatureImageSrc ? (
-        <img src={block.signatureImageSrc} alt={`Signature of ${block.name}`} className="max-h-[42px] object-contain" />
-      ) : null}
-    </div>
-    <span className="text-center font-bold text-[11px] leading-tight">{block.name || "—"}</span>
-    <span className="text-center text-[10px] leading-tight">{block.jobTitle || "—"}</span>
-    <div className="flex items-center gap-1 mt-4 text-[11px]">
-      <span className="font-bold">Date:</span>
-      <span className="flex-1 border-b border-black text-center px-1">{block.date || "—"}</span>
+/**
+ * InfoField Component - Responsive field with label and underlined value
+ */
+const InfoField: React.FC<{ label: string; value: string; className?: string }> = ({
+  label,
+  value,
+  className = "flex-1",
+}) => (
+  <div className={`flex items-center gap-2 ${className}`}>
+    <span className="font-semibold text-[11px] uppercase whitespace-nowrap">{label}:</span>
+    <div className="border-b border-black flex-1 text-[12px] px-2 py-0.5 break-words min-h-[18px]">
+      {value || " "}
     </div>
   </div>
 );
 
-export const PerformanceEvaluationSheet: React.FC<PerformanceEvaluationSheetProps> = ({
+/**
+ * SignatureColumn Component - Renders a single signature block
+ */
+const SignatureColumn: React.FC<{
+  heading: string;
+  subheading: string;
+  block: SignatureBlock;
+}> = ({ heading, subheading, block }) => (
+  <div className="flex-1 border-l border-black first:border-l-0 px-3 py-3 flex flex-col">
+    <div className="text-center font-bold uppercase text-[11px] leading-tight mb-1 break-words">
+      {heading}
+    </div>
+    <div className="text-center text-[10px] leading-tight mb-4 break-words">
+      {subheading}
+    </div>
+    <div className="flex-1 flex items-center justify-center border-b border-black mb-1 min-h-[40px]">
+      {block.signatureImageSrc && (
+        <img
+          src={block.signatureImageSrc}
+          alt={`Signature of ${block.name}`}
+          className="max-h-[35px] object-contain"
+        />
+      )}
+    </div>
+    <div className="text-center font-bold text-[11px] leading-tight break-words mb-1">
+      {block.name || "—"}
+    </div>
+    <div className="text-center text-[10px] leading-tight break-words mb-3">
+      {block.jobTitle || "—"}
+    </div>
+    <div className="flex items-center justify-center gap-1">
+      <span className="font-bold text-[10px] whitespace-nowrap">Date:</span>
+      <div className="flex-1 border-b border-black text-center text-[10px] px-1 min-h-[16px]">
+        {block.date || "—"}
+      </div>
+    </div>
+  </div>
+);
+
+/**
+ * PerformanceEvaluationSheet Component
+ * Fully responsive, print-optimized performance evaluation form
+ * Supports automatic page breaks and flexible content height
+ */
+export const PerformanceEvaluationSheet: React.FC<
+  PerformanceEvaluationSheetProps
+> = ({
   companyName,
   companyAddress,
   periodFrom,
@@ -82,53 +119,110 @@ export const PerformanceEvaluationSheet: React.FC<PerformanceEvaluationSheetProp
   principalWeakness = "",
   effectivenessRecommendation = "",
 }) => (
-  <div className="w-[794px] mx-auto bg-white text-black font-sans text-[12px]">
-    <main className="max-w-[760px] mx-auto bg-white p-6 md:p-10" data-purpose="evaluation-form-container">
-      <header className="mb-6" data-purpose="form-header">
-        <h1 className="text-[18px] font-extrabold uppercase leading-tight">{companyName}</h1>
-        <p className="text-[11px]">{companyAddress}</p>
+  <div className="bg-white text-black font-sans">
+    <style>{`
+      @media print {
+        * {
+          margin: 0;
+          padding: 0;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          color-adjust: exact;
+        }
+        html, body {
+          margin: 0;
+          padding: 0;
+          background: white;
+          height: auto;
+          width: 100%;
+        }
+        @page {
+          size: A4 portrait;
+          margin: 0.5in;
+          orphans: 3;
+          widows: 3;
+        }
+        .evaluation-document {
+          page-break-after: auto;
+          width: 100%;
+        }
+        .form-header {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .rating-scale {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .evaluation-table {
+          page-break-inside: auto;
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .evaluation-table tbody tr {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .evaluation-table td {
+          page-break-inside: avoid;
+        }
+        .signatures-section {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .conclusions-section {
+          page-break-inside: auto;
+        }
+      }
+    `}
+
+    <main className="max-w-5xl mx-auto bg-white text-[12px] leading-normal print:max-w-none print:mx-0">
+      {/* ===== HEADER SECTION ===== */}
+      <header className="form-header mb-6 px-6 py-8 print:px-10 print:py-6">
+        <h1 className="text-[18px] font-extrabold uppercase text-center leading-tight">
+          {companyName}
+        </h1>
+        <p className="text-[11px] text-center leading-tight mt-1">{companyAddress}</p>
+
         <div className="text-center mt-6 mb-8">
-          <h2 className="text-[16px] font-extrabold uppercase">PERFORMANCE EVALUATION SHEET</h2>
-          <h3 className="text-[14px] font-extrabold uppercase">FOR NON-SUPERVISORY STAFF</h3>
+          <h2 className="text-[16px] font-extrabold uppercase leading-tight">
+            PERFORMANCE EVALUATION SHEET
+          </h2>
+          <h3 className="text-[14px] font-extrabold uppercase leading-tight">
+            FOR NON-SUPERVISORY STAFF
+          </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-6">
-          <div className="flex items-center">
-            <span className="w-40 font-semibold">PERIOD COVERED:</span>
-            <span className="mr-2">FROM</span>
-            <span className="border-b border-black flex-grow text-center px-2">{periodFrom}</span>
-            <span className="mx-2">TO</span>
-            <span className="border-b border-black flex-grow text-center px-2">{periodTo}</span>
+        {/* Period Covered */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-semibold text-[11px] uppercase whitespace-nowrap">
+              Period Covered:
+            </span>
+            <span className="text-[11px] whitespace-nowrap">FROM</span>
+            <div className="flex-1 border-b border-black text-center text-[12px] px-2 py-0.5">
+              {periodFrom}
+            </div>
+            <span className="text-[11px] whitespace-nowrap">TO</span>
+            <div className="flex-1 border-b border-black text-center text-[12px] px-2 py-0.5">
+              {periodTo}
+            </div>
           </div>
-          <div />
-          <div className="flex items-center">
-            <span className="w-40 font-semibold uppercase">Name of Ratee:</span>
-            <span className="border-b border-black flex-grow px-2">{nameOfRatee}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="w-40 font-semibold uppercase">Job Title of Ratee:</span>
-            <span className="border-b border-black flex-grow px-2">{jobTitleOfRatee}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="w-40 font-semibold uppercase">Division/Dept:</span>
-            <span className="border-b border-black flex-grow px-2">{division}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="w-40 font-semibold uppercase">Section/Unit:</span>
-            <span className="border-b border-black flex-grow px-2">{sectionUnit}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="w-40 font-semibold uppercase">Name of Rater:</span>
-            <span className="border-b border-black flex-grow px-2">{nameOfRater}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="w-40 font-semibold uppercase">Job Title of Rater:</span>
-            <span className="border-b border-black flex-grow px-2">{jobTitleOfRater}</span>
-          </div>
+        </div>
+
+        {/* Employee Information Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3 mb-6">
+          <InfoField label="NAME OF RATEE" value={nameOfRatee} />
+          <InfoField label="JOB TITLE OF RATEE" value={jobTitleOfRatee} />
+          <InfoField label="DIVISION/DEPT" value={division} />
+          <InfoField label="SECTION/UNIT" value={sectionUnit} />
+          <InfoField label="NAME OF RATER" value={nameOfRater} />
+          <InfoField label="JOB TITLE OF RATER" value={jobTitleOfRater} />
         </div>
       </header>
 
-      <div className="border border-black p-2 mb-4 flex justify-between font-semibold text-[11px]">
+      {/* ===== RATING SCALE ===== */}
+      <div className="rating-scale border border-black mx-6 print:mx-10 px-4 py-2 mb-6 flex flex-wrap justify-between gap-2 font-semibold text-[11px]">
         <span>RATING:</span>
         <span>1 - Poor</span>
         <span>2 - Below Average</span>
@@ -137,107 +231,129 @@ export const PerformanceEvaluationSheet: React.FC<PerformanceEvaluationSheetProp
         <span>5 - Excellent</span>
       </div>
 
-      <div className="overflow-x-auto mb-8" data-purpose="evaluation-table-container">
-        <table className="w-full text-left border-collapse border border-black">
+      {/* ===== EVALUATION TABLE ===== */}
+      <div className="mx-6 print:mx-10 mb-8 overflow-x-auto">
+        <table className="evaluation-table w-full text-left border border-black">
           <thead>
-            <tr className="bg-[#d4d4d4] uppercase text-center text-[11px] font-bold leading-tight">
-              <th className="border border-black p-2 w-[55%]">Performance Evaluation Factor</th>
-              <th className="border border-black p-2 bg-[#dce8ff]">Employee / Ratee<br /><span className="text-[10px] font-normal capitalize">(Self Rating)</span></th>
-              <th className="border border-black p-2 bg-[#dff3df]">Supervisor / Rater<br /><span className="text-[10px] font-normal capitalize">(Rating)</span></th>
-              <th className="border border-black p-2 bg-[#f9e8cf]">Reviewing Supervisor /<br />Division Head<br /><span className="text-[10px] font-normal capitalize">(Rating)</span></th>
+            <tr className="bg-[#d4d4d4] text-[11px] font-bold leading-tight">
+              <th className="border border-black p-3 uppercase text-left w-[55%]">
+                Performance Evaluation Factor
+              </th>
+              <th className="border border-black p-3 uppercase text-center bg-[#dce8ff] text-[10px]">
+                <div>Employee / Ratee</div>
+                <div className="font-normal capitalize">(Self Rating)</div>
+              </th>
+              <th className="border border-black p-3 uppercase text-center bg-[#dff3df] text-[10px]">
+                <div>Supervisor / Rater</div>
+                <div className="font-normal capitalize">(Rating)</div>
+              </th>
+              <th className="border border-black p-3 uppercase text-center bg-[#f9e8cf] text-[10px]">
+                <div>Reviewing Supervisor /</div>
+                <div>Division Head</div>
+                <div className="font-normal capitalize">(Rating)</div>
+              </th>
             </tr>
           </thead>
           <tbody>
             {factors.map((factor) => (
-              <tr key={factor.letter}>
+              <tr key={factor.letter} className="border-b border-black">
                 <td className="border border-black p-3 align-top">
                   <div className="flex gap-2">
-                    <span className="font-bold">{factor.letter}.</span>
-                    <div>
-                      <span className="font-bold uppercase">{factor.title}.</span> {factor.description}
+                    <span className="font-bold whitespace-nowrap flex-shrink-0">
+                      {factor.letter}.
+                    </span>
+                    <div className="flex-1">
+                      <span className="font-bold uppercase text-[12px]">
+                        {factor.title}.
+                      </span>{" "}
+                      <span className="text-[12px] break-words">
+                        {factor.description}
+                      </span>
                     </div>
                   </div>
                 </td>
-                <td className="border border-black p-3 text-center font-bold text-[20px]">{factor.employeeSelfRating}</td>
-                <td className="border border-black p-3 text-center font-bold text-[20px]">{factor.supervisorRating}</td>
-                <td className="border border-black p-3 text-center font-bold text-[20px]">{factor.reviewingSupervisorRating}</td>
+                <td className="border border-black p-3 text-center font-bold text-[18px] align-middle">
+                  {factor.employeeSelfRating}
+                </td>
+                <td className="border border-black p-3 text-center font-bold text-[18px] align-middle">
+                  {factor.supervisorRating}
+                </td>
+                <td className="border border-black p-3 text-center font-bold text-[18px] align-middle">
+                  {factor.reviewingSupervisorRating}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8" data-purpose="signatures-section">
-        <div className="flex flex-col">
-          <span className="font-bold uppercase text-[11px] mb-1">APPRAISED BY:</span>
-          <span className="text-[10px] mb-6">Rater / Immediate Supervisor</span>
-          <div className="relative h-16 flex items-center justify-center border-b border-black mb-1">
-            {appraisedBy.signatureImageSrc ? (
-              <img src={appraisedBy.signatureImageSrc} alt={`Signature of ${appraisedBy.name}`} className="max-h-[42px] object-contain" />
-            ) : null}
-          </div>
-          <span className="text-center font-bold text-[12px]">{appraisedBy.name || "—"}</span>
-          <span className="text-center text-[10px]">{appraisedBy.jobTitle || "—"}</span>
-          <div className="flex mt-4 items-center">
-            <span className="mr-2 text-[11px]">Date:</span>
-            <span className="border-b border-black flex-grow text-center text-[11px]">{appraisedBy.date || "—"}</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col">
-          <span className="font-bold uppercase text-[11px] mb-1">REVIEWED BY:</span>
-          <span className="text-[10px] mb-6">Reviewing Supervisor / Division Head</span>
-          <div className="relative h-16 flex items-center justify-center border-b border-black mb-1">
-            {reviewedBy.signatureImageSrc ? (
-              <img src={reviewedBy.signatureImageSrc} alt={`Signature of ${reviewedBy.name}`} className="max-h-[42px] object-contain" />
-            ) : null}
-          </div>
-          <span className="text-center font-bold text-[12px]">{reviewedBy.name || "—"}</span>
-          <span className="text-center text-[10px]">{reviewedBy.jobTitle || "—"}</span>
-          <div className="flex mt-4 items-center">
-            <span className="mr-2 text-[11px]">Date:</span>
-            <span className="border-b border-black flex-grow text-center text-[11px]">{reviewedBy.date || "—"}</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col">
-          <span className="font-bold uppercase text-[11px] mb-1">REVIEWED WITH ME:</span>
-          <span className="text-[10px] mb-6">Ratee / Employee</span>
-          <div className="relative h-16 flex items-center justify-center border-b border-black mb-1">
-            {reviewedWithMe.signatureImageSrc ? (
-              <img src={reviewedWithMe.signatureImageSrc} alt={`Signature of ${reviewedWithMe.name}`} className="max-h-[42px] object-contain" />
-            ) : null}
-          </div>
-          <span className="text-center font-bold text-[12px]">{reviewedWithMe.name || "—"}</span>
-          <span className="text-center text-[10px]">{reviewedWithMe.jobTitle || "—"}</span>
-          <div className="flex mt-4 items-center">
-            <span className="mr-2 text-[11px]">Date:</span>
-            <span className="border-b border-black flex-grow text-center text-[11px]">{reviewedWithMe.date || "—"}</span>
-          </div>
-        </div>
+      {/* ===== SIGNATURES SECTION ===== */}
+      <div className="signatures-section border-t border-b border-black mx-6 print:mx-10 flex mb-8">
+        <SignatureColumn
+          heading="APPRAISED BY:"
+          subheading="Rater / Immediate Supervisor"
+          block={appraisedBy}
+        />
+        <SignatureColumn
+          heading="REVIEWED BY:"
+          subheading="Reviewing Supervisor / Division Head"
+          block={reviewedBy}
+        />
+        <SignatureColumn
+          heading="REVIEWED WITH ME:"
+          subheading="Ratee / Employee"
+          block={reviewedWithMe}
+        />
       </div>
 
-      <div className="border-t border-black pt-4" data-purpose="conclusions-section">
-        <h4 className="text-center font-bold mb-4 text-[12px]">CONCLUSIONS AND COMMENTS (CONFIDENTIAL: NOT TO BE SHOWN TO RATEE)</h4>
-        <div className="mb-4 text-[12px]">
-          <span className="font-bold uppercase">STEP TWO:</span> Develop conclusion and comments
+      {/* ===== CONCLUSIONS SECTION ===== */}
+      <div className="conclusions-section mx-6 print:mx-10 mb-8 border-t border-black pt-6">
+        <h4 className="text-center font-bold text-[12px] uppercase mb-4 leading-tight">
+          Conclusions and Comments (Confidential: Not to be Shown to Ratee)
+        </h4>
+
+        <div className="mb-4">
+          <div className="font-bold text-[12px] mb-2">STEP TWO: Develop conclusion and comments</div>
         </div>
-        <div className="mb-6 text-[12px]">
-          <p className="mb-2">1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents.</p>
-          <div className="border-b border-black w-full h-6 mb-2">{overallRatingExplanation}</div>
-          <div className="border-b border-black w-full h-6" />
-        </div>
-        <div className="text-[12px]">
-          <p className="mb-2">2. Summarize the principal strengths and weakness of the employee.</p>
-          <div className="flex gap-4 mb-2">
-            <span className="w-32">Principal Strengths:</span>
-            <div className="border-b border-black flex-grow min-h-[20px]">{principalStrengths}</div>
-            <span className="w-32">Principal Weakness:</span>
-            <div className="border-b border-black flex-grow min-h-[20px]">{principalWeakness}</div>
+
+        {/* Question 1 */}
+        <div className="mb-6">
+          <p className="text-[12px] mb-2">
+            1. If the overall rating is excellent or poor, explain why the employee was
+            rated such or support rating with specific incidents.
+          </p>
+          <div className="border-b border-black min-h-[40px] mb-2 px-2 py-1 text-[12px] break-words">
+            {overallRatingExplanation}
           </div>
-          <div className="flex items-center">
-            <span className="mr-2">To be more effective on present job the employee should:</span>
-            <div className="border-b border-black flex-grow min-h-[20px]">{effectivenessRecommendation}</div>
+          <div className="border-b border-black min-h-[40px] px-2" />
+        </div>
+
+        {/* Question 2 */}
+        <div>
+          <p className="text-[12px] mb-3">
+            2. Summarize the principal strengths and weakness of the employee.
+          </p>
+
+          <div className="mb-3">
+            <div className="flex gap-2 mb-2 text-[12px]">
+              <span className="font-semibold whitespace-nowrap">Principal Strengths:</span>
+              <div className="flex-1 border-b border-black px-2 py-1 break-words min-h-[24px]">
+                {principalStrengths}
+              </div>
+            </div>
+            <div className="flex gap-2 text-[12px]">
+              <span className="font-semibold whitespace-nowrap">Principal Weakness:</span>
+              <div className="flex-1 border-b border-black px-2 py-1 break-words min-h-[24px]">
+                {principalWeakness}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 text-[12px]">
+            <span className="font-semibold">To be more effective on present job the employee should:</span>
+            <div className="flex-1 border-b border-black px-2 py-1 break-words min-h-[24px]">
+              {effectivenessRecommendation}
+            </div>
           </div>
         </div>
       </div>
