@@ -92,8 +92,10 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
       }
       throw validationError(error?.message ?? "Could not create document link");
     }
+    const cacheBustedUrl = new URL(signed.signedUrl);
+    cacheBustedUrl.searchParams.set("t", String(Date.now()));
     await writeAudit({ actorUserId: context.userId, actorRole: (await getActorRoles(context.userId)).join(","), action: "DOCUMENT_VIEWED", module: "Employee Files", entityType: "employee_document", entityId: document.id, evaluationId: data.evaluationId });
-    return { url: signed.signedUrl, fileName: document.file_name };
+    return { url: cacheBustedUrl.toString(), fileName: document.file_name };
   });
 
 export const uploadEmployeeDocument = createServerFn({ method: "POST" })
