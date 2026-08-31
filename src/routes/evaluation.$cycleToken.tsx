@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,8 @@ function PublicEvaluationPage() {
   const submissionId = useMemo(() => crypto.randomUUID(), []);
   const [pending, setPending] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
+  const [googleUserEmail, setGoogleUserEmail] = useState("");
   const [verified, setVerified] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState("");
   const [signatureMethod, setSignatureMethod] = useState<"UPLOAD" | "DRAWN">("DRAWN");
@@ -62,6 +65,31 @@ function PublicEvaluationPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let active = true;
+
+    async function syncGoogleSession() {
+      const { data } = await supabase.auth.getSession();
+      if (!active) return;
+      const session = data.session;
+      setGoogleReady(Boolean(session));
+      setGoogleUserEmail(session?.user?.email ?? "");
+    }
+
+    void syncGoogleSession();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setGoogleReady(Boolean(session));
+      setGoogleUserEmail(session?.user?.email ?? "");
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
   const [identity, setIdentity] = useState({
     employeeNumber: "",
     firstName: "",
@@ -94,6 +122,10 @@ function PublicEvaluationPage() {
   }
 
   async function verifyProfile() {
+    if (!googleReady) {
+      setVerificationMessage("Sign in with Google before verifying your employee profile.");
+      return;
+    }
     const missing = [
       ["employeeNumber", "Employee number"],
       ["firstName", "First name"],
@@ -103,7 +135,18 @@ function PublicEvaluationPage() {
       setVerificationMessage(`Enter ${missing.map(([, label]) => label).join(", ")} to verify your profile.`);
       return;
     }
-    const identityFields = { employeeNumber: identity.employeeNumber, firstName: identity.firstName, middleName: identity.middleName, lastName: identity.lastName, cycleToken, deviceSessionId };
+    const session = await supabase.auth.getSession();
+    const currentUser = session.data.session?.user;
+    const identityFields = {
+      employeeNumber: identity.employeeNumber,
+      firstName: identity.firstName,
+      middleName: identity.middleName,
+      lastName: identity.lastName,
+      cycleToken,
+      deviceSessionId,
+      googleUserId: currentUser?.id,
+      googleEmail: currentUser?.email ?? googleUserEmail,
+    };
     setVerifying(true);
     setVerificationMessage("");
     try {
@@ -155,7 +198,20 @@ function PublicEvaluationPage() {
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const parsed = step1FormSchema.safeParse({ ...identity, deviceSessionId, ratings, signature: { method: signatureMethod, data: signatureData, contentType: "image/png" } });
+    if (!googleReady || !googleUserEmail) {
+      setVerificationMessage("Sign in with Google before submitting your evaluation.");
+      return;
+    }
+    const { data: activeSession } = await supabase.auth.getSession();
+    const currentUser = activeSession.session?.user;
+    const parsed = step1FormSchema.safeParse({
+      ...identity,
+      deviceSessionId,
+      googleUserId: currentUser?.id,
+      googleEmail: currentUser?.email ?? googleUserEmail,
+      ratings,
+      signature: { method: signatureMethod, data: signatureData, contentType: "image/png" },
+    });
     const missing = cycle.criteria.filter((criterion) => !ratings[criterion.id]);
     if (!parsed.success || missing.length > 0) {
       const fieldErrors: Record<string, string> = {};
@@ -242,6 +298,41 @@ function PublicEvaluationPage() {
 
         <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
+            <CardTitle className="text-base font-bold">Google access gate</CardTitle>
+            <CardDescription>Sign in with Google before continuing with the employee verification and self-assessment.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {googleReady ? (
+              <div className="flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <span>{googleUserEmail || "Google account connected"}</span>
+                <Button type="button" variant="outline" size="sm" onClick={async () => { await supabase.auth.signOut(); setGoogleReady(false); setGoogleUserEmail(""); }}>
+                  Sign out
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                className="w-full"
+                onClick={async () => {
+                  const redirectTo = `${window.location.origin}${window.location.pathname}`;
+                  const { error } = await supabase.auth.signInWithOAuth({
+                    provider: "google",
+                    options: {
+                      redirectTo,
+                      queryParams: { prompt: "select_account" },
+                    },
+                  });
+                  if (error) toast.error(error.message || "Google sign-in could not be started.");
+                }}
+              >
+                Continue with Google
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border bg-card shadow-sm">
+          <CardHeader>
             <CardTitle className="text-base font-bold">Your details</CardTitle>
             <CardDescription>Employee number, first name, and last name are required for verification.</CardDescription>
           </CardHeader>
@@ -259,7 +350,7 @@ function PublicEvaluationPage() {
                 {errors[field.key] ? <p className="text-xs text-destructive">{errors[field.key]}</p> : null}
               </div>
             ))}
-            <Button type="button" variant="outline" onClick={verifyProfile} disabled={verifying}>
+            <Button type="button" variant="outline" onClick={verifyProfile} disabled={verifying || !googleReady}>
               {verifying ? "Verifying..." : "Verify employee profile"}
             </Button>
             {verificationMessage ? <p className={cn("text-sm", verified ? "text-emerald-600" : "text-destructive")}>{verificationMessage}</p> : null}

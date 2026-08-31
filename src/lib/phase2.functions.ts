@@ -328,6 +328,8 @@ async function transition(
         finalizedAt: finalizationStamp,
         finalizationReason: reason,
       });
+      const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
+      await queueEmployeeFinalizedStep1Email(evaluationId);
     } catch (error) {
       console.error("[phase2] final evaluation document generation failed", error);
       throw error;

@@ -40,6 +40,8 @@ export const step1SubmissionSchema = employeeInfoSchema.extend({
   cycleToken: z.string().min(16).max(128),
   submissionId: z.string().uuid(),
   deviceSessionId: z.string().min(16).max(128),
+  googleUserId: z.string().min(1).max(255).optional(),
+  googleEmail: z.string().email().max(255).optional(),
   ratings: z.array(ratingEntrySchema).length(10),
   signature: z.object({
     method: z.enum(["UPLOAD", "DRAWN"]),
@@ -51,6 +53,8 @@ export type Step1Submission = z.infer<typeof step1SubmissionSchema>;
 
 export const step1FormSchema = employeeInfoSchema.extend({
   deviceSessionId: z.string().min(16).max(128),
+  googleUserId: z.string().min(1).max(255).optional(),
+  googleEmail: z.string().email().max(255).optional(),
   ratings: z.record(z.string().uuid(), ratingValueSchema),
   signature: z.object({
     method: z.enum(["UPLOAD", "DRAWN"]),

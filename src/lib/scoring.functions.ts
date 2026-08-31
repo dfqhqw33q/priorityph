@@ -322,6 +322,8 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
         .eq("evaluation_id", data.evaluationId);
 
       await createFinalEvaluationDocument(data.evaluationId, context.userId);
+      const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
+      await queueEmployeeFinalizedStep1Email(data.evaluationId);
 
       await admin.from("evaluation_events").insert({
         evaluation_id: data.evaluationId,

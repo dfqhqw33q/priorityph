@@ -8,6 +8,142 @@ export type PublicCycleResult =
   | { ok: true; cycle: PublicCycleInfo }
   | { ok: false; reason: "INVALID" | "NOT_STARTED" | "EXPIRED" | "CLOSED" };
 
+async function upsertAccessSession(
+  admin: any,
+  input: {
+    cycleId: string;
+    employeeId: string;
+    email: string;
+    googleUserId?: string | null;
+  },
+) {
+  const payload = {
+    cycle_id: input.cycleId,
+    employee_id: input.employeeId,
+    email: input.email.trim().toLowerCase(),
+    auth_user_id: input.googleUserId ?? null,
+    auth_provider: "google",
+    session_status: "VERIFIED",
+    last_verified_at: new Date().toISOString(),
+  } as never;
+
+  await admin.from("public_evaluation_access_sessions" as never).upsert(payload, {
+    onConflict: "cycle_id, employee_id",
+  });
+}
+
+export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
+  const { getAdmin } = await import("./server-core.server");
+  const admin = await getAdmin();
+
+  const { data: evaluation } = await admin
+    .from("evaluations")
+    .select("id, employee_id, cycle_id")
+    .eq("id", evaluationId)
+    .maybeSingle();
+  if (!evaluation) return { status: "SKIPPED" as const };
+
+  const { data: access } = await admin
+    .from("public_evaluation_access_sessions" as never)
+    .select("email")
+    .eq("cycle_id", evaluation.cycle_id)
+    .eq("employee_id", evaluation.employee_id)
+    .order("last_verified_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!access?.email) return { status: "SKIPPED" as const };
+
+  const idempotencyKey = `step1-finalized:${evaluationId}`;
+  const { data: existing } = await admin
+    .from("employee_email_deliveries" as never)
+    .select("mail_status, id")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+
+  if (existing) return { status: existing.mail_status === "SENT" ? ("QUEUED" as const) : ("SKIPPED" as const) };
+
+  const { data: delivery, error: insertError } = await admin
+    .from("employee_email_deliveries" as never)
+    .upsert(
+      {
+        evaluation_id: evaluation.id,
+        employee_id: evaluation.employee_id,
+        recipient_email: access.email,
+        document_type: "STEP1_FINALIZED",
+        mail_status: "PENDING",
+        idempotency_key: idempotencyKey,
+      },
+      { onConflict: "idempotency_key" },
+    )
+    .select("id")
+    .single();
+
+  if (insertError || !delivery) return { status: "FAILED" as const };
+
+  const apiKey = process.env["BREVO_API_KEY"];
+  const fromAddress = process.env["EMAIL_FROM"] ?? "noreply@priorityhandling.local";
+
+  if (!apiKey) {
+    await admin
+      .from("employee_email_deliveries" as never)
+      .update({ mail_status: "SKIPPED", provider_message: "BREVO_API_KEY is not configured" })
+      .eq("id", delivery.id);
+    return { status: "SKIPPED" as const };
+  }
+
+  const subject = "Your Step 1 performance evaluation is finalized";
+  const html = `
+    <p>Hello,</p>
+    <p>Your completed Step 1 performance evaluation has been finalized and is ready for your records.</p>
+    <p>This email contains the finalized evaluation summary prepared for the employee record.</p>
+    <p>Thank you.</p>
+  `;
+
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "api-key": apiKey,
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "Priority Handling Logistics",
+          email: fromAddress,
+        },
+        to: [{ email: access.email }],
+        subject,
+        htmlContent: html,
+        textContent: "Your completed Step 1 evaluation has been finalized and is available for review.",
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      await admin
+        .from("employee_email_deliveries" as never)
+        .update({ mail_status: "FAILED", provider_message: message.slice(0, 500) })
+        .eq("id", delivery.id);
+      return { status: "FAILED" as const };
+    }
+
+    await admin
+      .from("employee_email_deliveries" as never)
+      .update({ mail_status: "SENT", sent_at: new Date().toISOString() })
+      .eq("id", delivery.id);
+    return { status: "QUEUED" as const };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Unknown email delivery error";
+    await admin
+      .from("employee_email_deliveries" as never)
+      .update({ mail_status: "FAILED", provider_message: detail.slice(0, 500) })
+      .eq("id", delivery.id);
+    return { status: "FAILED" as const };
+  }
+}
+
 export const getPublicCycle = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) =>
     z.object({ cycleToken: z.string().min(16).max(128) }).parse(input),
@@ -58,6 +194,8 @@ export const verifyEmployeeProfile = createServerFn({ method: "POST" })
       .extend({
         cycleToken: z.string().min(16).max(128),
         deviceSessionId: z.string().min(16).max(128),
+        googleUserId: z.string().min(1).max(255).optional(),
+        googleEmail: z.string().email().max(255).optional(),
       })
       .parse(input),
   )
@@ -123,6 +261,16 @@ export const verifyEmployeeProfile = createServerFn({ method: "POST" })
           .maybeSingle()
       : { data: null };
     if (existing) return { status: "DUPLICATE" };
+
+    if (cycle && data.googleEmail) {
+      await upsertAccessSession(admin, {
+        cycleId: cycle.id,
+        employeeId: employee.id,
+        email: data.googleEmail,
+        googleUserId: data.googleUserId,
+      });
+    }
+
     await admin
       .from("public_submission_attempts")
       .insert({
@@ -143,6 +291,9 @@ export const submitStep1 = createServerFn({ method: "POST" })
     const { getAdmin, writeAudit, getRequestMeta, validationError } =
       await import("./server-core.server");
     const admin = await getAdmin();
+    if (!data.googleEmail) {
+      throw validationError("Sign in with Google before submitting your evaluation.");
+    }
     const meta = getRequestMeta();
     if (meta.ip) {
       const { count } = await admin
@@ -158,6 +309,7 @@ export const submitStep1 = createServerFn({ method: "POST" })
       .select("id, status, starts_at, ends_at, template_id")
       .eq("cycle_token", data.cycleToken)
       .maybeSingle();
+
     if (!cycle) throw validationError("This evaluation link is no longer available");
     const now = Date.now();
     if (
@@ -188,10 +340,23 @@ export const submitStep1 = createServerFn({ method: "POST" })
       )
       .eq("employee_number", data.employeeNumber)
       .maybeSingle();
+
     if (!employee || employee.employment_status !== "ACTIVE")
       throw validationError(
         "Employee profile could not be verified. Please contact the System Administrator.",
       );
+
+    const employeeId = employee.id;
+
+    if (data.googleEmail) {
+      await upsertAccessSession(admin, {
+        cycleId: cycle.id,
+        employeeId,
+        email: data.googleEmail,
+        googleUserId: data.googleUserId,
+      });
+    }
+
     const normalize = (value: string) => value.trim().toLocaleLowerCase();
     if (
       normalize(employee.first_name) !== normalize(data.firstName) ||
@@ -201,8 +366,6 @@ export const submitStep1 = createServerFn({ method: "POST" })
       throw validationError(
         "Employee profile could not be verified. Please contact the System Administrator.",
       );
-    const employeeId = employee.id;
-
     const { data: existing } = await admin
       .from("evaluations")
       .select("id")
