@@ -168,7 +168,87 @@ export async function createFinalEvaluationDocument(
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const page = pdf.addPage([612, 792]);
+
+  const addPage = () => pdf.addPage([612, 792]);
+  let currentPage = addPage();
+  let currentY = 760;
+
+  const ensureSpace = (required: number) => {
+    if (currentY - required < 48) {
+      currentPage = addPage();
+      currentY = 760;
+    }
+    return currentPage;
+  };
+
+  const drawTextLine = (text: string, x: number, y: number, size = 9, weight = font, color = rgb(0.12, 0.16, 0.2), maxWidth?: number) => {
+    currentPage.drawText(text, { x, y, size, font: weight, color, maxWidth });
+  };
+
+  const drawWrappedBlock = (
+    text: string,
+    x: number,
+    width: number,
+    size: number,
+    opts: { leading?: number; font?: typeof font; color?: ReturnType<typeof rgb>; maxLines?: number } = {},
+  ) => {
+    const leading = opts.leading ?? size + 2;
+    const maxLines = opts.maxLines ?? 12;
+    const lines = wrapText(text, Math.max(18, Math.floor(width / (size * 0.56))));
+    const actualLines = lines.slice(0, maxLines);
+    for (let index = 0; index < actualLines.length; index += 1) {
+      const line = actualLines[index];
+      currentPage.drawText(line, { x, y: currentY - (index * leading), size, font: opts.font ?? font, color: opts.color ?? rgb(0.12, 0.16, 0.2), maxWidth: width });
+    }
+    currentY -= Math.max(leading, actualLines.length * leading);
+  };
+
+  const drawHorizontalRule = (x1: number, x2: number, y: number, thickness = 0.7) => {
+    currentPage.drawLine({ start: { x: x1, y }, end: { x: x2, y }, thickness, color: rgb(0.72, 0.73, 0.75) });
+  };
+
+  const drawField = ({
+    label,
+    value,
+    labelX,
+    valueX,
+    valueWidth,
+    y,
+  }: { label: string; value: unknown; labelX: number; valueX: number; valueWidth: number; y: number }) => {
+    const text = normalizeText(value) || "—";
+    currentPage.drawText(label, { x: labelX, y, size: 9, font: bold, color: rgb(0.12, 0.16, 0.2) });
+    currentPage.drawText(text, { x: valueX, y, size: 9, font, color: rgb(0.12, 0.16, 0.2), maxWidth: valueWidth });
+  };
+
+  const drawSignatureBlock = ({
+    x,
+    label,
+    name,
+    title,
+    date,
+    signature,
+    y,
+  }: {
+    x: number;
+    label: string;
+    name: string;
+    title: string;
+    date: string | null;
+    signature: { width?: number; height?: number } | null;
+    y: number;
+  }) => {
+    const blockY = y;
+    currentPage.drawText(label, { x, y: blockY, size: 9, font: bold, color: rgb(0.14, 0.16, 0.2) });
+    if (signature) {
+      currentPage.drawImage(signature as never, { x: x + 8, y: blockY - 42, width: 120, height: 30 });
+    } else {
+      currentPage.drawLine({ start: { x, y: blockY - 26 }, end: { x: x + 120, y: blockY - 26 }, thickness: 1, color: rgb(0.2, 0.2, 0.2) });
+    }
+    currentPage.drawText(name || "—", { x, y: blockY - 42, size: 9, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 150 });
+    currentPage.drawText(title || "—", { x, y: blockY - 56, size: 8, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 150 });
+    currentPage.drawText(`Date: ${date ? formatDate(date) : "—"}`, { x, y: blockY - 70, size: 8, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 160 });
+    drawHorizontalRule(x, x + 150, blockY - 82);
+  };
 
   const employeeSignature = employeeSignatureResult?.data ?? null;
   const employeeSig = employeeSignature ? await loadSignatureImage(pdf, admin, employeeSignature) : null;
@@ -197,6 +277,30 @@ export async function createFinalEvaluationDocument(
     item[row.evaluator_type] = row.rating;
   }
 
+  const officialFactorDefinitions = [
+    { letter: "A", title: "QUALITY OF WORK", description: "Consider the neatness, accuracy, and completeness of the employee's work in relation to company standards." },
+    { letter: "B", title: "QUANTITY OF WORK", description: "Consider the volume of work done by the employee and the speed at which work was satisfactorily completed." },
+    { letter: "C", title: "JOB KNOWLEDGE", description: "Consider the employee's skill, knowledge, and understanding of the details of his regularly assigned work." },
+    { letter: "D", title: "ABILITY TO LEARN", description: "Consider the employee's ability to learn new job procedures and methods and his speed in grasping instructions." },
+    { letter: "E", title: "DEPENDABILITY", description: "Consider the employee's attendance, punctuality and the seriousness with which he performs his duties." },
+    { letter: "F", title: "INITIATIVE", description: "Consider the employee's resourcefulness or ability to develop new approaches to problems as required by his job." },
+    { letter: "G", title: "HUMAN RELATIONS/TEAMWORK", description: "Consider the employee's ability to get along with co-employees and client personal and his sense of organizational loyalty." },
+    { letter: "H", title: "COST CONSCIOUSNESS", description: "Consider the employee's attitude toward cost objectives in relation to his work, his efforts at preventing waste and generating cost savings." },
+    { letter: "I", title: "DISCIPLINE", description: "Consider the employee's conduct on the job, his attitude towards company rules and his efforts at promoting harmonious relationships among others." },
+    { letter: "J", title: "SAFETY CONSCIOUSNESS/CARE OF EQUIPMENT", description: "Consider the manner in which the employee handles himself, the materials, and the equipment in a work situation and his safety consciousness." },
+  ];
+
+  const criteriaByLetter = new Map((criteria ?? []).map((criterion) => [criterion.letter, criterion]));
+  const displayCriteria = officialFactorDefinitions.map((factor) => {
+    const persisted = criteriaByLetter.get(factor.letter);
+    return {
+      ...factor,
+      id: persisted?.id ?? factor.letter,
+      description: persisted?.description?.trim() || factor.description,
+      title: persisted?.title?.trim() || factor.title,
+    };
+  });
+
   const userLookup = new Map((userListResult.data ?? []).map((user) => [user.id, { full_name: user.full_name, job_title: user.job_title ?? null }]));
   const raterUser = evaluation.supervisor_user_id ? userLookup.get(evaluation.supervisor_user_id) ?? null : null;
   const reviewingSupervisorUser = step3Result?.data?.reviewer_user_id ? userLookup.get(step3Result.data.reviewer_user_id) ?? null : null;
@@ -204,172 +308,203 @@ export async function createFinalEvaluationDocument(
   const committeeUser = committeeResult?.data?.committee_user_id ? userLookup.get(committeeResult.data.committee_user_id) ?? null : null;
   const presidentUser = evaluation.finalized_by ? userLookup.get(evaluation.finalized_by) ?? null : null;
   const raterName = raterUser?.full_name ?? "—";
-  const raterTitle = raterUser?.job_title ?? "Rater";
+  const raterTitle = raterUser?.job_title ?? "Rater / Immediate Supervisor";
   const reviewingSupervisorName = reviewingSupervisorUser?.full_name ?? "—";
   const reviewingSupervisorTitle = reviewingSupervisorUser?.job_title ?? "Reviewing Supervisor / Division Head";
   const personnelName = personnelUser?.full_name ?? "—";
   const committeeName = committeeUser?.full_name ?? "—";
   const presidentName = presidentUser?.full_name ?? "—";
   const employeeName = employeeRecordResult?.data?.full_name ?? evaluation.full_name_snapshot ?? "—";
-  const employeeJobTitle = employeeRecordResult?.data?.job_title ?? evaluation.job_title_snapshot ?? "Ratee";
+  const employeeJobTitle = employeeRecordResult?.data?.job_title ?? evaluation.job_title_snapshot ?? "Ratee / Employee";
   const employeeSignatureDate = employeeSignatureResult?.data?.signed_at ?? null;
-
-  const drawText = (text: string, size = 10, x = 42, fontVariant = font, color = rgb(0.08, 0.12, 0.18), maxWidth?: number) => {
-    page.drawText(text, { x, y: 0, size, font: fontVariant, color, maxWidth });
-  };
-
-  const drawLine = (startX: number, endX: number, yPos: number, thickness = 0.8) => {
-    page.drawLine({ start: { x: startX, y: yPos }, end: { x: endX, y: yPos }, thickness, color: rgb(0.68, 0.7, 0.72) });
-  };
-
-  const fieldValue = (value: unknown, fallback = "") => normalizeText(value) || fallback;
-
-  const drawField = ({
-    label,
-    value,
-    labelX,
-    valueX,
-    valueWidth,
-    yPos,
-    labelFont = bold,
-    valueFont = font,
-  }: {
-    label: string;
-    value: unknown;
-    labelX: number;
-    valueX: number;
-    valueWidth: number;
-    yPos: number;
-    labelFont?: typeof font;
-    valueFont?: typeof font;
-  }) => {
-    const text = fieldValue(value, "—");
-    page.drawText(label, { x: labelX, y: yPos, size: 9, font: labelFont, color: rgb(0.14, 0.16, 0.2) });
-    page.drawText(text, { x: valueX, y: yPos, size: 9, font: valueFont, color: rgb(0.14, 0.16, 0.2), maxWidth: valueWidth });
-  };
-
-  const drawBreaker = (yPos: number) => drawLine(36, 576, yPos);
-
-  const drawSignatureBlock = ({
-    x,
-    label,
-    name,
-    title,
-    date,
-    signature,
-    yPos,
-  }: {
-    x: number;
-    label: string;
-    name: string;
-    title: string;
-    date: string | null;
-    signature: { width?: number; height?: number } | null;
-    yPos: number;
-  }) => {
-    page.drawText(label, { x, y: yPos, size: 10, font: bold, color: rgb(0.14, 0.16, 0.2) });
-    if (signature) {
-      page.drawImage(signature as never, { x: x + 8, y: yPos - 44, width: 120, height: 26 });
-    } else {
-      page.drawLine({ start: { x, y: yPos - 28 }, end: { x: x + 120, y: yPos - 28 }, thickness: 1, color: rgb(0.2, 0.2, 0.2) });
-    }
-    page.drawText(name || "—", { x, y: yPos - 48, size: 9, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 140 });
-    page.drawText(title || "—", { x, y: yPos - 64, size: 8, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 150 });
-    page.drawText(`Date: ${date ? formatDate(date) : "—"}`, { x, y: yPos - 80, size: 8, font, color: rgb(0.14, 0.16, 0.2), maxWidth: 160 });
-    drawLine(x, x + 150, yPos - 92);
-  };
-
   const periodFrom = cycle.starts_at ? formatFormDate(cycle.starts_at) : `January 1, ${cycle.year}`;
   const periodTo = cycle.ends_at ? formatFormDate(cycle.ends_at) : `December 31, ${cycle.year}`;
 
-  page.drawText("PRIORITY HANDLING LOGISTICS, INC.", { x: 156, y: 755, size: 14, font: bold, color: rgb(0.12, 0.16, 0.2) });
-  page.drawText("1618-B Copernico St., San Isidro, Makati City", { x: 160, y: 738, size: 9, font, color: rgb(0.12, 0.16, 0.2) });
-  page.drawText("PERFORMANCE EVALUATION SHEET", { x: 182, y: 710, size: 15, font: bold, color: rgb(0.12, 0.16, 0.2) });
-  page.drawText("FOR NON-SUPERVISORY STAFF", { x: 205, y: 693, size: 10, font: bold, color: rgb(0.12, 0.16, 0.2) });
+  const page1 = currentPage;
+  drawTextLine("PRIORITY HANDLING LOGISTICS, INC.", 160, 764, 14, bold);
+  drawTextLine("1618-B Copernico St., San Isidro, Makati City", 160, 748, 9);
+  drawTextLine("PERFORMANCE EVALUATION SHEET", 175, 722, 15, bold);
+  drawTextLine("FOR NON-SUPERVISORY STAFF", 203, 706, 10, bold);
 
-  drawField({ label: "PERIOD COVERED: FROM", value: periodFrom, labelX: 40, valueX: 190, valueWidth: 165, yPos: 665 });
-  drawField({ label: "TO", value: periodTo, labelX: 362, valueX: 390, valueWidth: 160, yPos: 665 });
-  drawField({ label: "NAME OF RATEE:", value: evaluation.full_name_snapshot ?? employeeName, labelX: 40, valueX: 160, valueWidth: 178, yPos: 640 });
-  drawField({ label: "JOB TITLE OF RATEE:", value: evaluation.job_title_snapshot ?? employeeJobTitle, labelX: 352, valueX: 488, valueWidth: 140, yPos: 640 });
-  drawField({ label: "DIVISION / DEPT:", value: evaluation.division_snapshot, labelX: 40, valueX: 170, valueWidth: 170, yPos: 618 });
-  drawField({ label: "SECTION / UNIT:", value: evaluation.section_snapshot, labelX: 352, valueX: 482, valueWidth: 130, yPos: 618 });
-  drawField({ label: "NAME OF RATER:", value: raterName, labelX: 40, valueX: 160, valueWidth: 170, yPos: 596 });
-  drawField({ label: "JOB TITLE OF RATER:", value: raterTitle, labelX: 352, valueX: 492, valueWidth: 130, yPos: 596 });
+  drawField({ label: "PERIOD COVERED: FROM", value: periodFrom, labelX: 36, valueX: 188, valueWidth: 170, y: 678 });
+  drawField({ label: "TO", value: periodTo, labelX: 358, valueX: 392, valueWidth: 150, y: 678 });
+  drawField({ label: "NAME OF RATEE:", value: evaluation.full_name_snapshot ?? employeeName, labelX: 36, valueX: 156, valueWidth: 172, y: 652 });
+  drawField({ label: "JOB TITLE OF RATEE:", value: evaluation.job_title_snapshot ?? employeeJobTitle, labelX: 352, valueX: 488, valueWidth: 140, y: 652 });
+  drawField({ label: "DIVISION / DEPT:", value: evaluation.division_snapshot, labelX: 36, valueX: 172, valueWidth: 156, y: 628 });
+  drawField({ label: "SECTION / UNIT:", value: evaluation.section_snapshot, labelX: 352, valueX: 482, valueWidth: 126, y: 628 });
+  drawField({ label: "NAME OF RATER:", value: raterName, labelX: 36, valueX: 156, valueWidth: 170, y: 604 });
+  drawField({ label: "JOB TITLE OF RATER:", value: raterTitle, labelX: 352, valueX: 492, valueWidth: 120, y: 604 });
 
-  page.drawText("RATING: 1 — Poor     2 — Below Average     3 — Average     4 — Above Average     5 — Excellent", {
-    x: 42,
-    y: 575,
+  currentPage.drawText("RATING: 1 — Poor     2 — Below Average     3 — Average     4 — Above Average     5 — Excellent", {
+    x: 36,
+    y: 580,
     size: 9,
     font: bold,
     color: rgb(0.14, 0.16, 0.2),
-    maxWidth: 500,
+    maxWidth: 520,
   });
 
-  const tableTop = 520;
+  const tableTop = 528;
   const tableLeft = 36;
-  const cellHeight = 24;
-  const colWidths = { factor: 240, employee: 100, supervisor: 100, reviewer: 120 };
-  const colX = { employee: tableLeft + colWidths.factor + 2, supervisor: tableLeft + colWidths.factor + colWidths.employee + 2, reviewer: tableLeft + colWidths.factor + colWidths.employee + colWidths.supervisor + 2 };
+  const rowHeight = 46;
+  const colFactor = 245;
+  const colEmployee = 95;
+  const colSupervisor = 95;
+  const colReviewer = 122;
+  const colX = { employee: tableLeft + colFactor + 2, supervisor: tableLeft + colFactor + colEmployee + 2, reviewer: tableLeft + colFactor + colEmployee + colSupervisor + 2 };
 
-  page.drawRectangle({ x: tableLeft, y: tableTop - 26, width: 504, height: 300, borderColor: rgb(0.25, 0.25, 0.25), borderWidth: 1.2 });
-  page.drawRectangle({ x: tableLeft, y: tableTop - 26, width: colWidths.factor, height: 26, fillColor: rgb(0.86, 0.86, 0.86), borderColor: rgb(0.25, 0.25, 0.25), borderWidth: 1.0 });
-  page.drawRectangle({ x: colX.employee, y: tableTop - 26, width: colWidths.employee, height: 26, fillColor: rgb(0.86, 0.86, 0.86), borderColor: rgb(0.25, 0.25, 0.25), borderWidth: 1.0 });
-  page.drawRectangle({ x: colX.supervisor, y: tableTop - 26, width: colWidths.supervisor, height: 26, fillColor: rgb(0.86, 0.86, 0.86), borderColor: rgb(0.25, 0.25, 0.25), borderWidth: 1.0 });
-  page.drawRectangle({ x: colX.reviewer, y: tableTop - 26, width: colWidths.reviewer, height: 26, fillColor: rgb(0.86, 0.86, 0.86), borderColor: rgb(0.25, 0.25, 0.25), borderWidth: 1.0 });
+  currentPage.drawRectangle({ x: tableLeft, y: tableTop - 28, width: 500, height: 370, borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 1.2 });
+  currentPage.drawRectangle({ x: tableLeft, y: tableTop - 28, width: colFactor, height: 28, fillColor: rgb(0.86, 0.86, 0.86), borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 1.0 });
+  currentPage.drawRectangle({ x: colX.employee, y: tableTop - 28, width: colEmployee, height: 28, fillColor: rgb(0.86, 0.86, 0.86), borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 1.0 });
+  currentPage.drawRectangle({ x: colX.supervisor, y: tableTop - 28, width: colSupervisor, height: 28, fillColor: rgb(0.86, 0.86, 0.86), borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 1.0 });
+  currentPage.drawRectangle({ x: colX.reviewer, y: tableTop - 28, width: colReviewer, height: 28, fillColor: rgb(0.86, 0.86, 0.86), borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 1.0 });
 
-  page.drawText("PERFORMANCE EVALUATION FACTOR", { x: tableLeft + 10, y: tableTop - 18, size: 9, font: bold, color: rgb(0.12, 0.16, 0.2) });
-  page.drawText("EMPLOYEE / RATEE", { x: colX.employee + 14, y: tableTop - 18, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2) });
-  page.drawText("SUPERVISOR / RATER", { x: colX.supervisor + 14, y: tableTop - 18, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2) });
-  page.drawText("REVIEWING SUPERVISOR / DIVISION HEAD", { x: colX.reviewer + 8, y: tableTop - 18, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2), maxWidth: 102 });
+  currentPage.drawText("PERFORMANCE EVALUATION FACTOR", { x: tableLeft + 8, y: tableTop - 18, size: 9, font: bold, color: rgb(0.12, 0.16, 0.2) });
+  currentPage.drawText("EMPLOYEE / RATEE", { x: colX.employee + 8, y: tableTop - 18, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2) });
+  currentPage.drawText("SUPERVISOR / RATER", { x: colX.supervisor + 8, y: tableTop - 18, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2) });
+  currentPage.drawText("REVIEWING SUPERVISOR / DIVISION HEAD", { x: colX.reviewer + 6, y: tableTop - 18, size: 7.5, font: bold, color: rgb(0.12, 0.16, 0.2), maxWidth: 102 });
 
-  for (let index = 0; index < criteria.length; index += 1) {
-    const criterion = criteria[index];
-    const rowY = tableTop - 26 - (index + 1) * cellHeight;
-    page.drawRectangle({ x: tableLeft, y: rowY, width: colWidths.factor, height: cellHeight, borderColor: rgb(0.25, 0.25, 0.25), borderWidth: 1.0 });
-    page.drawRectangle({ x: colX.employee, y: rowY, width: colWidths.employee, height: cellHeight, borderColor: rgb(0.25, 0.25, 0.25), borderWidth: 1.0 });
-    page.drawRectangle({ x: colX.supervisor, y: rowY, width: colWidths.supervisor, height: cellHeight, borderColor: rgb(0.25, 0.25, 0.25), borderWidth: 1.0 });
-    page.drawRectangle({ x: colX.reviewer, y: rowY, width: colWidths.reviewer, height: cellHeight, borderColor: rgb(0.25, 0.25, 0.25), borderWidth: 1.0 });
+  for (let index = 0; index < displayCriteria.length; index += 1) {
+    const criterion = displayCriteria[index];
+    const rowY = tableTop - 28 - (index + 1) * rowHeight;
+    currentPage.drawRectangle({ x: tableLeft, y: rowY, width: colFactor, height: rowHeight, borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 1.0 });
+    currentPage.drawRectangle({ x: colX.employee, y: rowY, width: colEmployee, height: rowHeight, borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 1.0 });
+    currentPage.drawRectangle({ x: colX.supervisor, y: rowY, width: colSupervisor, height: rowHeight, borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 1.0 });
+    currentPage.drawRectangle({ x: colX.reviewer, y: rowY, width: colReviewer, height: rowHeight, borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 1.0 });
 
-    const rowLabel = `${criterion.letter}. ${criterion.title}`;
-    page.drawText(rowLabel, { x: tableLeft + 8, y: rowY + 8, size: 8, font, color: rgb(0.12, 0.16, 0.2), maxWidth: 210 });
     const employeeRating = ratingMap.get(criterion.id)?.EMPLOYEE ?? "";
     const supervisorRating = ratingMap.get(criterion.id)?.SUPERVISOR ?? "";
     const reviewingRating = ratingMap.get(criterion.id)?.REVIEWING_SUPERVISOR ?? "";
-    page.drawText(String(employeeRating), { x: colX.employee + 44, y: rowY + 8, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2) });
-    page.drawText(String(supervisorRating), { x: colX.supervisor + 44, y: rowY + 8, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2) });
-    page.drawText(String(reviewingRating), { x: colX.reviewer + 52, y: rowY + 8, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2) });
+
+    currentPage.drawText(`${criterion.letter}. ${criterion.title}`, {
+      x: tableLeft + 8,
+      y: rowY + 23,
+      size: 8,
+      font: bold,
+      color: rgb(0.12, 0.16, 0.2),
+      maxWidth: colFactor - 14,
+    });
+    currentPage.drawText(criterion.description, {
+      x: tableLeft + 8,
+      y: rowY + 8,
+      size: 6.5,
+      font,
+      color: rgb(0.12, 0.16, 0.2),
+      maxWidth: colFactor - 14,
+    });
+    currentPage.drawText(String(employeeRating), { x: colX.employee + 40, y: rowY + 16, size: 9, font: bold, color: rgb(0.12, 0.16, 0.2) });
+    currentPage.drawText(String(supervisorRating), { x: colX.supervisor + 40, y: rowY + 16, size: 9, font: bold, color: rgb(0.12, 0.16, 0.2) });
+    currentPage.drawText(String(reviewingRating), { x: colX.reviewer + 52, y: rowY + 16, size: 9, font: bold, color: rgb(0.12, 0.16, 0.2) });
   }
 
-  const signatureTop = 200;
-  drawSignatureBlock({ x: 42, label: "APPRAISED BY:", name: raterName, title: raterTitle, date: stageSignatures.get("RATER_STEP2")?.signed_at ?? null, signature: raterSig, yPos: signatureTop });
-  drawSignatureBlock({ x: 220, label: "REVIEWED BY:", name: reviewingSupervisorName, title: reviewingSupervisorTitle, date: stageSignatures.get("REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null, signature: reviewingSupervisorSig, yPos: signatureTop });
-  drawSignatureBlock({ x: 398, label: "REVIEWED WITH ME:", name: employeeName, title: employeeJobTitle, date: employeeSignatureDate, signature: employeeSig, yPos: signatureTop });
+  const signatureY = 210;
+  drawSignatureBlock({ x: 36, label: "APPRAISED BY:", name: raterName, title: raterTitle, date: stageSignatures.get("RATER_STEP2")?.signed_at ?? null, signature: raterSig, y: signatureY });
+  drawSignatureBlock({ x: 216, label: "REVIEWED BY:", name: reviewingSupervisorName, title: reviewingSupervisorTitle, date: stageSignatures.get("REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null, signature: reviewingSupervisorSig, y: signatureY });
+  drawSignatureBlock({ x: 396, label: "REVIEWED WITH ME:", name: employeeName, title: employeeJobTitle, date: employeeSignatureDate, signature: employeeSig, y: signatureY });
 
-  page.drawText("CONCLUSIONS AND COMMENTS (CONFIDENTIAL: NOT TO BE SHOWN TO RATEE)", { x: 92, y: 150, size: 11, font: bold, color: rgb(0.12, 0.16, 0.2) });
-  page.drawText("STEP TWO: DEVELOP CONCLUSION AND COMMENTS", { x: 40, y: 122, size: 10, font: bold, color: rgb(0.12, 0.16, 0.2) });
-  page.drawText("1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents.", { x: 40, y: 100, size: 8, font, color: rgb(0.12, 0.16, 0.2), maxWidth: 520 });
-  const step2Strengths = fieldValue(evaluation.supervisor_step2_strengths ?? "", "");
-  const step2Weaknesses = fieldValue(evaluation.supervisor_step2_weaknesses ?? "", "");
-  if (step2Strengths) {
-    page.drawText("Principal Strengths:", { x: 40, y: 88, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2) });
-    page.drawText(step2Strengths, { x: 165, y: 88, size: 8, font, color: rgb(0.12, 0.16, 0.2), maxWidth: 350 });
-  }
-  if (step2Weaknesses) {
-    page.drawText("Principal Weaknesses:", { x: 40, y: 72, size: 8, font: bold, color: rgb(0.12, 0.16, 0.2) });
-    page.drawText(step2Weaknesses, { x: 165, y: 72, size: 8, font, color: rgb(0.12, 0.16, 0.2), maxWidth: 350 });
-  }
+  currentPage = addPage();
+  currentY = 760;
 
-  const step3Comments = fieldValue(step3Result?.data?.comments ?? "", "");
-  const step3Recommendations = fieldValue(step3Result?.data?.recommendations ?? "", "");
-  if (step3Comments || step3Recommendations) {
-    page.drawText("STEP THREE: REVIEWING SUPERVISOR / DIVISION HEAD COMMENTS AND RECOMMENDATIONS", { x: 40, y: 52, size: 9, font: bold, color: rgb(0.12, 0.16, 0.2) });
-    if (step3Comments) {
-      page.drawText(step3Comments, { x: 40, y: 38, size: 8, font, color: rgb(0.12, 0.16, 0.2), maxWidth: 240 });
+  drawTextLine("CONCLUSIONS AND COMMENTS", 118, 760, 12, bold);
+  drawTextLine("(CONFIDENTIAL: NOT TO BE SHOWN TO RATEE)", 134, 744, 9, bold);
+  drawTextLine("STEP TWO: DEVELOP CONCLUSION AND COMMENTS", 36, 720, 11, bold);
+
+  const stepTwoItems = [
+    { label: "If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents.", value: evaluation.supervisor_step2_overall_explanation ?? "" },
+    { label: "Principal Strengths:", value: evaluation.supervisor_step2_strengths ?? "" },
+    { label: "Principal Weaknesses:", value: evaluation.supervisor_step2_weaknesses ?? "" },
+    { label: "To be more effective on present job the employee should:", value: evaluation.supervisor_step2_development ?? "" },
+    { label: "Development Potential:", value: evaluation.supervisor_step2_development_potential ?? "" },
+    { label: "Advancement Outlook:", value: evaluation.supervisor_step2_advancement_outlook ?? "" },
+    { label: "Suggestions to accelerate employee growth and development:", value: evaluation.supervisor_step2_growth_suggestions ?? "" },
+    { label: "Job / transfer interest:", value: evaluation.supervisor_step2_transfer_interest ?? "" },
+    { label: "Transfer / job / where / qualification details:", value: `${evaluation.supervisor_step2_transfer_job ?? ""} ${evaluation.supervisor_step2_transfer_where ?? ""} ${evaluation.supervisor_step2_transfer_qualified ?? ""}`.trim() },
+    { label: "Other comments and recommendations:", value: evaluation.supervisor_step2_other_comments ?? "" },
+  ];
+
+  for (const item of stepTwoItems) {
+    ensureSpace(42);
+    currentPage.drawText(item.label, { x: 36, y: currentY, size: 9, font: bold, color: rgb(0.12, 0.16, 0.2), maxWidth: 500 });
+    currentY -= 18;
+    if (item.value) {
+      const answerLines = wrapText(item.value, 90);
+      answerLines.slice(0, 5).forEach((line) => {
+        currentPage.drawText(line, { x: 42, y: currentY, size: 8, font, color: rgb(0.12, 0.16, 0.2), maxWidth: 500 });
+        currentY -= 14;
+      });
     }
-    if (step3Recommendations) {
-      page.drawText(step3Recommendations, { x: 310, y: 38, size: 8, font, color: rgb(0.12, 0.16, 0.2), maxWidth: 240 });
-    }
+    currentY -= 12;
   }
+
+  if (raterSig || raterName) {
+    ensureSpace(64);
+    currentPage.drawLine({ start: { x: 40, y: currentY }, end: { x: 250, y: currentY }, thickness: 0.8, color: rgb(0.18, 0.18, 0.18) });
+    currentPage.drawText("Signature of Rater", { x: 40, y: currentY + 8, size: 8, font: bold });
+    if (raterSig) {
+      currentPage.drawImage(raterSig as never, { x: 40, y: currentY + 20, width: 145, height: 34 });
+    }
+    currentPage.drawText(raterName || "—", { x: 40, y: currentY + 56, size: 9, font, color: rgb(0.12, 0.16, 0.2) });
+    currentPage.drawText(raterTitle || "Rater / Immediate Supervisor", { x: 40, y: currentY + 42, size: 8, font, color: rgb(0.12, 0.16, 0.2) });
+    currentPage.drawText(`Date: ${stageSignatures.get("RATER_STEP2")?.signed_at ? formatDate(stageSignatures.get("RATER_STEP2")!.signed_at) : "—"}`, { x: 40, y: currentY + 28, size: 8, font });
+  }
+
+  currentPage = addPage();
+  currentY = 760;
+  drawTextLine("STEP THREE: REVIEWED BY THE REVIEWING SUPERVISOR", 36, 760, 11, bold);
+  drawTextLine("COMMENTS AND RECOMMENDATIONS OF", 156, 744, 10, bold);
+  drawTextLine("REVIEWING SUPERVISOR / DIVISION HEAD", 150, 730, 10, bold);
+
+  const stepThreeText = [step3Result?.data?.comments ?? "", step3Result?.data?.recommendations ?? ""].filter(Boolean).join("\n\n");
+  if (stepThreeText) {
+    ensureSpace(120);
+    const lines = wrapText(stepThreeText, 92);
+    lines.slice(0, 18).forEach((line) => {
+      currentPage.drawText(line, { x: 36, y: currentY, size: 9, font, color: rgb(0.12, 0.16, 0.2), maxWidth: 520 });
+      currentY -= 14;
+    });
+  }
+
+  ensureSpace(96);
+  if (reviewingSupervisorSig || reviewingSupervisorName) {
+    currentPage.drawLine({ start: { x: 40, y: currentY }, end: { x: 250, y: currentY }, thickness: 0.8, color: rgb(0.18, 0.18, 0.18) });
+    currentPage.drawText("Signature of Reviewing Supervisor / Division Head", { x: 40, y: currentY + 8, size: 8, font: bold });
+    if (reviewingSupervisorSig) {
+      currentPage.drawImage(reviewingSupervisorSig as never, { x: 40, y: currentY + 20, width: 145, height: 34 });
+    }
+    currentPage.drawText(reviewingSupervisorName || "—", { x: 40, y: currentY + 56, size: 9, font, color: rgb(0.12, 0.16, 0.2) });
+    currentPage.drawText(reviewingSupervisorTitle || "Reviewing Supervisor / Division Head", { x: 40, y: currentY + 42, size: 8, font, color: rgb(0.12, 0.16, 0.2) });
+    currentPage.drawText(`Date: ${stageSignatures.get("REVIEWING_SUPERVISOR_STEP3")?.signed_at ? formatDate(stageSignatures.get("REVIEWING_SUPERVISOR_STEP3")!.signed_at) : "—"}`, { x: 40, y: currentY + 28, size: 8, font });
+  }
+
+  currentPage = addPage();
+  currentY = 760;
+  drawTextLine("TO BE FILLED UP BY THE PERSONNEL OFFICE", 150, 760, 12, bold);
+  drawField({ label: "Employee's Present Salary:", value: personnelResult?.data?.present_salary ?? "", labelX: 36, valueX: 198, valueWidth: 330, y: 728 });
+  drawField({ label: "Date of Last Increase:", value: personnelResult?.data?.last_increase_date ?? "", labelX: 36, valueX: 190, valueWidth: 330, y: 706 });
+  drawField({ label: "Nature of Last Increase:", value: personnelResult?.data?.last_increase_nature ?? "", labelX: 36, valueX: 190, valueWidth: 330, y: 684 });
+  drawField({ label: "Amount of Last Increase:", value: personnelResult?.data?.last_increase_amount ?? "", labelX: 36, valueX: 196, valueWidth: 320, y: 662 });
+
+  drawField({ label: "TOTAL POINTS:", value: scoreResult?.data?.final_score ?? "", labelX: 36, valueX: 146, valueWidth: 120, y: 620 });
+  drawField({ label: "ADJECTIVE RATING:", value: scoreResult?.data?.final_rating_label ?? "", labelX: 260, valueX: 408, valueWidth: 120, y: 620 });
+  drawField({ label: "Recommended Increase / Bonus:", value: personnelResult?.data?.recommended_increase_bonus ?? "", labelX: 36, valueX: 240, valueWidth: 300, y: 590 });
+
+  currentPage = addPage();
+  currentY = 760;
+  drawTextLine("COMMITTEE REVIEW", 220, 760, 12, bold);
+  drawTextLine("Final action:", 36, 730, 10, bold);
+  currentPage.drawText(normalizeText(committeeResult?.data?.final_action) || "—", { x: 120, y: 730, size: 9, font, maxWidth: 430 });
+  drawTextLine("Action Details:", 36, 708, 10, bold);
+  currentPage.drawText(normalizeText(committeeResult?.data?.action_details) || "—", { x: 120, y: 708, size: 9, font, maxWidth: 430 });
+  drawTextLine("Recommendation:", 36, 686, 10, bold);
+  currentPage.drawText(normalizeText(committeeResult?.data?.recommendation) || "—", { x: 130, y: 686, size: 9, font, maxWidth: 430 });
+
+  drawTextLine("PRESIDENT APPROVAL", 220, 640, 12, bold);
+  drawTextLine("Final Decision:", 36, 610, 10, bold);
+  currentPage.drawText(normalizeText(finalizationReason) || "—", { x: 140, y: 610, size: 9, font, maxWidth: 420 });
+  drawTextLine("Approved By:", 36, 560, 10, bold);
+  currentPage.drawText(presidentName || "—", { x: 120, y: 560, size: 10, font, maxWidth: 220 });
+  currentPage.drawText(statusLabel, { x: 360, y: 560, size: 10, font: bold, maxWidth: 180 });
+  currentPage.drawText(`Date approved: ${finalizedAt ? formatDate(finalizedAt) : "—"}`, { x: 36, y: 540, size: 9, font });
 
   const bytes = await pdf.save();
   const versionLabel = evaluation.version ?? 1;
