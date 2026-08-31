@@ -125,8 +125,11 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
     const { generateEvaluationData, generateEvaluationHTML } = await import("./documents.server");
 
     try {
+      console.log(`[getEvaluationSheetHtml] Starting for evaluation: ${data.evaluationId}`);
+      
       // Check both permissions to allow access at different workflow stages
       await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view", "evaluations.review"], "Evaluation Sheet");
+      console.log(`[getEvaluationSheetHtml] Permissions check passed`);
 
       const admin = await getAdmin();
       const { data: evaluation, error: evalError } = await admin
@@ -135,20 +138,29 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
         .eq("id", data.evaluationId)
         .maybeSingle();
 
-      if (evalError) throw validationError(`Database error: ${evalError.message}`);
-      if (!evaluation) throw validationError("Evaluation not found");
+      console.log(`[getEvaluationSheetHtml] Query result:`, { evaluation, evalError });
 
+      if (evalError) throw validationError(`Database error fetching evaluation: ${evalError.message}`);
+      if (!evaluation) throw validationError(`Evaluation not found with ID: ${data.evaluationId}`);
+
+      console.log(`[getEvaluationSheetHtml] Evaluation found, generating data...`);
+      
       // Generate the HTML on-demand - allow at any stage where user has permission
       const evaluationData = await generateEvaluationData(data.evaluationId);
+      console.log(`[getEvaluationSheetHtml] Evaluation data generated`);
+      
       const html = generateEvaluationHTML(evaluationData);
+      console.log(`[getEvaluationSheetHtml] HTML generated, returning`);
 
       return { html };
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error(`[getEvaluationSheetHtml] Error occurred:`, errorMsg);
+      
       if (error instanceof Error && error.message.includes("VALIDATION")) {
         throw error;
       }
-      const message = error instanceof Error ? error.message : String(error);
-      throw validationError(`Failed to generate evaluation sheet: ${message}`);
+      throw validationError(`Failed to generate evaluation sheet: ${errorMsg}`);
     }
   });
 

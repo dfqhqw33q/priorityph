@@ -334,8 +334,12 @@ export async function generateEvaluationData(evaluationId: string) {
       .eq("id", evaluationId)
       .maybeSingle()) as any;
 
+    console.log(`[generateEvaluationData] Main query - evaluation found: ${!!evaluation}, error: ${evalError?.message}`);
+
     if (evalError) throw new Error(`Failed to fetch evaluation: ${evalError.message}`);
-    if (!evaluation) throw new Error("Evaluation not found");
+    if (!evaluation) throw new Error(`Evaluation not found for ID: ${evaluationId}`);
+
+    console.log(`[generateEvaluationData] Evaluation loaded, processing relationships...`);
 
     const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number; starts_at: string; ends_at: string; template_id: string } }).evaluation_cycles;
 
@@ -346,6 +350,8 @@ export async function generateEvaluationData(evaluationId: string) {
       admin.from("evaluation_stage_signatures").select("stage, signed_at").eq("evaluation_id", evaluationId),
       evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
     ]);
+
+    console.log(`[generateEvaluationData] Criteria: ${criteriaResult.data?.length || 0}, Ratings: ${ratingsResult.data?.length || 0}, Signatures: ${stageSignatureResult.data?.length || 0}, Employee: ${!!employeeRecordResult?.data}`);
 
     // Get reviewing supervisor info
     const { data: step3Result } = (await admin.from("reviewing_supervisor_reviews").select("reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle()) as any;
@@ -433,6 +439,7 @@ export async function generateEvaluationData(evaluationId: string) {
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[generateEvaluationData] Error:`, errorMsg, error);
     throw new Error(`Error generating evaluation data: ${errorMsg}`);
   }
 }
