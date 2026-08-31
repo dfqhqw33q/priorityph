@@ -318,6 +318,31 @@ function wrapText(text: string, maxCharsPerLine: number) {
   return lines.length > 0 ? lines : ["—"];
 }
 
+async function convertSignatureToDataUrl(
+  admin: any,
+  signatureData: { method: string; storage_path?: string; signature_data?: string; content_type?: string } | null,
+) {
+  if (!signatureData) return undefined;
+
+  if (signatureData.method === "DRAWN" && signatureData.signature_data) {
+    return signatureData.signature_data;
+  } else if (signatureData.method === "UPLOAD" && signatureData.storage_path) {
+    try {
+      const { data, error } = await admin.storage.from("employee-files").download(signatureData.storage_path);
+      if (!error && data) {
+        const buffer = await data.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        const binaryString = bytes.reduce((acc, byte) => acc + String.fromCharCode(byte), "");
+        const base64 = btoa(binaryString);
+        return `data:${signatureData.content_type || "image/png"};base64,${base64}`;
+      }
+    } catch (err) {
+      console.log(`[convertSignatureToDataUrl] Failed to fetch signature from storage: ${err}`);
+    }
+  }
+  return undefined;
+}
+
 /**
  * Generate evaluation sheet data for rendering
  * Returns structured data that can be used by React component or HTML template
@@ -345,12 +370,13 @@ export async function generateEvaluationData(evaluationId: string) {
     const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number; starts_at: string; ends_at: string; template_id: string } }).evaluation_cycles;
 
     // First batch of queries
-    const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult, employeeSignaturesResult] = await Promise.all([
+    const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult, employeeSignaturesResult, internalUserSignaturesResult] = await Promise.all([
       admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
       admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
       admin.from("evaluation_stage_signatures").select("stage, signed_at").eq("evaluation_id", evaluationId),
       evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
       admin.from("employee_signatures").select("method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
+      admin.from("internal_user_signatures").select("user_id, stage, method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
     ]);
 
     console.log(`[generateEvaluationData] Criteria: ${criteriaResult.data?.length || 0}, Ratings: ${ratingsResult.data?.length || 0}, Signatures: ${stageSignatureResult.data?.length || 0}, Employee: ${!!employeeRecordResult?.data}`);
@@ -406,30 +432,19 @@ export async function generateEvaluationData(evaluationId: string) {
     const periodFrom = formatFormDate(cycle.starts_at) || `January 1, ${cycle.year}`;
     const periodTo = formatFormDate(cycle.ends_at) || `December 31, ${cycle.year}`;
 
-    // Convert employee signature to base64 data URL
-    let reviewedWithMeSignature: string | undefined;
-    const empSig = employeeSignaturesResult.data?.[0];
-    if (empSig) {
-      if (empSig.method === "DRAWN" && empSig.signature_data) {
-        reviewedWithMeSignature = empSig.signature_data;
-      } else if (empSig.method === "UPLOAD" && empSig.storage_path) {
-        try {
-          const { data, error } = await admin.storage.from("employee-files").download(empSig.storage_path);
-          if (!error && data) {
-            const buffer = await data.arrayBuffer();
-            const bytes = new Uint8Array(buffer);
-            const binaryString = bytes.reduce((acc, byte) => acc + String.fromCharCode(byte), "");
-            const base64 = btoa(binaryString);
-            reviewedWithMeSignature = `data:${empSig.content_type || "image/png"};base64,${base64}`;
-          }
-        } catch (err) {
-          console.log(`[generateEvaluationData] Failed to fetch signature from storage: ${err}`);
-        }
-      }
-    }
+    // Convert employee signature to base64 data URL using helper function
+    const reviewedWithMeSignature = await convertSignatureToDataUrl(admin, employeeSignaturesResult.data?.[0]);
 
     // Get employee submission date
     const reviewedWithMeDateStr = evaluation.employee_submitted_at ? formatDate(evaluation.employee_submitted_at) : "—";
+
+    // Get supervisor signatures
+    const internalSigs = internalUserSignaturesResult.data ?? [];
+    const raterStage = internalSigs.find((s) => s.stage === "RATER_STEP2");
+    const reviewerStage = internalSigs.find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3");
+
+    const appraisedBySignature = raterStage ? await convertSignatureToDataUrl(admin, raterStage) : undefined;
+    const reviewedBySignature = reviewerStage ? await convertSignatureToDataUrl(admin, reviewerStage) : undefined;
 
     return {
       companyName: "PRIORITY HANDLING LOGISTICS, INC.",
@@ -453,11 +468,11 @@ export async function generateEvaluationData(evaluationId: string) {
       appraisedByName: raterName,
       appraisedByTitle: raterTitle,
       appraisedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at),
-      appraisedBySignature: undefined,
+      appraisedBySignature,
       reviewedByName: reviewingSupervisorName,
       reviewedByTitle: reviewingSupervisorTitle,
       reviewedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at),
-      reviewedBySignature: undefined,
+      reviewedBySignature,
       reviewedWithMeName: employeeName,
       reviewedWithMeTitle: employeeJobTitle,
       reviewedWithMeDate: reviewedWithMeDateStr,
