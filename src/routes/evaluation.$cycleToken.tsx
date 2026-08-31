@@ -298,8 +298,8 @@ function PublicEvaluationPage() {
 
         <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base font-bold">Google access gate</CardTitle>
-            <CardDescription>Sign in with Google before continuing with the employee verification and self-assessment.</CardDescription>
+            <CardTitle className="text-base font-bold">Sign in to continue</CardTitle>
+            <CardDescription>Use your company Google account to verify your identity and continue with your performance evaluation.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {googleReady ? (
@@ -312,7 +312,7 @@ function PublicEvaluationPage() {
             ) : (
               <Button
                 type="button"
-                className="w-full"
+                className="flex w-full items-center justify-center gap-3 rounded-md border border-slate-300 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-sm transition-colors hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 onClick={async () => {
                   const redirectTo = `${window.location.origin}${window.location.pathname}`;
                   const { error } = await supabase.auth.signInWithOAuth({
@@ -325,7 +325,15 @@ function PublicEvaluationPage() {
                   if (error) toast.error(error.message || "Google sign-in could not be started.");
                 }}
               >
-                Continue with Google
+                <span className="flex h-5 w-5 items-center justify-center" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.62l6.85-6.86C35.7 2.52 30.41 0 24 0 14.62 0 6.39 5.38 2.56 13.22l7.98 6.2C12.49 14.3 17.67 9.5 24 9.5Z" />
+                    <path fill="#4285F4" d="M46.5 24.5c0-1.65-.15-3.22-.42-4.74H24v9h12.73c-.55 2.96-2.23 5.48-4.76 7.18l7.73 6c4.51-4.15 7.3-10.29 7.3-18.44Z" />
+                    <path fill="#FBBC05" d="M32.97 36.9c-2.04 1.37-4.64 2.18-8.97 2.18-6.48 0-11.94-4.37-13.9-10.23l-8.14 6.3C4.75 42.83 13.26 48 24 48c7.31 0 13.46-2.42 17.95-6.6l-8.98-4.5Z" />
+                    <path fill="#34A853" d="M10.1 28.85A14.45 14.45 0 0 1 9.5 24c0-1.57.27-3.09.76-4.55L2.12 13.1A23.5 23.5 0 0 0 0 24c0 3.77.9 7.33 2.5 10.45l7.6-5.6Z" />
+                  </svg>
+                </span>
+                <span>Continue with Google</span>
               </Button>
             )}
           </CardContent>
