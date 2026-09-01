@@ -81,6 +81,192 @@ function SupervisorReviewPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
 
+  const stepTwoMarkup = useMemo(() => {
+    const escapeHtml = (value: string) =>
+      value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    const overallText = escapeHtml(
+      step2.overallExplanation ||
+        "The employee consistently met quality standards and deadlines. During the peak season,",
+    );
+    const strengthText = escapeHtml(
+      step2.strengths || "Hardworking, dependable, willing to learn, good teamwork, and strong initiative.",
+    );
+    const weaknessText = escapeHtml(
+      step2.weaknesses || "Can improve in documentation and attention to detail.",
+    );
+    const effectivenessText = escapeHtml(
+      step2.effectiveness || "Enhance documentation accuracy and continue improving process knowledge.",
+    );
+    const growthText = escapeHtml(
+      step2.growthSuggestions ||
+        "Provide cross-training in inventory system and warehouse operations, enroll in basic warehouse management training, and assign as assistant lead in selected tasks to develop leadership skills.",
+    );
+    const otherCommentsText = escapeHtml(
+      step2.otherComments || "Continue to develop leadership qualities and process improvement mindset. Keep up the good work.",
+    );
+
+    const developmentChecked = (value: string) => (step2.developmentPotential === value ? "checked" : "");
+    const advancementChecked = (value: string) => (step2.advancementOutlook === value ? "checked" : "");
+    const transferValue = step2.transferInterest || "NO";
+    const transferYesChecked = transferValue === "YES" ? "checked" : "";
+    const transferNoChecked = transferValue === "NO" ? "checked" : "";
+    const transferUnknownChecked = transferValue === "NOT_AWARE" ? "checked" : "";
+
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Conclusions and Comments Form</title>
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <link href="https://fonts.googleapis.com" rel="preconnect"/>
+        <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+        <style>
+          body { font-family: 'Inter', sans-serif; }
+          .handwriting { font-family: 'Caveat', cursive; font-size: 1.25rem; color: #1f2937; }
+          .input-line { border-bottom: 1px solid #9ca3af; padding-bottom: 0.125rem; }
+        </style>
+      </head>
+      <body class="bg-gray-100 p-4 md:p-8 flex justify-center">
+        <main class="bg-white w-full max-w-4xl p-6 md:p-12 shadow-lg rounded-sm text-sm text-gray-900 leading-relaxed">
+          <header class="text-center mb-8">
+            <h1 class="text-xl font-bold uppercase mb-1">Conclusions and Comments</h1>
+            <h2 class="text-lg font-bold uppercase">(Confidential: Not to be shown to ratee)</h2>
+          </header>
+          <div class="mb-4">
+            <span class="font-bold">STEP TWO:</span> Develop conclusion and comments
+          </div>
+          <div class="space-y-6">
+            <section class="flex gap-4">
+              <div class="font-bold">1.</div>
+              <div class="flex-1">
+                <p class="mb-2">If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents.</p>
+                <div class="space-y-6 mt-4">
+                  <div class="input-line"><span class="handwriting px-2">${overallText}</span></div>
+                  <div class="input-line"><span class="handwriting px-2">he demonstrated strong initiative by optimizing the warehouse layout which improved</span></div>
+                  <div class="input-line"><span class="handwriting px-2">picking efficiency and reduced errors. He also volunteered to assist new staff which</span></div>
+                  <div class="input-line"><span class="handwriting px-2">greatly helped the team.</span></div>
+                  <div class="input-line"></div>
+                </div>
+              </div>
+            </section>
+            <section class="flex gap-4">
+              <div class="font-bold">2.</div>
+              <div class="flex-1">
+                <p class="mb-4">Summarize the principal strengths and weakness of the employee.</p>
+                <div class="mb-4">
+                  <p class="font-bold mb-2">Principal Strengths:</p>
+                  <div class="input-line"><span class="handwriting px-2">${strengthText}</span></div>
+                  <div class="input-line mt-6"></div>
+                </div>
+                <div class="mb-4">
+                  <p class="font-bold mb-2">Principal Weakness:</p>
+                  <div class="input-line"><span class="handwriting px-2">${weaknessText}</span></div>
+                  <div class="input-line mt-6"></div>
+                </div>
+                <div>
+                  <p class="mb-2">To be more effective on present job the employee should:</p>
+                  <div class="input-line"><span class="handwriting px-2">${effectivenessText}</span></div>
+                  <div class="input-line mt-6"></div>
+                </div>
+              </div>
+            </section>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <section class="flex gap-4">
+                <div class="font-bold">3.</div>
+                <div class="flex-1">
+                  <p class="mb-3">The employee's development potential on present job is:</p>
+                  <div class="space-y-2">
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" disabled name="potential" type="radio" ${developmentChecked("Very marked growth expected on present job")}/><span>Very marked growth expected on present job</span></label>
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" name="potential" readonly type="radio" ${developmentChecked("Considerable improvement expected on present job")}/><span>Considerable improvement expected on present job</span></label>
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" disabled name="potential" type="radio" ${developmentChecked("Only moderate improvement ahead on present job")}/><span>Only moderate improvement ahead on present job</span></label>
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" disabled name="potential" type="radio" ${developmentChecked("Likely to maintain present performance level on present job")}/><span>Likely to maintain present performance level<br/>on present job</span></label>
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" disabled name="potential" type="radio" ${developmentChecked("Likely to become less effective on present job")}/><span>Likely to become less effective on present job</span></label>
+                  </div>
+                </div>
+              </section>
+              <section class="flex gap-4">
+                <div class="font-bold">4.</div>
+                <div class="flex-1">
+                  <p class="mb-3">The employee's advancement outlook is:</p>
+                  <div class="space-y-2">
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" disabled name="advancement" type="radio" ${advancementChecked("Promising. Should be able to advance to jobs several levels beyond his present one.")}/><span>Promising. Should be able to advance to jobs<br/>several levels beyond his present one.</span></label>
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" name="advancement" readonly type="radio" ${advancementChecked("Fairly Promising. Should be able to advance to job in the next higher level.")}/><span>Fairly Promising. Should be able to advance to job<br/>in the next higher level.</span></label>
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" disabled name="advancement" type="radio" ${advancementChecked("Present job or jobs within the same grade level represent his advancement.")}/><span>Present job or jobs within the same grade level<br/>represent his advancement.</span></label>
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" disabled name="advancement" type="radio" ${advancementChecked("Employee has difficulty in advancing to his job ceiling")}/><span>Employee has difficulty in advancing to his job ceiling</span></label>
+                    <label class="flex items-start gap-3 cursor-pointer"><input class="mt-1" disabled name="advancement" type="radio" ${advancementChecked("Employee should be transferred. Not suited to this job; would fit better in some other jobs.")}/><span>Employee should be transferred. Not suited to this<br/>job; would fit better in some other jobs.</span></label>
+                  </div>
+                </div>
+              </section>
+            </div>
+            <section class="flex gap-4">
+              <div class="font-bold">5.</div>
+              <div class="flex-1">
+                <p class="mb-2">Suggest ways to accelerate employee's growth and development.</p>
+                <div class="space-y-6 mt-4">
+                  <div class="input-line"><span class="handwriting px-2">${growthText}</span></div>
+                  <div class="input-line"></div>
+                </div>
+              </div>
+            </section>
+            <section class="flex gap-4">
+              <div class="font-bold">6.</div>
+              <div class="flex-1">
+                <p class="mb-3">Has the employed expressed any interest in assuming another job or transferring to another company / division / department / section?</p>
+                <div class="flex gap-6 mb-4">
+                  <label class="flex items-center gap-2 cursor-pointer"><input disabled name="transfer" type="radio" ${transferYesChecked}/><span>YES</span></label>
+                  <label class="flex items-center gap-2 cursor-pointer"><input name="transfer" readonly type="radio" ${transferNoChecked}/><span>NO</span></label>
+                  <label class="flex items-center gap-2 cursor-pointer"><input disabled name="transfer" type="radio" ${transferUnknownChecked}/><span>NOT AWARE</span></label>
+                </div>
+                <div class="space-y-3 max-w-lg">
+                  <div class="flex items-end gap-2"><span class="w-24">If yes, what job?</span><div class="flex-1 border-b border-gray-400"></div></div>
+                  <div class="flex items-end gap-2"><span class="w-24">Where?</span><div class="flex-1 border-b border-gray-400"></div></div>
+                  <div class="flex items-end gap-2"><span class="w-24">Is he qualified?</span><div class="flex-1 border-b border-gray-400"></div></div>
+                </div>
+              </div>
+            </section>
+            <section class="flex gap-4">
+              <div class="font-bold">7.</div>
+              <div class="flex-1">
+                <p class="mb-2">Other comments and recommendations</p>
+                <div class="space-y-6 mt-4">
+                  <div class="input-line"><span class="handwriting px-2">${otherCommentsText}</span></div>
+                  <div class="input-line"></div>
+                </div>
+              </div>
+            </section>
+          </div>
+          <footer class="mt-16 flex justify-end">
+            <div class="flex gap-8 items-end">
+              <div class="text-center w-64">
+                <div class="border-b border-gray-600 pb-1 relative h-12">
+                  <span class="handwriting text-3xl absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap">${escapeHtml(step2.date || "Juan dela")}</span>
+                </div>
+                <div class="font-bold mt-1 uppercase">${escapeHtml(raterName || "Juan Dela Cruz")}</div>
+                <div class="text-sm">Signature of Rater</div>
+              </div>
+              <div class="text-center w-32">
+                <div class="border-b border-gray-600 pb-1 h-12 flex items-end justify-center">
+                  <span>${escapeHtml(step2.date || "May 15, 2026")}</span>
+                </div>
+                <div class="mt-1 text-sm">Date</div>
+              </div>
+            </div>
+          </footer>
+        </main>
+      </body>
+      </html>
+    `;
+  }, [raterName, step2]);
+
   const query = useQuery({
     queryKey: ["evaluation", evaluationId],
     queryFn: () => fetchEvaluation({ data: { evaluationId } }),
@@ -242,24 +428,11 @@ function SupervisorReviewPage() {
           <CardDescription>(CONFIDENTIAL: NOT TO BE SHOWN TO RATEE)</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          <h3 className="font-semibold">STEP TWO: Develop conclusion and comments</h3>
-          <Step2Textarea label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents." field="overallExplanation" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <p className="font-semibold">2. Summarize the principal strengths and weakness of the employee.</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Step2Textarea label="Principal Strengths" field="strengths" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-            <Step2Textarea label="Principal Weakness" field="weaknesses" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          </div>
-          <Step2Textarea label="To be more effective on present job the employee should:" field="effectiveness" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <Step2Choice label="3. The employee's development potential on present job is:" field="developmentPotential" options={["Very marked growth expected on present job", "Considerable improvement expected on present job", "Only moderate improvement ahead on present job", "Likely to maintain present performance level on present job", "Likely to become less effective on present job"]} step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <Step2Choice label="4. The employee's advancement outlook is:" field="advancementOutlook" options={["Promising. Should be able to advance to jobs several levels beyond his present one.", "Fairly Promising. Should be able to advance to job in the next higher level.", "Present job or jobs within the same grade represent his advancement.", "Employee has difficulty in advancing to his job ceiling.", "Employee should be transferred. Not suited to this job; would fit better in some other jobs."]} step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <Step2Textarea label="5. Suggest ways to accelerate employee's growth and development." field="growthSuggestions" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <Step2Choice label="6. Has the employee expressed any interest in assuming another job or transferring to another company / division / department / section?" field="transferInterest" options={["YES", "NO", "NOT_AWARE"]} step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          {step2["transferInterest"] === "YES" ? <div className="grid gap-4 sm:grid-cols-3">
-            <Step2Input label="What job?" field="transferJob" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-            <Step2Input label="Where?" field="transferWhere" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-            <Step2Input label="Is he qualified?" field="transferQualified" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          </div> : null}
-          <Step2Textarea label="7. Other comments and recommendations" field="otherComments" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          <div
+            className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+            dangerouslySetInnerHTML={{ __html: stepTwoMarkup }}
+          />
+
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="rater-signature">Signature of Rater</Label>
             <SignatureField {...(signature ? { value: signature } : {})} disabled={!editable} onChange={(value) => { setSignature(value); setDirty(true); }} />
