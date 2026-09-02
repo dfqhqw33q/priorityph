@@ -6,16 +6,26 @@ import {
   ClipboardList,
   FileClock,
   Gauge,
-  LogOut,
   Menu,
   Shield,
   Users,
   CalendarRange,
   UserCog,
   BadgeCheck,
+  LogOut,
+  User,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +56,12 @@ function routeAccess(pathname: string) {
   return (
     ROUTE_ACCESS.find(({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ?? null
   );
+}
+
+function activeNavPath(pathname: string, items: NavItem[]) {
+  return items
+    .filter((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
+    .sort((first, second) => second.to.length - first.to.length)[0]?.to;
 }
 
 const NAV: { group: string; items: NavItem[] }[] = [
@@ -118,6 +134,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             (!item.permission || can(item.permission)),
         );
         if (items.length === 0) return null;
+        const activePath = activeNavPath(pathname, items);
         return (
           <div key={group.group}>
             <p className="px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -125,7 +142,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             </p>
             <div className="mt-2 space-y-1">
               {items.map((item) => {
-                const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+                const active = item.to === activePath;
                 const Icon = item.icon;
                 return (
                   <Link
@@ -229,17 +246,31 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
 
             <div className="ml-auto flex items-center gap-3">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-semibold leading-tight text-foreground">{access?.fullName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {(access?.roles ?? []).map((role) => ROLE_LABELS[role]).join(" \u00b7 ") || "No role assigned"}
-                </p>
-              </div>
               <ThemeToggle />
-              <Button variant="outline" size="sm" onClick={signOut} className="gap-1.5 font-medium">
-                <LogOut className="size-4" />
-                <span className="hidden sm:inline">Sign out</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="rounded-full" aria-label="Open profile menu">
+                    <Avatar className="size-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <User className="size-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <p className="font-semibold text-foreground">{access?.fullName}</p>
+                    <p className="font-normal text-muted-foreground">
+                      {(access?.roles ?? []).map((role) => ROLE_LABELS[role]).join(" \u00b7 ") || "No role assigned"}
+                    </p>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="gap-2">
+                    <LogOut className="size-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>
