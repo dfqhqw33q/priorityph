@@ -6,7 +6,3 @@ ALTER TABLE public.evaluations
   ADD COLUMN IF NOT EXISTS ai_source_version integer;
 
 GRANT SELECT ON public.evaluations TO authenticated;
-
-INSERT INTO public.role_permissions (role_code, permission_code) VALUES
-  ('PRESIDENT', 'evaluations.finalize')
-ON CONFLICT DO NOTHING;

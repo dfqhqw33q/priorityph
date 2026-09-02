@@ -62,6 +62,10 @@ INSERT INTO public.role_permissions(role_code, permission_code)
 VALUES ('ADMINISTRATOR', 'employees.manage')
 ON CONFLICT DO NOTHING;
 
+INSERT INTO public.role_permissions(role_code, permission_code)
+VALUES ('ADMINISTRATOR', 'employees.view')
+ON CONFLICT DO NOTHING;
+
 GRANT SELECT ON public.employee_signatures, public.public_submission_attempts TO authenticated;
 GRANT ALL ON public.employee_signatures, public.public_submission_attempts TO service_role;
 
@@ -117,3 +121,15 @@ END; $$;
 DROP TRIGGER IF EXISTS trg_protect_finalized_signature ON public.employee_signatures;
 CREATE TRIGGER trg_protect_finalized_signature BEFORE UPDATE OR DELETE ON public.employee_signatures
 FOR EACH ROW EXECUTE FUNCTION public.protect_finalized_signature();
+
+INSERT INTO public.role_permissions (role_code, permission_code)
+VALUES ('ADMINISTRATOR', 'employees.view')
+ON CONFLICT DO NOTHING;
+
+DELETE FROM public.role_permissions
+WHERE permission_code = 'employees.view'
+  AND role_code IN ('HR', 'SUPERVISOR');
+
+INSERT INTO public.role_permissions (role_code, permission_code)
+VALUES ('PRESIDENT', 'employees.view')
+ON CONFLICT DO NOTHING;
