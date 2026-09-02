@@ -1,6 +1,15 @@
 -- Phase 2: stage records, permissions, and finalized-record protection.
 -- Forward-only migration. Do not edit previously applied migrations.
 
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'REVIEWING_SUPERVISOR';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'COMMITTEE';
+ALTER TYPE public.evaluation_status ADD VALUE IF NOT EXISTS 'REVIEWING_SUPERVISOR_REVIEW';
+ALTER TYPE public.evaluation_status ADD VALUE IF NOT EXISTS 'PERSONNEL_PROCESSING';
+ALTER TYPE public.evaluation_status ADD VALUE IF NOT EXISTS 'COMMITTEE_REVIEW';
+ALTER TYPE public.evaluation_status ADD VALUE IF NOT EXISTS 'PRESIDENT_APPROVAL';
+ALTER TYPE public.evaluation_status ADD VALUE IF NOT EXISTS 'RESUBMITTED';
+ALTER TYPE public.evaluator_type ADD VALUE IF NOT EXISTS 'REVIEWING_SUPERVISOR';
+
 ALTER TABLE public.evaluations
   ADD COLUMN IF NOT EXISTS supervisor_step2_submitted_at timestamptz,
   ADD COLUMN IF NOT EXISTS supervisor_step2_strengths text NOT NULL DEFAULT '',
@@ -9,6 +18,26 @@ ALTER TABLE public.evaluations
   ADD COLUMN IF NOT EXISTS supervisor_step2_advancement text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS supervisor_step2_career_transfer text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS supervisor_step2_recommendations text NOT NULL DEFAULT '';
+
+ALTER TABLE public.evaluations
+  ADD COLUMN IF NOT EXISTS supervisor_step2_overall_explanation text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_effectiveness text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_development_potential text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_advancement_outlook text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_growth_suggestions text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_transfer_interest text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_transfer_job text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_transfer_where text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_transfer_qualified text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_other_comments text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS supervisor_step2_date date;
+
+ALTER TABLE public.evaluations ADD COLUMN IF NOT EXISTS correction_stage text;
+ALTER TABLE public.evaluations DROP CONSTRAINT IF EXISTS evaluations_correction_stage_check;
+ALTER TABLE public.evaluations ADD CONSTRAINT evaluations_correction_stage_check
+  CHECK (correction_stage IS NULL OR correction_stage IN (
+    'SUPERVISOR_DRAFT', 'REVIEWING_SUPERVISOR_REVIEW', 'PERSONNEL_PROCESSING', 'COMMITTEE_REVIEW'
+  ));
 
 CREATE TABLE IF NOT EXISTS public.evaluation_stage_signatures (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), evaluation_id uuid NOT NULL REFERENCES public.evaluations(id) ON DELETE RESTRICT,
@@ -22,7 +51,7 @@ CREATE INDEX IF NOT EXISTS idx_stage_signatures_evaluation ON public.evaluation_
 CREATE TABLE IF NOT EXISTS public.reviewing_supervisor_reviews (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), evaluation_id uuid NOT NULL UNIQUE REFERENCES public.evaluations(id) ON DELETE RESTRICT,
   reviewer_user_id uuid NOT NULL REFERENCES public.internal_users(id) ON DELETE RESTRICT, comments text NOT NULL DEFAULT '', recommendations text NOT NULL DEFAULT '',
-  status text NOT NULL CHECK (status IN ('DRAFT','SUBMITTED')) DEFAULT 'DRAFT', submitted_at timestamptz, version integer NOT NULL DEFAULT 1, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
+  status text NOT NULL CHECK (status IN ('DRAFT','SUBMITTED')) DEFAULT 'DRAFT', submitted_at timestamptz, reviewing_supervisor_date date, version integer NOT NULL DEFAULT 1, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE IF NOT EXISTS public.personnel_processing (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), evaluation_id uuid NOT NULL UNIQUE REFERENCES public.evaluations(id) ON DELETE RESTRICT,
@@ -63,3 +92,19 @@ DROP TRIGGER IF EXISTS trg_personnel_finalized ON public.personnel_processing;
 CREATE TRIGGER trg_personnel_finalized BEFORE UPDATE OR DELETE ON public.personnel_processing FOR EACH ROW EXECUTE FUNCTION public.prevent_finalized_phase2_mutation();
 DROP TRIGGER IF EXISTS trg_committee_finalized ON public.committee_reviews;
 CREATE TRIGGER trg_committee_finalized BEFORE UPDATE OR DELETE ON public.committee_reviews FOR EACH ROW EXECUTE FUNCTION public.prevent_finalized_phase2_mutation();
+
+DROP POLICY IF EXISTS "notifications viewable with evaluation access" ON public.notification_events;
+CREATE POLICY "notifications viewable with evaluation access" ON public.notification_events FOR SELECT TO authenticated
+USING (
+  public.has_permission(auth.uid(), 'evaluations.view_step1')
+  OR public.has_permission(auth.uid(), 'president.view')
+  OR public.has_permission(auth.uid(), 'cycles.view')
+  OR public.has_permission(auth.uid(), 'evaluations.review_step3')
+  OR public.has_permission(auth.uid(), 'personnel.process')
+  OR public.has_permission(auth.uid(), 'committee.review')
+  OR public.has_permission(auth.uid(), 'president.approve')
+);
+
+UPDATE public.evaluations
+SET status = 'REVIEWING_SUPERVISOR_REVIEW'
+WHERE status = 'SUPERVISOR_SUBMITTED';
