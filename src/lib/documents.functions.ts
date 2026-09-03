@@ -56,7 +56,11 @@ export const uploadEmployeeDocument = createServerFn({ method: "POST" })
 
 export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ 
+    evaluationId: z.string().uuid(),
+    // Optional current unsaved UI values for President stage preview
+    presidentSignatureData: z.string().optional(),
+  }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermissionAny, validationError } = await import("./server-core.server");
     const { generateEvaluationData, generateEvaluationHTML } = await import("./documents.server");
@@ -69,6 +73,18 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
       console.log(`[getEvaluationSheetHtml] Permissions check passed`);
 
       const admin = await getAdmin();
+      
+      // Get current authenticated user's information for President approval preview
+      let presidentName = "";
+      if (data.presidentSignatureData) {
+        const { data: currentUser } = await admin
+          .from("internal_users")
+          .select("full_name")
+          .eq("id", context.userId)
+          .maybeSingle();
+        presidentName = currentUser?.full_name || "";
+      }
+      
       const { data: evaluation, error: evalError } = await admin
         .from("evaluations")
         .select("id, status, cycle_id")
@@ -83,7 +99,11 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
       console.log(`[getEvaluationSheetHtml] Evaluation found, generating data...`);
       
       // Generate the HTML on-demand - allow at any stage where user has permission
-      const evaluationData = await generateEvaluationData(data.evaluationId);
+      // Pass current unsaved UI values for President stage preview
+      const evaluationData = await generateEvaluationData(data.evaluationId, {
+        presidentSignatureData: data.presidentSignatureData,
+        presidentName: presidentName,
+      });
       console.log(`[getEvaluationSheetHtml] Evaluation data generated`);
       
       const html = generateEvaluationHTML(evaluationData);

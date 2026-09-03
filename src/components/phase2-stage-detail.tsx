@@ -152,7 +152,12 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   async function openDocument() {
     setDocumentOpen(true);
     try {
-      const result = await getSheetHtml({ data: { evaluationId } });
+      // For PRESIDENT stage, pass current unsaved signature for preview
+      const params = { evaluationId };
+      if (stage === "PRESIDENT" && signature) {
+        Object.assign(params, { presidentSignatureData: signature.data });
+      }
+      const result = await getSheetHtml({ data: params });
       setDocumentHtml(result.html);
     } catch (error) {
       setDocumentOpen(false);

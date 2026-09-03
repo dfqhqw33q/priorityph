@@ -114,14 +114,21 @@ export function generateEvaluationHTML(params: {
     )
     .join("");
 
-  const renderSelectedOption = (selected: string, options: string[]) => {
+  const renderCheckboxOptions = (selected: string, options: string[]) => {
+    // Normalize selected value for comparison
     const normalizedSelected = selected.trim().replace(/_/g, " ").toLowerCase();
-    const option = options.find(
-      (item) => item.toLowerCase() === normalizedSelected || item.replace(/_/g, " ").toLowerCase() === normalizedSelected,
-    );
-    return option
-      ? `<label class="step-two-option"><span class="step-two-option-marker">(✓)</span><span>${escapeHtml(option)}</span></label>`
-      : "";
+    
+    // Render all options with checkboxes (☑ for selected, ☐ for unselected)
+    return options
+      .map((option) => {
+        const normalizedOption = option.replace(/_/g, " ").toLowerCase();
+        const isSelected = 
+          normalizedOption === normalizedSelected || 
+          option.toLowerCase() === normalizedSelected;
+        const checkbox = isSelected ? "☑" : "☐";
+        return `<div class="step-two-option"><span class="step-two-option-marker">${checkbox}</span><span>${escapeHtml(option)}</span></div>`;
+      })
+      .join("");
   };
 
   return `<!DOCTYPE html>
@@ -380,7 +387,7 @@ export function generateEvaluationHTML(params: {
             <div class="step-two-content">
               <p>The employee's development potential on present job is:</p>
               <div class="step-two-options">
-                ${renderSelectedOption(params.developmentPotential, ["Very marked growth expected on present job", "Considerable improvement expected on present job", "Only moderate improvement ahead on present job", "Likely to maintain present performance level on present job", "Likely to become less effective on present job"])}
+                ${renderCheckboxOptions(params.developmentPotential, ["Very marked growth expected on present job", "Considerable improvement expected on present job", "Only moderate improvement ahead on present job", "Likely to maintain present performance level on present job", "Likely to become less effective on present job"])}
               </div>
             </div>
           </section>
@@ -389,7 +396,7 @@ export function generateEvaluationHTML(params: {
             <div class="step-two-content">
               <p>The employee's advancement outlook is:</p>
               <div class="step-two-options">
-                ${renderSelectedOption(params.advancementOutlook, ["Promising. Should be able to advance to jobs several levels beyond his present one.", "Fairly Promising. Should be able to advance to job in the next higher level.", "Present job or jobs within the same grade level represent his advancement.", "Employee has difficulty in advancing to his job ceiling.", "Employee should be transferred. Not suited to this job; would fit better in some other jobs."])}
+                ${renderCheckboxOptions(params.advancementOutlook, ["Promising. Should be able to advance to jobs several levels beyond his present one.", "Fairly Promising. Should be able to advance to job in the next higher level.", "Present job or jobs within the same grade level represent his advancement.", "Employee has difficulty in advancing to his job ceiling.", "Employee should be transferred. Not suited to this job; would fit better in some other jobs."])}
               </div>
             </div>
           </section>
@@ -405,7 +412,7 @@ export function generateEvaluationHTML(params: {
           <div class="step-two-number">6.</div>
           <div class="step-two-content">
             <p>Has the employed expressed any interest in assuming another job or transferring to another company / division / department / section?</p>
-            <div class="step-two-options">${renderSelectedOption(params.transferInterest, ["YES", "NO", "NOT_AWARE"])}</div>
+            <div class="step-two-options">${renderCheckboxOptions(params.transferInterest, ["YES", "NO", "NOT_AWARE"])}</div>
             ${params.transferInterest === "YES" ? `<div class="input-line">If yes, what job? ${text(params.transferJob)}</div><div class="input-line">Where? ${text(params.transferWhere)}</div><div class="input-line">Is he qualified? ${text(params.transferQualified)}</div>` : ""}
           </div>
         </section>
@@ -482,11 +489,11 @@ export function generateEvaluationHTML(params: {
       <section class="step-three-section">
         <h3 class="step-three-section-title">FINAL ACTION RECOMMENDED BY THE PERFORMANCE EVALUATION COMMITTEE:</h3>
         <div class="step-three-action-list">
-          ${params.finalAction === "RETAIN" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Retain in Present Job</span></div>` : ""}
-          ${params.finalAction === "TRANSFER" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Transfer to :</span><span class="step-three-action-value">${text(params.finalActionDetails)}</span></div>` : ""}
-          ${params.finalAction === "PROMOTE" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Promote to :</span><span class="step-three-action-value">${text(params.finalActionDetails)}</span></div>` : ""}
-          ${params.finalAction === "INCREASE_SALARY" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Increase Salary by :</span><span class="step-three-action-value">${text(params.finalActionDetails)}</span></div>` : ""}
-          ${params.finalAction === "TRAINING_REQUIRED" || params.finalAction === "OTHER" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Others (Training Required, etc.)</span><span class="step-three-action-value">${text(params.finalActionDetails)}</span></div>` : ""}
+          <div class="step-three-action"><span class="step-three-action-mark">${params.finalAction === "RETAIN" ? "☑" : "☐"}</span><span>Retain in Present Job</span></div>
+          <div class="step-three-action"><span class="step-three-action-mark">${params.finalAction === "TRANSFER" ? "☑" : "☐"}</span><span>Transfer to :</span><span class="step-three-action-value">${params.finalAction === "TRANSFER" ? text(params.finalActionDetails) : ""}</span></div>
+          <div class="step-three-action"><span class="step-three-action-mark">${params.finalAction === "PROMOTE" ? "☑" : "☐"}</span><span>Promote to :</span><span class="step-three-action-value">${params.finalAction === "PROMOTE" ? text(params.finalActionDetails) : ""}</span></div>
+          <div class="step-three-action"><span class="step-three-action-mark">${params.finalAction === "INCREASE_SALARY" ? "☑" : "☐"}</span><span>Increase Salary by :</span><span class="step-three-action-value">${params.finalAction === "INCREASE_SALARY" ? text(params.finalActionDetails) : ""}</span></div>
+          <div class="step-three-action"><span class="step-three-action-mark">${(params.finalAction === "TRAINING_REQUIRED" || params.finalAction === "OTHER") ? "☑" : "☐"}</span><span>Others (Training Required, etc.)</span><span class="step-three-action-value">${(params.finalAction === "TRAINING_REQUIRED" || params.finalAction === "OTHER") ? text(params.finalActionDetails) : ""}</span></div>
         </div>
         <div class="step-three-approval">
           <div class="step-three-approval-block">
@@ -644,7 +651,13 @@ export async function createFinalEvaluationDocument(
   return { path, html };
 }
 
-export async function generateEvaluationData(evaluationId: string) {
+export async function generateEvaluationData(
+  evaluationId: string, 
+  options: {
+    presidentSignatureData?: string;
+    presidentName?: string;
+  } = {}
+) {
   const admin = await getAdmin();
 
   try {
@@ -769,12 +782,14 @@ export async function generateEvaluationData(evaluationId: string) {
     const presidentStage = stageSignatureMap.get("PRESIDENT") ?? internalSignatureMap.get("PRESIDENT_STEP3");
     const personnelSignature = personnelStage ? await convertSignatureToDataUrl(admin, personnelStage as any) : undefined;
     const committeeSignature = committeeStage ? await convertSignatureToDataUrl(admin, committeeStage as any) : undefined;
-    const presidentSignature = presidentStage ? await convertSignatureToDataUrl(admin, presidentStage as any) : undefined;
+    // Use current unsaved signature from UI if provided, otherwise use saved data
+    const presidentSignature = options.presidentSignatureData || (presidentStage ? await convertSignatureToDataUrl(admin, presidentStage as any) : undefined);
     const raterStep2Date = evaluation.supervisor_step2_date ?? (stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at ?? null;
     const reviewerStep3Date = reviewingReviewResult.data?.reviewing_supervisor_date ?? (stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null;
     const personnelDate = personnelStage?.signed_at ?? personnelResult.data?.submitted_at ?? null;
     const committeeDate = committeeStage?.signed_at ?? committeeResult.data?.submitted_at ?? null;
-    const approvedDate = presidentStage?.signed_at ?? evaluation.finalized_at ?? null;
+    // Use today's date if current unsaved signature is provided (for preview), otherwise use saved date
+    const approvedDate = options.presidentSignatureData ? new Date().toISOString() : (presidentStage?.signed_at ?? evaluation.finalized_at ?? null);
 
     return {
       companyName: "PRIORITY HANDLING LOGISTICS, INC.",
@@ -839,7 +854,8 @@ export async function generateEvaluationData(evaluationId: string) {
       committeeTitle: committeeUser?.job_title ?? "Performance Evaluation Committee",
       committeeDate: formatDate(committeeDate),
       committeeSignature,
-      approvedByName: presidentUser?.full_name ?? "",
+      // Use current President name if provided (for preview), otherwise use saved data
+      approvedByName: options.presidentName || (presidentUser?.full_name ?? ""),
       approvedByTitle: presidentUser?.job_title ?? "President",
       approvedByDate: formatDate(approvedDate),
       approvedBySignature: presidentSignature,
