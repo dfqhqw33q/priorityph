@@ -1,5 +1,7 @@
 import { getAdmin, validationError } from "./server-core.server";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { chromium as playwrightChromium } from "playwright-core";
+import chromium from "@sparticuz/chromium";
 
 /**
  * Generate HTML string for the Performance Evaluation Sheet
@@ -608,7 +610,34 @@ async function convertSignatureToDataUrl(
 
 type EvaluationDocumentData = Parameters<typeof generateEvaluationHTML>[0];
 
-export async function generateEmployeeFinalizedPDF(data: EvaluationDocumentData): Promise<Uint8Array> {
+export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): string {
+  const fullDocument = generateEvaluationHTML(data);
+  const stepTwoStart = fullDocument.indexOf('\n    <div class="step-two">');
+  if (stepTwoStart < 0) throw new Error("Step 2 marker not found in evaluation document");
+  return `${fullDocument.slice(0, stepTwoStart)}\n  </div>\n</body>\n</html>`;
+}
+
+export async function generateEmployeeFinalizedBrowserPDF(data: EvaluationDocumentData): Promise<Uint8Array> {
+  const browser = await playwrightChromium.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: true,
+  });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1024, height: 1440 } });
+    await page.setContent(generateEmployeeFinalizedHTML(data), { waitUntil: "networkidle" });
+    return await page.pdf({
+      format: "A4",
+      printBackground: true,
+      preferCSSPageSize: true,
+      margin: { top: "0.5in", right: "0.5in", bottom: "0.5in", left: "0.5in" },
+    });
+  } finally {
+    await browser.close();
+  }
+}
+
+export async function generateEmployeeFinalizedPDFLegacy(data: EvaluationDocumentData): Promise<Uint8Array> {
   const document = await PDFDocument.create();
   const regularFont = await document.embedFont(StandardFonts.Helvetica);
   const boldFont = await document.embedFont(StandardFonts.HelveticaBold);
@@ -660,6 +689,17 @@ export async function generateEmployeeFinalizedPDF(data: EvaluationDocumentData)
     cursorY -= 3;
   };
   const field = (label: string, value: unknown) => text(`${label}: ${ascii(value) || "-"}`);
+  const embedSignature = async (signature: string | undefined) => {
+    if (!signature?.startsWith("data:image/")) return null;
+    const match = signature.match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
+    if (!match) return null;
+    const bytes = Buffer.from(match[2], "base64");
+    try {
+      return match[1] === "png" ? await document.embedPng(bytes) : await document.embedJpg(bytes);
+    } catch {
+      return null;
+    }
+  };
 
   text(data.companyName, { bold: true, size: 12 });
   text(data.companyAddress, { size: 8, color: rgb(0.35, 0.35, 0.35) });
@@ -672,27 +712,67 @@ export async function generateEmployeeFinalizedPDF(data: EvaluationDocumentData)
   field("Job Title", data.jobTitleOfRatee);
   field("Division / Department", data.division);
   field("Section / Unit", data.sectionUnit);
+  field("Name of Rater", data.nameOfRater);
+  field("Job Title of Rater", data.jobTitleOfRater);
+
+  heading("RATING SCALE");
+  text("1 - Poor    2 - Below Average    3 - Average    4 - Above Average    5 - Excellent");
 
   heading("FINALIZED PERFORMANCE FACTORS");
   const factorNumberWidth = 18;
-  const ratingWidth = 88;
+  const ratingWidth = 126;
   const factorTextWidth = contentWidth - factorNumberWidth - ratingWidth;
+  ensureSpace(22);
+  page.drawRectangle({ x: margin, y: cursorY - 19, width: contentWidth, height: 22, borderColor: rgb(0.3, 0.3, 0.3), borderWidth: 0.6 });
+  page.drawLine({ start: { x: margin + factorNumberWidth, y: cursorY + 3 }, end: { x: margin + factorNumberWidth, y: cursorY - 19 }, thickness: 0.6, color: rgb(0.3, 0.3, 0.3) });
+  page.drawLine({ start: { x: margin + factorNumberWidth + factorTextWidth, y: cursorY + 3 }, end: { x: margin + factorNumberWidth + factorTextWidth, y: cursorY - 19 }, thickness: 0.6, color: rgb(0.3, 0.3, 0.3) });
+  page.drawText("FACTOR", { x: margin + factorNumberWidth + 5, y: cursorY - 12, size: 8, font: boldFont });
+  page.drawText("EMPLOYEE", { x: margin + factorNumberWidth + factorTextWidth + 5, y: cursorY - 12, size: 7, font: boldFont });
+  page.drawText("SUPERVISOR", { x: margin + factorNumberWidth + factorTextWidth + ratingWidth / 3 + 2, y: cursorY - 12, size: 7, font: boldFont });
+  page.drawText("REVIEWER", { x: margin + factorNumberWidth + factorTextWidth + (ratingWidth * 2) / 3 + 7, y: cursorY - 12, size: 7, font: boldFont });
+  cursorY -= 22;
   for (const factor of data.factors) {
     const factorLines = wrap(`${factor.title}: ${factor.description}`, factorTextWidth, regularFont, fontSize);
     const rowHeight = Math.max(factorLines.length * lineHeight, 34);
     ensureSpace(rowHeight);
     page.drawRectangle({ x: margin, y: cursorY - rowHeight + 3, width: contentWidth, height: rowHeight, borderColor: rgb(0.3, 0.3, 0.3), borderWidth: 0.6 });
     page.drawLine({ start: { x: margin + factorNumberWidth, y: cursorY + 3 }, end: { x: margin + factorNumberWidth, y: cursorY - rowHeight + 3 }, thickness: 0.6, color: rgb(0.3, 0.3, 0.3) });
-    page.drawLine({ start: { x: margin + factorNumberWidth + factorTextWidth, y: cursorY + 3 }, end: { x: margin + factorNumberWidth + factorTextWidth, y: cursorY - rowHeight + 3 }, thickness: 0.6, color: rgb(0.3, 0.3, 0.3) });
+    const ratingStart = margin + factorNumberWidth + factorTextWidth;
+    page.drawLine({ start: { x: ratingStart, y: cursorY + 3 }, end: { x: ratingStart, y: cursorY - rowHeight + 3 }, thickness: 0.6, color: rgb(0.3, 0.3, 0.3) });
+    page.drawLine({ start: { x: ratingStart + ratingWidth / 3, y: cursorY + 3 }, end: { x: ratingStart + ratingWidth / 3, y: cursorY - rowHeight + 3 }, thickness: 0.6, color: rgb(0.3, 0.3, 0.3) });
+    page.drawLine({ start: { x: ratingStart + (ratingWidth * 2) / 3, y: cursorY + 3 }, end: { x: ratingStart + (ratingWidth * 2) / 3, y: cursorY - rowHeight + 3 }, thickness: 0.6, color: rgb(0.3, 0.3, 0.3) });
     page.drawText(`${factor.letter}.`, { x: margin + 5, y: cursorY - 12, size: 10, font: boldFont });
     factorLines.forEach((line, index) => page.drawText(line, { x: margin + factorNumberWidth + 5, y: cursorY - 12 - index * lineHeight, size: fontSize, font: regularFont }));
-    page.drawText(ascii(factor.employeeSelfRating) || "-", { x: margin + factorNumberWidth + factorTextWidth + 36, y: cursorY - rowHeight / 2, size: 13, font: boldFont });
+    [factor.employeeSelfRating, factor.supervisorRating, factor.reviewingSupervisorRating].forEach((rating, index) => {
+      const cellStart = ratingStart + (ratingWidth / 3) * index;
+      const value = ascii(rating) || "-";
+      const valueWidth = boldFont.widthOfTextAtSize(value, 13);
+      page.drawText(value, { x: cellStart + (ratingWidth / 3 - valueWidth) / 2, y: cursorY - rowHeight / 2, size: 13, font: boldFont });
+    });
     cursorY -= rowHeight;
   }
   heading("FINAL OUTCOME");
   field("Total Points", data.totalPoints);
   field("Adjective Rating", data.adjectiveRating);
-  field("Final Action", `${data.finalAction}; ${data.finalActionDetails}`);
+
+  heading("SIGNATURES");
+  ensureSpace(92);
+  const signatureWidth = (contentWidth - 24) / 3;
+  const signatureY = cursorY;
+  const signatureItems = [
+    { label: "Appraised By", name: data.appraisedByName, title: data.appraisedByTitle, date: data.appraisedByDate, image: await embedSignature(data.appraisedBySignature) },
+    { label: "Reviewed By", name: data.reviewedByName, title: data.reviewedByTitle, date: data.reviewedByDate, image: await embedSignature(data.reviewedBySignature) },
+    { label: "Reviewed With Me", name: data.reviewedWithMeName, title: data.reviewedWithMeTitle, date: data.reviewedWithMeDate, image: await embedSignature(data.reviewedWithMeSignature) },
+  ];
+  signatureItems.forEach((item, index) => {
+    const x = margin + index * (signatureWidth + 16);
+    page.drawText(item.label, { x, y: signatureY, size: 9, font: boldFont });
+    page.drawLine({ start: { x, y: signatureY - 48 }, end: { x: x + signatureWidth, y: signatureY - 48 }, thickness: 0.8, color: rgb(0.1, 0.1, 0.1) });
+    if (item.image) page.drawImage(item.image, { x: x + 8, y: signatureY - 43, width: signatureWidth - 16, height: 32, opacity: 1 });
+    page.drawText(ascii(item.name) || "-", { x, y: signatureY - 62, size: 8, font: boldFont });
+    page.drawText(ascii(item.title) || "-", { x, y: signatureY - 74, size: 8, font: regularFont });
+    page.drawText(`Date: ${ascii(item.date) || "-"}`, { x, y: signatureY - 86, size: 8, font: regularFont });
+  });
 
   return document.save();
 }
