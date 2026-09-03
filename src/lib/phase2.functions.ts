@@ -35,6 +35,7 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, loadEvaluationDetail } =
       await import("./server-core.server");
+    const { computeScore } = await import("./scoring.server");
     const permission = {
       RATER: "evaluations.step2",
       REVIEWING_SUPERVISOR: "evaluations.review_step3",
@@ -45,6 +46,7 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
     await requirePermission(context.userId, permission, `${data.stage} Review`);
     const detail = await loadEvaluationDetail(data.evaluationId);
     if (!detail) return null;
+    const score = await computeScore(data.evaluationId);
     const admin = await getAdmin();
     const { data: row } = await admin
       .from("evaluations")
@@ -133,12 +135,18 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
         "This evaluation is assigned to another workflow user",
       );
     let stageSignature = null;
-    if (data.stage === "REVIEWING_SUPERVISOR") {
+    if (data.stage !== "RATER") {
+      const signatureStage = {
+        REVIEWING_SUPERVISOR: "REVIEWING_SUPERVISOR_STEP3",
+        PERSONNEL: "PERSONNEL",
+        COMMITTEE: "COMMITTEE",
+        PRESIDENT: "PRESIDENT",
+      }[data.stage];
       const signature = await admin
         .from("evaluation_stage_signatures")
         .select("method, signature_data, storage_path, signed_at")
         .eq("evaluation_id", data.evaluationId)
-        .eq("stage", "REVIEWING_SUPERVISOR_STEP3")
+        .eq("stage", signatureStage)
         .maybeSingle();
       stageSignature = signature.data;
       if (stageSignature?.storage_path) {
@@ -182,6 +190,7 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
       stageRecord,
       stageSignature,
       accumulatedStages,
+      score,
     };
   });
 
@@ -392,6 +401,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => raterStep2Schema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { computeScore } = await import("./scoring.server");
     await requirePermission(context.userId, "evaluations.step2", "Rater Step 2");
     const admin = await getAdmin();
     const { data: evaluation } = await admin
@@ -581,6 +591,9 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
     await requirePermission(context.userId, "personnel.process", "Personnel Processing");
     if (data.submit && !data.signature)
       throw validationError("A Personnel Office signature is required before submission");
+    const score = await computeScore(data.evaluationId);
+    if (data.submit && (score.status !== "CALCULATED" || score.finalScore === null || !score.finalRatingLabel))
+      throw validationError(score.notes || "Complete Employee, Supervisor, and Reviewing Supervisor ratings before submission");
     const admin = await getAdmin();
     const { data: evaluation } = await admin
       .from("evaluations")
@@ -609,8 +622,8 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
         last_increase_date: submissionDate,
         last_increase_nature: data.lastIncreaseNature,
         last_increase_amount: data.lastIncreaseAmount,
-        total_points: data.totalPoints,
-        adjective_rating: data.adjectiveRating,
+        total_points: score.finalScore,
+        adjective_rating: score.finalRatingLabel ?? "",
         recommended_increase_bonus: data.recommendedIncreaseBonus,
         status: data.submit ? "SUBMITTED" : "DRAFT",
         submitted_at: data.submit ? new Date().toISOString() : null,

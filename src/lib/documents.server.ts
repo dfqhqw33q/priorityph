@@ -59,8 +59,18 @@ export function generateEvaluationHTML(params: {
   finalAction: string;
   finalActionDetails: string;
   committeeRecommendation: string;
+  preparedByName: string;
+  preparedByTitle: string;
+  preparedByDate: string;
+  preparedBySignature?: string | undefined;
+  committeeName: string;
+  committeeTitle: string;
+  committeeDate: string;
+  committeeSignature?: string | undefined;
   approvedByName: string;
+  approvedByTitle: string;
   approvedByDate: string;
+  approvedBySignature?: string | undefined;
   formDate?: string;
 }): string {
   const escapeHtml = (value: string) => value
@@ -200,7 +210,7 @@ export function generateEvaluationHTML(params: {
     .step-three-header { margin-bottom: 24px; }
     .step-three-comments { margin-bottom: 28px; }
     .step-three-comments-title { text-align: center; margin-bottom: 28px; }
-    .comment-lines { min-height: 160px; border-bottom: 1px solid #000; margin-bottom: 16px; white-space: pre-wrap; }
+    .comment-lines { border-bottom: 1px solid #000; margin-bottom: 16px; padding-bottom: 16px; white-space: pre-wrap; }
     .step-three-signature { display: flex; justify-content: flex-end; gap: 16px; margin-top: 28px; }
     .step-three-signature-block { width: 42%; text-align: center; }
     .step-three-date-block { width: 22%; text-align: center; }
@@ -221,6 +231,8 @@ export function generateEvaluationHTML(params: {
     .step-three-result-field.total .step-three-result-value { max-width: 96px; }
     .step-three-result-field.rating .step-three-result-value { max-width: 128px; }
     .step-three-prepared { display: flex; justify-content: flex-end; gap: 16px; flex-wrap: wrap; }
+    .step-three-prepared .sig-block { width: 256px; flex: 0 0 256px; padding: 12px; }
+    .step-three-prepared .step-two-date-block { width: 128px; padding: 12px; }
     .step-three-prepared .step-three-field-value { min-width: 96px; }
     .step-three-action-list { display: grid; gap: 10px; margin: 0 0 28px 16px; }
     .step-three-action { display: flex; align-items: flex-end; gap: 8px; }
@@ -429,8 +441,10 @@ export function generateEvaluationHTML(params: {
         <div class="comment-lines">${text(params.stepThreeComments)}${params.stepThreeRecommendations ? `\n${text(params.stepThreeRecommendations)}` : ""}</div>
         <div class="step-three-signature">
           <div class="step-three-signature-block">
-            <div class="step-three-line">${text(params.reviewedByName)}</div>
-            <div class="step-three-label">Signature of Reviewing<br>Supervisor/Division Head</div>
+            <div class="sig-line">${params.reviewedBySignature ? `<img src="${params.reviewedBySignature}" class="sig-image" alt="Signature of Reviewing Supervisor">` : ""}</div>
+            <div class="sig-name">${text(params.reviewedByName)}</div>
+            <div class="sig-title">${text(params.reviewedByTitle)}</div>
+            <div class="step-three-label">Signature of Reviewing Supervisor/Division Head</div>
           </div>
           <div class="step-three-date-block">
             <div class="step-three-line">${text(params.reviewedByDate)}</div>
@@ -459,8 +473,16 @@ export function generateEvaluationHTML(params: {
         </div>
         <div class="step-three-field" style="margin-bottom:20px;"><span class="step-three-field-label">Recommended Increase / Bonus :</span><span class="step-three-field-value">${text(params.recommendedIncreaseBonus)}</span></div>
         <div class="step-three-prepared">
-          <div class="step-three-field"><span class="step-three-field-label">Prepared by:</span><span class="step-three-field-value">${text(params.approvedByName)}</span></div>
-          <div class="step-three-field"><span class="step-three-field-label">Date:</span><span class="step-three-field-value">${text(params.formDate || "")}</span></div>
+          <div class="sig-block">
+            <div class="sig-line">${params.preparedBySignature ? `<img src="${params.preparedBySignature}" class="sig-image" alt="Signature of Personnel Office preparer">` : ""}</div>
+            <div class="sig-name">${text(params.preparedByName)}</div>
+            <div class="sig-title">${text(params.preparedByTitle)}</div>
+            <div class="sig-date"><strong>Prepared by:</strong></div>
+          </div>
+          <div class="step-two-date-block">
+            <div class="step-two-date-line">${text(params.preparedByDate)}</div>
+            <div class="step-two-footer-label">Date</div>
+          </div>
         </div>
       </section>
 
@@ -477,12 +499,18 @@ export function generateEvaluationHTML(params: {
         </div>
         <div class="step-three-approval">
           <div class="step-three-approval-block">
-            <div class="step-three-field"><strong>RECOMMENDED BY:</strong><span class="step-three-field-value"></span></div>
-            <div class="step-three-approval-caption">${text(params.committeeRecommendation)}<br>Performance Evaluation Committee<br><strong>CHAIRMAN</strong></div>
-            <div class="step-three-field"><strong>DATE :</strong><span class="step-three-field-value">${text(params.formDate || "")}</span></div>
+            <div class="step-three-field"><strong>RECOMMENDED BY:</strong></div>
+            <div class="sig-line">${params.committeeSignature ? `<img src="${params.committeeSignature}" class="sig-image" alt="Signature of Performance Evaluation Committee member">` : ""}</div>
+            <div class="sig-name">${text(params.committeeName)}</div>
+            <div class="sig-title">${text(params.committeeTitle)}<br>CHAIRMAN</div>
+            <div class="step-three-approval-caption">${text(params.committeeRecommendation)}</div>
+            <div class="step-three-field"><strong>DATE :</strong><span class="step-three-field-value">${text(params.committeeDate)}</span></div>
           </div>
           <div class="step-three-approval-block">
-            <div class="step-three-field"><strong>APPROVED BY:</strong><span class="step-three-field-value">${text(params.approvedByName)}</span></div>
+            <div class="step-three-field"><strong>APPROVED BY:</strong></div>
+            <div class="sig-line">${params.approvedBySignature ? `<img src="${params.approvedBySignature}" class="sig-image" alt="Signature of President">` : ""}</div>
+            <div class="sig-name">${text(params.approvedByName)}</div>
+            <div class="sig-title">${text(params.approvedByTitle)}</div>
             <div class="step-three-approval-caption">President</div>
             <div class="step-three-field"><strong>DATE :</strong><span class="step-three-field-value">${text(params.approvedByDate)}</span></div>
           </div>
@@ -558,7 +586,7 @@ async function convertSignatureToDataUrl(
 ) {
   if (!signatureData) return undefined;
 
-  if (signatureData.method === "DRAWN" && signatureData.signature_data) {
+  if ((signatureData.method === "DRAWN" || signatureData.method === "TYPED") && signatureData.signature_data) {
     return signatureData.signature_data;
   } else if (signatureData.method === "UPLOAD" && signatureData.storage_path) {
     try {
@@ -631,7 +659,7 @@ export async function generateEvaluationData(evaluationId: string) {
     const { data: evaluation, error: evalError } = (await admin
       .from("evaluations")
       .select(
-        "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, is_finalized, employee_submitted_at, supervisor_user_id, president_user_id, supervisor_submitted_at, supervisor_remarks, supervisor_step2_overall_explanation, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
+        "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, is_finalized, employee_submitted_at, supervisor_user_id, president_user_id, finalized_by, supervisor_submitted_at, supervisor_remarks, supervisor_step2_overall_explanation, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
       )
       .eq("id", evaluationId)
       .maybeSingle()) as any;
@@ -653,13 +681,13 @@ export async function generateEvaluationData(evaluationId: string) {
         .from("evaluation_stage_signatures")
         .select("stage, method, storage_path, signature_data, signer_user_id, signed_at")
         .eq("evaluation_id", evaluationId)
-        .in("stage", ["RATER_STEP2", "REVIEWING_SUPERVISOR_STEP3", "PRESIDENT"]),
+        .in("stage", ["RATER_STEP2", "REVIEWING_SUPERVISOR_STEP3", "PERSONNEL", "COMMITTEE", "PRESIDENT"]),
       evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
       admin.from("employee_signatures").select("method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
       (admin as any).from("internal_user_signatures").select("user_id, stage, method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
       admin.from("reviewing_supervisor_reviews").select("comments, recommendations, reviewing_supervisor_date, reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
-      admin.from("personnel_processing").select("present_salary, last_increase_date, last_increase_nature, last_increase_amount, total_points, adjective_rating, recommended_increase_bonus").eq("evaluation_id", evaluationId).maybeSingle(),
-      admin.from("committee_reviews").select("final_action, action_details, recommendation").eq("evaluation_id", evaluationId).maybeSingle(),
+      admin.from("personnel_processing").select("personnel_user_id, present_salary, last_increase_date, last_increase_nature, last_increase_amount, total_points, adjective_rating, recommended_increase_bonus, submitted_at").eq("evaluation_id", evaluationId).maybeSingle(),
+      admin.from("committee_reviews").select("committee_user_id, final_action, action_details, recommendation, submitted_at").eq("evaluation_id", evaluationId).maybeSingle(),
     ]);
 
     console.log(`[generateEvaluationData] Criteria: ${criteriaResult.data?.length || 0}, Ratings: ${ratingsResult.data?.length || 0}, Signatures: ${stageSignatureResult.data?.length || 0}, Employee: ${!!employeeRecordResult?.data}`);
@@ -668,7 +696,14 @@ export async function generateEvaluationData(evaluationId: string) {
     const { data: step3Result } = (await admin.from("reviewing_supervisor_reviews").select("reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle()) as any;
 
     // Fetch internal users that we need
-    const userIds = [evaluation.supervisor_user_id, step3Result?.reviewer_user_id, evaluation.president_user_id].filter((id): id is string => Boolean(id));
+    const userIds = [
+      evaluation.supervisor_user_id,
+      step3Result?.reviewer_user_id,
+      personnelResult.data?.personnel_user_id,
+      committeeResult.data?.committee_user_id,
+      evaluation.president_user_id,
+      evaluation.finalized_by,
+    ].filter((id): id is string => Boolean(id));
     const { data: userListResult } = userIds.length ? await admin.from("internal_users").select("id, full_name, job_title").in("id", userIds) : ({ data: [] } as any);
 
     const ratingMap = new Map<string, Record<string, number | undefined>>();
@@ -712,7 +747,12 @@ export async function generateEvaluationData(evaluationId: string) {
     const raterTitle = raterUser?.job_title ?? "Rater / Immediate Supervisor";
     const reviewingSupervisorName = reviewingSupervisorUser?.full_name ?? "—";
     const reviewingSupervisorTitle = reviewingSupervisorUser?.job_title ?? "Reviewing Supervisor / Division Head";
-    const presidentUser = evaluation.president_user_id ? userLookup.get(evaluation.president_user_id) ?? null : null;
+    const personnelUser = personnelResult.data?.personnel_user_id ? userLookup.get(personnelResult.data.personnel_user_id) ?? null : null;
+    const committeeUser = committeeResult.data?.committee_user_id ? userLookup.get(committeeResult.data.committee_user_id) ?? null : null;
+    const approvedByUserId = evaluation.finalized_by ?? evaluation.president_user_id;
+    const presidentUser = approvedByUserId ? userLookup.get(approvedByUserId) ?? null : null;
+    const { computeScore } = await import("./scoring.server");
+    const score = await computeScore(evaluationId);
     const periodFrom = formatFormDate(cycle.starts_at) || `January 1, ${cycle.year}`;
     const periodTo = formatFormDate(cycle.ends_at) || `December 31, ${cycle.year}`;
 
@@ -731,9 +771,17 @@ export async function generateEvaluationData(evaluationId: string) {
 
     const appraisedBySignature = raterStage ? await convertSignatureToDataUrl(admin, raterStage as any) : undefined;
     const reviewedBySignature = reviewerStage ? await convertSignatureToDataUrl(admin, reviewerStage as any) : undefined;
+    const personnelStage = stageSignatureMap.get("PERSONNEL") ?? internalSignatureMap.get("HR_REVIEW");
+    const committeeStage = stageSignatureMap.get("COMMITTEE") ?? internalSignatureMap.get("COMMITTEE_REVIEW");
+    const presidentStage = stageSignatureMap.get("PRESIDENT") ?? internalSignatureMap.get("PRESIDENT_STEP3");
+    const personnelSignature = personnelStage ? await convertSignatureToDataUrl(admin, personnelStage as any) : undefined;
+    const committeeSignature = committeeStage ? await convertSignatureToDataUrl(admin, committeeStage as any) : undefined;
+    const presidentSignature = presidentStage ? await convertSignatureToDataUrl(admin, presidentStage as any) : undefined;
     const raterStep2Date = evaluation.supervisor_step2_date ?? (stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at ?? null;
-    const reviewerStep3Date = (stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null;
-    const presidentSignature = (stageSignatureResult.data ?? []).find((s) => s.stage === "PRESIDENT");
+    const reviewerStep3Date = reviewingReviewResult.data?.reviewing_supervisor_date ?? (stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null;
+    const personnelDate = personnelStage?.signed_at ?? personnelResult.data?.submitted_at ?? null;
+    const committeeDate = committeeStage?.signed_at ?? committeeResult.data?.submitted_at ?? null;
+    const approvedDate = presidentStage?.signed_at ?? evaluation.finalized_at ?? null;
 
     return {
       companyName: "PRIORITY HANDLING LOGISTICS, INC.",
@@ -784,14 +832,24 @@ export async function generateEvaluationData(evaluationId: string) {
       lastIncreaseDate: formatDate(personnelResult.data?.last_increase_date),
       lastIncreaseNature: normalizeText(personnelResult.data?.last_increase_nature),
       lastIncreaseAmount: normalizeText(personnelResult.data?.last_increase_amount),
-      totalPoints: normalizeText(personnelResult.data?.total_points),
-      adjectiveRating: normalizeText(personnelResult.data?.adjective_rating),
+      totalPoints: score.finalScore === null ? "" : String(score.finalScore),
+      adjectiveRating: score.finalRatingLabel ?? "",
       recommendedIncreaseBonus: normalizeText(personnelResult.data?.recommended_increase_bonus),
       finalAction: normalizeText(committeeResult.data?.final_action),
       finalActionDetails: normalizeText(committeeResult.data?.action_details),
       committeeRecommendation: normalizeText(committeeResult.data?.recommendation),
-      approvedByName: presidentUser?.full_name ?? "President",
-      approvedByDate: formatDate(presidentSignature?.signed_at),
+      preparedByName: personnelUser?.full_name ?? "",
+      preparedByTitle: personnelUser?.job_title ?? "Personnel Office",
+      preparedByDate: formatDate(personnelDate),
+      preparedBySignature: personnelSignature,
+      committeeName: committeeUser?.full_name ?? "",
+      committeeTitle: committeeUser?.job_title ?? "Performance Evaluation Committee",
+      committeeDate: formatDate(committeeDate),
+      committeeSignature,
+      approvedByName: presidentUser?.full_name ?? "",
+      approvedByTitle: presidentUser?.job_title ?? "President",
+      approvedByDate: formatDate(approvedDate),
+      approvedBySignature: presidentSignature,
       formDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
     };
   } catch (error) {

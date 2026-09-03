@@ -101,9 +101,9 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
     const record = (detail as typeof detail & { stageRecord?: Record<string, unknown> })
       .stageRecord;
     const source = detail as typeof detail & Record<string, unknown>;
-    const savedStageSignature = source["stageSignature"] as { method: "DRAWN" | "UPLOAD"; signature_data: string | null } | null;
-    if (savedStageSignature?.signature_data && (savedStageSignature.method === "DRAWN" || savedStageSignature.method === "UPLOAD"))
-      setSignature({ method: savedStageSignature.method, data: savedStageSignature.signature_data });
+    const savedStageSignature = source["stageSignature"] as { method: "DRAWN" | "UPLOAD" | "TYPED"; signature_data: string | null } | null;
+    if (savedStageSignature?.signature_data && (savedStageSignature.method === "DRAWN" || savedStageSignature.method === "UPLOAD" || savedStageSignature.method === "TYPED"))
+      setSignature({ method: savedStageSignature.method === "TYPED" ? "DRAWN" : savedStageSignature.method, data: savedStageSignature.signature_data });
     if (stage === "RATER")
       setValues({
         strengths: String(source["supervisor_step2_strengths"] ?? ""),
@@ -149,7 +149,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   }, [detail, stage]);
   const update = (key: string, value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
-  async function openDocument(mode: "preview" | "print") {
+  async function openDocument() {
     setDocumentOpen(true);
     try {
       const result = await getSheetHtml({ data: { evaluationId } });
@@ -202,8 +202,8 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             lastIncreaseAmount: values.lastIncreaseAmount
               ? Number(values.lastIncreaseAmount)
               : null,
-            totalPoints: values.totalPoints ? Number(values.totalPoints) : null,
-            adjectiveRating: values.adjectiveRating ?? "",
+            totalPoints: detail.score?.finalScore ?? null,
+            adjectiveRating: detail.score?.finalRatingLabel ?? "",
             recommendedIncreaseBonus: values.recommendedIncreaseBonus ?? "",
           },
         });
@@ -485,13 +485,6 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
               })()}
             </>
           ) : null}
-          {stage === "PRESIDENT" ? (
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={() => openDocument("preview")}>Preview Evaluation</Button>
-              <Button type="button" variant="outline" onClick={() => openDocument("print")}>Print / Export PDF</Button>
-              <Button type="button" variant="secondary" onClick={() => openDocument("preview")}>Refresh PDF</Button>
-            </div>
-          ) : null}
           <EvaluationDocumentPreview
             html={documentHtml}
             open={documentOpen}
@@ -547,18 +540,12 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                     disabled={!editable}
                   />
                 </div>
-                <div>
-                  <Label>Total points</Label>
-                  <Input
-                    type="number"
-                    value={values.totalPoints ?? ""}
-                    onChange={(event) => update("totalPoints", event.target.value)}
-                    disabled={!editable}
-                  />
-                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Total points (calculated)" value={detail.score?.finalScore === null || detail.score?.finalScore === undefined ? "—" : String(detail.score.finalScore)} />
+                <Field label="Adjective rating (calculated)" value={detail.score?.finalRatingLabel ?? "—"} />
               </div>
               {field("lastIncreaseNature", "Nature of last increase", false)}
-              {field("adjectiveRating", "Adjective rating")}
               {field("recommendedIncreaseBonus", "Recommended increase / bonus")}
             </>
           ) : stage === "COMMITTEE" ? (
@@ -631,6 +618,13 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             </>
           )}
           <SignatureField {...(signature ? { value: signature } : {})} disabled={!editable} onChange={setSignature} />
+          {stage === "PRESIDENT" ? (
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={openDocument}>Preview Evaluation</Button>
+              <Button type="button" variant="outline" onClick={openDocument}>Print / Export PDF</Button>
+              <Button type="button" variant="secondary" onClick={openDocument}>Refresh PDF</Button>
+            </div>
+          ) : null}
           <div className="flex gap-2">
             <Button
               onClick={() => mutation.mutate(true)}

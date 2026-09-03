@@ -141,6 +141,7 @@ export type ScoreResult = {
   notes: string;
   employeeAverage: number | null;
   supervisorAverage: number | null;
+  reviewingSupervisorAverage: number | null;
   presidentAverage: number | null;
   finalScore: number | null;
   finalRatingLabel: string | null;
@@ -183,6 +184,7 @@ export async function computeScore(evaluationId: string): Promise<ScoreResult> {
     notes,
     employeeAverage: null,
     supervisorAverage: null,
+    reviewingSupervisorAverage: null,
     presidentAverage: null,
     finalScore: null,
     finalRatingLabel: null,
@@ -210,12 +212,18 @@ export async function computeScore(evaluationId: string): Promise<ScoreResult> {
 
   const employeeAverage = averageFor(rule, criterionList, ratingRows, "EMPLOYEE");
   const supervisorAverage = averageFor(rule, criterionList, ratingRows, "SUPERVISOR");
-  const presidentAverage = averageFor(rule, criterionList, ratingRows, "PRESIDENT");
+  const reviewingSupervisorAverage = averageFor(rule, criterionList, ratingRows, "REVIEWING_SUPERVISOR");
 
-  if (presidentAverage === null)
-    return invalid("The President ratings are incomplete for all ten factors.");
+  if (employeeAverage === null || supervisorAverage === null || reviewingSupervisorAverage === null)
+    return invalid("Employee, Supervisor, and Reviewing Supervisor ratings must be complete for all factors.");
 
-  const finalScore = Math.min(5, Math.max(1, roundTo(presidentAverage, rule.roundingDecimals)));
+  const finalScore = Math.min(
+    5,
+    Math.max(
+      1,
+      roundTo((employeeAverage + supervisorAverage + reviewingSupervisorAverage) / 3, rule.roundingDecimals),
+    ),
+  );
   const band = rule.bands.find((item) => finalScore >= item.minScore && finalScore <= item.maxScore);
 
   return {
@@ -223,14 +231,16 @@ export async function computeScore(evaluationId: string): Promise<ScoreResult> {
     notes: band ? "" : "The final score does not fall inside any configured rating band.",
     employeeAverage: employeeAverage === null ? null : roundTo(employeeAverage, 4),
     supervisorAverage: supervisorAverage === null ? null : roundTo(supervisorAverage, 4),
-    presidentAverage: presidentAverage === null ? null : roundTo(presidentAverage, 4),
+    reviewingSupervisorAverage: roundTo(reviewingSupervisorAverage, 4),
+    presidentAverage: null,
     finalScore,
     finalRatingLabel: band?.label ?? null,
     ruleId: rule.id,
     ruleVersion: rule.version,
     breakdown: {
       factorWeighting: rule.factorWeighting,
-      scoringMethod: "PRESIDENT_AVERAGE",
+      scoringMethod: "THREE_EVALUATOR_AVERAGE",
+      reviewingSupervisorAverage,
       roundingDecimals: rule.roundingDecimals,
       exactFinalScore: presidentAverage,
       criterionCount: criterionList.length,
