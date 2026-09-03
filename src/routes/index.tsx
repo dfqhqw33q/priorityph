@@ -45,7 +45,8 @@ function Index() {
         const access = await fetchAccess();
         if (cancelled) return;
         if (!access) {
-          navigate({ to: "/unauthorized", replace: true });
+          await supabase.auth.signOut();
+          navigate({ to: "/login", replace: true });
           return;
         }
         if (access.mustChangePassword) {
