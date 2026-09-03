@@ -26,21 +26,57 @@ export function generateEvaluationHTML(params: {
   appraisedByName: string;
   appraisedByTitle: string;
   appraisedByDate: string;
-  appraisedBySignature?: string;
+  appraisedBySignature?: string | undefined;
   reviewedByName: string;
   reviewedByTitle: string;
   reviewedByDate: string;
-  reviewedBySignature?: string;
+  reviewedBySignature?: string | undefined;
   reviewedWithMeName: string;
   reviewedWithMeTitle: string;
   reviewedWithMeDate: string;
-  reviewedWithMeSignature?: string;
+  reviewedWithMeSignature?: string | undefined;
   overallRatingExplanation: string;
   principalStrengths: string;
   principalWeakness: string;
   effectivenessRecommendation: string;
+  developmentPotential: string;
+  advancementOutlook: string;
+  growthSuggestions: string;
+  transferInterest: string;
+  transferJob: string;
+  transferWhere: string;
+  transferQualified: string;
+  otherComments: string;
+  stepThreeComments: string;
+  stepThreeRecommendations: string;
+  presentSalary: string;
+  lastIncreaseDate: string;
+  lastIncreaseNature: string;
+  lastIncreaseAmount: string;
+  totalPoints: string;
+  adjectiveRating: string;
+  recommendedIncreaseBonus: string;
+  finalAction: string;
+  finalActionDetails: string;
+  committeeRecommendation: string;
+  approvedByName: string;
+  approvedByDate: string;
   formDate?: string;
 }): string {
+  const escapeHtml = (value: string) => value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+  const text = (value: string) => escapeHtml(value || "");
+  const renderLines = (value: string, maxCharsPerLine = 105) => {
+    const normalized = value.trim();
+    if (!normalized) return "";
+    return wrapText(normalized, maxCharsPerLine)
+      .map((line) => `<div class="input-line">${escapeHtml(line)}</div>`)
+      .join("");
+  };
   const factorRows = params.factors
     .map(
       (f) => `
@@ -67,6 +103,8 @@ export function generateEvaluationHTML(params: {
   `,
     )
     .join("");
+
+  const actionMarker = (action: string) => params.finalAction === action ? "✓" : " ";
 
   return `<!DOCTYPE html>
 <html>
@@ -129,6 +167,71 @@ export function generateEvaluationHTML(params: {
     .flex-row { display: flex; gap: 8px; margin-bottom: 8px; }
     .flex-row label { font-weight: 600; font-size: 12px; white-space: nowrap; }
     .flex-row .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 12px; padding: 4px 8px; }
+    .step-two { margin-top: 24px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5; }
+    .step-two-header { text-align: center; margin-bottom: 32px; }
+    .step-two-header h1 { font-size: 20px; margin: 0 0 4px; text-transform: uppercase; }
+    .step-two-header h2 { font-size: 18px; margin: 0; text-transform: uppercase; }
+    .step-two-title { margin-bottom: 16px; }
+    .step-two-section { display: flex; gap: 16px; margin-bottom: 24px; }
+    .step-two-number { font-weight: bold; }
+    .step-two-content { flex: 1; }
+    .step-two-content p { margin: 0 0 8px; }
+    .input-line { border-bottom: 1px solid #000; padding: 4px 8px; min-height: 24px; word-wrap: break-word; }
+    .input-line + .input-line { margin-top: 8px; }
+    .step-two-options { display: grid; gap: 8px; }
+    .step-two-option { display: flex; align-items: flex-start; gap: 12px; }
+    .step-two-option input, .step-two-transfer input { appearance: none; width: 13px; height: 13px; margin: 4px 0 0; border: 1.5px solid #000; border-radius: 50%; background: #fff; opacity: 1; flex: 0 0 auto; }
+    .step-two-option input:checked, .step-two-transfer input:checked { background: radial-gradient(circle, #000 0 45%, #fff 48% 100%); }
+    .step-two-transfer { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .step-two-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .step-two-footer { margin-top: 64px; display: flex; justify-content: flex-end; }
+    .step-two-footer .sig-block { width: 256px; flex: 0 0 256px; padding: 12px; text-align: center; }
+    .step-two-footer .sig-line { min-height: 40px; border-bottom: 2px solid #000; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
+    .step-two-footer .sig-image { max-width: 100%; max-height: 40px; object-fit: contain; }
+    .step-two-footer .sig-name { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
+    .step-two-footer .sig-title { font-size: 10px; margin-bottom: 8px; }
+    .step-two-date-block { width: 128px; padding: 12px; text-align: center; }
+    .step-two-date-line { height: 40px; border-bottom: 1px solid #000; display: flex; align-items: flex-end; justify-content: center; font-size: 10px; }
+    .step-two-footer-label { margin-top: 4px; font-size: 10px; }
+    @media (max-width: 700px) { .step-two-grid { grid-template-columns: 1fr; } .step-two-footer { justify-content: flex-start; } }
+
+    .step-three { margin-top: 24px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.35; }
+    .step-three h2, .step-three h3 { font-weight: bold; text-transform: uppercase; }
+    .step-three-header { margin-bottom: 24px; }
+    .step-three-comments { margin-bottom: 28px; }
+    .step-three-comments-title { text-align: center; margin-bottom: 28px; }
+    .comment-lines { min-height: 160px; border-bottom: 1px solid #000; margin-bottom: 16px; white-space: pre-wrap; }
+    .step-three-signature { display: flex; justify-content: flex-end; gap: 16px; margin-top: 28px; }
+    .step-three-signature-block { width: 42%; text-align: center; }
+    .step-three-date-block { width: 22%; text-align: center; }
+    .step-three-line { min-height: 32px; border-bottom: 1px solid #000; }
+    .step-three-label { font-size: 10px; margin-top: 4px; }
+    .step-three-rule { border: 0; border-top: 1px solid #000; margin: 24px 0; }
+    .step-three-section { margin-bottom: 28px; page-break-inside: avoid; break-inside: avoid; }
+    .step-three-section-title { margin: 0 0 14px; }
+    .step-three-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; margin-bottom: 20px; }
+    .step-three-field { display: flex; align-items: flex-end; gap: 8px; }
+    .step-three-field-label { white-space: nowrap; }
+    .step-three-field-value { flex: 1; min-height: 20px; border-bottom: 1px solid #000; word-wrap: break-word; }
+    .step-three-result-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+    .step-three-result-field { display: flex; align-items: flex-end; gap: 8px; }
+    .step-three-result-field.total { flex: 1; min-width: 200px; }
+    .step-three-result-field.rating { flex: 1; min-width: 300px; }
+    .step-three-result-value { min-width: 96px; flex: 1; min-height: 20px; border-bottom: 1px solid #000; }
+    .step-three-result-field.total .step-three-result-value { max-width: 96px; }
+    .step-three-result-field.rating .step-three-result-value { max-width: 128px; }
+    .step-three-prepared { display: flex; justify-content: flex-end; gap: 16px; flex-wrap: wrap; }
+    .step-three-prepared .step-three-field-value { min-width: 96px; }
+    .step-three-action-list { display: grid; gap: 10px; margin: 0 0 28px 16px; }
+    .step-three-action { display: flex; align-items: flex-end; gap: 8px; }
+    .step-three-action-mark { width: 22px; flex: 0 0 22px; }
+    .step-three-action-value { width: 300px; max-width: 100%; min-height: 20px; border-bottom: 1px solid #000; }
+    .step-three-approval { display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+    .step-three-approval-block { width: 45%; min-width: 260px; }
+    .step-three-approval-block .step-three-field { margin-bottom: 4px; }
+    .step-three-approval-caption { text-align: center; font-size: 10px; font-style: italic; margin-bottom: 18px; }
+    .step-three-note { margin-top: 32px; font-size: 10px; }
+    @media (max-width: 700px) { .step-three-fields { grid-template-columns: 1fr; } .step-three-signature { justify-content: flex-start; } .step-three-approval-block { width: 100%; min-width: 0; } }
     
     @media print {
       .container { max-width: 100%; padding: 0; }
@@ -234,30 +337,161 @@ export function generateEvaluationHTML(params: {
       </div>
     </div>
     
-    <div class="conclusions">
-      <h3>Conclusions and Comments (Confidential: Not to be Shown to Ratee)</h3>
-      <h4>Step Two: Develop conclusion and comments</h4>
-      
-      <div class="question">
-        <p>1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents.</p>
-        <div class="question-content">${params.overallRatingExplanation}</div>
-        <div class="question-content"></div>
+    <div class="step-two">
+      <header class="step-two-header">
+        <h1>Conclusions and Comments</h1>
+        <h2>(Confidential: Not to be shown to ratee)</h2>
+      </header>
+      <div class="step-two-title"><strong>STEP TWO:</strong> Develop conclusion and comments</div>
+      <div>
+        <section class="step-two-section">
+          <div class="step-two-number">1.</div>
+          <div class="step-two-content">
+            <p>If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents.</p>
+            ${renderLines(params.overallRatingExplanation)}
+          </div>
+        </section>
+        <section class="step-two-section">
+          <div class="step-two-number">2.</div>
+          <div class="step-two-content">
+            <p>Summarize the principal strengths and weakness of the employee.</p>
+            <p><strong>Principal Strengths:</strong></p>
+            ${renderLines(params.principalStrengths)}
+            <p><strong>Principal Weakness:</strong></p>
+            ${renderLines(params.principalWeakness)}
+            <p>To be more effective on present job the employee should:</p>
+            ${renderLines(params.effectivenessRecommendation)}
+          </div>
+        </section>
+        <div class="step-two-grid">
+          <section class="step-two-section">
+            <div class="step-two-number">3.</div>
+            <div class="step-two-content">
+              <p>The employee's development potential on present job is:</p>
+              <div class="step-two-options">
+                ${["Very marked growth expected on present job", "Considerable improvement expected on present job", "Only moderate improvement ahead on present job", "Likely to maintain present performance level on present job", "Likely to become less effective on present job"].map((option) => `<label class="step-two-option"><input type="radio" ${params.developmentPotential === option ? "checked" : ""}/><span>${escapeHtml(option)}</span></label>`).join("")}
+              </div>
+            </div>
+          </section>
+          <section class="step-two-section">
+            <div class="step-two-number">4.</div>
+            <div class="step-two-content">
+              <p>The employee's advancement outlook is:</p>
+              <div class="step-two-options">
+                ${["Promising. Should be able to advance to jobs several levels beyond his present one.", "Fairly Promising. Should be able to advance to job in the next higher level.", "Present job or jobs within the same grade level represent his advancement.", "Employee has difficulty in advancing to his job ceiling.", "Employee should be transferred. Not suited to this job; would fit better in some other jobs."].map((option) => `<label class="step-two-option"><input type="radio" ${params.advancementOutlook === option ? "checked" : ""}/><span>${escapeHtml(option)}</span></label>`).join("")}
+              </div>
+            </div>
+          </section>
+        </div>
+        <section class="step-two-section">
+          <div class="step-two-number">5.</div>
+          <div class="step-two-content">
+            <p>Suggest ways to accelerate employee's growth and development.</p>
+            ${renderLines(params.growthSuggestions)}
+          </div>
+        </section>
+        <section class="step-two-section">
+          <div class="step-two-number">6.</div>
+          <div class="step-two-content">
+            <p>Has the employed expressed any interest in assuming another job or transferring to another company / division / department / section?</p>
+            <div class="step-two-transfer"><input type="radio" ${params.transferInterest === "YES" ? "checked" : ""}/><span>YES</span><input type="radio" ${params.transferInterest === "NO" ? "checked" : ""}/><span>NO</span><input type="radio" ${params.transferInterest === "NOT_AWARE" ? "checked" : ""}/><span>NOT AWARE</span></div>
+            ${params.transferInterest === "YES" ? `<div class="input-line">If yes, what job? ${text(params.transferJob)}</div><div class="input-line">Where? ${text(params.transferWhere)}</div><div class="input-line">Is he qualified? ${text(params.transferQualified)}</div>` : ""}
+          </div>
+        </section>
+        <section class="step-two-section">
+          <div class="step-two-number">7.</div>
+          <div class="step-two-content">
+            <p>Other comments and recommendations</p>
+            ${renderLines(params.otherComments)}
+          </div>
+        </section>
       </div>
-      
-      <div class="question">
-        <p>2. Summarize the principal strengths and weakness of the employee.</p>
-        <div class="flex-row">
-          <label>Principal Strengths:</label>
-          <div class="value">${params.principalStrengths}</div>
+      <footer class="step-two-footer">
+        <div class="sig-block">
+          <div class="sig-line">${params.appraisedBySignature ? `<img src="${params.appraisedBySignature}" class="sig-image" alt="Signature of rater">` : ""}</div>
+          <div class="sig-name">${text(params.appraisedByName)}</div>
+          <div class="sig-title">${text(params.appraisedByTitle)}</div>
         </div>
-        <div class="flex-row">
-          <label>Principal Weakness:</label>
-          <div class="value">${params.principalWeakness}</div>
+        <div class="step-two-date-block">
+          <div class="step-two-date-line">${text(params.appraisedByDate)}</div>
+          <div class="step-two-footer-label">Date</div>
         </div>
-        <div class="flex-row">
-          <label>To be more effective on present job the employee should:</label>
-          <div class="value">${params.effectivenessRecommendation}</div>
+      </footer>
+    </div>
+
+    <div class="step-three">
+      <div class="step-three-header">
+        <h2>STEP THREE: Reviewed by the Reviewing Supervisor</h2>
+      </div>
+
+      <section class="step-three-comments step-three-section">
+        <h3 class="step-three-comments-title">COMMENTS AND RECOMMENDATIONS OF<br>REVIEWING SUPERVISOR/DIVISION HEAD</h3>
+        <div class="comment-lines">${text(params.stepThreeComments)}${params.stepThreeRecommendations ? `\n${text(params.stepThreeRecommendations)}` : ""}</div>
+        <div class="step-three-signature">
+          <div class="step-three-signature-block">
+            <div class="step-three-line">${text(params.reviewedByName)}</div>
+            <div class="step-three-label">Signature of Reviewing<br>Supervisor/Division Head</div>
+          </div>
+          <div class="step-three-date-block">
+            <div class="step-three-line">${text(params.reviewedByDate)}</div>
+            <div class="step-three-label">Date</div>
+          </div>
         </div>
+      </section>
+
+      <hr class="step-three-rule">
+
+      <section class="step-three-section">
+        <h3 class="step-three-section-title" style="text-align:center;">TO BE FILLED UP BY THE PERSONNEL OFFICE</h3>
+        <div class="step-three-fields">
+          <div class="step-three-field"><span class="step-three-field-label">Employee's Present Salary :</span><span class="step-three-field-value">${text(params.presentSalary)}</span></div>
+          <div class="step-three-field"><span class="step-three-field-label">Date of Last Increase :</span><span class="step-three-field-value">${text(params.lastIncreaseDate)}</span></div>
+          <div class="step-three-field"><span class="step-three-field-label">Nature of Last Increase :</span><span class="step-three-field-value">${text(params.lastIncreaseNature)}</span></div>
+          <div class="step-three-field"><span class="step-three-field-label">Amount of Last Increase :</span><span class="step-three-field-value">${text(params.lastIncreaseAmount)}</span></div>
+        </div>
+      </section>
+
+      <section class="step-three-section">
+        <h3 class="step-three-section-title">PERFORMANCE EVALUATION RESULT FOR THIS PERIOD</h3>
+        <div class="step-three-result-row">
+          <div class="step-three-result-field total"><strong>TOTAL POINTS:</strong><span class="step-three-result-value">${text(params.totalPoints)}</span></div>
+          <div class="step-three-result-field rating"><strong>ADJECTIVE RATING:</strong><span class="step-three-result-value">${text(params.adjectiveRating)}</span></div>
+        </div>
+        <div class="step-three-field" style="margin-bottom:20px;"><span class="step-three-field-label">Recommended Increase / Bonus :</span><span class="step-three-field-value">${text(params.recommendedIncreaseBonus)}</span></div>
+        <div class="step-three-prepared">
+          <div class="step-three-field"><span class="step-three-field-label">Prepared by:</span><span class="step-three-field-value">${text(params.approvedByName)}</span></div>
+          <div class="step-three-field"><span class="step-three-field-label">Date:</span><span class="step-three-field-value">${text(params.formDate || "")}</span></div>
+        </div>
+      </section>
+
+      <hr class="step-three-rule">
+
+      <section class="step-three-section">
+        <h3 class="step-three-section-title">FINAL ACTION RECOMMENDED BY THE PERFORMANCE EVALUATION COMMITTEE:</h3>
+        <div class="step-three-action-list">
+          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("RETAIN")})</span><span>Retain in Present Job</span></div>
+          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("TRANSFER")})</span><span>Transfer to :</span><span class="step-three-action-value">${params.finalAction === "TRANSFER" ? text(params.finalActionDetails) : ""}</span></div>
+          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("PROMOTE")})</span><span>Promote to :</span><span class="step-three-action-value">${params.finalAction === "PROMOTE" ? text(params.finalActionDetails) : ""}</span></div>
+          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("INCREASE_SALARY")})</span><span>Increase Salary by :</span><span class="step-three-action-value">${params.finalAction === "INCREASE_SALARY" ? text(params.finalActionDetails) : ""}</span></div>
+          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("TRAINING_REQUIRED")})</span><span>Others (Training Required, etc.)</span><span class="step-three-action-value">${params.finalAction === "TRAINING_REQUIRED" || params.finalAction === "OTHER" ? text(params.finalActionDetails) : ""}</span></div>
+        </div>
+        <div class="step-three-approval">
+          <div class="step-three-approval-block">
+            <div class="step-three-field"><strong>RECOMMENDED BY:</strong><span class="step-three-field-value"></span></div>
+            <div class="step-three-approval-caption">${text(params.committeeRecommendation)}<br>Performance Evaluation Committee<br><strong>CHAIRMAN</strong></div>
+            <div class="step-three-field"><strong>DATE :</strong><span class="step-three-field-value">${text(params.formDate || "")}</span></div>
+          </div>
+          <div class="step-three-approval-block">
+            <div class="step-three-field"><strong>APPROVED BY:</strong><span class="step-three-field-value">${text(params.approvedByName)}</span></div>
+            <div class="step-three-approval-caption">President</div>
+            <div class="step-three-field"><strong>DATE :</strong><span class="step-three-field-value">${text(params.approvedByDate)}</span></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="step-three-note">
+        <p><strong><sup>1</sup>N.B. FOR SALES PERSONNEL:</strong></p>
+        <div style="margin-left:16px;"><p>Indicate monthly history of:</p><div style="margin-left:16px;"><p>a. Number of Active Accounts</p><p>b. Sales Production (domestic and International) Peso Value</p></div></div>
       </div>
     </div>
   </div>
@@ -397,7 +631,7 @@ export async function generateEvaluationData(evaluationId: string) {
     const { data: evaluation, error: evalError } = (await admin
       .from("evaluations")
       .select(
-        "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, is_finalized, employee_submitted_at, supervisor_user_id, supervisor_submitted_at, supervisor_remarks, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
+        "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, is_finalized, employee_submitted_at, supervisor_user_id, president_user_id, supervisor_submitted_at, supervisor_remarks, supervisor_step2_overall_explanation, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
       )
       .eq("id", evaluationId)
       .maybeSingle()) as any;
@@ -412,17 +646,20 @@ export async function generateEvaluationData(evaluationId: string) {
     const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number; starts_at: string; ends_at: string; template_id: string } }).evaluation_cycles;
 
     // First batch of queries
-    const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult, employeeSignaturesResult, internalUserSignaturesResult] = await Promise.all([
+    const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult, employeeSignaturesResult, internalUserSignaturesResult, reviewingReviewResult, personnelResult, committeeResult] = await Promise.all([
       admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
       admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
       admin
         .from("evaluation_stage_signatures")
         .select("stage, method, storage_path, signature_data, signer_user_id, signed_at")
         .eq("evaluation_id", evaluationId)
-        .in("stage", ["RATER_STEP2", "REVIEWING_SUPERVISOR_STEP3"]),
+        .in("stage", ["RATER_STEP2", "REVIEWING_SUPERVISOR_STEP3", "PRESIDENT"]),
       evaluation.employee_id ? admin.from("employees").select("full_name, job_title").eq("id", evaluation.employee_id).maybeSingle() : Promise.resolve({ data: null }),
       admin.from("employee_signatures").select("method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
       (admin as any).from("internal_user_signatures").select("user_id, stage, method, storage_path, signature_data, content_type").eq("evaluation_id", evaluationId),
+      admin.from("reviewing_supervisor_reviews").select("comments, recommendations, reviewing_supervisor_date, reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle(),
+      admin.from("personnel_processing").select("present_salary, last_increase_date, last_increase_nature, last_increase_amount, total_points, adjective_rating, recommended_increase_bonus").eq("evaluation_id", evaluationId).maybeSingle(),
+      admin.from("committee_reviews").select("final_action, action_details, recommendation").eq("evaluation_id", evaluationId).maybeSingle(),
     ]);
 
     console.log(`[generateEvaluationData] Criteria: ${criteriaResult.data?.length || 0}, Ratings: ${ratingsResult.data?.length || 0}, Signatures: ${stageSignatureResult.data?.length || 0}, Employee: ${!!employeeRecordResult?.data}`);
@@ -431,7 +668,7 @@ export async function generateEvaluationData(evaluationId: string) {
     const { data: step3Result } = (await admin.from("reviewing_supervisor_reviews").select("reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle()) as any;
 
     // Fetch internal users that we need
-    const userIds = [evaluation.supervisor_user_id, step3Result?.reviewer_user_id].filter((id): id is string => Boolean(id));
+    const userIds = [evaluation.supervisor_user_id, step3Result?.reviewer_user_id, evaluation.president_user_id].filter((id): id is string => Boolean(id));
     const { data: userListResult } = userIds.length ? await admin.from("internal_users").select("id, full_name, job_title").in("id", userIds) : ({ data: [] } as any);
 
     const ratingMap = new Map<string, Record<string, number | undefined>>();
@@ -475,6 +712,7 @@ export async function generateEvaluationData(evaluationId: string) {
     const raterTitle = raterUser?.job_title ?? "Rater / Immediate Supervisor";
     const reviewingSupervisorName = reviewingSupervisorUser?.full_name ?? "—";
     const reviewingSupervisorTitle = reviewingSupervisorUser?.job_title ?? "Reviewing Supervisor / Division Head";
+    const presidentUser = evaluation.president_user_id ? userLookup.get(evaluation.president_user_id) ?? null : null;
     const periodFrom = formatFormDate(cycle.starts_at) || `January 1, ${cycle.year}`;
     const periodTo = formatFormDate(cycle.ends_at) || `December 31, ${cycle.year}`;
 
@@ -493,6 +731,9 @@ export async function generateEvaluationData(evaluationId: string) {
 
     const appraisedBySignature = raterStage ? await convertSignatureToDataUrl(admin, raterStage as any) : undefined;
     const reviewedBySignature = reviewerStage ? await convertSignatureToDataUrl(admin, reviewerStage as any) : undefined;
+    const raterStep2Date = evaluation.supervisor_step2_date ?? (stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at ?? null;
+    const reviewerStep3Date = (stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null;
+    const presidentSignature = (stageSignatureResult.data ?? []).find((s) => s.stage === "PRESIDENT");
 
     return {
       companyName: "PRIORITY HANDLING LOGISTICS, INC.",
@@ -515,20 +756,42 @@ export async function generateEvaluationData(evaluationId: string) {
       })),
       appraisedByName: raterName,
       appraisedByTitle: raterTitle,
-      appraisedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at),
+      appraisedByDate: formatDate(raterStep2Date),
       appraisedBySignature,
       reviewedByName: reviewingSupervisorName,
       reviewedByTitle: reviewingSupervisorTitle,
-      reviewedByDate: formatDate((stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at),
+      reviewedByDate: formatDate(reviewerStep3Date),
       reviewedBySignature,
       reviewedWithMeName: employeeName,
       reviewedWithMeTitle: "Ratee / Employee",
       reviewedWithMeDate: reviewedWithMeDateStr,
       reviewedWithMeSignature,
-      overallRatingExplanation: "",
-      principalStrengths: "",
-      principalWeakness: "",
-      effectivenessRecommendation: "",
+      overallRatingExplanation: normalizeText(evaluation.supervisor_step2_overall_explanation),
+      principalStrengths: normalizeText(evaluation.supervisor_step2_strengths),
+      principalWeakness: normalizeText(evaluation.supervisor_step2_weaknesses),
+      effectivenessRecommendation: normalizeText(evaluation.supervisor_step2_effectiveness),
+      developmentPotential: normalizeText(evaluation.supervisor_step2_development_potential),
+      advancementOutlook: normalizeText(evaluation.supervisor_step2_advancement_outlook),
+      growthSuggestions: normalizeText(evaluation.supervisor_step2_growth_suggestions),
+      transferInterest: normalizeText(evaluation.supervisor_step2_transfer_interest),
+      transferJob: normalizeText(evaluation.supervisor_step2_transfer_job),
+      transferWhere: normalizeText(evaluation.supervisor_step2_transfer_where),
+      transferQualified: normalizeText(evaluation.supervisor_step2_transfer_qualified),
+      otherComments: normalizeText(evaluation.supervisor_step2_other_comments),
+      stepThreeComments: normalizeText(reviewingReviewResult.data?.comments),
+      stepThreeRecommendations: normalizeText(reviewingReviewResult.data?.recommendations),
+      presentSalary: normalizeText(personnelResult.data?.present_salary),
+      lastIncreaseDate: formatDate(personnelResult.data?.last_increase_date),
+      lastIncreaseNature: normalizeText(personnelResult.data?.last_increase_nature),
+      lastIncreaseAmount: normalizeText(personnelResult.data?.last_increase_amount),
+      totalPoints: normalizeText(personnelResult.data?.total_points),
+      adjectiveRating: normalizeText(personnelResult.data?.adjective_rating),
+      recommendedIncreaseBonus: normalizeText(personnelResult.data?.recommended_increase_bonus),
+      finalAction: normalizeText(committeeResult.data?.final_action),
+      finalActionDetails: normalizeText(committeeResult.data?.action_details),
+      committeeRecommendation: normalizeText(committeeResult.data?.recommendation),
+      approvedByName: presidentUser?.full_name ?? "President",
+      approvedByDate: formatDate(presidentSignature?.signed_at),
       formDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
     };
   } catch (error) {
