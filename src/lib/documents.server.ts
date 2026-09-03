@@ -616,10 +616,9 @@ export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): str
 }
 
 export async function generateEmployeeFinalizedBrowserPDF(data: EvaluationDocumentData): Promise<Uint8Array> {
-  const playwrightPackage = "playwright-core";
   const chromiumPackage = "@sparticuz/chromium";
   const [{ chromium: playwrightChromium }, { default: chromium }] = await Promise.all([
-    import(playwrightPackage),
+    import("playwright-core"),
     import(chromiumPackage),
   ]);
   const browser = await playwrightChromium.launch({
