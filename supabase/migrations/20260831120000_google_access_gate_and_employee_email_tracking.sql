@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS public.employee_email_deliveries (
   evaluation_id uuid REFERENCES public.evaluations(id) ON DELETE CASCADE,
   employee_id uuid REFERENCES public.employees(id) ON DELETE CASCADE,
   recipient_email text NOT NULL CHECK (position('@' in recipient_email) > 1),
-  document_type text NOT NULL DEFAULT 'STEP1_FINALIZED' CHECK (document_type = 'STEP1_FINALIZED'),
+  document_type text NOT NULL DEFAULT 'STEP1_FINALIZED' CHECK (document_type IN ('STEP1_FINALIZED', 'EVALUATION_FINALIZED')),
   mail_status text NOT NULL DEFAULT 'PENDING' CHECK (mail_status IN ('PENDING', 'QUEUED', 'SENT', 'FAILED', 'SKIPPED')),
   idempotency_key text NOT NULL UNIQUE,
   provider_message text,
