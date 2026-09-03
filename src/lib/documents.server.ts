@@ -114,7 +114,15 @@ export function generateEvaluationHTML(params: {
     )
     .join("");
 
-  const actionMarker = (action: string) => params.finalAction === action ? "✓" : " ";
+  const renderSelectedOption = (selected: string, options: string[]) => {
+    const normalizedSelected = selected.trim().replace(/_/g, " ").toLowerCase();
+    const option = options.find(
+      (item) => item.toLowerCase() === normalizedSelected || item.replace(/_/g, " ").toLowerCase() === normalizedSelected,
+    );
+    return option
+      ? `<label class="step-two-option"><span class="step-two-option-marker">(✓)</span><span>${escapeHtml(option)}</span></label>`
+      : "";
+  };
 
   return `<!DOCTYPE html>
 <html>
@@ -152,11 +160,8 @@ export function generateEvaluationHTML(params: {
     
     .table-container { margin-bottom: 12px; }
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    thead tr { background-color: #080B3D; }
-    th { border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 11px; color: white; }
-    th:nth-child(2) { background-color: #0000FE; }
-    th:nth-child(3) { background-color: #0000FE; }
-    th:nth-child(4) { background-color: #0000FE; }
+    thead tr { background-color: transparent; }
+    th { border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 11px; color: #1a1a1a; background-color: transparent; }
     
     .signatures { border-top: 1px solid #000; border-bottom: 1px solid #000; display: flex; margin-bottom: 12px; }
     .sig-block { flex: 1; padding: 12px; border-left: 1px solid #000; text-align: center; }
@@ -190,6 +195,7 @@ export function generateEvaluationHTML(params: {
     .input-line + .input-line { margin-top: 8px; }
     .step-two-options { display: grid; gap: 8px; }
     .step-two-option { display: flex; align-items: flex-start; gap: 12px; }
+    .step-two-option-marker { flex: 0 0 auto; width: 22px; }
     .step-two-option input, .step-two-transfer input { appearance: none; width: 13px; height: 13px; margin: 4px 0 0; border: 1.5px solid #000; border-radius: 50%; background: #fff; opacity: 1; flex: 0 0 auto; }
     .step-two-option input:checked, .step-two-transfer input:checked { background: radial-gradient(circle, #000 0 45%, #fff 48% 100%); }
     .step-two-transfer { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -306,7 +312,7 @@ export function generateEvaluationHTML(params: {
       <table>
         <thead>
           <tr>
-            <th style="width: 55%; text-align: center; background-color: #0000FE;">Performance Evaluation Factor</th>
+            <th style="width: 55%; text-align: center;">Performance Evaluation Factor</th>
             <th>Employee / Ratee</th>
             <th>Supervisor / Rater</th>
             <th>Reviewing Supervisor /<br>Division Head</th>
@@ -374,7 +380,7 @@ export function generateEvaluationHTML(params: {
             <div class="step-two-content">
               <p>The employee's development potential on present job is:</p>
               <div class="step-two-options">
-                ${["Very marked growth expected on present job", "Considerable improvement expected on present job", "Only moderate improvement ahead on present job", "Likely to maintain present performance level on present job", "Likely to become less effective on present job"].map((option) => `<label class="step-two-option"><input type="radio" ${params.developmentPotential === option ? "checked" : ""}/><span>${escapeHtml(option)}</span></label>`).join("")}
+                ${renderSelectedOption(params.developmentPotential, ["Very marked growth expected on present job", "Considerable improvement expected on present job", "Only moderate improvement ahead on present job", "Likely to maintain present performance level on present job", "Likely to become less effective on present job"])}
               </div>
             </div>
           </section>
@@ -383,7 +389,7 @@ export function generateEvaluationHTML(params: {
             <div class="step-two-content">
               <p>The employee's advancement outlook is:</p>
               <div class="step-two-options">
-                ${["Promising. Should be able to advance to jobs several levels beyond his present one.", "Fairly Promising. Should be able to advance to job in the next higher level.", "Present job or jobs within the same grade level represent his advancement.", "Employee has difficulty in advancing to his job ceiling.", "Employee should be transferred. Not suited to this job; would fit better in some other jobs."].map((option) => `<label class="step-two-option"><input type="radio" ${params.advancementOutlook === option ? "checked" : ""}/><span>${escapeHtml(option)}</span></label>`).join("")}
+                ${renderSelectedOption(params.advancementOutlook, ["Promising. Should be able to advance to jobs several levels beyond his present one.", "Fairly Promising. Should be able to advance to job in the next higher level.", "Present job or jobs within the same grade level represent his advancement.", "Employee has difficulty in advancing to his job ceiling.", "Employee should be transferred. Not suited to this job; would fit better in some other jobs."])}
               </div>
             </div>
           </section>
@@ -399,7 +405,7 @@ export function generateEvaluationHTML(params: {
           <div class="step-two-number">6.</div>
           <div class="step-two-content">
             <p>Has the employed expressed any interest in assuming another job or transferring to another company / division / department / section?</p>
-            <div class="step-two-transfer"><input type="radio" ${params.transferInterest === "YES" ? "checked" : ""}/><span>YES</span><input type="radio" ${params.transferInterest === "NO" ? "checked" : ""}/><span>NO</span><input type="radio" ${params.transferInterest === "NOT_AWARE" ? "checked" : ""}/><span>NOT AWARE</span></div>
+            <div class="step-two-options">${renderSelectedOption(params.transferInterest, ["YES", "NO", "NOT_AWARE"])}</div>
             ${params.transferInterest === "YES" ? `<div class="input-line">If yes, what job? ${text(params.transferJob)}</div><div class="input-line">Where? ${text(params.transferWhere)}</div><div class="input-line">Is he qualified? ${text(params.transferQualified)}</div>` : ""}
           </div>
         </section>
@@ -476,11 +482,11 @@ export function generateEvaluationHTML(params: {
       <section class="step-three-section">
         <h3 class="step-three-section-title">FINAL ACTION RECOMMENDED BY THE PERFORMANCE EVALUATION COMMITTEE:</h3>
         <div class="step-three-action-list">
-          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("RETAIN")})</span><span>Retain in Present Job</span></div>
-          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("TRANSFER")})</span><span>Transfer to :</span><span class="step-three-action-value">${params.finalAction === "TRANSFER" ? text(params.finalActionDetails) : ""}</span></div>
-          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("PROMOTE")})</span><span>Promote to :</span><span class="step-three-action-value">${params.finalAction === "PROMOTE" ? text(params.finalActionDetails) : ""}</span></div>
-          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("INCREASE_SALARY")})</span><span>Increase Salary by :</span><span class="step-three-action-value">${params.finalAction === "INCREASE_SALARY" ? text(params.finalActionDetails) : ""}</span></div>
-          <div class="step-three-action"><span class="step-three-action-mark">(${actionMarker("TRAINING_REQUIRED")})</span><span>Others (Training Required, etc.)</span><span class="step-three-action-value">${params.finalAction === "TRAINING_REQUIRED" || params.finalAction === "OTHER" ? text(params.finalActionDetails) : ""}</span></div>
+          ${params.finalAction === "RETAIN" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Retain in Present Job</span></div>` : ""}
+          ${params.finalAction === "TRANSFER" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Transfer to :</span><span class="step-three-action-value">${text(params.finalActionDetails)}</span></div>` : ""}
+          ${params.finalAction === "PROMOTE" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Promote to :</span><span class="step-three-action-value">${text(params.finalActionDetails)}</span></div>` : ""}
+          ${params.finalAction === "INCREASE_SALARY" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Increase Salary by :</span><span class="step-three-action-value">${text(params.finalActionDetails)}</span></div>` : ""}
+          ${params.finalAction === "TRAINING_REQUIRED" || params.finalAction === "OTHER" ? `<div class="step-three-action"><span class="step-three-action-mark">(✓)</span><span>Others (Training Required, etc.)</span><span class="step-three-action-value">${text(params.finalActionDetails)}</span></div>` : ""}
         </div>
         <div class="step-three-approval">
           <div class="step-three-approval-block">
