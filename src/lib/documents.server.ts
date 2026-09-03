@@ -203,6 +203,7 @@ export function generateEvaluationHTML(params: {
     .step-two-date-block { width: 128px; padding: 12px; text-align: center; }
     .step-two-date-line { height: 40px; border-bottom: 1px solid #000; display: flex; align-items: flex-end; justify-content: center; font-size: 10px; }
     .step-two-footer-label { margin-top: 4px; font-size: 10px; }
+    .workflow-signature-heading { font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 0 0 12px; }
     @media (max-width: 700px) { .step-two-grid { grid-template-columns: 1fr; } .step-two-footer { justify-content: flex-start; } }
 
     .step-three { margin-top: 24px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.35; }
@@ -211,11 +212,9 @@ export function generateEvaluationHTML(params: {
     .step-three-comments { margin-bottom: 28px; }
     .step-three-comments-title { text-align: center; margin-bottom: 28px; }
     .comment-lines { border-bottom: 1px solid #000; margin-bottom: 16px; padding-bottom: 16px; white-space: pre-wrap; }
-    .step-three-signature { display: flex; justify-content: flex-end; gap: 16px; margin-top: 28px; }
-    .step-three-signature-block { width: 42%; text-align: center; }
-    .step-three-date-block { width: 22%; text-align: center; }
-    .step-three-line { min-height: 32px; border-bottom: 1px solid #000; }
-    .step-three-label { font-size: 10px; margin-top: 4px; }
+    .step-three-signature { margin-top: 28px; }
+    .step-three-signature .sig-block { width: 256px; flex: 0 0 256px; padding: 12px; text-align: center; }
+    .step-three-signature .step-two-date-block { width: 128px; flex: 0 0 128px; padding: 12px; text-align: center; }
     .step-three-rule { border: 0; border-top: 1px solid #000; margin: 24px 0; }
     .step-three-section { margin-bottom: 28px; page-break-inside: avoid; break-inside: avoid; }
     .step-three-section-title { margin: 0 0 14px; }
@@ -420,6 +419,7 @@ export function generateEvaluationHTML(params: {
       </div>
       <footer class="step-two-footer">
         <div class="sig-block">
+          <h3 class="workflow-signature-heading">Appraised By:</h3>
           <div class="sig-line">${params.appraisedBySignature ? `<img src="${params.appraisedBySignature}" class="sig-image" alt="Signature of rater">` : ""}</div>
           <div class="sig-name">${text(params.appraisedByName)}</div>
           <div class="sig-title">${text(params.appraisedByTitle)}</div>
@@ -439,18 +439,18 @@ export function generateEvaluationHTML(params: {
       <section class="step-three-comments step-three-section">
         <h3 class="step-three-comments-title">COMMENTS AND RECOMMENDATIONS OF<br>REVIEWING SUPERVISOR/DIVISION HEAD</h3>
         <div class="comment-lines">${text(params.stepThreeComments)}${params.stepThreeRecommendations ? `\n${text(params.stepThreeRecommendations)}` : ""}</div>
-        <div class="step-three-signature">
-          <div class="step-three-signature-block">
+        <footer class="step-two-footer step-three-signature">
+          <div class="sig-block">
+            <h3 class="workflow-signature-heading">Reviewed By:</h3>
             <div class="sig-line">${params.reviewedBySignature ? `<img src="${params.reviewedBySignature}" class="sig-image" alt="Signature of Reviewing Supervisor">` : ""}</div>
             <div class="sig-name">${text(params.reviewedByName)}</div>
             <div class="sig-title">${text(params.reviewedByTitle)}</div>
-            <div class="step-three-label">Signature of Reviewing Supervisor/Division Head</div>
           </div>
-          <div class="step-three-date-block">
-            <div class="step-three-line">${text(params.reviewedByDate)}</div>
-            <div class="step-three-label">Date</div>
+          <div class="step-two-date-block">
+            <div class="step-two-date-line">${text(params.reviewedByDate)}</div>
+            <div class="step-two-footer-label">Date</div>
           </div>
-        </div>
+        </footer>
       </section>
 
       <hr class="step-three-rule">
@@ -474,10 +474,10 @@ export function generateEvaluationHTML(params: {
         <div class="step-three-field" style="margin-bottom:20px;"><span class="step-three-field-label">Recommended Increase / Bonus :</span><span class="step-three-field-value">${text(params.recommendedIncreaseBonus)}</span></div>
         <div class="step-three-prepared">
           <div class="sig-block">
+            <h3 class="workflow-signature-heading">Prepared By:</h3>
             <div class="sig-line">${params.preparedBySignature ? `<img src="${params.preparedBySignature}" class="sig-image" alt="Signature of Personnel Office preparer">` : ""}</div>
             <div class="sig-name">${text(params.preparedByName)}</div>
             <div class="sig-title">${text(params.preparedByTitle)}</div>
-            <div class="sig-date"><strong>Prepared by:</strong></div>
           </div>
           <div class="step-two-date-block">
             <div class="step-two-date-line">${text(params.preparedByDate)}</div>
