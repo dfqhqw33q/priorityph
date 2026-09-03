@@ -697,7 +697,9 @@ export async function generateEmployeeFinalizedPDFLegacy(data: EvaluationDocumen
     if (!signature?.startsWith("data:image/")) return null;
     const match = signature.match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
     if (!match) return null;
-    const bytes = Buffer.from(match[2], "base64");
+    const encodedImage = match[2];
+    if (!encodedImage) return null;
+    const bytes = Buffer.from(encodedImage, "base64");
     try {
       return match[1] === "png" ? await document.embedPng(bytes) : await document.embedJpg(bytes);
     } catch {

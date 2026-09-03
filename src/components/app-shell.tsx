@@ -170,7 +170,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { access, isLoading } = useAccess();
+  const { access, isLoading, isError } = useAccess();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const queryClient = useQueryClient();
@@ -179,6 +179,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const accessRule = routeAccess(pathname);
   const accessDenied =
     !isLoading &&
+    !isError &&
     (access === null ||
       !access.isActive ||
       access.isLocked ||
