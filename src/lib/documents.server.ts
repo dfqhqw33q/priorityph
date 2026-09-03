@@ -201,6 +201,7 @@ export function generateEvaluationHTML(params: {
     .step-two-footer .sig-name { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
     .step-two-footer .sig-title { font-size: 10px; margin-bottom: 8px; }
     .step-two-date-block { width: 128px; padding: 12px; text-align: center; }
+    .step-two-footer > .step-two-date-block { margin-top: 23px; }
     .step-two-date-line { height: 40px; border-bottom: 1px solid #000; display: flex; align-items: flex-end; justify-content: center; font-size: 10px; }
     .step-two-footer-label { margin-top: 4px; font-size: 10px; }
     .workflow-signature-heading { font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 0 0 12px; }
@@ -232,6 +233,7 @@ export function generateEvaluationHTML(params: {
     .step-three-prepared { display: flex; justify-content: flex-end; gap: 16px; flex-wrap: wrap; }
     .step-three-prepared .sig-block { width: 256px; flex: 0 0 256px; padding: 12px; }
     .step-three-prepared .step-two-date-block { width: 128px; padding: 12px; }
+    .step-three-prepared > .step-two-date-block { margin-top: 23px; }
     .step-three-prepared .step-three-field-value { min-width: 96px; }
     .step-three-action-list { display: grid; gap: 10px; margin: 0 0 28px 16px; }
     .step-three-action { display: flex; align-items: flex-end; gap: 8px; }
