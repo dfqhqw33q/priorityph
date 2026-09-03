@@ -200,11 +200,10 @@ export function generateEvaluationHTML(params: {
     .step-two-footer .sig-image { max-width: 100%; max-height: 40px; object-fit: contain; }
     .step-two-footer .sig-name { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
     .step-two-footer .sig-title { font-size: 10px; margin-bottom: 8px; }
-    .step-two-date-block { width: 128px; padding: 12px; text-align: center; }
-    .step-two-footer > .step-two-date-block { margin-top: 23px; }
-    .step-two-date-line { height: 40px; border-bottom: 1px solid #000; display: flex; align-items: flex-end; justify-content: center; font-size: 10px; }
-    .step-two-footer-label { margin-top: 4px; font-size: 10px; }
     .workflow-signature-heading { font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 0 0 12px; }
+    .workflow-signature { width: 256px; flex: 0 0 256px; padding: 12px; text-align: center; }
+    .workflow-signature .sig-date { font-size: 10px; margin-top: 8px; }
+    .workflow-signature .sig-date-label { font-weight: bold; }
     @media (max-width: 700px) { .step-two-grid { grid-template-columns: 1fr; } .step-two-footer { justify-content: flex-start; } }
 
     .step-three { margin-top: 24px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.35; }
@@ -213,9 +212,7 @@ export function generateEvaluationHTML(params: {
     .step-three-comments { margin-bottom: 28px; }
     .step-three-comments-title { text-align: center; margin-bottom: 28px; }
     .comment-lines { border-bottom: 1px solid #000; margin-bottom: 16px; padding-bottom: 16px; white-space: pre-wrap; }
-    .step-three-signature { margin-top: 28px; }
-    .step-three-signature .sig-block { width: 256px; flex: 0 0 256px; padding: 12px; text-align: center; }
-    .step-three-signature .step-two-date-block { width: 128px; flex: 0 0 128px; padding: 12px; text-align: center; }
+    .step-three-signature { display: flex; justify-content: flex-end; margin-top: 28px; }
     .step-three-rule { border: 0; border-top: 1px solid #000; margin: 24px 0; }
     .step-three-section { margin-bottom: 28px; page-break-inside: avoid; break-inside: avoid; }
     .step-three-section-title { margin: 0 0 14px; }
@@ -230,21 +227,16 @@ export function generateEvaluationHTML(params: {
     .step-three-result-value { min-width: 96px; flex: 1; min-height: 20px; border-bottom: 1px solid #000; }
     .step-three-result-field.total .step-three-result-value { max-width: 96px; }
     .step-three-result-field.rating .step-three-result-value { max-width: 128px; }
-    .step-three-prepared { display: flex; justify-content: flex-end; gap: 16px; flex-wrap: wrap; }
-    .step-three-prepared .sig-block { width: 256px; flex: 0 0 256px; padding: 12px; }
-    .step-three-prepared .step-two-date-block { width: 128px; padding: 12px; }
-    .step-three-prepared > .step-two-date-block { margin-top: 23px; }
-    .step-three-prepared .step-three-field-value { min-width: 96px; }
+    .step-three-prepared { display: flex; justify-content: flex-end; }
     .step-three-action-list { display: grid; gap: 10px; margin: 0 0 28px 16px; }
     .step-three-action { display: flex; align-items: flex-end; gap: 8px; }
     .step-three-action-mark { width: 22px; flex: 0 0 22px; }
     .step-three-action-value { width: 300px; max-width: 100%; min-height: 20px; border-bottom: 1px solid #000; }
-    .step-three-approval { display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+    .step-three-approval { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
     .step-three-approval-block { width: 45%; min-width: 260px; }
-    .step-three-approval-block .step-three-field { margin-bottom: 4px; }
-    .step-three-approval-caption { text-align: center; font-size: 10px; font-style: italic; margin-bottom: 18px; }
+    .step-three-approval-block .workflow-signature { margin: 0; width: 256px; }
     .step-three-note { margin-top: 32px; font-size: 10px; }
-    @media (max-width: 700px) { .step-three-fields { grid-template-columns: 1fr; } .step-three-signature { justify-content: flex-start; } .step-three-approval-block { width: 100%; min-width: 0; } }
+    @media (max-width: 700px) { .step-three-fields { grid-template-columns: 1fr; } .step-three-signature { justify-content: flex-start; } .step-three-approval { grid-template-columns: 1fr; } .step-three-approval-block { width: 100%; min-width: 0; } }
     
     @media print {
       .container { max-width: 100%; padding: 0; }
@@ -420,15 +412,12 @@ export function generateEvaluationHTML(params: {
         </section>
       </div>
       <footer class="step-two-footer">
-        <div class="sig-block">
+        <div class="workflow-signature">
           <h3 class="workflow-signature-heading">Appraised By:</h3>
           <div class="sig-line">${params.appraisedBySignature ? `<img src="${params.appraisedBySignature}" class="sig-image" alt="Signature of rater">` : ""}</div>
           <div class="sig-name">${text(params.appraisedByName)}</div>
           <div class="sig-title">${text(params.appraisedByTitle)}</div>
-        </div>
-        <div class="step-two-date-block">
-          <div class="step-two-date-line">${text(params.appraisedByDate)}</div>
-          <div class="step-two-footer-label">Date</div>
+          <div class="sig-date"><span class="sig-date-label">Date:</span> ${text(params.appraisedByDate)}</div>
         </div>
       </footer>
     </div>
@@ -442,15 +431,12 @@ export function generateEvaluationHTML(params: {
         <h3 class="step-three-comments-title">COMMENTS AND RECOMMENDATIONS OF<br>REVIEWING SUPERVISOR/DIVISION HEAD</h3>
         <div class="comment-lines">${text(params.stepThreeComments)}${params.stepThreeRecommendations ? `\n${text(params.stepThreeRecommendations)}` : ""}</div>
         <footer class="step-two-footer step-three-signature">
-          <div class="sig-block">
+          <div class="workflow-signature">
             <h3 class="workflow-signature-heading">Reviewed By:</h3>
             <div class="sig-line">${params.reviewedBySignature ? `<img src="${params.reviewedBySignature}" class="sig-image" alt="Signature of Reviewing Supervisor">` : ""}</div>
             <div class="sig-name">${text(params.reviewedByName)}</div>
             <div class="sig-title">${text(params.reviewedByTitle)}</div>
-          </div>
-          <div class="step-two-date-block">
-            <div class="step-two-date-line">${text(params.reviewedByDate)}</div>
-            <div class="step-two-footer-label">Date</div>
+            <div class="sig-date"><span class="sig-date-label">Date:</span> ${text(params.reviewedByDate)}</div>
           </div>
         </footer>
       </section>
@@ -475,15 +461,12 @@ export function generateEvaluationHTML(params: {
         </div>
         <div class="step-three-field" style="margin-bottom:20px;"><span class="step-three-field-label">Recommended Increase / Bonus :</span><span class="step-three-field-value">${text(params.recommendedIncreaseBonus)}</span></div>
         <div class="step-three-prepared">
-          <div class="sig-block">
+          <div class="workflow-signature">
             <h3 class="workflow-signature-heading">Prepared By:</h3>
             <div class="sig-line">${params.preparedBySignature ? `<img src="${params.preparedBySignature}" class="sig-image" alt="Signature of Personnel Office preparer">` : ""}</div>
             <div class="sig-name">${text(params.preparedByName)}</div>
             <div class="sig-title">${text(params.preparedByTitle)}</div>
-          </div>
-          <div class="step-two-date-block">
-            <div class="step-two-date-line">${text(params.preparedByDate)}</div>
-            <div class="step-two-footer-label">Date</div>
+            <div class="sig-date"><span class="sig-date-label">Date:</span> ${text(params.preparedByDate)}</div>
           </div>
         </div>
       </section>
@@ -501,20 +484,22 @@ export function generateEvaluationHTML(params: {
         </div>
         <div class="step-three-approval">
           <div class="step-three-approval-block">
-            <div class="step-three-field"><strong>RECOMMENDED BY:</strong></div>
-            <div class="sig-line">${params.committeeSignature ? `<img src="${params.committeeSignature}" class="sig-image" alt="Signature of Performance Evaluation Committee member">` : ""}</div>
-            <div class="sig-name">${text(params.committeeName)}</div>
-            <div class="sig-title">${text(params.committeeTitle)}<br>CHAIRMAN</div>
-            <div class="step-three-approval-caption">${text(params.committeeRecommendation)}</div>
-            <div class="step-three-field"><strong>DATE :</strong><span class="step-three-field-value">${text(params.committeeDate)}</span></div>
+            <div class="workflow-signature">
+              <h3 class="workflow-signature-heading">Recommended By:</h3>
+              <div class="sig-line">${params.committeeSignature ? `<img src="${params.committeeSignature}" class="sig-image" alt="Signature of Performance Evaluation Committee member">` : ""}</div>
+              <div class="sig-name">${text(params.committeeName)}</div>
+              <div class="sig-title">${text(params.committeeTitle)}<br>CHAIRMAN</div>
+              <div class="sig-date"><span class="sig-date-label">Date:</span> ${text(params.committeeDate)}</div>
+            </div>
           </div>
           <div class="step-three-approval-block">
-            <div class="step-three-field"><strong>APPROVED BY:</strong></div>
-            <div class="sig-line">${params.approvedBySignature ? `<img src="${params.approvedBySignature}" class="sig-image" alt="Signature of President">` : ""}</div>
-            <div class="sig-name">${text(params.approvedByName)}</div>
-            <div class="sig-title">${text(params.approvedByTitle)}</div>
-            <div class="step-three-approval-caption">President</div>
-            <div class="step-three-field"><strong>DATE :</strong><span class="step-three-field-value">${text(params.approvedByDate)}</span></div>
+            <div class="workflow-signature">
+              <h3 class="workflow-signature-heading">Approved By:</h3>
+              <div class="sig-line">${params.approvedBySignature ? `<img src="${params.approvedBySignature}" class="sig-image" alt="Signature of President">` : ""}</div>
+              <div class="sig-name">${text(params.approvedByName)}</div>
+              <div class="sig-title">${text(params.approvedByTitle)}</div>
+              <div class="sig-date"><span class="sig-date-label">Date:</span> ${text(params.approvedByDate)}</div>
+            </div>
           </div>
         </div>
       </section>
