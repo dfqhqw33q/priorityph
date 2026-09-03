@@ -217,11 +217,12 @@ export async function computeScore(evaluationId: string): Promise<ScoreResult> {
   if (employeeAverage === null || supervisorAverage === null || reviewingSupervisorAverage === null)
     return invalid("Employee, Supervisor, and Reviewing Supervisor ratings must be complete for all factors.");
 
+  const exactFinalScore = (employeeAverage + supervisorAverage + reviewingSupervisorAverage) / 3;
   const finalScore = Math.min(
     5,
     Math.max(
       1,
-      roundTo((employeeAverage + supervisorAverage + reviewingSupervisorAverage) / 3, rule.roundingDecimals),
+      roundTo(exactFinalScore, rule.roundingDecimals),
     ),
   );
   const band = rule.bands.find((item) => finalScore >= item.minScore && finalScore <= item.maxScore);
@@ -242,7 +243,7 @@ export async function computeScore(evaluationId: string): Promise<ScoreResult> {
       scoringMethod: "THREE_EVALUATOR_AVERAGE",
       reviewingSupervisorAverage,
       roundingDecimals: rule.roundingDecimals,
-      exactFinalScore: presidentAverage,
+      exactFinalScore,
       criterionCount: criterionList.length,
     },
   };
