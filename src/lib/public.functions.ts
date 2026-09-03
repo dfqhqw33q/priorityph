@@ -34,6 +34,7 @@ async function upsertAccessSession(
 
 export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   const { getAdmin } = await import("./server-core.server");
+  const { generateEvaluationData, generateEvaluationHTML } = await import("./documents.server");
   const admin = await getAdmin();
 
   const { data: evaluation } = await admin
@@ -111,10 +112,13 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   }
 
   const subject = "Your Step 1 performance evaluation is finalized";
+  const evaluationData = await generateEvaluationData(evaluationId);
+  const documentHtml = generateEvaluationHTML(evaluationData);
+  const base64Html = Buffer.from(new TextEncoder().encode(documentHtml)).toString("base64");
   const html = `
     <p>Hello,</p>
     <p>Your completed Step 1 performance evaluation has been finalized and is ready for your records.</p>
-    <p>This email contains the finalized evaluation summary prepared for the employee record.</p>
+    <p>The attached file contains the finalized evaluation summary prepared for the employee record.</p>
     <p>Thank you.</p>
   `;
 
@@ -135,6 +139,12 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
         subject,
         htmlContent: html,
         textContent: "Your completed Step 1 evaluation has been finalized and is available for review.",
+        attachment: [
+          {
+            content: base64Html,
+            name: "Performance_Evaluation_Step1_Finalized.html",
+          },
+        ],
       }),
     });
 
