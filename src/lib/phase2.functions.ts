@@ -589,6 +589,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => personnelProcessingSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { computeScore } = await import("./scoring.server");
     await requirePermission(context.userId, "personnel.process", "Personnel Processing");
     if (data.submit && !data.signature)
       throw validationError("A Personnel Office signature is required before submission");
