@@ -162,6 +162,159 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   }
 }
 
+export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string) {
+  const { getAdmin } = await import("./server-core.server");
+  const { generateEvaluationData, generateEvaluationHTML } = await import("./documents.server");
+  const admin = await getAdmin();
+
+  const { data: evaluation } = await admin
+    .from("evaluations")
+    .select("id, employee_id, cycle_id")
+    .eq("id", evaluationId)
+    .maybeSingle();
+  if (!evaluation) return { status: "SKIPPED" as const };
+
+  // Get the employee's email from the access session
+  const { data: accessRows } = await admin
+    .from("public_evaluation_access_sessions" as never)
+    .select("email")
+    .eq("employee_id", evaluation.employee_id)
+    .order("last_verified_at", { ascending: false })
+    .limit(10);
+
+  const accessEmail = accessRows?.find((row) => typeof row.email === "string" && row.email.includes("@"))?.email;
+
+  if (!accessEmail) {
+    const idempotencyKey = `evaluation-finalized:${evaluationId}`;
+    await admin
+      .from("employee_email_deliveries" as never)
+      .upsert(
+        {
+          evaluation_id: evaluation.id,
+          employee_id: evaluation.employee_id,
+          recipient_email: "unknown@not-found",
+          document_type: "EVALUATION_FINALIZED",
+          mail_status: "SKIPPED",
+          idempotency_key: idempotencyKey,
+          provider_message: "No verified Google email was found for this employee.",
+        },
+        { onConflict: "idempotency_key" },
+      )
+      .select("id");
+    return { status: "SKIPPED" as const };
+  }
+
+  const idempotencyKey = `evaluation-finalized:${evaluationId}`;
+  const { data: existing } = await admin
+    .from("employee_email_deliveries" as never)
+    .select("mail_status, id")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+
+  if (existing) return { status: existing.mail_status === "SENT" ? ("QUEUED" as const) : ("SKIPPED" as const) };
+
+  const { data: delivery, error: insertError } = await admin
+    .from("employee_email_deliveries" as never)
+    .upsert(
+      {
+        evaluation_id: evaluation.id,
+        employee_id: evaluation.employee_id,
+        recipient_email: accessEmail,
+        document_type: "EVALUATION_FINALIZED",
+        mail_status: "PENDING",
+        idempotency_key: idempotencyKey,
+      },
+      { onConflict: "idempotency_key" },
+    )
+    .select("id")
+    .single();
+
+  if (insertError || !delivery) return { status: "FAILED" as const };
+
+  const apiKey = process.env["BREVO_API_KEY"];
+  const fromAddress = process.env["EMAIL_FROM"] ?? "noreply@priorityhandling.local";
+
+  if (!apiKey || !fromAddress || !fromAddress.includes("@")) {
+    await admin
+      .from("employee_email_deliveries" as never)
+      .update({ mail_status: "FAILED", provider_message: "BREVO_API_KEY or EMAIL_FROM is not configured." })
+      .eq("id", delivery.id);
+    return { status: "FAILED" as const };
+  }
+
+  try {
+    // Generate the finalized evaluation document
+    const evaluationData = await generateEvaluationData(evaluationId);
+    const documentHtml = generateEvaluationHTML(evaluationData);
+
+    // Convert HTML to base64 for attachment
+    const htmlBuffer = new TextEncoder().encode(documentHtml);
+    const base64Html = Buffer.from(htmlBuffer).toString("base64");
+
+    const subject = "Your Performance Evaluation Has Been Finalized";
+    const htmlContent = `
+      <p>Hello,</p>
+      <p>Your completed performance evaluation has been finalized and is ready for your records.</p>
+      <p>The attached file contains your complete evaluation, including:</p>
+      <ul>
+        <li>Your evaluation ratings (Step 1)</li>
+        <li>Supervisor conclusions and comments (Step 2)</li>
+        <li>Reviewing Supervisor review (Step 3)</li>
+        <li>Personnel Office results (Total Points, Adjective Rating)</li>
+        <li>Performance Evaluation Committee recommendation</li>
+        <li>President approval and final action</li>
+      </ul>
+      <p>Thank you.</p>
+    `;
+
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "api-key": apiKey,
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "Priority Handling Logistics",
+          email: fromAddress,
+        },
+        to: [{ email: accessEmail }],
+        subject,
+        htmlContent,
+        attachment: [
+          {
+            content: base64Html,
+            name: "Performance_Evaluation_Finalized.html",
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      await admin
+        .from("employee_email_deliveries" as never)
+        .update({ mail_status: "FAILED", provider_message: message.slice(0, 500) })
+        .eq("id", delivery.id);
+      return { status: "FAILED" as const };
+    }
+
+    await admin
+      .from("employee_email_deliveries" as never)
+      .update({ mail_status: "SENT", sent_at: new Date().toISOString() })
+      .eq("id", delivery.id);
+    return { status: "QUEUED" as const };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Unknown email delivery error";
+    await admin
+      .from("employee_email_deliveries" as never)
+      .update({ mail_status: "FAILED", provider_message: detail.slice(0, 500) })
+      .eq("id", delivery.id);
+    return { status: "FAILED" as const };
+  }
+}
+
 export const getPublicCycle = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) =>
     z.object({ cycleToken: z.string().min(16).max(128) }).parse(input),
