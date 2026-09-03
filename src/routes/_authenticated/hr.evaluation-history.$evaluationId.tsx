@@ -9,6 +9,7 @@ import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader, formatDate
 import { getEvaluationHistory } from "@/lib/reports.functions";
 import { humanizeToken } from "@/lib/domain";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
+import { EvaluationDocumentPreview } from "@/components/evaluation-document-preview";
 
 export const Route = createFileRoute("/_authenticated/hr/evaluation-history/$evaluationId")({
   component: HistoryDetailPage,
@@ -19,6 +20,8 @@ function HistoryDetailPage() {
   const fetch = useServerFn(getEvaluationHistory);
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const [documentAction, setDocumentAction] = useState<"preview" | "print" | null>(null);
+  const [documentHtml, setDocumentHtml] = useState<string | null>(null);
+  const [documentOpen, setDocumentOpen] = useState(false);
   const query = useQuery({
     queryKey: ["evaluation-history-detail", evaluationId],
     queryFn: () => fetch({ data: { evaluationId } }),
@@ -27,16 +30,12 @@ function HistoryDetailPage() {
 
   async function openFinalDocument(mode: "preview" | "print") {
     setDocumentAction(mode);
+    setDocumentOpen(true);
     try {
       const result = await getSheetHtml({ data: { evaluationId } });
-      // Create a blob with the HTML content
-      const blob = new Blob([result.html], { type: "text/html; charset=utf-8" });
-      const blobUrl = URL.createObjectURL(blob);
-      const win = window.open(blobUrl, "_blank", "noopener,noreferrer");
-      if (mode === "print") {
-        setTimeout(() => win?.print(), 600);
-      }
+      setDocumentHtml(result.html);
     } catch (error) {
+      setDocumentOpen(false);
       window.alert(error instanceof Error ? error.message : "The final evaluation document is not available yet.");
     } finally {
       setDocumentAction(null);
@@ -77,6 +76,16 @@ function HistoryDetailPage() {
             ) : null}
           </div>
         }
+      />
+
+      <EvaluationDocumentPreview
+        html={documentHtml}
+        open={documentOpen}
+        loading={documentOpen && !documentHtml}
+        onOpenChange={(open) => {
+          setDocumentOpen(open);
+          if (!open) setDocumentHtml(null);
+        }}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -1,0 +1,197 @@
+1.1 Project Background and Motivation
+Human resources are central to freight and logistics operations, where service continuity depends on employees who can meet technical, operational, and supervisory demands. Priority Handling Logistics, Inc., a freight and logistics company, currently manages employee performance evaluation through a paper-based annual evaluation process. This process involves completion of a standardized evaluation form on a fixed annual basis for all employees within the organization on the company's anniversary date. The evaluation form captures performance ratings across ten performance factors (labeled A–J), rated on a 1–5 scale, and includes qualitative assessments by multiple raters: the employee's self-rating (Step 1), the immediate supervisor's ratings and narrative feedback (Step 2), and the reviewing supervisor or division head's comments (Step 3).
+
+However, the current paper-based, manual evaluation process creates several operational challenges. First, historical performance data is difficult to access and compare. When conducting a new annual evaluation, HR personnel and supervisors must physically retrieve prior-year evaluation forms from employee files to assess performance trends, resulting in time-consuming manual searches and incomplete historical visibility. Second, the evaluation form contains no mechanism to systematically resolve rating discrepancies when an employee's self-rating differs materially from supervisor or division head ratings, creating ambiguity about which rating represents the "final" assessment. Third, qualitative feedback (supervisor remarks on strengths, weaknesses, and development needs) is maintained as physical documents with no centralized, searchable digital record. Fourth, training needs identified through evaluations are not linked to a structured training management system, resulting in informal, fragmented training follow-up. Fifth, training records received from third-party providers (often international) are not centrally organized, making it difficult to track employee development history. Sixth, employee recognition practices are informal and minimal, with no systematic record-keeping. Finally, there is no integrated employee digital record—analogous to a personnel file—that consolidates evaluation history, training records, and recognition in one accessible location.
+
+These gaps limit HR's ability to support evidence-based employee development, make informed decisions regarding succession and advancement, and maintain organized personnel records. Research on human resource information systems (HRMS) has demonstrated that digital, integrated HR platforms reduce manual processes, improve data accuracy, and support more strategic workforce development (Bangura, 2024; Destriani et al., 2024). In the freight and logistics industry specifically, where operational continuity and workforce capability are critical, an integrated digital platform for performance management, competency assessment, and training coordination can strengthen employee development and organizational performance.
+
+This capstone project proposes the design and development of a Performance and Development Human Resource Management System for Priority Handling Logistics, Inc. The system digitalizes the company's existing annual paper-based evaluation process and extends it to support competency management, learning management, training management, succession planning, and social recognition—all derived from the same annual evaluation data. Central to this system is the integration of Gemini 2.5 Flash, a generative AI model, to analyze competency gaps identified during the evaluation process and generate personalized development and training recommendations. By consolidating performance evaluation, competency assessment, development tracking, and recognition in one platform, and by providing AI-assisted competency gap analysis, the proposed system aims to improve workforce development visibility, reduce manual administrative work, and support more informed HR and management decisions.
+
+1.2 Problem Statement
+Priority Handling Logistics, Inc. currently manages employee performance through an annual paper-based evaluation process. While this process exists and is followed, it creates significant operational inefficiencies and gaps in employee development support:
+
+Historical Data Accessibility — Currently, when HR or supervisors conduct a new annual evaluation, prior-year evaluation forms must be manually retrieved from physical employee files. This makes it difficult to quickly assess performance trends, identify recurring strengths or weaknesses, or make data-driven development recommendations. The lack of digital historical access is identified by the client as the most pressing pain point in the current system.
+
+Manual Paper-Based Process — The evaluation form is completed by hand or in print, involving manual routing between employee, immediate supervisor, reviewing supervisor/division head, and HR. This creates delays, potential for data loss, and limited audit trail.
+
+Rating Discrepancy Ambiguity — When an employee's self-rating differs from the supervisor's or division head's rating (e.g., employee rates themselves 4, supervisor rates 3), there is no documented process or system mechanism to clarify which rating is final or authoritative at each workflow stage. This creates confusion and potential disputes.
+
+Unstructured Qualitative Feedback — Supervisor comments on employee strengths, weaknesses, and development needs (captured in Step 2) exist as narrative text on physical forms with no centralized digital record, making it difficult to systematically analyze competency gaps or identify trends across the workforce.
+
+Fragmented Training Management — Training needs identified during evaluation are not automatically linked to a structured training management process. Training certificates and records received from third-party providers remain unorganized, and there is no digital tracking of employee training history or completion status.
+
+Informal Recognition Practices — Employee recognition is ad-hoc and minimal (e.g., annual attendance recognition), with no formal program or digital record-keeping.
+
+Lack of Integrated Employee Record — Employee files remain physical, with performance evaluations, training records, and recognition scattered across documents. There is no unified "digital 201 file" where all employee performance history, development activities, and recognition are consolidated in one accessible location.
+
+No Competency Gap Analysis — While the evaluation form captures performance ratings (A–J, 1–5 scale), there is no systematic analysis to identify competency gaps (comparing employee self-rating to supervisor rating) or to generate targeted development recommendations based on those gaps.
+
+These operational gaps hinder HR's ability to support evidence-based employee development, track training ROI, make informed succession planning decisions, and maintain organized, auditable personnel records. An integrated, digitized HR platform with competency gap analysis and structured training management capabilities would address these challenges and improve the organization's capacity for workforce development.
+
+1.3 Project Vision and Scope
+1.3.1 Vision
+To design and develop an integrated Performance and Development Human Resource Management System for Priority Handling Logistics, Inc. that consolidates the organization's annual evaluation process, competency assessment, learning and training management, succession planning, and employee recognition into one unified platform, supported by AI-assisted competency gap analysis and personalized training recommendations.
+
+1.3.2 System Concept
+The proposed system centers on the client's existing annual performance evaluation form as the primary data source. The six core HR modules—Performance Management, Competency Management, Learning Management, Training Management, Succession Planning, and Social Recognition—are not separate systems but integrated functions derived from and linked to the annual evaluation data. The workflow proceeds through multiple approval stages: (1) Employee Self-Rating (Step 1), (2) Immediate Supervisor/Rater Assessment with AI-assisted development suggestions (Step 2), (3) Reviewing Supervisor/Division Head Review (Step 3), (4) Personnel Office salary/points processing, (5) Performance Evaluation Committee final action recommendation, and (6) President final approval. Upon finalization, evaluation results flow into competency profiles, learning records, training recommendations, and succession planning data, all consolidated in a unified Digital 201 File per employee.
+
+Gemini 2.5 Flash is integrated as a decision-support AI layer that analyzes employee and supervisor A–J ratings to identify competency gaps and generate personalized development and training recommendations. The AI output is advisory only and remains under the Rater's full control—the Rater may accept, edit, regenerate, or discard AI suggestions without restriction.
+
+1.3.3 In-Scope
+Annual performance evaluation workflow conducted on the company's anniversary date (5 stages: Employee → Supervisor → Reviewing Supervisor → Personnel → Committee → President → Finalized)
+Performance ratings (A–J factors, 1–5 scale) with rating discrepancy tracking
+Competency Management module (A–J ratings as competency indicators; competency gap analysis comparing employee vs supervisor ratings)
+Learning Management module (development records and activity tracking sourced from evaluation data)
+Training Management module (training needs/recommendations from evaluation and AI, with third-party provider tracking)
+Succession Planning module (career advancement tracking and readiness assessment based on Step 2 fields)
+Social Recognition module (formal commendations and achievement recognition)
+Gemini 2.5 Flash AI integration (competency gap analysis and personalized development/training recommendations)
+E-signatures at each workflow stage
+Employee digital 201 file (consolidated performance history, evaluations, training, recognition)
+Employee self-rating access via temporary QR/link (1-week access on company anniversary; no permanent account)
+Employee access to finalized evaluation results (Step 1 A–J ratings and final outcome only, delivered via Gmail)
+Evaluation history and trend reporting
+Audit logging and event tracking
+1.3.4 Out-of-Scope
+Recruitment and applicant management
+Payroll and compensation management (system records salary information for context; does not process payroll)
+Time and attendance tracking
+Disciplinary action and memo management
+Customer rating/portal integration
+Learning Management System (LMS) content hosting (system tracks training records; content delivered by third-party providers)
+Mobile application (web-based only)
+1.3.5 Target Users and Roles
+HR / Personnel Officer — Opens and manages evaluation cycles; creates and maintains employee profiles; monitors evaluation progress; generates reports
+Employee / Ratee — Completes self-rating via temporary QR/link during 1-week window on company anniversary (Step 1); no permanent system account; receives finalized results via Gmail
+Immediate Supervisor / Rater — Reviews employee self-rating; enters supervisor ratings (A–J); completes Step 2 narrative (Strengths, Weaknesses, Development Potential, Advancement, Career/Transfer Interest, Other Recommendations); reviews and acts on AI suggestions; e-signs
+Reviewing Supervisor / Division Head — Reviews supervisor assessment; completes Step 3 (Comments, Recommendations); e-signs
+Performance Evaluation Committee — Reviews complete evaluation; recommends Final Action (Retain, Transfer, Promote, Increase Salary, Training Required, Other); e-signs
+President — Gives final approval; may return for correction with reason
+System Administrator — Manages users, roles, permissions, evaluation templates (customization), audit logs, system configuration
+1.4 Objectives and Goals
+1.4.1 General Objective
+To design and develop a Performance and Development Human Resource Management System for Priority Handling Logistics, Inc. that integrates annual performance evaluation, competency assessment, learning and training management, succession planning, and employee recognition through an end-to-end workflow supported by Gemini 2.5 Flash-powered competency gap analysis and personalized training recommendations.
+
+1.4.2 Specific Objectives
+Digitalize the Annual Evaluation Process — Convert the client's paper-based annual performance evaluation form into a digital, multi-stage workflow with role-based access, version control, and e-signature requirements at each stage, conducted annually on the company's anniversary date.
+
+Enable Historical Performance Visibility — Create a searchable, accessible digital repository of all past evaluations per employee, with easy retrieval and comparison of year-over-year performance trends and ratings by factor (A–J).
+
+Clarify Rating Discrepancies — Implement a documented process for displaying and tracking rating differences when employee self-rating differs from supervisor or division head rating, ensuring transparency and auditability.
+
+Systematize Competency Gap Analysis — Develop a competency management module that compares employee and supervisor A–J ratings to identify development gaps, and integrate Gemini 2.5 Flash to generate AI-assisted, personalized development recommendations.
+
+Structure Training Management — Create a training management module that links training needs identified in evaluations to structured training records, tracks third-party provider information, and maintains a digital repository of training recommendations and completion status.
+
+Support Succession Planning — Implement a succession planning module that captures career advancement potential, development readiness, and career interests from evaluation Step 2 fields, enabling HR to identify and track succession candidates.
+
+Formalize Employee Recognition — Develop a social recognition module that records formal commendations, achievements, and recognition events, creating a persistent recognition history per employee.
+
+Consolidate Employee Records — Create a unified Digital 201 File per employee that consolidates evaluation history, competency assessments, training records, and recognition in one accessible location with role-based access controls.
+
+Implement Temporary Employee Access — Establish a secure, temporary QR/link-based access mechanism (1-week window on company anniversary) for employees to complete Step 1 self-rating during each evaluation cycle without requiring permanent system accounts.
+
+Provide Employee Access to Final Results — Enable employees to receive their finalized evaluation results (Step 1 A–J ratings and final outcome only) via their Gmail account, without disclosing supervisor feedback, AI suggestions, or internal deliberations.
+
+Enable Role-Based Workflow and RBAC — Implement role-based access control and queue management for all workflow stages (Supervisor, Reviewing Supervisor, Personnel, Committee, President), ensuring each role accesses only authorized data and functions.
+
+Provide AI-Assisted Decision Support — Integrate Gemini 2.5 Flash to analyze competency gaps and generate personalized development and training recommendations, while ensuring all AI output remains advisory and under Rater control (no auto-changes to ratings or approvals).
+
+Enable Template Customization — Provide HR/Administrator with tools to customize evaluation form fields without requiring code changes, supporting organizational evolution.
+
+1.5 Significance and Relevance
+1.5.1 Theoretical Significance
+This study demonstrates the application of modern information systems architecture (microservices, API integration, polyglot persistence) and artificial intelligence (generative AI for competency gap analysis) to human resource management in the freight and logistics sector. By integrating an AI model (Gemini 2.5 Flash) as a decision-support layer rather than a decision-making authority, the research illustrates best practices for human-centered AI in HR—where AI augments but does not replace human judgment. The work also contributes to the literature on HRMS design by showing how multiple HR functions (performance management, competency, learning, training, succession, recognition) can be unified around a single, centralized evaluation process rather than implemented as isolated modules. This approach aligns with emerging trends in integrated workforce management systems and may serve as a reference for future HR technology research and development.
+
+1.5.2 Practical Significance
+For Priority Handling Logistics, Inc.
+The proposed system addresses the organization's most urgent operational challenge: lack of accessible historical performance data. By digitizing evaluations and providing easy historical retrieval and comparison, HR and supervisors can assess performance trends, identify recurring development needs, and make more informed decisions regarding training, advancement, and succession. The system will reduce manual administrative work (no more physical file retrieval), improve data consistency and accuracy, and create an auditable record of evaluation outcomes and HR decisions. By systematizing training management and linking training to evaluation-identified needs, the organization can better measure training ROI and ensure development efforts align with business priorities.
+
+For HR Personnel
+The system provides centralized tools for managing the entire annual evaluation cycle—cycle setup, employee profile management, progress monitoring, and reporting. The AI-assisted competency gap analysis reduces the time required to manually assess employee strengths and development needs, allowing HR to focus on strategic workforce planning. Digital records and audit trails support labor compliance and defense against potential disputes. Historical data visibility enables evidence-based recommendations for training, succession, and organizational development.
+
+For Supervisors and Managers
+Supervisors gain access to employee performance history and trend data during the current evaluation process, supporting more informed and consistent assessments. AI-generated development recommendations provide evidence-based suggestions without replacing supervisor judgment. The structured workflow and role-based queues ensure clarity about who is responsible for each evaluation stage. Digital signatures and timestamped records provide accountability and audit trails.
+
+For Employees
+Employees will receive a temporary QR/link for one week during the company's annual evaluation cycle (on the company anniversary date) to complete their Step 1 self-rating on A–J performance factors. After the evaluation is finalized, employees will receive an email with their final evaluation results sent to their Gmail account, allowing them to view their own Step 1 ratings (A–J factors) and final outcome. Employees will NOT have access to intermediate AI suggestions, supervisor Step 2 feedback, reviewing supervisor comments, or internal personnel/committee deliberations—these remain confidential to management. This ensures transparency about their self-assessment and final results while protecting the confidentiality of supervisory input and internal decision-making. Employees benefit from awareness of their performance ratings and an understanding of their evaluation outcome, supporting career awareness and development.
+
+For the Organization
+The system consolidates employee performance, competency, training, and recognition data in one unified record, supporting strategic workforce planning, succession pipeline development, and compliance. Trend reporting enables the organization to identify organization-wide competency gaps and training priorities. Event logging and audit trails support labor law compliance and defensible HR decisions.
+
+For Future Researchers and Practitioners
+The study demonstrates practical integration of Gemini 2.5 Flash (a cost-efficient generative AI model) into an HR context, illustrating its suitability for high-volume, reasoning-based tasks like competency gap analysis. The work provides a case study in freight and logistics HR, an industry often underrepresented in academic HRMS research. The system design may serve as a reference for organizations seeking to digitize manual HR processes and integrate AI decision support without automating strategic HR decisions.
+
+1.6 Definition of Terms
+For better understanding of the study, the following terms are defined as used in this research:
+
+Artificial Intelligence (AI) — Computer systems capable of performing tasks requiring human-level reasoning, learning, and decision support. In this study, Gemini 2.5 Flash provides AI-driven competency gap analysis and personalized training recommendations.
+
+Competency — The knowledge, skills, abilities, attitudes, and work behaviors necessary for an employee to perform a specific job role effectively, measured through the A–J performance factors on the evaluation form.
+
+Competency Gap — The difference between an employee's current competency level (self-rated) and the competency level required or expected by the immediate supervisor or division head, identified through comparison of their respective A–J ratings.
+
+Competency Gap Analysis — Systematic evaluation of competency gaps across the workforce, generated through comparison of employee self-ratings to supervisor ratings on each A–J factor, used to identify development priorities and inform personalized training recommendations.
+
+Competency Management — The HRMS module responsible for creating and maintaining employee competency profiles, analyzing competency gaps, tracking competency progression over time, and supporting competency-based succession planning.
+
+Decision Support System — A system that provides analysis, information, and recommendations to assist human decision-makers without replacing their authority or judgment. In this context, Gemini 2.5 Flash generates development and training suggestions that supervisors may accept, edit, or discard at their discretion.
+
+Digital 201 File — A unified, digital employee record accessible through the HRMS consolidating performance evaluation history, competency assessments, development activities, training records, and recognition achievements. Access is role-based: HR and authorized managers can view the complete file; employees can view only their own Step 1 ratings and final evaluation results (no supervisor feedback, AI suggestions, or internal deliberations).
+
+E-Signature — A digital representation of a person's signature, either drawn (via canvas) or typed, used to certify completion and approval of evaluation stages by authorized users.
+
+Employee Access Portal — The mechanism by which employees receive their finalized evaluation results via email to their Gmail account. Employees can view their own Step 1 A–J ratings and final outcome but cannot access supervisor feedback, AI-generated suggestions, or internal processing stages.
+
+Evaluation Workflow Stage — One of the discrete steps in the annual evaluation process: Step 1 (Employee Self-Rating), Step 2 (Supervisor/Rater Assessment), Step 3 (Reviewing Supervisor/Division Head Review), Personnel Processing, Committee Review, and President Approval.
+
+Final Evaluation Output — The completed, finalized evaluation summary containing final scores, overall rating, and final action recommendation, presented to the employee and stored in the Digital 201 File. Does not include intermediate AI suggestions, supervisor development recommendations, or internal personnel/committee notes.
+
+Freight and Logistics Industry — The sector encompassing transportation, warehousing, inventory management, freight forwarding, and distribution of goods, requiring diverse technical and operational competencies.
+
+Gemini 2.5 Flash — A generative AI model developed by Google, described as cost-efficient and suited to high-volume reasoning tasks, integrated into the proposed system for analyzing competency gaps and generating personalized development and training recommendations.
+
+Human Resource Management (HRM) — The set of organizational functions overseeing recruitment, performance management, compensation, training, development, and employee relations to support organizational objectives.
+
+Human Resource Management System (HRMS) — The software platform proposed in this study, integrating performance evaluation, competency assessment, learning and training management, succession planning, and recognition into a unified, digital system.
+
+Learning Management — The HRMS module responsible for recording development activities (coaching, mentoring, self-development, formal training), tracking activity completion, and linking learning records to evaluation-identified development needs.
+
+Performance Evaluation — The annual, company-wide assessment process conducted by Priority Handling Logistics, Inc. for all employees on the company's anniversary date, capturing self-ratings (Step 1), supervisor ratings and narrative feedback (Step 2), and reviewing supervisor comments (Step 3).
+
+Performance Management — The HRMS module responsible for capturing, storing, and reporting annual performance evaluation data, including employee self-ratings, supervisor assessments, qualitative feedback, and performance trends across multiple years.
+
+Personalized Training Recommendation — AI-generated, evidence-based suggestion for training or development activity targeted to an individual employee's identified competency gaps, learning objectives, and role requirements, generated by Gemini 2.5 Flash for Rater review and action.
+
+Role-Based Access Control (RBAC) — System mechanism that grants or restricts access to functions and data based on assigned user roles (e.g., HR, Supervisor, Reviewing Supervisor, Committee, President), ensuring each user accesses only authorized information and functions.
+
+Social Recognition — The HRMS module responsible for recording and maintaining formal acknowledgments of employee achievements, commendations, and contributions, creating a persistent recognition history per employee.
+
+Step 1 (Employee Self-Rating) — The first stage of the annual evaluation workflow, in which an employee completes a self-assessment on A–J performance factors (1–5 scale) via temporary QR/link access (1-week window on company anniversary) and provides a digital signature. After finalization, the employee receives their own Step 1 ratings via email; they do not receive supervisor ratings, AI suggestions, or subsequent stage comments.
+
+Step 2 (Supervisor/Rater Assessment) — The second stage of the annual evaluation workflow, in which the immediate supervisor reviews the employee's self-rating, provides his/her own A–J ratings, completes narrative feedback (Strengths, Weaknesses, Development Potential, Advancement Outlook, Career/Transfer Interest, Qualification, Other Recommendations), reviews and acts on AI-generated development suggestions, and provides a digital signature.
+
+Step 3 (Reviewing Supervisor/Division Head Assessment) — The third stage of the annual evaluation workflow, in which the reviewing supervisor or division head reviews the complete employee and supervisor assessment and provides comments and recommendations.
+
+Succession Planning — The HRMS module that identifies, assesses, and tracks employees with advancement potential, using evaluation-captured development potential, advancement interest, and career aspirations to support organizational succession pipeline development.
+
+Third-Party Training Provider — External organization that delivers training, education, or development services to employees, contracted by Priority Handling Logistics, Inc., with completion certificates or records transmitted to the system for centralized record-keeping.
+
+Training Management — The HRMS module responsible for managing training needs identified through evaluations, coordinating with third-party providers, tracking training completion, maintaining training records and certificates, and supporting training ROI analysis.
+
+Training Recommendation — A formal suggestion that an employee participate in specific training or development activity, sourced from evaluation Step 2 fields and AI-assisted analysis, recorded for tracking and status management.
+
+1.7 Structure of the Document
+The study is organized into five chapters.
+
+Chapter 1 — Introduction presents the background and motivation for the study grounded in the client's current manual evaluation process and industry (freight/logistics), the problem statement detailing operational gaps and real client pain points, the project vision and scope aligned with the real six-module integration and company-anniversary evaluation schedule, specific objectives tied to real client requirements, significance and relevance to the organization and field, definition of terms reflecting the real system design, and structure of the document.
+
+Chapter 2 — Related Literature, Studies, and Technical Background reviews existing research on Human Resource Management Systems, performance management and competency development in the freight and logistics industry, the Agile Scrum development methodology employed in the project, emerging technologies (microservices, AI/machine learning, data analytics), the technology stack (React, TanStack, Supabase, Gemini 2.5 Flash), enterprise architecture principles, the conceptual framework (IPO Model) reflecting the real system design, and theoretical paradigm.
+
+Chapter 3 — Research Methodology and Project Management presents the research design, respondents/stakeholders, data gathering procedures, system development approach (Agile Scrum with sprint planning and reviews), architecture and design decisions, development team roles and responsibilities, testing strategy (unit, integration, user acceptance testing), evaluation instruments aligned with ISO/IEC 25010 software quality characteristics, and statistical treatment of evaluation data.
+
+Chapter 4 — Results and Discussion (to be developed) presents the designed and developed system, implementation outcomes, testing results, quality evaluation results, and discussion of findings in relation to objectives and client requirements.
+
+Chapter 5 — Summary, Conclusions, and Recommendations (to be developed) presents a summary of findings, conclusions regarding system readiness and achievement of objectives, and recommendations for future improvements and research.
+
+END OF CHAPTER 1 — COMPLETE AND FINALIZED

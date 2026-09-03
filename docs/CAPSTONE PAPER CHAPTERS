@@ -1,0 +1,717 @@
+CHAPTER 1
+INTRODUCTION
+1.1 Project Background and Motivation
+
+Human resources constitute an important component of freight and logistics operations, where effective service delivery depends on employees performing their assigned responsibilities competently and consistently. Priority Handling Logistics, Inc., a company operating in the freight and logistics industry, conducts employee performance evaluation through an annual process using a standardized performance evaluation form. The evaluation covers employee performance during the designated evaluation period and provides information used in employee development and subsequent personnel-related decisions.
+
+The organization's performance evaluation form assesses employees using ten performance factors identified as A through J. Each factor is evaluated using a five-point rating scale ranging from 1 – Poor to 5 – Excellent. The form provides separate assessment areas for the Employee/Ratee, Immediate Supervisor/Rater, and Reviewing Supervisor/Division Head. In addition to numerical ratings, the evaluation records conclusions, comments, recommendations, development information, career or transfer interests, and other information required for succeeding stages of the evaluation process.
+
+The annual evaluation follows a defined sequence of participants and activities. The Employee/Ratee begins by completing the self-assessment. The assigned Immediate Supervisor or Rater then reviews the employee's assessment, provides independent ratings for the performance factors, and completes the required assessment and Step Two information. The Reviewing Supervisor or Division Head subsequently reviews the evaluation and completes the required Step Three information. The evaluation then proceeds to Personnel Office processing, Performance Evaluation Committee review, and President approval before the evaluation is finalized. This workflow reflects the structure of the organization's existing performance evaluation form and provides the basis for the proposed digital workflow.
+
+Although the existing evaluation process provides an established method for assessing employee performance, maintaining and retrieving evaluation information through physical records can make historical performance review more difficult. Previous evaluation records may need to be manually located from employee files when HR personnel or supervisors need to examine an employee's performance history. This can make year-to-year comparison more difficult and increase the administrative effort required to retrieve and review records.
+
+The sequential handling of evaluation documents also requires the evaluation to move between the Employee/Ratee, Immediate Supervisor/Rater, Reviewing Supervisor/Division Head, Personnel Office, Performance Evaluation Committee, and President. A paper-based process can therefore limit visibility into the current status of an evaluation and increase the effort required to manage, route, and maintain evaluation documents. Written comments and recommendations stored within individual forms are likewise difficult to search and organize across employees and evaluation periods.
+
+Another limitation is that information obtained through performance evaluation may be useful beyond the immediate evaluation process. The A–J performance factors can serve as indicators for identifying competency strengths and possible competency gaps. Development needs identified during evaluation may also lead to learning activities and training recommendations, while information concerning advancement potential, career interests, and qualifications may support succession-related planning. Recognition information can likewise contribute to an employee's overall development and performance history. In the existing paper-based process, these related areas are not organized through a single integrated digital structure.
+
+Digital transformation in human resource management provides opportunities to improve the organization and accessibility of employee information. Research on human resource information systems indicates that digital HR platforms can reduce manual administrative work, improve the organization of personnel information, and support more efficient HR processes (Bangura, 2024). Similarly, research on digital transformation in human resource management emphasizes the value of integrated systems in supporting workforce information management and development activities (Destriani et al., 2024).
+
+In response to these challenges, this capstone project proposes the development of a Performance and Development Human Resource Management System for Priority Handling Logistics, Inc. The system is primarily centered on the organization's annual performance evaluation. The evaluation serves as the main source of employee performance information, while competency management, learning and development, training management, succession planning, and social recognition function as supporting modules that use relevant evaluation information to support employee development and management activities. This design follows the principle that these functions are integrated with the performance evaluation process rather than operating as six separate HR workflows.
+
+The proposed system also incorporates Gemini 2.5 Flash as an artificial intelligence-assisted decision-support component within the development portion of the evaluation process. Evaluation information, including employee and supervisor ratings, rating differences, identified strengths and weaknesses, and development information, may be analyzed to identify possible competency gaps and generate suggested development or training activities. The generated recommendations remain advisory. The Immediate Supervisor or Rater retains responsibility for reviewing, editing, accepting, regenerating, or rejecting AI-generated recommendations, and the AI does not modify official ratings or independently make employment decisions.
+
+Through this integrated approach, the proposed system aims to establish a centralized digital source of employee performance and development information. The finalized evaluation can contribute to the employee's performance history, competency profile, development records, training information, career and advancement information, and recognition history within the Digital 201 File. This structure allows the annual performance evaluation to serve as the primary foundation for supporting employee development while providing authorized users with more organized access to historical information.
+
+Overall, the project is motivated by the need to transform the organization's existing performance evaluation process into a more organized digital workflow while retaining the structure and responsibilities established by the existing evaluation form. Rather than replacing the evaluation process with unrelated HR functions, the proposed system uses the annual performance evaluation as its core function and connects its results to supporting competency, learning, training, succession, and recognition functions. This approach is intended to reduce manual record handling, improve access to historical performance information, support competency and development analysis, and provide a centralized foundation for employee performance and development management
+
+1.2 Problem Statement
+
+Priority Handling Logistics, Inc. currently conducts employee performance evaluation through an annual paper-based process. While the process provides a standardized method for evaluating employee performance, its manual nature creates several operational limitations in managing evaluation records and supporting employee development.
+
+Historical Performance Data Accessibility
+
+Historical evaluation records are maintained through physical employee files. When HR personnel or supervisors need to review previous evaluations, the corresponding documents must be manually located and retrieved. This makes it difficult and time-consuming to compare performance across multiple evaluation periods and identify recurring strengths or development areas.
+
+Manual Evaluation Workflow and Documentation
+
+The evaluation process requires documents to be completed and routed among the Employee/Ratee, Immediate Supervisor or Rater, Reviewing Supervisor or Division Head, Personnel Office, Performance Evaluation Committee, and President. The paper-based process limits real-time visibility into evaluation progress and increases the administrative effort involved in document handling and record maintenance.
+
+Rating Discrepancy Management
+
+The evaluation form contains separate ratings from the Employee/Ratee, Supervisor/Rater, and Reviewing Supervisor/Division Head. Differences among these ratings may occur during the evaluation process. Under the existing paper-based process, these differences are not supported by a centralized digital mechanism for tracking and analyzing rating variations across employees and evaluation periods.
+
+Unstructured Performance Comments and Development Information
+
+Comments concerning employee strengths, weaknesses, development needs, career interests, and recommendations are recorded within evaluation documents. Because these records are maintained through individual paper forms, the information is difficult to search, organize, and analyze across employees or evaluation periods.
+
+Fragmented Training and Development Records
+
+Training and development needs identified during employee evaluation are not centrally connected to a digital record of employee development activities. Training participation, completion information, and related certificates may also be maintained separately, making it difficult to obtain a consolidated view of an employee's development history.
+
+Limited Competency Gap Analysis
+
+Although the evaluation process collects ratings for ten performance factors, the paper-based process does not systematically compare employee self-ratings with supervisor ratings to identify possible competency gaps. Consequently, development needs must largely be interpreted manually from individual evaluation forms.
+
+Fragmented Employee Records
+
+Performance evaluations, training information, development activities, and recognition records may exist in different physical documents or locations. The absence of a unified digital employee record makes it more difficult for authorized personnel to obtain a complete view of an employee's performance and development history.
+
+These limitations reduce the organization's ability to efficiently retrieve historical performance information, organize employee development records, identify competency gaps, and support evidence-informed workforce development decisions. An integrated digital system can address these limitations by centralizing evaluation information, automating the evaluation workflow, and connecting evaluation results with related employee development functions.
+
+1.3 Project Vision and Scope
+1.3.1 Vision
+
+The project envisions an integrated Performance and Development Human Resource Management System for Priority Handling Logistics, Inc. that digitizes and manages the organization's annual employee performance evaluation as its primary function. The system is designed to preserve the established evaluation workflow while providing a centralized digital platform for collecting, reviewing, processing, finalizing, and storing employee performance information.
+
+The proposed system connects the results of the annual performance evaluation with supporting functions for competency management, learning and development, training management, succession planning, and social recognition. These supporting functions use relevant evaluation and employee information to organize development needs, competency gaps, training recommendations, career and advancement information, and recognition records rather than operating as separate HR workflows.
+
+The system also incorporates Gemini 2.5 Flash as an artificial intelligence-assisted decision-support component for competency gap analysis and development or training recommendations. AI-generated recommendations remain advisory, while authorized supervisors and management retain responsibility and authority over evaluation, development, and employment-related decisions.
+
+The overall vision is to provide authorized users with a centralized and organized source of employee performance and development information, including evaluation history, competency information, development activities, training records, succession-related information, and recognition records. These records are integrated into the employee's Digital 201 File to support more efficient performance management, employee development, and informed management consideration.
+
+1.3.2 System Concept
+
+The proposed system is centered on the organization's annual employee performance evaluation, which serves as the core function and primary source of employee performance information. The system digitizes the established evaluation process while maintaining its defined sequence of assessment, review, personnel processing, recommendation, approval, and finalization.
+
+The core performance evaluation workflow consists of the following stages:
+
+Employee/Ratee Self-Rating – The Employee/Ratee completes the required employee information and self-assessment for performance factors A through J and provides the required electronic signature.
+
+Immediate Supervisor/Rater Assessment – The assigned Immediate Supervisor/Rater reviews the Employee/Ratee's assessment, provides independent ratings for performance factors A through J, and completes the required assessment, conclusions, comments, recommendations, development information, career or transfer information, and other Step Two requirements.
+
+Reviewing Supervisor/Division Head Assessment – The Reviewing Supervisor/Division Head reviews the completed evaluation, provides the required assessment, comments, recommendations, and Step Three information, and provides the required electronic signature.
+
+Personnel Office Processing – The Personnel Office records the required personnel and evaluation-result information, including applicable salary information, total points, adjective rating, and recommended increase or bonus.
+
+Performance Evaluation Committee Review – The Performance Evaluation Committee reviews the completed evaluation and records the formal recommendation regarding the applicable personnel action or evaluation outcome.
+
+President Approval – The President reviews the completed evaluation and Committee recommendation and provides the final approval or decision required for evaluation finalization.
+
+Finalization and Record Storage – After the required approval is completed, the evaluation is finalized and retained as part of the employee's digital performance and personnel record.
+
+The system's supporting modules are integrated with the core performance evaluation rather than operating as separate HR workflows. The A–J evaluation results provide the basis for competency information and possible competency-gap identification. Development needs may then be recorded through the Learning and Development function, while training needs and recommendations are maintained through Training Management. Information concerning advancement potential, career or transfer interests, qualifications, and development potential supports the Succession Planning function. Social Recognition maintains records of employee commendations and other recognized contributions.
+
+Gemini 2.5 Flash functions as an artificial intelligence-assisted decision-support component within the development portion of the system. It may analyze authorized evaluation information, including Employee/Ratee and Supervisor/Rater ratings, rating differences, identified strengths and weaknesses, and development information, to assist in identifying possible competency gaps and generating suggested development or training activities. The Rater remains responsible for reviewing the generated recommendations and may use, edit, regenerate, or discard them. AI does not modify official ratings or independently approve promotions, salary changes, training assignments, or other employment decisions.
+
+The system also provides role-based access control so that each authorized user can access only the evaluation information, supporting records, and functions appropriate to their assigned responsibilities. Electronic signatures and audit records provide evidence of completed actions and workflow activities. The resulting performance, competency, development, training, career and advancement, and recognition information can be organized within the employee's Digital 201 File, allowing authorized users to access relevant historical information in one centralized record.
+
+1.3.3 In-Scope
+
+The following functions and features are included within the scope of the project:
+
+Annual Performance Evaluation. The system digitizes the organization's annual employee performance evaluation as its primary function, covering the complete workflow from Employee/Ratee self-assessment, Immediate Supervisor/Rater assessment and Step Two, Reviewing Supervisor/Division Head review and Step Three, Personnel Office processing, Performance Evaluation Committee recommendation, President approval, and finalization.
+Digital Performance Factor Evaluation. The system supports the digital evaluation of performance factors A through J using the organization's five-point rating scale.
+Multi-Level Performance Ratings. The system separately records the Employee/Ratee, Immediate Supervisor/Rater, and Reviewing Supervisor/Division Head ratings while preserving the information submitted at each evaluation stage.
+Evaluation Comments and Supporting Information. The system records required conclusions, comments, recommendations, development information, advancement information, career or transfer information, and other evaluation data specified in the organization's performance evaluation form.
+Performance Evaluation Workflow and Role-Based Access. The system manages evaluation stages and provides appropriate access for Employees/Ratees, Immediate Supervisors/Raters, Reviewing Supervisors/Division Heads, Personnel/HR personnel, Performance Evaluation Committee members, the President, and System Administrators.
+Digital Signatures. The system supports electronic signature capture and storage for authorized participants involved in the evaluation workflow.
+Evaluation History and Retrieval. The system maintains historical annual evaluations and allows authorized users to retrieve and review employee performance information across evaluation periods.
+
+Supporting Modules
+The following supporting functions use information generated from the core performance evaluation process:
+
+Competency Management. The system uses A–J performance ratings as competency indicators to organize competency information, identify competency strengths and gaps, and support historical competency comparison.
+Learning and Development Management. The system records employee development needs and development activities arising from identified evaluation requirements.
+Training Management. The system records training needs, recommendations, participation, completion, and relevant training information resulting from evaluation and competency analysis.
+AI-Assisted Development and Training Recommendations. The system uses Gemini 2.5 Flash to analyze authorized evaluation and competency information and assist in generating development and training recommendations. The recommendations remain advisory and are reviewed by authorized personnel.
+Succession Planning. The system organizes advancement, career or transfer interest, qualification, and development-potential information captured through the performance evaluation to support management consideration.
+Social Recognition. The system records employee commendations and other recognition as supporting employee-history information.
+Digital Employee 201 File. The system consolidates authorized employee profile, performance, competency, development, training, career and advancement, and recognition information into a centralized digital employee record.
+Reporting and Search. The system provides authorized users with searching, filtering, reporting, and retrieval capabilities for relevant employee performance and development information.
+Audit Logging and Activity Tracking. The system records relevant system activities and workflow actions to support accountability and traceability.
+
+1.3.4 Out-of-Scope
+The following functions and features are outside the scope of the proposed system:
+
+Recruitment and Applicant Management. The system does not include job posting, applicant screening, recruitment, selection, or hiring processes.
+Payroll and Full Compensation Processing. The system does not perform payroll computation, salary disbursement, benefits administration, or full compensation management. Salary-related information may be recorded when required for performance evaluation and Personnel Office processing.
+Timekeeping, Attendance, and Leave Management. The system does not manage daily time-in/time-out records, attendance monitoring, overtime computation, leave applications, or leave balances.
+Disciplinary Case Management. The system does not manage formal disciplinary cases, investigation procedures, sanctions, or disciplinary documentation outside information required within the performance evaluation process.
+Training Content Delivery. The system records training needs, recommendations, participation, completion, and certificates but does not host, create, or deliver training courses, instructional materials, or educational content.
+Native Mobile Application. The proposed system is developed as a web-based application. Development of dedicated native Android or iOS applications is not included in the project scope.
+Autonomous Human Resource Decision-Making. Artificial intelligence does not independently determine employee ratings, promotions, retention, salary adjustments, training requirements, or other personnel actions. AI-generated recommendations remain advisory and require review and decision by authorized personnel.
+External HR System Replacement. The proposed system is intended to address the organization's defined performance evaluation and employee development requirements. It is not intended to replace every existing HR, payroll, accounting, or enterprise management system used by the organization.
+
+The system may record or display information related to salary, training, employee records, and personnel processing when such information is required by the evaluation workflow. However, recording such information does not mean that the system performs the complete business processes associated with payroll, compensation, attendance, recruitment, or other excluded functions.
+
+1.3.5 Target Users and Roles
+
+The proposed system serves the following user groups:
+
+Human Resources / Personnel Officer
+
+The Human Resources or Personnel Officer manages employee profiles, annual evaluation cycles, evaluation progress, Personnel Office processing, historical evaluation records, and authorized reports. This role also oversees the movement of evaluations through the defined workflow and manages relevant employee performance and development information.
+
+Employee / Ratee
+
+The Employee or Ratee completes the required employee information and self-assessment for performance factors A through J during the authorized evaluation period. The employee provides the required electronic signature and may access information specifically permitted by the organization's defined access rules, including applicable finalized evaluation results.
+
+Immediate Supervisor / Rater
+
+The Immediate Supervisor or Rater reviews the Employee/Ratee's self-assessment and provides independent ratings for performance factors A through J. The Rater also completes the required Step Two information, including conclusions, comments, strengths, weaknesses, development information, advancement information, career or transfer information, and other recommendations. The Rater may review and manage AI-generated development and training recommendations by accepting, editing, regenerating, or discarding them. The Rater provides the required electronic signature upon completion of the evaluation stage.
+
+Reviewing Supervisor / Division Head
+
+The Reviewing Supervisor or Division Head reviews the completed evaluation after the Immediate Supervisor/Rater stage. This role completes the required Step Three information, including comments and recommendations, and provides the required electronic signature before submitting the evaluation to the Personnel Office.
+
+Performance Evaluation Committee
+
+The Performance Evaluation Committee reviews the completed evaluation and provides the formal recommendation regarding the appropriate personnel action or evaluation outcome. The available final actions include options such as retain, transfer, promotion, salary increase, training required, or other applicable action.
+
+President
+
+The President conducts the final review of the completed evaluation and Committee recommendation and provides the final approval or decision required to finalize the evaluation.
+
+System Administrator
+
+The System Administrator manages system users, roles and permissions, system configuration, evaluation configuration, system-level settings, and audit logs. This role is responsible for administrative functions rather than participating in the employee performance evaluation itself.
+
+1.4 Objectives and Goals
+1.4.1 General Objective
+
+The general objective of this project is to design and develop a Performance and Development Human Resource Management System for Priority Handling Logistics, Inc. that digitizes and manages the organization's annual employee performance evaluation as its primary function, while integrating supporting functions for competency management, learning and development, training management, succession planning, and social recognition.
+
+The system aims to improve the accessibility, organization, processing, and management of employee performance and development information through a centralized digital platform that supports role-based workflow management, digital signatures, audit tracking, historical performance records, and artificial intelligence-assisted competency gap analysis and development or training recommendations.
+
+This objective is aligned with the final system design, which identifies the annual performance evaluation as the primary data source and the other required modules as supporting functions rather than separate HR workflows.
+
+1.4.2 Specific Objectives
+A. Digitize the Annual Performance Evaluation Process
+
+To transform the organization's paper-based annual performance evaluation into a structured digital workflow covering Employee/Ratee self-assessment, Immediate Supervisor/Rater assessment, Reviewing Supervisor/Division Head review, Personnel Office processing, Performance Evaluation Committee review, President approval, and evaluation finalization.
+
+B. Improve Historical Performance Accessibility
+
+To provide authorized users with centralized access to employee evaluation records and historical performance information, allowing performance results to be retrieved, reviewed, and compared across evaluation periods.
+
+C. Manage Multi-Level Performance Ratings
+
+To record and preserve separate Employee/Ratee, Immediate Supervisor/Rater, and Reviewing Supervisor/Division Head ratings for performance factors A through J and provide structured information for reviewing rating differences.
+
+D. Support Competency Gap Analysis
+
+To use performance evaluation results, particularly relevant differences between Employee/Ratee and Supervisor/Rater ratings, to identify possible competency strengths and development gaps.
+
+E. Provide AI-Assisted Development and Training Recommendations
+
+To integrate Gemini 2.5 Flash as an artificial intelligence-assisted decision-support component that generates suggested development and training activities based on authorized evaluation information and identified competency gaps, while keeping the recommendations advisory and subject to human review.
+
+F. Manage Employee Development and Training Records
+
+To maintain centralized records of employee development needs, development activities, training needs, recommendations, participation, completion, and relevant training information arising from the performance evaluation process.
+
+G. Support Succession and Career Development
+
+To organize information concerning development potential, advancement outlook, career or transfer interests, and qualifications obtained through the performance evaluation to support succession and career-development activities.
+
+H. Manage Employee Recognition Records
+
+To maintain digital records of employee commendations, achievements, and other recognized contributions as part of the employee's development and performance history.
+
+I. Consolidate Employee Performance and Development Records
+
+To establish a unified Digital 201 File that organizes authorized employee profile, performance, competency, development, training, career and advancement, and recognition information in a centralized record.
+
+J. Implement Role-Based Workflow and Access Control
+
+To provide role-specific access to evaluation stages, employee information, supporting modules, reports, and system functions according to the responsibilities and authorization of each user.
+
+K. Implement Digital Signatures and Auditability
+
+To provide digital signature functionality and activity tracking that records relevant user actions, dates, and workflow events to support accountability and traceability throughout the evaluation process.
+
+L. Provide Configurable Evaluation Management
+
+To provide authorized administrators with appropriate mechanisms for managing configurable evaluation components, such as evaluation fields, factors, categories, and related settings, without requiring unnecessary modifications to the underlying application.
+
+1.5 Significance and Relevance
+1.5.1 Theoretical Significance
+
+This study demonstrates the application of information systems principles to the digital transformation of an organization's annual employee performance evaluation and employee development process. It illustrates how a centralized digital system can structure the performance evaluation workflow, manage role-based access, preserve evaluation records, and connect performance information with supporting employee development functions.
+
+The study also demonstrates the application of generative artificial intelligence as a decision-support mechanism within human resource management. Gemini 2.5 Flash is incorporated to assist in identifying possible competency gaps and generating development and training recommendations based on authorized evaluation information. The AI component does not modify official performance ratings or independently determine promotions, salary adjustments, training assignments, or other employment decisions. AI-generated recommendations remain subject to review and authorization by responsible personnel. This reflects the system design in which the Rater remains responsible for reviewing and deciding whether to use, edit, regenerate, or discard AI-generated recommendations.
+
+The project further demonstrates how annual performance evaluation data can serve as the primary source for supporting related human resource functions. The proposed design does not treat performance management, competency management, learning and development, training management, succession planning, and social recognition as separate HR workflows. Instead, the annual performance evaluation provides the central performance information from which supporting competency, development, training, career, succession, and recognition records can be organized.
+
+The study also demonstrates the use of a centralized employee record to organize performance and development information across evaluation periods. Through the Digital 201 File, authorized information concerning performance history, competency, development, training, career and advancement, and recognition can be maintained as part of a unified employee record.
+
+Research concerning human resource information systems and digital transformation provides supporting context for the use of digital technologies in improving HR information management and organizational processes (Bangura, 2024; Destriani et al., 2024).
+
+1.5.2 Practical Significance
+For Priority Handling Logistics, Inc.
+
+The proposed system provides Priority Handling Logistics, Inc. with a centralized digital platform for managing its annual employee performance evaluation process. It replaces the reliance on physical evaluation documents with a structured digital workflow that allows authorized personnel to monitor evaluation progress, access completed evaluations, and maintain organized historical records.
+
+The system also connects performance evaluation information with supporting competency, learning and development, training, succession, and recognition functions. This provides the organization with a more organized view of employee performance and development information while maintaining the established responsibilities of each evaluation stage.
+
+For Human Resources / Personnel
+
+The system provides HR and Personnel users with centralized access to employee profiles, evaluation cycles, workflow status, historical evaluations, Personnel Office information, and authorized development records. This can reduce the administrative effort involved in locating physical evaluation documents and help organize the processing and monitoring of annual evaluations.
+
+The Digital 201 File also provides a centralized location for authorized employee performance and development information, supporting more efficient retrieval and review of employee records.
+
+For Supervisors and Managers
+
+The system provides Immediate Supervisors, Reviewing Supervisors, and other authorized managers with structured access to the evaluation information required for their respective responsibilities. Supervisors can review current and historical performance information and record the required assessments, comments, and recommendations through the digital workflow.
+
+The Immediate Supervisor/Rater may also use AI-assisted development and training recommendations generated from authorized evaluation information and identified competency gaps. These recommendations remain advisory, and the supervisor retains responsibility for reviewing, modifying, accepting, or rejecting the recommendations.
+
+For Employees
+
+The system provides employees with a structured digital mechanism for completing their annual performance self-assessment for performance factors A through J during the authorized evaluation period.
+
+Employees may also receive controlled access to applicable finalized evaluation information according to the organization's access rules. This provides employees with appropriate visibility into their evaluation results while helping protect confidential supervisory comments and internal management information.
+
+For Management Decision-Making
+
+The system provides authorized management users with organized historical performance information, competency-related information, development needs, training recommendations, career and advancement information, and recognition records.
+
+The availability of consolidated information can support management in reviewing employee performance and development patterns across evaluation periods. The system serves as a decision-support tool; it does not independently determine promotions, salary adjustments, training assignments, succession decisions, or other personnel actions.
+
+For Future Researchers and Practitioners
+
+The project provides a practical example of integrating a digital annual performance evaluation workflow with supporting employee development functions within a human resource management system. It also demonstrates the use of generative artificial intelligence as an advisory decision-support component while retaining human authority over performance and employment-related decisions.
+
+The study may serve as a reference for future researchers and practitioners examining digital performance management, integrated HR information systems, competency development, AI-assisted HR decision support, and employee development management.
+1.6 Definition of Terms
+
+For clarity and consistency, the following terms are defined according to their use in this study.
+
+Artificial Intelligence (AI). A technology used in the proposed system to analyze authorized evaluation information and generate recommendations that assist human decision-making. In this study, AI primarily refers to Gemini 2.5 Flash and its use in competency gap analysis and development or training recommendations.
+
+Competency. The knowledge, skills, abilities, attitudes, and work behaviors relevant to an employee's effective performance of assigned responsibilities. In this study, competency-related information is represented through the organization's performance evaluation factors.
+
+Competency Gap. A potential development area identified from differences between an Employee/Ratee's self-rating and the Immediate Supervisor/Rater's rating for a particular performance factor. The identified difference serves as an indicator for further review and does not by itself establish an actual competency deficiency.
+
+Competency Gap Analysis. The process of examining relevant differences between Employee/Ratee and Immediate Supervisor/Rater ratings across performance factors A through J to identify possible areas for employee development.
+
+Competency Management. A supporting system function that organizes competency-related information derived from performance evaluation data and supports the identification and monitoring of employee competency strengths and development areas.
+
+Decision Support System. A system that provides information, analysis, or recommendations to assist human decision-makers without replacing their authority. In this study, AI-generated development and training recommendations serve as decision-support information for authorized personnel.
+
+Digital 201 File. A centralized digital employee record containing authorized employee information, including performance evaluation history, competency-related records, development activities, training information, career and advancement information, and recognition records.
+
+Electronic Signature (E-Signature). A digital representation of a user's signature used to certify the completion, review, or authorization of information within the evaluation workflow.
+
+Employee / Ratee. The employee being evaluated through the organization's annual performance evaluation process.
+
+Evaluation Workflow Stage. A defined stage in the sequential annual performance evaluation process. The stages include Employee/Ratee Self-Rating, Immediate Supervisor/Rater Assessment, Reviewing Supervisor/Division Head Assessment, Personnel Office Processing, Performance Evaluation Committee Review, President Approval, and finalization.
+
+Finalized Evaluation. A completed evaluation record that has passed through the required evaluation stages and received the required final approval or authorization.
+
+Freight and Logistics Industry. The industry sector involving activities such as freight handling, transportation, warehousing, storage, distribution, and related logistics operations.
+
+Gemini 2.5 Flash. A generative artificial intelligence model developed by Google and integrated into the proposed system to assist with competency gap analysis and the generation of development and training recommendations.
+
+Human Resource Management (HRM). The organizational activities involved in managing and developing employees, including performance management, employee development, training, and other workforce-related activities.
+
+Human Resource Management System (HRMS). An information system used to manage and organize human resource information and processes. In this study, HRMS refers to the proposed Performance and Development Human Resource Management System for Priority Handling Logistics, Inc.
+
+Immediate Supervisor / Rater. The supervisor directly assigned to evaluate an employee. This role provides independent ratings for performance factors A through J and completes the required assessment, Step Two information, comments, recommendations, and electronic signature.
+
+Learning and Development. Activities intended to support employee knowledge, skills, professional development, and improvement, including coaching, mentoring, self-development, and other development activities recorded by the system.
+
+Performance Evaluation. The formal annual process used by Priority Handling Logistics, Inc. to assess employee performance using the organization's standardized evaluation form and performance factors A through J.
+
+Performance Evaluation Committee. The group responsible for reviewing completed employee evaluations and providing a formal recommendation regarding the appropriate personnel action or evaluation outcome.
+
+Performance Management. The process of collecting, recording, reviewing, and managing employee performance information. In this study, performance management is primarily implemented through the digital annual performance evaluation workflow.
+
+President Approval. The final approval stage of the evaluation workflow in which the President reviews the completed evaluation and Committee recommendation and provides the required final decision or authorization.
+
+Reviewing Supervisor / Division Head. The authorized supervisor or division head who reviews the evaluation after completion of the Immediate Supervisor/Rater stage, provides the required Step Three information, comments, recommendations, and electronic signature, and represents a separate workflow role from the Immediate Supervisor/Rater.
+
+Role-Based Access Control (RBAC). A security mechanism that controls access to system information and functions according to the user's assigned role and responsibilities.
+
+Social Recognition. A supporting system function used to record employee commendations, achievements, and other recognized contributions as part of the employee's performance and development history.
+
+Step 1 – Employee Self-Rating. The first evaluation stage in which the Employee/Ratee provides self-assessment ratings for performance factors A through J, completes the required information, and provides the required electronic signature.
+
+Step 2 – Immediate Supervisor/Rater Assessment. The evaluation stage in which the Immediate Supervisor/Rater reviews the Employee/Ratee's self-assessment, provides independent ratings for performance factors A through J, completes the required conclusions, comments, recommendations, development information, career or transfer information, and other required assessment information.
+
+Step 3 – Reviewing Supervisor/Division Head Assessment. The evaluation stage in which the Reviewing Supervisor/Division Head reviews the completed evaluation, provides the required Step Three comments and recommendations, and provides the required electronic signature.
+
+Succession Planning. A supporting function that organizes information concerning employee development potential, advancement outlook, career interests, transfer interests, qualifications, and related development information to support organizational consideration of future positions.
+
+Training Management. A supporting system function that records employee training needs, recommendations, participation, completion, certificates, and related training information.
+
+Training Recommendation. A suggested training course, development activity, or learning intervention identified from evaluation information, competency-gap analysis, or AI-assisted analysis.
+
+AI-Assisted Development and Training Recommendation. A development or training suggestion generated by Gemini 2.5 Flash from authorized evaluation and competency-related information. The recommendation is advisory and remains subject to review and decision by authorized personnel.
+
+1.7 Structure of the Document
+
+This capstone study is organized into five chapters.
+
+Chapter 1 – Introduction presents the background and motivation of the project, the problems associated with the organization's existing paper-based performance evaluation process, the project vision and scope, objectives, significance, definition of terms, and structure of the study.
+
+Chapter 2 – Related Literature, Studies, and Technical Background presents relevant literature and studies concerning human resource management systems, performance management, competency development, learning and training management, succession planning, employee recognition, artificial intelligence in HR, and related technologies. It also discusses the development methodology, technical architecture, selected technologies, and conceptual framework relevant to the proposed system.
+
+Chapter 3 – Research Methodology and Project Management describes the research and development methodology used in the project. It presents the respondents and stakeholders, data-gathering procedures, system development process, project management activities, system design, testing procedures, evaluation instruments, and statistical treatment of evaluation results.
+
+Chapter 4 – Results and Discussion presents the developed system, its implemented features, workflow, testing results, software quality evaluation, and discussion of the results in relation to the established objectives and identified organizational requirements.
+
+Chapter 5 – Summary, Conclusions, and Recommendations presents the summary of the project findings, conclusions based on the objectives and evaluation results, and recommendations for future improvements and further research.
+
+CHAPTER 2
+RELATED LITERATURE, STUDIES, AND TECHNICAL BACKGROUND
+2.1 Review of Related Literature
+Foreign Literature
+Human Resource Management Systems
+
+Human Resource Management Systems (HRMS) are information systems that use information technology to organize employee information and support human resource processes. Their adoption has increased as organizations seek to reduce manual work, improve information accessibility, and support more consistent HR operations. Raja et al. (2025), through a systematic review of HRIS and performance management, identified implementation, user, and organizational factors associated with the effectiveness of technology-supported performance management. Hussain et al. (2025) likewise examined HRIS in the tourism and hospitality sector and demonstrated the relevance of centralized HR information systems to organizational performance.
+
+These studies establish the broader value of digital HR systems. In the proposed system, however, HRMS functionality is organized around the annual performance evaluation as the primary process, with competency management, learning and development, training management, succession planning, Social Recognition, and the Digital 201 File serving as interconnected supporting functions.
+
+Performance Management and Employee Evaluation
+
+Performance management involves the systematic assessment, monitoring, feedback, and development of employees. Digital performance management systems allow organizations to structure employee evaluations and maintain performance information for later review. Raja et al. (2025) found that HRIS and performance management are closely related areas and that technology can provide information and process support for performance management.
+
+The proposed Performance and Development HRMS applies these principles through a defined annual evaluation workflow. It records independent A–J ratings from the Employee/Ratee, Immediate Supervisor/Rater, and Reviewing Supervisor/Division Head and carries the evaluation through Personnel processing, Performance Evaluation Committee review, President approval, and finalization. The emphasis of this function is therefore on the evaluation process and workflow, rather than on general HR data storage.
+
+Competency Management and Competency Gap Analysis
+
+Competency management focuses on identifying and developing the knowledge, skills, abilities, and work behaviors required for effective job performance. Estrella et al. (2024) examined competency-based recruitment and learning and development and emphasized the importance of aligning employee development with required competencies.
+
+Competency gap analysis complements this process by examining differences among available competency or performance information. In the proposed system, differences among authorized employee and supervisor ratings are used as indicators of possible competency strengths or development areas. These differences do not automatically establish poor performance or a confirmed competency gap and instead provide information for further review and development planning.
+
+Learning and Employee Development
+
+Learning and development provide opportunities for employees to strengthen their knowledge, skills, and work capabilities through coaching, mentoring, self-development, and formal training. Da-ang et al. (2024) reported perceived benefits of training and development in areas including work quality, teamwork, professional development, and organizational goals. Tumacole (2024) likewise examined training and development practices and their relationship with employee job performance.
+
+These findings support the Learning and Development function of the proposed HRMS. The system does not deliver learning content as a full learning management platform. Instead, it records development needs, activities, and related employee information identified through performance evaluation and competency analysis.
+
+Training Management
+
+Training management involves identifying training needs, organizing training recommendations, recording participation, and maintaining relevant training information. The proposed system connects these activities with employee performance and competency information. When an evaluation indicates a possible development area, related training needs or recommendations may be recorded and monitored.
+
+This function is therefore distinct from Learning and Development. Learning and Development focuses on employee development information, while Training Management focuses on the planning and recording of training-related activities.
+
+Succession Planning and Career Development
+
+Succession planning considers employee potential, qualifications, development, and readiness for greater responsibilities. Raharjo et al. (2024) examined succession planning and job training in relation to employee performance, supporting the relevance of linking employee development information with future workforce considerations.
+
+The proposed system records development potential, advancement outlook, career interests, transfer interests, and relevant qualifications captured during the performance evaluation. These records provide authorized personnel and management with organized information that may support future career-development and succession considerations. The system does not automatically select successors or approve promotions.
+
+Social Recognition
+
+Social Recognition provides a supporting record of employee achievements, commendations, and recognized contributions. Within the proposed system, recognition information is maintained as supplementary employee information and can form part of the employee's Digital 201 File. It is not used as an automatic ranking mechanism or as an independent performance evaluation process.
+
+Artificial Intelligence in Human Resource Management
+
+Artificial Intelligence (AI) is increasingly being applied to Human Resource Management, including performance management, training and development, and workforce analysis. Gélinas et al. (2022) identified AI applications across major areas of the HR life cycle while also highlighting legal and ethical considerations. Naoum et al. (2026) further emphasized the importance of transparency, accountability, fairness, and responsible implementation when applying AI in HRM.
+
+The proposed system uses Gemini 2.5 Flash as an AI-assisted decision-support component. Authorized evaluation and development information can be analyzed to generate possible competency-related development and training recommendations. The AI does not determine official ratings, approve salary changes, decide promotions, finalize evaluations, or independently execute personnel actions. Final decisions remain with authorized human users.
+
+Digital Employee Records and Centralized HR Data
+
+Digital employee records support the organized storage and retrieval of employee information and historical records. Salah et al. (2022) demonstrated how HRIS can support HR management, performance evaluation, document management, reporting, and user management.
+
+The proposed Digital 201 File applies this principle specifically to employee history. It consolidates authorized performance evaluations, competency information, development activities, training records, career-related information, and recognition history so that authorized users can retrieve an employee's information across evaluation periods.
+
+Local Literature
+
+Philippine studies further demonstrate the relevance of digital HR systems, employee development, and data analytics in local organizations. Salah et al. (2022) demonstrated how an HRIS can support human resource management, performance evaluation, document management, reporting, and user management. Da-ang et al. (2024) and Tumacole (2024) likewise highlight the contribution of training and development to employee work quality, competency development, and job performance. In addition, Paulino (2022) found that business analytics capabilities contribute to business intelligence and that business intelligence is positively associated with organizational performance.
+
+Collectively, these local studies support the use of digital systems to organize employee information, support performance and development activities, and transform organizational data into useful information. However, the reviewed Philippine studies do not fully implement the specific evaluation-driven workflow proposed for Priority Handling Logistics, Inc. The proposed system addresses this gap by integrating the annual performance evaluation with competency management, learning and development, training management, succession planning, Social Recognition, and centralized employee records.
+
+2.2 Analysis of Related Studies and Existing Systems
+Google Sheets and Microsoft Excel
+
+Google Sheets and Microsoft Excel are widely used spreadsheet applications for organizing, processing, and analyzing structured information. Spreadsheets are commonly used for business operations and data analytics because they provide functions for calculation, data organization, and chart development (Rebman et al., 2023). Google Sheets and Microsoft Excel also provide features such as formulas, filtering, charts, and PivotTables that can support the preparation of reports and basic data analysis (Google, n.d.).
+
+For performance evaluation, spreadsheets can be used to record employee ratings, calculate scores, organize evaluation information, and prepare summary reports. However, these activities remain dependent on how users organize, maintain, and interpret the data. Spreadsheet applications are not specifically designed to manage a complete multi-stage performance evaluation workflow in which specific roles are assigned to each stage, previous submissions are preserved as read-only records, electronic signatures are associated with particular evaluation stages, and system rules control the movement of an evaluation between authorized users.
+
+The proposed Performance and Development Subsystem addresses these limitations by incorporating the evaluation process directly into the system. Instead of relying on spreadsheets as the primary record and workflow mechanism, the proposed subsystem provides role-based access, separate A–J ratings for the Employee/Ratee, Immediate Supervisor/Rater, and Reviewing Supervisor/Division Head, digital signatures, controlled workflow transitions, centralized evaluation records, and historical retrieval.
+
+Manual and Paper-Based Performance Evaluation
+
+Manual and paper-based performance evaluation is a traditional approach in which employee ratings, comments, and other evaluation information are recorded through printed forms and manually processed. Dela Fuente and Dela Fuente (2022) described a performance evaluation process in which evaluation questions were provided through printed forms using a Likert scale, while overall performance measures were manually computed. The study demonstrates how traditional evaluation procedures can depend on physical documentation and manual processing of performance information.
+
+Although manual evaluation can support a defined assessment procedure, handling multiple employees and evaluation stages may require considerable coordination. Evaluation forms must be distributed, completed, collected, reviewed, signed, and stored. Monitoring the current status of an evaluation may also require manual checking, while retrieving previous evaluations may require searching through stored physical records. Repeated handling of documents can also increase the need for manual verification and record maintenance.
+
+The proposed Performance and Development Subsystem digitizes this process by maintaining evaluation information in a centralized system. Each evaluation is associated with an authorized user and workflow stage, allowing the system to track whether an evaluation is currently assigned to the Employee/Ratee, Immediate Supervisor/Rater, Reviewing Supervisor/Division Head, Personnel Office, Performance Evaluation Committee, or President. Digital signatures, system-generated dates, workflow status, and audit information further support traceability throughout the evaluation process.
+
+BambooHR
+
+BambooHR is a cloud-based human resource management platform that provides performance management capabilities together with centralized employee information. Its performance management resources describe structured review cycles, goals, feedback, communication, scheduling, and performance-related processes intended to organize employee assessment within a centralized HR environment (BambooHR, n.d.).
+
+These capabilities demonstrate the advantages of replacing disconnected employee records and manually managed performance processes with a centralized digital HR platform. A dedicated performance management environment can organize evaluation activities and provide a more consistent way of managing employee performance information.
+
+However, BambooHR is a general-purpose HR platform intended to support a broad range of organizational requirements. The proposed Performance and Development Subsystem is specifically designed around the annual performance evaluation procedure of Priority Handling Logistics, Inc. It follows the required sequence of Employee/Ratee, Immediate Supervisor/Rater, Reviewing Supervisor/Division Head, Personnel Office, Performance Evaluation Committee, and President. It also preserves the organization's specific A–J evaluation factors, role-specific editing permissions, digital signatures, and workflow rules.
+
+SAP SuccessFactors
+
+SAP SuccessFactors Performance and Goals is an enterprise performance management solution that supports performance management, goal management, continuous performance management, 360-degree reviews, and calibration. SAP documentation also identifies functions for employee self-evaluation, manager evaluation, competency-related assessment, and signing of performance review forms (SAP, n.d.-a; SAP, n.d.-b).
+
+The platform demonstrates how performance management can be integrated with broader organizational talent and development processes. Its capabilities allow organizations to structure performance reviews, gather feedback from multiple sources, assess competencies, and standardize ratings through calibration (SAP, n.d.-a).
+
+Despite these broad capabilities, SAP SuccessFactors is an enterprise-level HCM platform designed to accommodate diverse organizational processes. An organization may therefore need configuration to reproduce its own evaluation forms, rating factors, approval hierarchy, workflow sequence, and information-access requirements. The proposed Performance and Development Subsystem differs by concentrating specifically on the annual performance evaluation process of Priority Handling Logistics, Inc. and connecting its evaluation information to competency management, learning and development, training management, succession planning, Social Recognition, and the Digital 201 File.
+
+Analysis of the Existing Systems
+
+The reviewed approaches demonstrate different levels of support for employee performance management. Google Sheets and Microsoft Excel provide flexible tools for calculation, data organization, filtering, visualization, and reporting, but their use for performance evaluation remains dependent on user-managed data and processes (Rebman et al., 2023; Google, n.d.). Manual and paper-based evaluation provides a direct method of documenting performance but requires physical handling and manual processing, as demonstrated by Dela Fuente and Dela Fuente (2022). BambooHR demonstrates the use of a centralized HR platform for structured performance management, while SAP SuccessFactors demonstrates a broader enterprise approach that incorporates performance management, competencies, 360-degree reviews, and calibration (BambooHR, n.d.; SAP, n.d.-a).
+
+The proposed Performance and Development Subsystem addresses these limitations by focusing on the specific annual performance evaluation requirements of Priority Handling Logistics, Inc. The system supports the complete workflow from Employee/Ratee self-assessment through Immediate Supervisor/Rater evaluation, Reviewing Supervisor/Division Head evaluation, Personnel processing, Performance Evaluation Committee review, President approval, and finalization. Separate A–J ratings are maintained for the Employee/Ratee, Immediate Supervisor/Rater, and Reviewing Supervisor/Division Head, while previously submitted information is preserved as read-only during later stages.
+
+The proposed subsystem also extends the evaluation process into employee development. Authorized evaluation information can be analyzed to identify potential competency gaps and support development or training recommendations through Gemini 2.5 Flash. The AI component functions only as an advisory mechanism and does not independently modify official ratings, approve compensation, determine promotions, finalize evaluations, or execute personnel decisions. The subsystem further maintains a Digital 201 File containing relevant employee performance, competency, development, training, career, and recognition information for historical reference.
+
+Overall, the reviewed systems demonstrate that digital tools can support employee information management, performance evaluation, reporting, feedback, and development. However, the proposed Performance and Development Subsystem is specifically designed around the workflow, evaluation factors, role responsibilities, approval sequence, and information requirements of Priority Handling Logistics, Inc. Its distinction lies in combining organization-specific multi-level performance evaluation with competency and development support, controlled workflow, digital documentation, centralized historical records, and AI-assisted development recommendations.
+
+2.3 Agile Scrum Methodology
+
+Agile development emphasizes iterative development, collaboration, adaptability, inspection, and continuous improvement. Scrum is an Agile framework that organizes development around incremental delivery through Sprints and provides defined events and artifacts for managing development work. The official Scrum Guide identifies the Sprint, Sprint Planning, Daily Scrum, Sprint Review, and Sprint Retrospective as Scrum events and defines the Product Backlog, Sprint Backlog, and Increment as Scrum artifacts (Schwaber & Sutherland, 2020).
+
+Putrianasari et al. (2024) reviewed problems associated with adopting Agile-Scrum in small organizations and identified technical, organizational, process, and people-related factors affecting implementation. Their findings indicate that Agile-Scrum can provide adaptability but also requires coordination and suitable adjustment to the organizational environment.
+
+The proposed Performance and Development HRMS uses an iterative approach because its components are interconnected and requirements may evolve during development. The Product Backlog can contain requirements related to performance evaluation, competency management, learning and development, training, succession, recognition, AI recommendations, administration, and system security.
+
+During Sprint Planning, selected backlog items are prioritized for implementation. Development activities may include interface design, backend implementation, database integration, authentication, authorization, workflow transitions, AI integration, testing, and defect correction. Daily Scrum activities support coordination among the researchers, while Sprint Reviews provide opportunities to obtain feedback from relevant stakeholders.
+
+The iterative approach is particularly valuable for the evaluation workflow because changes to one stage can affect other stages. For example, changes to evaluation fields, role permissions, database relationships, or workflow transitions may influence subsequent processing. Incremental implementation allows these dependencies to be tested and improved throughout development.
+
+2.4 Emerging Technologies, Intelligent Systems, and Standards in Modern Information Systems
+
+Modern information systems increasingly incorporate distributed architectures, artificial intelligence, analytics, cloud infrastructure, connected devices, cybersecurity controls, and software quality standards. These technologies are particularly relevant to enterprise environments that need to integrate multiple functional systems while maintaining performance, security, and maintainability.
+
+The following technical discussions establish the concepts that support the broader freight and logistics enterprise environment and the specific Performance and Development Subsystem developed by the researchers.
+
+2.4.1 Microservices Architecture
+
+Microservices architecture is an architectural style in which an application is organized into relatively independent services with defined responsibilities and communication mechanisms. Söylemez et al. (2022), through a systematic literature review, described microservices as an architectural style that uses fine-grained services with independent lifecycles. The study identified advantages such as modularity, flexible configuration, easier development, easier maintenance, and productivity, while also emphasizing that microservices introduce substantial architectural and operational challenges.
+
+Security is another important consideration in microservices. Almeida and Canedo (2022) explain that microservices increase the number of independently running components that need to be secured, making authentication and authorization important architectural concerns.
+
+The broader freight and logistics enterprise system developed by the class is composed of multiple functional subsystems. The Performance and Development Subsystem is the HR-focused subsystem developed by the researchers. The group is responsible for its own application logic, database structures, interfaces, access controls, and related integrations while the subsystem participates in the broader enterprise architecture.
+
+This structure should therefore be understood as a modular subsystem within the larger enterprise system. The existence of ten subsystems alone does not automatically establish microservices architecture because functional modularity and service deployment are not identical concepts. Microservices are characterized by service boundaries, independent execution or deployment, and defined communication mechanisms.
+
+The detailed architectural implementation of the broader enterprise system, including service boundaries, communication mechanisms, and deployment decisions, is presented in the succeeding methodology and technical design sections.
+
+2.4.2 Artificial Intelligence (AI)
+
+Artificial Intelligence refers to computational technologies that perform tasks associated with human cognitive abilities, such as analysis, reasoning, pattern recognition, and information generation. AI has increasingly been applied to HR functions, including performance management, training and development, and workforce analysis. Gélinas et al. (2022) identified AI applications throughout the HR life cycle while emphasizing legal and ethical considerations.
+
+Naoum et al. (2026) found that AI may improve efficiency and standardization in HR processes while creating concerns involving fairness, transparency, accountability, and responsible use.
+
+Generative AI
+
+Generative AI refers to AI systems capable of generating new text, explanations, summaries, recommendations, or other outputs from supplied inputs. In the proposed system, Gemini 2.5 Flash is used as a generative AI component for competency gap analysis and development or training recommendations.
+
+The system provides the AI with authorized evaluation information, including relevant A–J ratings, rating differences, and development-related information. Gemini 2.5 Flash then generates recommendations intended to assist the Immediate Supervisor/Rater.
+
+The AI component is limited to a decision-support role. It does not modify official employee ratings, approve salary changes, determine promotions, finalize evaluations, or independently assign training. Human users remain responsible for evaluating and acting upon the recommendations.
+
+2.4.3 Internet of Things (IoT)
+
+The Internet of Things (IoT) refers to interconnected physical devices capable of collecting, transmitting, and exchanging data through network technologies. IoT is particularly relevant to transportation, logistics, warehousing, and other operational environments that depend on connected devices and real-time information.
+
+Idrissi et al. (2024), through a systematic review of blockchain, IoT, and AI in logistics and transportation, identified IoT and AI as important technologies in the transition toward smart logistics. The study notes that technology can support information access, analysis, automation, traceability, and operational efficiency in logistics systems.
+
+IoT is therefore relevant to the broader freight and logistics enterprise environment. Connected vehicles, warehouse devices, tracking systems, and sensors may provide operational information that can eventually complement business and management systems.
+
+However, IoT is not a core implemented function of the Performance and Development Subsystem. The subsystem primarily uses employee, evaluation, competency, development, and HR information. IoT is included in the technical background because it represents a relevant technology within the broader logistics environment and may provide opportunities for future enterprise integration.
+
+2.4.4 Data Analytics and Business Intelligence
+
+Data analytics involves examining data to identify patterns, trends, relationships, and useful information. Business intelligence focuses on organizing, presenting, and visualizing this information to support organizational decision-making.
+
+Eboigbe et al. (2023) examined the relationship between business intelligence, AI, and data analytics and described how these technologies can transform organizational information into useful knowledge for operational and strategic decisions.
+
+Paulino (2022) provides Philippine evidence by examining business analytics and business intelligence in the retail industry. The study found that business analytics capabilities contribute to business intelligence and that business intelligence has a positive relationship with organizational performance.
+
+For the proposed HRMS, data analytics is applied primarily to employee performance and development information. The system can organize historical evaluation results, compare authorized rating differences, identify recurring indicators of competency needs, and summarize related learning and training records for authorized users.
+
+The analytical results are intended to support human decision-making rather than replace it.
+
+2.4.5 Polyglot Persistence
+
+Polyglot persistence refers to using different persistence technologies or storage approaches according to the characteristics and requirements of different types of data. The concept is particularly relevant to distributed applications because different services may have different data requirements.
+
+Microservices literature recognizes that services may use different technologies according to their individual requirements, but this flexibility also introduces additional operational and governance concerns. Söylemez et al. (2022) emphasize that distributed service architecture creates challenges that must be considered before adopting microservices.
+
+Within the proposed enterprise environment, structured HR information such as employee profiles, A–J ratings, workflow states, role assignments, and evaluation results is naturally handled through relational data structures. Uploaded documents such as signed forms and training-related attachments may require file or object storage.
+
+The project should only claim polyglot persistence as an implemented architecture when multiple distinct persistence technologies are actually used. Otherwise, the concept should be treated as a technical reference for handling different data types rather than as a claim that the subsystem uses multiple database engines.
+
+2.4.6 Cybersecurity
+
+Cybersecurity refers to the protection of information systems, networks, applications, and data against unauthorized access, alteration, disclosure, disruption, and other threats. HR systems require strong cybersecurity because they contain employee information, performance evaluations, development records, and management decisions.
+
+The proposed system applies cybersecurity through authentication, Role-Based Access Control (RBAC), restricted information visibility, workflow authorization, audit trail logging, and protected system functions. These mechanisms are important in a multi-role HR workflow because employees, supervisors, Personnel, Committee members, the President, and administrators require different levels of access.
+
+Microservices-oriented environments also require careful authentication and authorization because independently running services increase the number of components that must be secured. Almeida and Canedo (2022) identified authentication and authorization as significant security considerations in microservice architectures.
+
+2.4.7 Data Privacy
+
+Data privacy refers to the responsible collection, processing, storage, use, and disclosure of personal information. Privacy is especially important in HR systems because employee information can affect employment, development, compensation considerations, and career opportunities.
+
+In the Philippines, Republic Act No. 10173, or the Data Privacy Act of 2012, provides the legal framework for protecting personal information in government and private-sector information systems. The Act establishes principles for personal data protection and recognizes the responsibility of organizations to secure personal information. The Implementing Rules and Regulations further establish requirements related to personal-data protection and security.
+
+The proposed HRMS applies privacy through role-based information access and controlled disclosure. Employees can access information authorized for them, while internal supervisor comments, confidential management information, committee deliberations, and other restricted information are not exposed to unauthorized users.
+
+Privacy considerations also apply to the AI component. Only information necessary for the authorized AI-assisted analysis should be provided to the external AI service, with system permissions and data handling rules applied before information is processed.
+
+2.4.8 Software Quality Standards
+
+Software quality standards provide criteria for assessing whether a system satisfies expected functional and non-functional requirements. ISO/IEC 25010:2023 defines a product quality model for software and ICT products containing nine quality characteristics and corresponding subcharacteristics that can be used for specification, measurement, and evaluation.
+
+The standard is relevant to the proposed HRMS because the system is intended for actual organizational use. Functional suitability requires the system to correctly support the annual evaluation workflow. Performance efficiency concerns acceptable system response and resource use. Reliability is important for protecting evaluation records. Usability is necessary because the system serves users with different responsibilities. Security is essential because employee information is sensitive, while maintainability supports future system changes.
+
+The quality model therefore provides an appropriate foundation for evaluating whether the developed system meets both functional requirements and broader software quality expectations.
+
+2.4.9 Cloud Computing
+
+Cloud computing provides network-based access to computing resources such as storage, processing, and application services. Cloud-based HR systems can provide centralized access to employee information while reducing dependence on locally maintained infrastructure.
+
+Maqueira Marín et al. (2022) conducted a systematic literature review of cloud computing in HRM and identified research concerning the development, adoption, implementation, and organizational implications of cloud-based HR platforms.
+
+Cloud computing is relevant to the proposed HRMS because the system is implemented as a web-based application and may be accessed by authorized users through internet-connected devices. The exact deployment environment and cloud infrastructure used by the system are documented separately in the technical and deployment sections.
+
+2.4.10 Edge Computing
+
+Edge computing is a computing paradigm in which selected data processing activities are performed closer to the location where data is generated. It is useful in environments involving large numbers of connected devices and requirements for responsive processing.
+
+Kong et al. (2022) examined edge computing in the Internet of Everything context and described its relevance to handling the large volume of data generated by connected devices. The study also identified challenges involving network, security, privacy, and edge-node implementation.
+
+In freight and logistics environments, edge computing can be relevant to applications involving connected vehicles, tracking devices, warehouses, and operational monitoring. It may support lower-latency processing by reducing dependence on distant processing infrastructure.
+
+Edge computing is not a core implemented component of the Performance and Development Subsystem. It is included as supporting technical background because it represents a relevant emerging technology for the broader logistics enterprise environment and a potential future integration capability.
+
+2.5 DevOps Culture and CI/CD Practices
+
+DevOps is an approach that promotes collaboration between development and operations, automation, continuous feedback, and reliable software delivery. It is particularly relevant to systems that require frequent development, testing, deployment, and maintenance.
+
+Khattak et al. (2023) examined the adoption of DevOps culture and identified technological, cultural, and organizational challenges associated with successful implementation. Their findings demonstrate that DevOps requires coordination between technical processes and organizational practices.
+
+Amaro et al. (2025), through a systematic literature review, mapped DevOps capabilities to software life-cycle processes and found that DevOps capabilities can contribute to improved software delivery, quality, and reliability.
+
+Continuous Integration (CI) refers to the frequent integration and validation of code changes, while Continuous Delivery or Continuous Deployment supports predictable preparation and release of application updates.
+
+For the proposed HRMS, CI/CD is relevant because changes to the evaluation workflow, database, access control, AI integration, or reporting functions may affect multiple system components. Automated build, test, and deployment processes can help detect issues earlier and support more controlled releases.
+
+DevOps practices also complement Agile Scrum by providing operational practices for moving completed increments from development and testing toward deployment and maintenance.
+
+2.6 Enterprise Architecture and System Integration
+
+Enterprise architecture describes how organizational processes, information, applications, data, and technology are structured and integrated to support organizational goals. Martínez-López et al. (2024) describe enterprise architecture as an approach for dealing with the complexity of socio-technical systems and their information technology environments..
+
+Enterprise architecture is relevant to the proposed project because the Performance and Development Subsystem is not developed as an isolated application. It is one component of a larger freight and logistics enterprise system composed of multiple interconnected subsystems.
+
+Within the larger enterprise system, the researchers are responsible for developing the Performance and Development Subsystem. The subsystem includes its own application logic, database structures, interfaces, authentication and authorization, AI integration, and HR functions while remaining connected to the broader enterprise environment through defined integration points.
+
+The modular organization allows each subsystem to maintain a clear functional scope. For the Performance and Development Subsystem, the annual employee performance evaluation serves as the central process. Its results are connected to competency management, learning and development, training management, succession planning, Social Recognition, and the Digital 201 File.
+
+Integration does not imply that all users can access all data. Role-based permissions continue to determine which information can be viewed or modified. This allows the broader enterprise system to remain integrated while preserving confidentiality and functional separation.
+
+The architecture also allows future integration with additional enterprise systems. Potential examples include payroll, attendance, operational, or other organizational applications. Such integrations remain outside the current project unless they are explicitly implemented and authorized.
+
+2.7 Conceptual Framework
+
+The conceptual framework of the study follows the Input-Process-Output (IPO) Model. The IPO model is appropriate for the proposed Performance and Development Human Resource Management System because it presents how employee and evaluation information enters the system, undergoes evaluation and analysis through the defined workflow, and produces outputs that support employee development and management activities.
+
+Input. The input component consists of the employee and evaluation information required by the system. These include employee profile information, A–J ratings from the Employee/Ratee, Immediate Supervisor/Rater, and Reviewing Supervisor/Division Head, evaluation comments, development and career information, historical performance records, learning and training information, and recognition records. These inputs provide the information needed to conduct the annual performance evaluation and support subsequent development activities.
+
+Process. The process begins with the Employee/Ratee completing the annual self-assessment, followed by the independent evaluation of the Immediate Supervisor/Rater and Reviewing Supervisor/Division Head. Authorized rating information may be compared to identify possible competency strengths or development areas. Gemini 2.5 Flash may then analyze authorized evaluation information and generate development or training recommendations for human review. The evaluation subsequently proceeds through the Personnel Office, Performance Evaluation Committee, and President according to the established workflow. Throughout the process, the system applies role-based access control, manages digital signatures, records workflow activities, and maintains evaluation history.
+
+Output. The output component consists of the finalized performance evaluation and related employee development information. These include competency information, development and training recommendations, learning and training records, succession-related information, Social Recognition records, the Digital 201 File, and historical performance records. These outputs provide organized information that may assist authorized HR personnel and management in employee development and other appropriate workforce decisions.
+
+Figure 1. Input-Process-Output Conceptual Framework of the Proposed Performance and Development Subsystem
+
+[Insert Figure 1 image here]
+
+The conceptual framework illustrates that the annual performance evaluation serves as the primary source of information connecting the different Performance and Development functions. Employee and evaluation data are processed through the established multi-level review and approval workflow, while competency analysis and AI-assisted recommendations provide additional development support. The resulting records are retained for future reference and management consideration. Although the system provides analytical and decision-support functions, final employment-related decisions remain with authorized HR personnel and management.
+
+2.8 Theoretical Paradigm
+
+(put the table i sent in the gc) 
+
+The theoretical paradigm presents the major algorithms and system components that support the operation of the proposed Performance and Development Subsystem. These components work together to enforce authorized access, maintain the approved evaluation workflow, process performance information, support competency analysis, generate AI-assisted development recommendations, and preserve evaluation records. The algorithms do not operate as independent decision-makers; instead, they support the functions of the system while final employment-related decisions remain under the authority of authorized personnel and management. The theoretical paradigm also supports the software quality and security requirements of the proposed system by providing structured mechanisms for access control, data processing, workflow management, traceability, and information retrieval.
+
+REFERENCES
+
+Da-ang, J., Queja, D. M. V., Sendin, T. M. J., Tottoc, A. A. P., Villanueva, C. M. O., & Mania, J. R. (2024). Assessing the perceived benefits of training and development on employee performance in municipal financial management offices: A case study of Solano's Local Government Unit. International Journal of Research and Innovation in Social Science.
+https://rsisinternational.org/journals/ijriss/articles/assessing-the-perceived-benefits-of-training-and-development-on-employee-performance-in-municipal-financial-management-offices-a-case-study-of-solanos-local-government-unit/
+
+Eboigbe, E. O., Farayola, O. A., Olatoye, F. O., Nnabugwu, O. C., & Daraojimba, C. (2023). Business intelligence transformation through AI and data analytics. Engineering Science & Technology Journal, 4(5), 285–307. DOI: 10.51594/estj.v4i5.616.
+https://doi.org/10.51594/estj.v4i5.616
+
+Gélinas, D., Sadreddin, A., & Vahidov, R. (2022). Artificial intelligence in human resources management: A review and research agenda. Pacific Asia Journal of the Association for Information Systems, 14(6). DOI: 10.17705/1pais.14601.
+https://aisel.aisnet.org/pajais/vol14/iss6/1/
+
+Hussain, A. R. A. G., Vasudevan, H., Zhang, Q., & Cheok, M. Y. (2025). Evaluating the impact of Human Resource Information Systems on organizational performance in the Maldivian tourism and hospitality sector. Human Resources Management and Services, 7(2), 4617.
+https://www.enpress-publisher.com/journal/HRMS0327/7/2/10.18282/hrms4617
+
+Idrissi, Z. K., Lachgar, M., & Hrimech, H. (2024). Blockchain, IoT and AI in logistics and transportation: A systematic review. Transport Economics and Management, 2, 275–285. DOI: 10.1016/j.team.2024.09.002.
+https://doi.org/10.1016/j.team.2024.09.002
+
+ISO. (2023). ISO/IEC 25010:2023 — Systems and software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — Product quality model.
+https://www.iso.org/standard/78176.html
+
+Amaro, R., Pereira, R., & da Silva, M. M. (2025). Mapping DevOps capabilities to the software life cycle: A systematic literature review. Information and Software Technology, 177, 107583.
+https://doi.org/10.1016/j.infsof.2024.107583
+
+Kong, X., Wu, Y., Wang, H., & Xia, F. (2022). Edge computing for Internet of Everything: A survey. IEEE Internet of Things Journal, 9(23), 23472–23485.
+https://doi.org/10.1109/JIOT.2022.3200431
+
+Maqueira Marín, J. M., Oliveira-Dias, D. D., Jafari Navimipour, N., & Gardas, B. (2022). Cloud computing and human resource management: Systematic literature review and future research agenda. Kybernetes, 51(6), 2172–2191. DOI: 10.1108/K-05-2021-0420.
+https://doi.org/10.1108/K-05-2021-0420
+
+Martínez-López, J. A., García, F., Ruiz, F., & Vizcaíno, A. (2024). Contributions of enterprise architecture to software engineering: A systematic literature review. Journal of Software: Evolution and Process, 36, e2572. https://doi.org/10.1002/smr.2572
+
+Naoum, R. F., Szakadáti, T., & Balogh, G. (2026). Artificial Intelligence (AI) in human resource management (HRM): A systematic review of its dual impact on diversity, equity, and inclusion (DEI). Management Review Quarterly. DOI: 10.1007/s11301-025-00580-y.
+https://doi.org/10.1007/s11301-025-00580-y
+
+Paulino, E. P. (2022). Amplifying organizational performance from business intelligence: Business analytics implementation in the retail industry. Journal of Entrepreneurship, Management and Innovation, 18(2), 69–104. DOI: 10.7341/20221823.
+https://doi.org/10.7341/20221823
+
+Putrianasari, R., Budiardjo, E. K., Mahatma, K., & Raharjo, T. (2024). Problems in the adoption of Agile-Scrum software development process in small organization: A systematic literature review.
+https://jurnal.polgan.ac.id/index.php/sinkron/article/view/13271
+
+Raharjo, I. D., Sedyastuti, K., & Suharso, A. A. P. (2024). The effect of succession planning and job training on employee performance. Jurnal Riset Mahasiswa Manajemen, 11(2). DOI: 10.21067/jrmm.v11i2.10654.
+https://doi.org/10.21067/jrmm.v11i2.10654
+
+Raja, M., Swamy, T. N. V. R. L., Das, S., Bansal, R., Fahlevi, M., & Aziz, A. L. (2025). Does human resource information system influence performance management? Cogent Business & Management, 12(1), 2438862.
+https://www.tandfonline.com/doi/full/10.1080/23311975.2024.2438862
+
+Republic of the Philippines. (2012). Republic Act No. 10173 — Data Privacy Act of 2012. National Privacy Commission.
+https://privacy.gov.ph/data-privacy-act/
+
+Republic of the Philippines, National Privacy Commission. Implementing Rules and Regulations of the Data Privacy Act of 2012.
+https://privacy.gov.ph/implementing-rules-regulations-data-privacy-act-2012/
+
+Salah, H., Abdulgani, M. A., Aliuden, F., Mantikayan, J. M., Guiamalon, T., Dilna, S., Mohamad, H., & Ferolino, M. F. (2022). Adopting Human Resource Information System (HRIS)-Enabled Government Transformation: Perspective of MBHTE Employees. Psychology and Education: A Multidisciplinary Journal, 3(7).
+https://ejournals.ph/article.php?id=20441
+
+Söylemez, M., Tekinerdogan, B., & Kolukısa Tarhan, A. (2022). Challenges and Solution Directions of Microservice Architectures: A Systematic Literature Review. Applied Sciences, 12(11), 5507. DOI: 10.3390/app12115507.
+https://doi.org/10.3390/app12115507
+
+Almeida, M. G., & Canedo, E. D. (2022). Authentication and Authorization in Microservices Architecture: A Systematic Literature Review. Applied Sciences, 12(6), 3023. DOI: 10.3390/app12063023.
+https://doi.org/10.3390/app12063023
+
+Tumacole, E., Jr. (2024). Training and Development Practices and their Influence on Workers Job Performance. Journal of Interdisciplinary Perspectives, 2(5), 6–15. DOI: 10.69569/jip.2024.0061.
+https://doi.org/10.69569/jip.2024.0061
+
+Schwaber, K., & Sutherland, J. (2020). The Scrum Guide: The definitive guide to Scrum: The rules of the game.
+https://scrumguides.org/scrum-guide.html
+
+BambooHR. (n.d.). Performance management systems for HR.
+https://www.bamboohr.com/platform/performance-management/
+
+BambooHR. (n.d.). The definitive guide to performance management.
+https://www.bamboohr.com/resources/guides/definitive-guide-performance-management
+
+Dela Fuente, R. O., & Dela Fuente, R. O. (2022). Faculty performance evaluation system with application of data analytics. South Asian Journal of Engineering and Technology.
+https://doi.org/10.26524/sajet.2022.12.05
+
+Google. (n.d.). Create and use pivot tables. Google Docs Editors Help.
+https://support.google.com/docs/answer/7572895
+
+Rebman, C., Booker, Q., Wimmer, H., Levkoff, S., McMurtrey, M., & Powell, L. M. (2023). An industry survey of analytics spreadsheet tools adoption: Microsoft Excel vs Google Sheets. Information Systems Education Journal, 21(5), 29–42.
+https://isedj.org/2023-21/n5/ISEDJv21n5p29.html
+
+SAP. (n.d.-a). SAP Best Practices for SAP SuccessFactors Performance and Goals. SAP Help Portal.
+https://help.sap.com/docs/successfactors-performance-and-goals/sap-best-practices-for-sap-successfactors-performance-and-goals
+
+SAP. (n.d.-b). Performance & Goals Management in SAP SuccessFactors. SAP Help Portal.
+https://help.sap.com/docs/SAP_SUCCESSFACTORS_PERFORMANCE_AND_GOALS

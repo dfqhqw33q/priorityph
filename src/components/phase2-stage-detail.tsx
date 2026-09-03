@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EvaluationRatingCards, ratingFor } from "@/components/rating-matrix";
 import { SignatureField, type SignatureValue } from "@/components/signature-field";
+import { EvaluationDocumentPreview } from "@/components/evaluation-document-preview";
 import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader } from "@/components/ui-bits";
 import {
   getPhase2Evaluation,
@@ -70,6 +71,8 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   const [action, setAction] = useState("RETAIN");
   const [reason, setReason] = useState("");
   const [correctionStage, setCorrectionStage] = useState("SUPERVISOR_DRAFT");
+  const [documentHtml, setDocumentHtml] = useState<string | null>(null);
+  const [documentOpen, setDocumentOpen] = useState(false);
   const workflowDate = () => new Date().toISOString().slice(0, 10);
   const editableStatuses = {
     RATER: ["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"],
@@ -147,15 +150,12 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   const update = (key: string, value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
   async function openDocument(mode: "preview" | "print") {
+    setDocumentOpen(true);
     try {
       const result = await getSheetHtml({ data: { evaluationId } });
-      const blob = new Blob([result.html], { type: "text/html; charset=utf-8" });
-      const blobUrl = URL.createObjectURL(blob);
-      const win = window.open(blobUrl, "_blank", "noopener,noreferrer");
-      if (mode === "print") {
-        setTimeout(() => win?.print(), 600);
-      }
+      setDocumentHtml(result.html);
     } catch (error) {
+      setDocumentOpen(false);
       toast.error(error instanceof Error ? error.message : "The evaluation document is not available yet.");
     }
   }
@@ -492,6 +492,15 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
               <Button type="button" variant="secondary" onClick={() => openDocument("preview")}>Refresh PDF</Button>
             </div>
           ) : null}
+          <EvaluationDocumentPreview
+            html={documentHtml}
+            open={documentOpen}
+            loading={documentOpen && !documentHtml}
+            onOpenChange={(open) => {
+              setDocumentOpen(open);
+              if (!open) setDocumentHtml(null);
+            }}
+          />
           {stage === "RATER" ? (
             <>
               {field("strengths", "Strengths")} {field("weaknesses", "Weaknesses")}{" "}
