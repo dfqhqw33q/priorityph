@@ -121,7 +121,7 @@ export function generateEvaluationHTML(params: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Performance Evaluation Sheet</title>
+  <title></title>
   <style>
     @media print {
       * { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
