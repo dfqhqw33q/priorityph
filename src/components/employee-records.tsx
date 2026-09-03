@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +30,9 @@ import {
   PageHeader,
   formatDateTime,
 } from "@/components/ui-bits";
+import { EvaluationDocumentPreview } from "@/components/evaluation-document-preview";
 import { getEmployeeRecord, listEmployees } from "@/lib/admin.functions";
-import { getEvaluationDocumentUrl, getEmployeeDocumentUrl, listEmployeeDocuments, uploadEmployeeDocument } from "@/lib/documents.functions";
+import { getEvaluationDocumentUrl, getEmployeeDocumentUrl, listEmployeeDocuments, uploadEmployeeDocument, getEvaluationSheetHtml } from "@/lib/documents.functions";
 import type { EvaluationStatus } from "@/lib/domain";
 
 type EmployeeRow = {
@@ -50,11 +52,14 @@ export function EmployeeRecordsPage() {
   const fetchDocuments = useServerFn(listEmployeeDocuments);
   const getDocumentUrl = useServerFn(getEmployeeDocumentUrl);
   const getFinalEvaluationDocumentUrl = useServerFn(getEvaluationDocumentUrl);
+  const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const uploadDocument = useServerFn(uploadEmployeeDocument);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [documentCategory, setDocumentCategory] = useState("SUPPORTING_DOCUMENTS");
   const [uploading, setUploading] = useState(false);
+  const [documentHtml, setDocumentHtml] = useState<string | null>(null);
+  const [documentOpen, setDocumentOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const query = useQuery({
@@ -99,18 +104,28 @@ export function EmployeeRecordsPage() {
     window.open(result.url, "_blank", "noopener,noreferrer");
   }
 
-  async function openFinalEvaluationDocument(evaluationId: string, mode: "preview" | "print" | "export", forceRefresh = true) {
+  async function openFinalEvaluationDocument(evaluationId: string, mode: "preview" | "print" | "export") {
+    setDocumentOpen(true);
     try {
-      const result = await getFinalEvaluationDocumentUrl({ data: { evaluationId, forceRefresh } });
-      const win = window.open(result.url, "_blank", "noopener,noreferrer");
+      const result = await getSheetHtml({ data: { evaluationId } });
+      setDocumentHtml(result.html);
+      
+      // Handle print/export after document loads
       if (mode === "print") {
-        setTimeout(() => win?.print(), 600);
-      }
-      if (mode === "export") {
-        win?.focus();
+        setTimeout(() => {
+          const frame = document.querySelector('iframe[title="Evaluation document preview"]') as HTMLIFrameElement;
+          frame?.contentWindow?.print();
+        }, 600);
+      } else if (mode === "export") {
+        // For export, user can use browser's Print to PDF
+        setTimeout(() => {
+          const frame = document.querySelector('iframe[title="Evaluation document preview"]') as HTMLIFrameElement;
+          frame?.focus();
+        }, 300);
       }
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : "The final evaluation document is not available yet.");
+      setDocumentOpen(false);
+      toast.error(error instanceof Error ? error.message : "The final evaluation document is not available yet.");
     }
   }
 
@@ -230,16 +245,16 @@ export function EmployeeRecordsPage() {
                   </p>
                   {item.status === "FINALIZED" ? (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "preview", true)}>
+                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "preview")}>
                         Preview
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "print", true)}>
+                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "print")}>
                         Print
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "export", true)}>
+                      <Button variant="outline" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "export")}>
                         Export
                       </Button>
-                      <Button variant="secondary" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "preview", true)}>
+                      <Button variant="secondary" size="sm" onClick={() => openFinalEvaluationDocument(item.id, "preview")}>
                         Refresh PDF
                       </Button>
                     </div>
@@ -275,6 +290,16 @@ export function EmployeeRecordsPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <EvaluationDocumentPreview
+        html={documentHtml}
+        open={documentOpen}
+        loading={documentOpen && !documentHtml}
+        onOpenChange={(open) => {
+          setDocumentOpen(open);
+          if (!open) setDocumentHtml(null);
+        }}
+      />
     </div>
   );
 }
