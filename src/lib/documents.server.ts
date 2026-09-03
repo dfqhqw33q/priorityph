@@ -608,7 +608,7 @@ async function convertSignatureToDataUrl(
 
 type EvaluationDocumentData = Parameters<typeof generateEvaluationHTML>[0];
 
-export async function generateEvaluationPDF(data: EvaluationDocumentData): Promise<Uint8Array> {
+export async function generateEmployeeFinalizedPDF(data: EvaluationDocumentData): Promise<Uint8Array> {
   const document = await PDFDocument.create();
   const regularFont = await document.embedFont(StandardFonts.Helvetica);
   const boldFont = await document.embedFont(StandardFonts.HelveticaBold);
@@ -672,40 +672,27 @@ export async function generateEvaluationPDF(data: EvaluationDocumentData): Promi
   field("Job Title", data.jobTitleOfRatee);
   field("Division / Department", data.division);
   field("Section / Unit", data.sectionUnit);
-  field("Name of Rater", `${data.nameOfRater} (${data.jobTitleOfRater})`);
 
-  heading("RATINGS");
+  heading("FINALIZED PERFORMANCE FACTORS");
+  const factorNumberWidth = 18;
+  const ratingWidth = 88;
+  const factorTextWidth = contentWidth - factorNumberWidth - ratingWidth;
   for (const factor of data.factors) {
-    text(`${factor.letter}. ${factor.title}: ${factor.description}`);
-    text(`Employee: ${factor.employeeSelfRating || "-"}   Supervisor: ${factor.supervisorRating || "-"}   Reviewing Supervisor: ${factor.reviewingSupervisorRating || "-"}`);
+    const factorLines = wrap(`${factor.title}: ${factor.description}`, factorTextWidth, regularFont, fontSize);
+    const rowHeight = Math.max(factorLines.length * lineHeight, 34);
+    ensureSpace(rowHeight);
+    page.drawRectangle({ x: margin, y: cursorY - rowHeight + 3, width: contentWidth, height: rowHeight, borderColor: rgb(0.3, 0.3, 0.3), borderWidth: 0.6 });
+    page.drawLine({ start: { x: margin + factorNumberWidth, y: cursorY + 3 }, end: { x: margin + factorNumberWidth, y: cursorY - rowHeight + 3 }, thickness: 0.6, color: rgb(0.3, 0.3, 0.3) });
+    page.drawLine({ start: { x: margin + factorNumberWidth + factorTextWidth, y: cursorY + 3 }, end: { x: margin + factorNumberWidth + factorTextWidth, y: cursorY - rowHeight + 3 }, thickness: 0.6, color: rgb(0.3, 0.3, 0.3) });
+    page.drawText(`${factor.letter}.`, { x: margin + 5, y: cursorY - 12, size: 10, font: boldFont });
+    factorLines.forEach((line, index) => page.drawText(line, { x: margin + factorNumberWidth + 5, y: cursorY - 12 - index * lineHeight, size: fontSize, font: regularFont }));
+    page.drawText(ascii(factor.employeeSelfRating) || "-", { x: margin + factorNumberWidth + factorTextWidth + 36, y: cursorY - rowHeight / 2, size: 13, font: boldFont });
+    cursorY -= rowHeight;
   }
-  heading("CONCLUSIONS AND COMMENTS");
-  for (const [label, value] of [
-    ["Overall Rating Explanation", data.overallRatingExplanation],
-    ["Principal Strengths", data.principalStrengths],
-    ["Principal Weakness", data.principalWeakness],
-    ["Effectiveness Recommendation", data.effectivenessRecommendation],
-    ["Development Potential", data.developmentPotential],
-    ["Advancement Outlook", data.advancementOutlook],
-    ["Growth Suggestions", data.growthSuggestions],
-    ["Transfer Interest", data.transferInterest],
-    ["Other Comments", data.otherComments],
-    ["Reviewing Supervisor Comments", data.stepThreeComments],
-    ["Reviewing Supervisor Recommendations", data.stepThreeRecommendations],
-  ] as const) field(label, value);
-  heading("PERSONNEL PROCESSING");
-  field("Present Salary", data.presentSalary);
-  field("Last Increase", `${data.lastIncreaseDate}; ${data.lastIncreaseNature}; ${data.lastIncreaseAmount}`);
+  heading("FINAL OUTCOME");
   field("Total Points", data.totalPoints);
   field("Adjective Rating", data.adjectiveRating);
-  field("Recommended Increase / Bonus", data.recommendedIncreaseBonus);
-  field("Prepared By", `${data.preparedByName} (${data.preparedByTitle})`);
-  heading("COMMITTEE AND PRESIDENT APPROVAL");
-  field("Committee Recommendation", data.committeeRecommendation);
   field("Final Action", `${data.finalAction}; ${data.finalActionDetails}`);
-  field("Committee", `${data.committeeName} (${data.committeeTitle})`);
-  field("Approved By", `${data.approvedByName} (${data.approvedByTitle})`);
-  field("Approval Date", data.approvedByDate);
 
   return document.save();
 }

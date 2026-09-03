@@ -34,7 +34,7 @@ async function upsertAccessSession(
 
 export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   const { getAdmin } = await import("./server-core.server");
-  const { generateEvaluationData, generateEvaluationPDF } = await import("./documents.server");
+  const { generateEvaluationData, generateEmployeeFinalizedPDF } = await import("./documents.server");
   const admin = await getAdmin();
 
   const { data: evaluation } = await admin
@@ -113,7 +113,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
 
   const subject = "Your Step 1 performance evaluation is finalized";
   const evaluationData = await generateEvaluationData(evaluationId);
-  const documentPdf = await generateEvaluationPDF(evaluationData);
+  const documentPdf = await generateEmployeeFinalizedPDF(evaluationData);
   const base64Pdf = Buffer.from(documentPdf).toString("base64");
   const html = `
     <p>Hello,</p>
@@ -174,7 +174,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
 
 export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string) {
   const { getAdmin } = await import("./server-core.server");
-  const { generateEvaluationData, generateEvaluationPDF } = await import("./documents.server");
+  const { generateEvaluationData, generateEmployeeFinalizedPDF } = await import("./documents.server");
   const admin = await getAdmin();
 
   const { data: evaluation } = await admin
@@ -255,7 +255,7 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
   try {
     // Generate the finalized evaluation document
     const evaluationData = await generateEvaluationData(evaluationId);
-    const documentPdf = await generateEvaluationPDF(evaluationData);
+    const documentPdf = await generateEmployeeFinalizedPDF(evaluationData);
     const base64Pdf = Buffer.from(documentPdf).toString("base64");
 
     const subject = "Your Performance Evaluation Has Been Finalized";
