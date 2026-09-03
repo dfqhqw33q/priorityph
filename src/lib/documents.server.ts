@@ -1,4 +1,5 @@
 import { getAdmin, validationError } from "./server-core.server";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 /**
  * Generate HTML string for the Performance Evaluation Sheet
@@ -603,6 +604,110 @@ async function convertSignatureToDataUrl(
     }
   }
   return undefined;
+}
+
+type EvaluationDocumentData = Parameters<typeof generateEvaluationHTML>[0];
+
+export async function generateEvaluationPDF(data: EvaluationDocumentData): Promise<Uint8Array> {
+  const document = await PDFDocument.create();
+  const regularFont = await document.embedFont(StandardFonts.Helvetica);
+  const boldFont = await document.embedFont(StandardFonts.HelveticaBold);
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const margin = 42;
+  const contentWidth = pageWidth - margin * 2;
+  const fontSize = 9;
+  const lineHeight = 13;
+  let page = document.addPage([pageWidth, pageHeight]);
+  let cursorY = pageHeight - margin;
+
+  const ascii = (value: unknown) => String(value ?? "").replace(/[^\x20-\x7E]/g, "-");
+  const wrap = (value: unknown, maxWidth: number, font = regularFont, size = fontSize) => {
+    const words = ascii(value).trim().split(/\s+/).filter(Boolean);
+    const lines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (font.widthOfTextAtSize(candidate, size) <= maxWidth) line = candidate;
+      else {
+        if (line) lines.push(line);
+        line = word;
+      }
+    }
+    if (line) lines.push(line);
+    return lines.length ? lines : ["-"];
+  };
+  const ensureSpace = (height: number) => {
+    if (cursorY - height < margin) {
+      page = document.addPage([pageWidth, pageHeight]);
+      cursorY = pageHeight - margin;
+    }
+  };
+  const text = (value: unknown, options: { bold?: boolean; size?: number; color?: ReturnType<typeof rgb> } = {}) => {
+    const font = options.bold ? boldFont : regularFont;
+    const size = options.size ?? fontSize;
+    const lines = wrap(value, contentWidth, font, size);
+    ensureSpace(lines.length * lineHeight);
+    for (const line of lines) {
+      page.drawText(line, { x: margin, y: cursorY, size, font, color: options.color ?? rgb(0.1, 0.1, 0.1) });
+      cursorY -= lineHeight;
+    }
+  };
+  const heading = (value: string) => {
+    ensureSpace(24);
+    cursorY -= 7;
+    text(value, { bold: true, size: 11 });
+    cursorY -= 3;
+  };
+  const field = (label: string, value: unknown) => text(`${label}: ${ascii(value) || "-"}`);
+
+  text(data.companyName, { bold: true, size: 12 });
+  text(data.companyAddress, { size: 8, color: rgb(0.35, 0.35, 0.35) });
+  cursorY -= 5;
+  text("PERFORMANCE EVALUATION SHEET", { bold: true, size: 15 });
+  text("For Non-Supervisory Staff", { bold: true, size: 11 });
+  cursorY -= 5;
+  field("Period Covered", `${data.periodFrom} to ${data.periodTo}`);
+  field("Name of Ratee", data.nameOfRatee);
+  field("Job Title", data.jobTitleOfRatee);
+  field("Division / Department", data.division);
+  field("Section / Unit", data.sectionUnit);
+  field("Name of Rater", `${data.nameOfRater} (${data.jobTitleOfRater})`);
+
+  heading("RATINGS");
+  for (const factor of data.factors) {
+    text(`${factor.letter}. ${factor.title}: ${factor.description}`);
+    text(`Employee: ${factor.employeeSelfRating || "-"}   Supervisor: ${factor.supervisorRating || "-"}   Reviewing Supervisor: ${factor.reviewingSupervisorRating || "-"}`);
+  }
+  heading("CONCLUSIONS AND COMMENTS");
+  for (const [label, value] of [
+    ["Overall Rating Explanation", data.overallRatingExplanation],
+    ["Principal Strengths", data.principalStrengths],
+    ["Principal Weakness", data.principalWeakness],
+    ["Effectiveness Recommendation", data.effectivenessRecommendation],
+    ["Development Potential", data.developmentPotential],
+    ["Advancement Outlook", data.advancementOutlook],
+    ["Growth Suggestions", data.growthSuggestions],
+    ["Transfer Interest", data.transferInterest],
+    ["Other Comments", data.otherComments],
+    ["Reviewing Supervisor Comments", data.stepThreeComments],
+    ["Reviewing Supervisor Recommendations", data.stepThreeRecommendations],
+  ] as const) field(label, value);
+  heading("PERSONNEL PROCESSING");
+  field("Present Salary", data.presentSalary);
+  field("Last Increase", `${data.lastIncreaseDate}; ${data.lastIncreaseNature}; ${data.lastIncreaseAmount}`);
+  field("Total Points", data.totalPoints);
+  field("Adjective Rating", data.adjectiveRating);
+  field("Recommended Increase / Bonus", data.recommendedIncreaseBonus);
+  field("Prepared By", `${data.preparedByName} (${data.preparedByTitle})`);
+  heading("COMMITTEE AND PRESIDENT APPROVAL");
+  field("Committee Recommendation", data.committeeRecommendation);
+  field("Final Action", `${data.finalAction}; ${data.finalActionDetails}`);
+  field("Committee", `${data.committeeName} (${data.committeeTitle})`);
+  field("Approved By", `${data.approvedByName} (${data.approvedByTitle})`);
+  field("Approval Date", data.approvedByDate);
+
+  return document.save();
 }
 
 /**
