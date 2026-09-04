@@ -8,18 +8,14 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   vite: {
-    ssr: {
-      noExternal: ["playwright-core", "@sparticuz/chromium"],
-    },
     build: {
       rolldownOptions: {
-        external: ["kerberos"],
+        external: ["playwright-core", "@sparticuz/chromium", "kerberos"],
       },
     },
   },
   nitro: ({
     preset: "vercel",
-    traceDeps: ["playwright-core*"],
   } as any),
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
