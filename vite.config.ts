@@ -9,11 +9,11 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   vite: {
     ssr: {
-      noExternal: ["playwright-core"],
+      noExternal: ["playwright-core", "@sparticuz/chromium"],
     },
     build: {
       rolldownOptions: {
-        external: ["@sparticuz/chromium", "kerberos"],
+        external: ["kerberos"],
       },
     },
   },
