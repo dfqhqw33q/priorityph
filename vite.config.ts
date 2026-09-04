@@ -14,9 +14,10 @@ export default defineConfig({
       },
     },
   },
-  nitro: {
+  nitro: ({
     preset: "vercel",
-  },
+    traceDeps: ["playwright-core*"],
+  } as any),
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
