@@ -1,5 +1,7 @@
 import { getAdmin, validationError } from "./server-core.server";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { chromium as playwrightChromium } from "playwright-core";
+import chromium from "@sparticuz/chromium";
 
 /**
  * Generate HTML string for the Performance Evaluation Sheet
@@ -616,11 +618,6 @@ export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): str
 }
 
 export async function generateEmployeeFinalizedBrowserPDF(data: EvaluationDocumentData): Promise<Uint8Array> {
-  const chromiumPackage = "@sparticuz/chromium";
-  const [{ chromium: playwrightChromium }, { default: chromium }] = await Promise.all([
-    import("playwright-core"),
-    import(chromiumPackage),
-  ]);
   const browser = await playwrightChromium.launch({
     args: chromium.args,
     executablePath: await chromium.executablePath(),
