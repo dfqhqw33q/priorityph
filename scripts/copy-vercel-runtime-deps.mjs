@@ -20,6 +20,9 @@ const packages = [
   "wrappy",
   "fs-constants",
   "streamx",
+  "events-universal",
+  "bare-events",
+  "text-decoder",
   "bare-fs",
   "bare-path",
 ];
