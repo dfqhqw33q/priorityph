@@ -21,6 +21,10 @@ const decisionSchema = requestSchema.extend({
   edited: z.boolean(),
 });
 const raterSuggestionSchema = requestSchema.extend({
+  supervisorRatings: z
+    .array(z.object({ criterionId: z.string().uuid(), rating: z.number().int().min(1).max(5) }))
+    .max(10)
+    .default([]),
   currentValues: z.object({
     strengths: z.string().max(4000),
     weaknesses: z.string().max(4000),
@@ -96,41 +100,73 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       .maybeSingle();
     if (priorAction) throw validationError("This AI action was already processed.");
 
+    const submittedRatings = new Map(
+      data.supervisorRatings.map((rating) => [rating.criterionId, rating.rating]),
+    );
+    const validCriterionIds = new Set(detail.criteria.map((criterion) => criterion.id));
+    if ([...submittedRatings.keys()].some((criterionId) => !validCriterionIds.has(criterionId)))
+      throw validationError("The submitted Supervisor ratings do not belong to this evaluation.");
+
     const factorRatings = detail.criteria.map((criterion) => ({
       letter: criterion.letter,
       title: criterion.title,
+      description: criterion.description,
       employeeRating:
         detail.ratings.find(
           (rating) => rating.criterion_id === criterion.id && rating.evaluator_type === "EMPLOYEE",
         )?.rating ?? null,
       supervisorRating:
+        submittedRatings.get(criterion.id) ??
         detail.ratings.find(
           (rating) =>
             rating.criterion_id === criterion.id && rating.evaluator_type === "SUPERVISOR",
-        )?.rating ?? null,
+        )?.rating ??
+        null,
     }));
+    const factorsWithDifferences = factorRatings.map((factor) => ({
+      ...factor,
+      employeeSupervisorDifference:
+        factor.employeeRating !== null && factor.supervisorRating !== null
+          ? factor.supervisorRating - factor.employeeRating
+          : null,
+    }));
+    const supervisorRatingsComplete = factorRatings.every(
+      (factor) => factor.supervisorRating !== null,
+    );
     const analysisContext = {
       cycle: `${detail.cycle_name} (${detail.cycle_year})`,
-      factors: factorRatings,
+      factors: factorsWithDifferences,
       existingFields: data.currentValues,
       purposes: {
-        strengths: "Evidence-supported strengths.",
-        weaknesses: "Supported areas needing improvement.",
-        effectiveness: "Development information explaining current-job needs.",
-        growthSuggestions: "Practical development actions and training directions.",
-        otherComments: "Development-oriented career considerations.",
+        strengths:
+          "Principal Strengths: summarize strengths primarily supported by the Supervisor's current ratings.",
+        weaknesses:
+          "Principal Weakness: identify supported areas needing improvement from lower Supervisor ratings, differences, and context.",
+        effectiveness:
+          "Present-job effectiveness: answer what the employee should do to be more effective in the present job with practical actions.",
+        growthSuggestions:
+          "Growth and development: suggest practical coaching, mentoring, job-specific training, guided practice, or targeted skill development.",
+        otherComments:
+          "Other comments and recommendations: provide concise Supervisor comments and career/development considerations only when supported by the evaluation.",
       },
+      supervisorRatingsComplete,
     };
     const { generateAiText, AiUnavailableError, stripJsonFence, getAiProviderName } =
       await import("./ai-provider.server");
     const prompt = [
       "You are an advisory assistant embedded in an annual performance evaluation.",
+      "You are assisting the Immediate Supervisor/Rater, not the Employee/Ratee.",
       "Return JSON with exactly these string keys: strengths, weaknesses, effectiveness, growthSuggestions, otherComments.",
       "Generate all five fields together from the same evidence and avoid repeating sentences or recommendations across fields.",
+      "The current Supervisor/Rater ratings are the primary current assessment. Use Employee/Ratee ratings only as comparison context.",
+      "When Supervisor ratings are present, never say that supervisor ratings are missing, unavailable, or not yet recorded.",
+      "Do not call the Supervisor assessment a self-assessment or self-rating. Do not write generic system disclaimers.",
+      "Interpret meaningful Employee-versus-Supervisor differences explicitly when relevant, without treating a difference alone as a confirmed competency gap.",
+      "If Supervisor ratings are incomplete, state only that the Supervisor assessment is incomplete and use available evidence; do not invent missing ratings.",
       "Use only the structured evidence below. Do not invent achievements, incidents, qualifications, or personal facts.",
       "Do not change ratings, assign scores, approve training, promotion, salary, or any HR decision.",
       `Evaluation context: ${JSON.stringify(analysisContext)}`,
-      "Keep each field concise and relevant to its purpose. Return only valid JSON, with no markdown fences.",
+      "Strengths must primarily reflect the Supervisor ratings. Weaknesses and development fields must use lower Supervisor ratings, meaningful rating differences, and the available evidence. Keep each field concise and directly answer its evaluation question. Return only valid JSON, with no markdown fences.",
     ].join("\n");
     let suggestion: string;
     try {
@@ -176,7 +212,7 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
     );
     return {
       suggestions,
-      evidence: { factors: factorRatings, cycle: analysisContext.cycle },
+      evidence: { factors: factorsWithDifferences, cycle: analysisContext.cycle },
       generatedAt,
       provider: getAiProviderName() === "openrouter" ? "openrouter" : "development-mock",
     };

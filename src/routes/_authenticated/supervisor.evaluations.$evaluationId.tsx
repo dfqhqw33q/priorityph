@@ -301,6 +301,9 @@ function SupervisorReviewPage() {
         data: {
           evaluationId,
           version: detail.version,
+          supervisorRatings: Object.entries(ratings)
+            .filter(([, rating]) => typeof rating === "number")
+            .map(([criterionId, rating]) => ({ criterionId, rating: rating as number })),
           currentValues: {
             strengths: step2.strengths ?? "",
             weaknesses: step2.weaknesses ?? "",
