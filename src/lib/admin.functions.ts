@@ -34,7 +34,9 @@ export const listUsers = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const { data: users } = await admin
       .from("internal_users")
-      .select("id, email, full_name, job_title, is_active, is_locked, must_change_password, last_login_at, created_at")
+      .select(
+        "id, email, full_name, job_title, is_active, is_locked, must_change_password, last_login_at, created_at",
+      )
       .order("created_at", { ascending: false });
     const { data: roles } = await admin.from("user_roles").select("user_id, role");
     return (users ?? []).map((user) => ({
@@ -47,8 +49,15 @@ export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => userFormSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError, safeMessage, randomPassword } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      safeMessage,
+      randomPassword,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "users.manage", "User Management");
     const admin = await getAdmin();
     try {
@@ -59,7 +68,8 @@ export const createUser = createServerFn({ method: "POST" })
         email_confirm: true,
         user_metadata: { full_name: data.fullName },
       });
-      if (error || !created.user) throw validationError(error?.message ?? "Could not create the account");
+      if (error || !created.user)
+        throw validationError(error?.message ?? "Could not create the account");
 
       const userId = created.user.id;
       const { error: profileError } = await admin.from("internal_users").insert({
@@ -92,9 +102,8 @@ export const updateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => userUpdateSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } = await import(
-      "./server-core.server"
-    );
+    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "users.manage", "User Management");
     const admin = await getAdmin();
     const { data: before } = await admin
@@ -124,8 +133,15 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => userAccessActionSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError, safeMessage, randomPassword } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      safeMessage,
+      randomPassword,
+    } = await import("./server-core.server");
     const permission: Permission =
       data.action === "RESET_PASSWORD" || data.action === "REQUIRE_PASSWORD_CHANGE"
         ? "users.reset_password"
@@ -136,7 +152,10 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
     const admin = await getAdmin();
 
     try {
-      let result: { ok: boolean; temporaryPassword: string | null } = { ok: true, temporaryPassword: null };
+      let result: { ok: boolean; temporaryPassword: string | null } = {
+        ok: true,
+        temporaryPassword: null,
+      };
       if (data.action === "ACTIVATE" || data.action === "DEACTIVATE") {
         const { error } = await admin
           .from("internal_users")
@@ -150,18 +169,25 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
           .eq("id", data.userId);
         if (error) throw validationError(error.message);
       } else if (data.action === "REQUIRE_PASSWORD_CHANGE") {
-        await admin.from("internal_users").update({ must_change_password: true }).eq("id", data.userId);
+        await admin
+          .from("internal_users")
+          .update({ must_change_password: true })
+          .eq("id", data.userId);
       } else if (data.action === "RESET_PASSWORD") {
         const tempPassword = randomPassword();
-        const { error } = await admin.auth.admin.updateUserById(data.userId, { password: tempPassword });
+        const { error } = await admin.auth.admin.updateUserById(data.userId, {
+          password: tempPassword,
+        });
         if (error) throw validationError(error.message);
-        await admin.from("internal_users").update({ must_change_password: true }).eq("id", data.userId);
+        await admin
+          .from("internal_users")
+          .update({ must_change_password: true })
+          .eq("id", data.userId);
         await admin.from("password_reset_events").insert({
           user_id: data.userId,
           event_type: "ADMIN_PASSWORD_RESET",
         });
         result = { ok: true, temporaryPassword: tempPassword };
-
       } else if (data.action === "REVOKE_SESSIONS") {
         await admin.auth.admin.signOut(data.userId, "global").catch(() => undefined);
       }
@@ -189,7 +215,10 @@ export const assignRoles = createServerFn({ method: "POST" })
       await import("./server-core.server");
     await requirePermission(context.userId, "users.assign_roles", "User Management");
     const admin = await getAdmin();
-    const { data: before } = await admin.from("user_roles").select("role").eq("user_id", data.userId);
+    const { data: before } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
     const current = (before ?? []).map((r) => r.role as AppRole);
     const removed = current.filter((role) => !data.roles.includes(role));
     const added = data.roles.filter((role) => !current.includes(role));
@@ -244,9 +273,8 @@ export const setRolePermissions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => rolePermissionsSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } = await import(
-      "./server-core.server"
-    );
+    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "permissions.manage", "Roles & Permissions");
     const admin = await getAdmin();
 
@@ -261,7 +289,12 @@ export const setRolePermissions = createServerFn({ method: "POST" })
     if (data.permissions.length > 0) {
       const { error } = await admin
         .from("role_permissions")
-        .insert(data.permissions.map((permission) => ({ role_code: data.role, permission_code: permission })));
+        .insert(
+          data.permissions.map((permission) => ({
+            role_code: data.role,
+            permission_code: permission,
+          })),
+        );
       if (error) throw validationError(error.message);
     }
     await writeAudit({
@@ -281,7 +314,12 @@ export const setRolePermissions = createServerFn({ method: "POST" })
 export const listAuditLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ search: z.string().max(120).default(""), limit: z.number().int().min(1).max(500).default(200) }).parse(input),
+    z
+      .object({
+        search: z.string().max(120).default(""),
+        limit: z.number().int().min(1).max(500).default(200),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission } = await import("./server-core.server");
@@ -306,10 +344,7 @@ export const listEmployees = createServerFn({ method: "GET" })
     const { getAdmin, requirePermission } = await import("./server-core.server");
     await requirePermission(context.userId, "employees.view", "Employees");
     const admin = await getAdmin();
-    const { data } = await admin
-      .from("employees")
-      .select("*")
-      .order("employee_number");
+    const { data } = await admin.from("employees").select("*").order("employee_number");
     return data ?? [];
   });
 
@@ -317,9 +352,8 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => employeeProfileSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } = await import(
-      "./server-core.server"
-    );
+    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "employees.manage", "Employee Profiles");
     const admin = await getAdmin();
     const fullName = [data.firstName, data.middleName, data.lastName].filter(Boolean).join(" ");
@@ -338,7 +372,8 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error || !employee) {
-      if (error?.code === "23505") throw validationError("An employee profile with that number already exists");
+      if (error?.code === "23505")
+        throw validationError("An employee profile with that number already exists");
       throw validationError(error?.message ?? "Could not create employee profile");
     }
     await writeAudit({
@@ -349,34 +384,52 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
       entityType: "employee",
       entityId: employee.id,
       employeeId: employee.id,
-      newValue: { employee_number: data.employeeNumber, first_name: data.firstName, middle_name: data.middleName, last_name: data.lastName },
+      newValue: {
+        employee_number: data.employeeNumber,
+        first_name: data.firstName,
+        middle_name: data.middleName,
+        last_name: data.lastName,
+      },
     });
     return { employeeId: employee.id };
   });
 
 export const updateEmployeeProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => employeeProfileSchema.extend({ employeeId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) =>
+    employeeProfileSchema.extend({ employeeId: z.string().uuid() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } = await import(
-      "./server-core.server"
-    );
+    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "employees.manage", "Employee Profiles");
     const admin = await getAdmin();
-    const { data: previous } = await admin.from("employees").select("*").eq("id", data.employeeId).maybeSingle();
+    const { data: previous } = await admin
+      .from("employees")
+      .select("*")
+      .eq("id", data.employeeId)
+      .maybeSingle();
     if (!previous) throw validationError("Employee profile not found");
     const fullName = [data.firstName, data.middleName, data.lastName].filter(Boolean).join(" ");
-    const { error } = await admin.from("employees").update({
-      employee_number: data.employeeNumber,
-      full_name: fullName,
-      first_name: data.firstName,
-      middle_name: data.middleName,
-      last_name: data.lastName,
-      job_title: data.jobTitle,
-      division: data.division,
-      section: data.section,
-    } as never).eq("id", data.employeeId);
-    if (error) throw validationError(error.code === "23505" ? "An employee profile with that number already exists" : error.message);
+    const { error } = await admin
+      .from("employees")
+      .update({
+        employee_number: data.employeeNumber,
+        full_name: fullName,
+        first_name: data.firstName,
+        middle_name: data.middleName,
+        last_name: data.lastName,
+        job_title: data.jobTitle,
+        division: data.division,
+        section: data.section,
+      } as never)
+      .eq("id", data.employeeId);
+    if (error)
+      throw validationError(
+        error.code === "23505"
+          ? "An employee profile with that number already exists"
+          : error.message,
+      );
     await writeAudit({
       actorUserId: context.userId,
       actorRole: (await getActorRoles(context.userId)).join(","),
@@ -386,7 +439,12 @@ export const updateEmployeeProfile = createServerFn({ method: "POST" })
       entityId: data.employeeId,
       employeeId: data.employeeId,
       previousValue: previous,
-      newValue: { employee_number: data.employeeNumber, first_name: data.firstName, middle_name: data.middleName, last_name: data.lastName },
+      newValue: {
+        employee_number: data.employeeNumber,
+        first_name: data.firstName,
+        middle_name: data.middleName,
+        last_name: data.lastName,
+      },
     });
     return { employeeId: data.employeeId };
   });
@@ -394,9 +452,8 @@ export const updateEmployeeProfile = createServerFn({ method: "POST" })
 export const getAdminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { requirePermission, adminStats, recentActivity, recentSecurityEvents } = await import(
-      "./server-core.server"
-    );
+    const { requirePermission, adminStats, recentActivity, recentSecurityEvents } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "users.view", "Administration");
     const [stats, activity, security] = await Promise.all([
       adminStats(),
@@ -411,9 +468,8 @@ export const listAuditEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => auditFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles } = await import(
-      "./server-core.server"
-    );
+    const { getAdmin, requirePermission, writeAudit, getActorRoles } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "audit.view", "Audit Logs");
     const admin = await getAdmin();
 
@@ -460,7 +516,7 @@ export const getEmployeeRecord = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ employeeId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission } = await import("./server-core.server");
-    await requirePermission(context.userId, "employees.view", "Employees");
+    await requirePermission(context.userId, "evaluations.view_201", "Digital 201 File");
     const admin = await getAdmin();
     const { data: employee } = await admin
       .from("employees")
@@ -479,15 +535,15 @@ export const getEmployeeRecord = createServerFn({ method: "GET" })
       employee,
       history: (history ?? []).map((row) => {
         const record = row as unknown as Record<string, unknown>;
-        const cycle = record['evaluation_cycles'] as { name: string; year: number } | null;
+        const cycle = record["evaluation_cycles"] as { name: string; year: number } | null;
         return {
-          id: String(record['id']),
-          status: String(record['status']),
-          employee_submitted_at: (record['employee_submitted_at'] as string | null) ?? null,
-          supervisor_submitted_at: (record['supervisor_submitted_at'] as string | null) ?? null,
-          job_title_snapshot: String(record['job_title_snapshot'] ?? ""),
-          division_snapshot: String(record['division_snapshot'] ?? ""),
-          section_snapshot: String(record['section_snapshot'] ?? ""),
+          id: String(record["id"]),
+          status: String(record["status"]),
+          employee_submitted_at: (record["employee_submitted_at"] as string | null) ?? null,
+          supervisor_submitted_at: (record["supervisor_submitted_at"] as string | null) ?? null,
+          job_title_snapshot: String(record["job_title_snapshot"] ?? ""),
+          division_snapshot: String(record["division_snapshot"] ?? ""),
+          section_snapshot: String(record["section_snapshot"] ?? ""),
           cycle_name: cycle?.name ?? "",
           cycle_year: cycle?.year ?? 0,
         };

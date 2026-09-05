@@ -27,6 +27,7 @@ import { Route as AuthenticatedAdminRolesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedCommitteeIndexRouteImport } from './routes/_authenticated/committee.index'
 import { Route as AuthenticatedHrIndexRouteImport } from './routes/_authenticated/hr.index'
+import { Route as AuthenticatedHrEmployeesRouteImport } from './routes/_authenticated/hr.employees'
 import { Route as AuthenticatedPersonnelIndexRouteImport } from './routes/_authenticated/personnel.index'
 import { Route as AuthenticatedPresidentIndexRouteImport } from './routes/_authenticated/president.index'
 import { Route as AuthenticatedPresidentEmployeesRouteImport } from './routes/_authenticated/president.employees'
@@ -139,6 +140,12 @@ const AuthenticatedHrIndexRoute = AuthenticatedHrIndexRouteImport.update({
   path: '/hr/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHrEmployeesRoute =
+  AuthenticatedHrEmployeesRouteImport.update({
+    id: '/hr/employees',
+    path: '/hr/employees',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPersonnelIndexRoute =
   AuthenticatedPersonnelIndexRouteImport.update({
     id: '/personnel/',
@@ -257,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/hr/employees': typeof AuthenticatedHrEmployeesRoute
   '/president/employees': typeof AuthenticatedPresidentEmployeesRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/committee/': typeof AuthenticatedCommitteeIndexRoute
@@ -293,6 +301,7 @@ export interface FileRoutesByTo {
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/hr/employees': typeof AuthenticatedHrEmployeesRoute
   '/president/employees': typeof AuthenticatedPresidentEmployeesRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/committee': typeof AuthenticatedCommitteeIndexRoute
@@ -331,6 +340,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/_authenticated/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/hr/employees': typeof AuthenticatedHrEmployeesRoute
   '/_authenticated/president/employees': typeof AuthenticatedPresidentEmployeesRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/committee/': typeof AuthenticatedCommitteeIndexRoute
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/admin/employees'
     | '/admin/roles'
     | '/admin/users'
+    | '/hr/employees'
     | '/president/employees'
     | '/admin/'
     | '/committee/'
@@ -405,6 +416,7 @@ export interface FileRouteTypes {
     | '/admin/employees'
     | '/admin/roles'
     | '/admin/users'
+    | '/hr/employees'
     | '/president/employees'
     | '/admin'
     | '/committee'
@@ -442,6 +454,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/employees'
     | '/_authenticated/admin/roles'
     | '/_authenticated/admin/users'
+    | '/_authenticated/hr/employees'
     | '/_authenticated/president/employees'
     | '/_authenticated/admin/'
     | '/_authenticated/committee/'
@@ -604,6 +617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHrIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/hr/employees': {
+      id: '/_authenticated/hr/employees'
+      path: '/hr/employees'
+      fullPath: '/hr/employees'
+      preLoaderRoute: typeof AuthenticatedHrEmployeesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/personnel/': {
       id: '/_authenticated/personnel/'
       path: '/personnel'
@@ -733,6 +753,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminEmployeesRoute: typeof AuthenticatedAdminEmployeesRoute
   AuthenticatedAdminRolesRoute: typeof AuthenticatedAdminRolesRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedHrEmployeesRoute: typeof AuthenticatedHrEmployeesRoute
   AuthenticatedPresidentEmployeesRoute: typeof AuthenticatedPresidentEmployeesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedCommitteeIndexRoute: typeof AuthenticatedCommitteeIndexRoute
@@ -763,6 +784,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminEmployeesRoute: AuthenticatedAdminEmployeesRoute,
   AuthenticatedAdminRolesRoute: AuthenticatedAdminRolesRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedHrEmployeesRoute: AuthenticatedHrEmployeesRoute,
   AuthenticatedPresidentEmployeesRoute: AuthenticatedPresidentEmployeesRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedCommitteeIndexRoute: AuthenticatedCommitteeIndexRoute,
