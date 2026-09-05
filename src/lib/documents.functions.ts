@@ -69,7 +69,7 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
       console.log(`[getEvaluationSheetHtml] Starting for evaluation: ${data.evaluationId}`);
       
       // Check both permissions to allow access at different workflow stages
-      await requirePermissionAny(context.userId, ["evaluations.view_history", "president.view", "evaluations.review_step3"], "Evaluation Sheet");
+      await requirePermissionAny(context.userId, ["evaluations.view_201", "president.view", "evaluations.review_step3"], "Evaluation Sheet");
       console.log(`[getEvaluationSheetHtml] Permissions check passed`);
 
       const admin = await getAdmin();
@@ -137,7 +137,7 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
 
     await requirePermissionAny(
       context.userId,
-      ["evaluations.view_history", "president.view", "evaluations.review_step3"],
+      ["evaluations.view_201", "president.view", "evaluations.review_step3"],
       "Final evaluation document",
     );
 

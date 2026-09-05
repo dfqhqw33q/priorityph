@@ -34,7 +34,13 @@ import { APP_NAME, ROLE_LABELS, type AppRole, type Permission } from "@/lib/doma
 import { useAccess } from "@/hooks/use-access";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: typeof Gauge; permission?: Permission; roles?: AppRole[] };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof Gauge;
+  permission?: Permission;
+  roles?: AppRole[];
+};
 
 const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permission }> = [
   { prefix: "/admin/users", roles: ["ADMINISTRATOR"], permission: "users.view" },
@@ -42,19 +48,29 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
   { prefix: "/admin/employees", roles: ["ADMINISTRATOR"], permission: "employees.view" },
   { prefix: "/admin/audit-logs", roles: ["ADMINISTRATOR"], permission: "audit.view" },
   { prefix: "/admin", roles: ["ADMINISTRATOR"], permission: "users.view" },
-  { prefix: "/president/employees", roles: ["PRESIDENT"], permission: "employees.view" },
-  { prefix: "/hr/evaluation-history", roles: ["HR", "SUPERVISOR"], permission: "evaluations.view_history" },
+  { prefix: "/president/employees", roles: ["PRESIDENT"], permission: "evaluations.view_201" },
+  { prefix: "/hr/employees", roles: ["HR"], permission: "evaluations.view_201" },
+  {
+    prefix: "/hr/evaluation-history",
+    roles: ["HR", "PRESIDENT"],
+    permission: "evaluations.view_201",
+  },
   { prefix: "/hr", roles: ["HR"], permission: "cycles.view" },
   { prefix: "/supervisor", roles: ["SUPERVISOR"], permission: "evaluations.view_step1" },
   { prefix: "/president", roles: ["PRESIDENT"], permission: "president.view" },
-  { prefix: "/reviewing-supervisor", roles: ["REVIEWING_SUPERVISOR"], permission: "evaluations.review_step3" },
+  {
+    prefix: "/reviewing-supervisor",
+    roles: ["REVIEWING_SUPERVISOR"],
+    permission: "evaluations.review_step3",
+  },
   { prefix: "/personnel", roles: ["HR"], permission: "personnel.process" },
   { prefix: "/committee", roles: ["COMMITTEE"], permission: "committee.review" },
 ];
 
 function routeAccess(pathname: string) {
   return (
-    ROUTE_ACCESS.find(({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ?? null
+    ROUTE_ACCESS.find(({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ??
+    null
   );
 }
 
@@ -68,15 +84,40 @@ const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: "HR / Personnel",
     items: [
-      { to: "/hr/cycles", label: "Evaluation cycles", icon: CalendarRange, permission: "cycles.view", roles: ["HR"] },
-      { to: "/hr/evaluation-history", label: "Evaluation history", icon: FileClock, permission: "evaluations.view_history", roles: ["HR"] },
+      {
+        to: "/hr/cycles",
+        label: "Evaluation cycles",
+        icon: CalendarRange,
+        permission: "cycles.view",
+        roles: ["HR"],
+      },
+      {
+        to: "/hr/evaluation-history",
+        label: "Evaluation history",
+        icon: FileClock,
+        permission: "evaluations.view_201",
+        roles: ["HR"],
+      },
+      {
+        to: "/hr/employees",
+        label: "Digital 201 files",
+        icon: Users,
+        permission: "evaluations.view_201",
+        roles: ["HR"],
+      },
     ],
   },
 
   {
     group: "Supervisor",
     items: [
-      { to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1", roles: ["SUPERVISOR"] },
+      {
+        to: "/supervisor",
+        label: "Dashboard",
+        icon: Gauge,
+        permission: "evaluations.view_step1",
+        roles: ["SUPERVISOR"],
+      },
       {
         to: "/supervisor/evaluations",
         label: "Evaluations to review",
@@ -84,39 +125,115 @@ const NAV: { group: string; items: NavItem[] }[] = [
         permission: "evaluations.view_step1",
         roles: ["SUPERVISOR"],
       },
-      { to: "/hr/evaluation-history", label: "Evaluation history", icon: FileClock, permission: "evaluations.view_history", roles: ["SUPERVISOR"] },
     ],
   },
   {
     group: "President",
     items: [
-      { to: "/president", label: "Dashboard", icon: Gauge, permission: "president.view", roles: ["PRESIDENT"] },
-      { to: "/president/evaluations", label: "Evaluations to review", icon: BadgeCheck, permission: "president.view", roles: ["PRESIDENT"] },
-      { to: "/president/employees", label: "Employee records", icon: Users, permission: "employees.view", roles: ["PRESIDENT"] },
+      {
+        to: "/president",
+        label: "Dashboard",
+        icon: Gauge,
+        permission: "president.view",
+        roles: ["PRESIDENT"],
+      },
+      {
+        to: "/president/evaluations",
+        label: "Evaluations to review",
+        icon: BadgeCheck,
+        permission: "president.view",
+        roles: ["PRESIDENT"],
+      },
+      {
+        to: "/president/employees",
+        label: "Digital 201 files",
+        icon: Users,
+        permission: "evaluations.view_201",
+        roles: ["PRESIDENT"],
+      },
     ],
-
   },
   {
     group: "Reviewing Supervisor / Division Head",
-    items: [{ to: "/reviewing-supervisor", label: "Evaluations for review", icon: BadgeCheck, permission: "evaluations.review_step3", roles: ["REVIEWING_SUPERVISOR"] }],
+    items: [
+      {
+        to: "/reviewing-supervisor",
+        label: "Evaluations for review",
+        icon: BadgeCheck,
+        permission: "evaluations.review_step3",
+        roles: ["REVIEWING_SUPERVISOR"],
+      },
+    ],
   },
   {
     group: "Personnel Office",
-    items: [{ to: "/personnel", label: "Personnel processing", icon: ClipboardList, permission: "personnel.process", roles: ["HR"] }],
+    items: [
+      {
+        to: "/personnel",
+        label: "Personnel processing",
+        icon: ClipboardList,
+        permission: "personnel.process",
+        roles: ["HR"],
+      },
+    ],
   },
   {
     group: "Performance Evaluation Committee",
-    items: [{ to: "/committee", label: "Evaluations for review", icon: BadgeCheck, permission: "committee.review", roles: ["COMMITTEE"] }],
+    items: [
+      {
+        to: "/committee",
+        label: "Evaluations for review",
+        icon: BadgeCheck,
+        permission: "committee.review",
+        roles: ["COMMITTEE"],
+      },
+    ],
   },
   {
     group: "Administration",
     items: [
-      { to: "/admin", label: "Overview", icon: Shield, permission: "users.view", roles: ["ADMINISTRATOR"] },
-      { to: "/admin/users", label: "User accounts", icon: Users, permission: "users.view", roles: ["ADMINISTRATOR"] },
-      { to: "/admin/roles", label: "Roles & permissions", icon: UserCog, permission: "roles.manage", roles: ["ADMINISTRATOR"] },
-      { to: "/admin/employees", label: "Employee records", icon: Users, permission: "employees.view", roles: ["ADMINISTRATOR"] },
-      { to: "/admin/employee-profiles", label: "Employee profiles", icon: UserCog, permission: "employees.manage", roles: ["ADMINISTRATOR"] },
-      { to: "/admin/audit-logs", label: "Audit logs", icon: FileClock, permission: "audit.view", roles: ["ADMINISTRATOR"] },
+      {
+        to: "/admin",
+        label: "Overview",
+        icon: Shield,
+        permission: "users.view",
+        roles: ["ADMINISTRATOR"],
+      },
+      {
+        to: "/admin/users",
+        label: "User accounts",
+        icon: Users,
+        permission: "users.view",
+        roles: ["ADMINISTRATOR"],
+      },
+      {
+        to: "/admin/roles",
+        label: "Roles & permissions",
+        icon: UserCog,
+        permission: "roles.manage",
+        roles: ["ADMINISTRATOR"],
+      },
+      {
+        to: "/admin/employees",
+        label: "Employee records",
+        icon: Users,
+        permission: "employees.view",
+        roles: ["ADMINISTRATOR"],
+      },
+      {
+        to: "/admin/employee-profiles",
+        label: "Employee profiles",
+        icon: UserCog,
+        permission: "employees.manage",
+        roles: ["ADMINISTRATOR"],
+      },
+      {
+        to: "/admin/audit-logs",
+        label: "Audit logs",
+        icon: FileClock,
+        permission: "audit.view",
+        roles: ["ADMINISTRATOR"],
+      },
     ],
   },
 ];
@@ -156,7 +273,12 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                         : "border-transparent text-foreground hover:border-border hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <Icon className={cn("size-4 shrink-0", active ? "text-primary-foreground" : "text-muted-foreground")} />
+                    <Icon
+                      className={cn(
+                        "size-4 shrink-0",
+                        active ? "text-primary-foreground" : "text-muted-foreground",
+                      )}
+                    />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -185,7 +307,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       access.isLocked ||
       (accessRule !== null &&
         (!accessRule.roles.some((role) => access.roles.includes(role)) ||
-          (accessRule.permission !== undefined && !access.permissions.includes(accessRule.permission)))));
+          (accessRule.permission !== undefined &&
+            !access.permissions.includes(accessRule.permission)))));
 
   useEffect(() => {
     if (accessDenied) navigate({ to: "/unauthorized", replace: true });
@@ -228,12 +351,22 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  aria-label="Open navigation"
+                >
                   <Menu className="size-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 overflow-y-auto p-4 border-r border-border bg-background">
-                <SheetTitle className="mb-4 text-base font-bold text-foreground">{APP_NAME}</SheetTitle>
+              <SheetContent
+                side="left"
+                className="w-72 overflow-y-auto p-4 border-r border-border bg-background"
+              >
+                <SheetTitle className="mb-4 text-base font-bold text-foreground">
+                  {APP_NAME}
+                </SheetTitle>
                 <NavLinks onNavigate={() => setOpen(false)} />
               </SheetContent>
             </Sheet>
@@ -250,7 +383,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               <ThemeToggle />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="rounded-full" aria-label="Open profile menu">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full"
+                    aria-label="Open profile menu"
+                  >
                     <Avatar className="size-8">
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         <User className="size-4" />
@@ -262,7 +400,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <DropdownMenuLabel>
                     <p className="font-semibold text-foreground">{access?.fullName}</p>
                     <p className="font-normal text-muted-foreground">
-                      {(access?.roles ?? []).map((role) => ROLE_LABELS[role]).join(" \u00b7 ") || "No role assigned"}
+                      {(access?.roles ?? []).map((role) => ROLE_LABELS[role]).join(" \u00b7 ") ||
+                        "No role assigned"}
                     </p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -276,7 +415,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 space-y-6 px-4 py-6 sm:px-6">{children}</main>
+        <main className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 space-y-6 px-4 py-6 sm:px-6">
+          {children}
+        </main>
       </div>
     </div>
   );

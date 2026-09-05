@@ -2,7 +2,14 @@
 
 export const APP_NAME = "Priority Handling Logistics, Inc.";
 
-export const APP_ROLES = ["ADMINISTRATOR", "PRESIDENT", "HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE"] as const;
+export const APP_ROLES = [
+  "ADMINISTRATOR",
+  "PRESIDENT",
+  "HR",
+  "SUPERVISOR",
+  "REVIEWING_SUPERVISOR",
+  "COMMITTEE",
+] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
 export const ROLE_LABELS: Record<AppRole, string> = {
@@ -38,6 +45,7 @@ export const PERMISSIONS = [
   "evaluations.submit_president",
   "evaluations.reopen_supervisor",
   "evaluations.view_history",
+  "evaluations.view_201",
   "president.view",
   "president.step2",
   "president.step3",
@@ -78,6 +86,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "evaluations.submit_president": "Submit To Reviewing Supervisor",
   "evaluations.reopen_supervisor": "Reopen Supervisor Review",
   "evaluations.view_history": "View Evaluation History",
+  "evaluations.view_201": "View Digital 201 Files",
   "president.view": "View President Review",
   "president.step2": "Complete Step 2",
   "president.step3": "Complete Step 3",
@@ -111,7 +120,6 @@ export function humanizeToken(value: string | null | undefined): string {
   if (!value) return "—";
   return value.replace(/_/g, " ").trim();
 }
-
 
 export const CYCLE_STATUSES = ["DRAFT", "ACTIVE", "CLOSED", "DISABLED"] as const;
 export type CycleStatus = (typeof CYCLE_STATUSES)[number];
@@ -148,7 +156,12 @@ export const CANONICAL_STAGE_TRANSITIONS: Partial<Record<EvaluationStatus, Evalu
   PERSONNEL_PROCESSING: ["COMMITTEE_REVIEW"],
   COMMITTEE_REVIEW: ["PRESIDENT_APPROVAL"],
   PRESIDENT_APPROVAL: ["FINALIZED", "RETURNED_FOR_CORRECTION"],
-  RETURNED_FOR_CORRECTION: ["SUPERVISOR_DRAFT", "REVIEWING_SUPERVISOR_REVIEW", "PERSONNEL_PROCESSING", "COMMITTEE_REVIEW"],
+  RETURNED_FOR_CORRECTION: [
+    "SUPERVISOR_DRAFT",
+    "REVIEWING_SUPERVISOR_REVIEW",
+    "PERSONNEL_PROCESSING",
+    "COMMITTEE_REVIEW",
+  ],
   FINALIZED: [],
 };
 
