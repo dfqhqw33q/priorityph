@@ -41,6 +41,24 @@ const raterActionSchema = requestSchema.extend({
   actionId: z.string().uuid(),
   edited: z.boolean().default(false),
 });
+const reviewingSuggestionSchema = requestSchema.extend({
+  reviewingRatings: z
+    .array(z.object({ criterionId: z.string().uuid(), rating: z.number().int().min(1).max(5) }))
+    .max(10)
+    .default([]),
+  currentValues: z.object({
+    comments: z.string().max(4000),
+    recommendations: z.string().max(4000),
+  }),
+  actionId: z.string().uuid(),
+  regenerate: z.boolean().default(false),
+});
+const reviewingActionSchema = requestSchema.extend({
+  field: z.enum(["comments", "recommendations"]),
+  action: z.enum(["ACCEPTED", "DISMISSED"]),
+  actionId: z.string().uuid(),
+  edited: z.boolean().default(false),
+});
 
 export type EvaluationAiAnalysis = {
   performanceSummary: string;
@@ -257,6 +275,203 @@ export const recordRaterAiAction = createServerFn({ method: "POST" })
             ? "AI_RATER_SUGGESTION_ACCEPTED"
             : "AI_RATER_SUGGESTION_DISCARDED",
         module: "Rater Step 2",
+        entityType: "evaluation",
+        entityId: data.evaluationId,
+        evaluationId: data.evaluationId,
+        newValue: { field: data.field, edited: data.edited },
+      },
+      { ip: null, userAgent: null, correlationId: data.actionId },
+    );
+    return { ok: true, duplicate: false };
+  });
+
+export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => reviewingSuggestionSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      loadEvaluationDetail,
+    } = await import("./server-core.server");
+    await requirePermission(context.userId, "evaluations.review_step3", "Reviewing Supervisor");
+    const detail = await loadEvaluationDetail(data.evaluationId);
+    if (!detail) throw validationError("Evaluation not found");
+    if (detail.is_finalized || detail.version !== data.version)
+      throw validationError("This evaluation changed or is no longer editable.");
+    if (!["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW"].includes(detail.status))
+      throw validationError("This evaluation is not available for Reviewing Supervisor review.");
+    const admin = await getAdmin();
+    const { data: review } = await admin
+      .from("reviewing_supervisor_reviews")
+      .select("reviewer_user_id")
+      .eq("evaluation_id", data.evaluationId)
+      .maybeSingle();
+    if (review?.reviewer_user_id && review.reviewer_user_id !== context.userId)
+      throw validationError("This evaluation is assigned to another Reviewing Supervisor.");
+    const { data: priorAction } = await admin
+      .from("audit_logs")
+      .select("id")
+      .eq("correlation_id", data.actionId)
+      .maybeSingle();
+    if (priorAction) throw validationError("This AI action was already processed.");
+    const submittedRatings = new Map(
+      data.reviewingRatings.map((rating) => [rating.criterionId, rating.rating]),
+    );
+    const validCriterionIds = new Set(detail.criteria.map((criterion) => criterion.id));
+    if ([...submittedRatings.keys()].some((criterionId) => !validCriterionIds.has(criterionId)))
+      throw validationError(
+        "The submitted Reviewing Supervisor ratings do not belong to this evaluation.",
+      );
+    const factors = detail.criteria.map((criterion) => {
+      const employee =
+        detail.ratings.find(
+          (rating) => rating.criterion_id === criterion.id && rating.evaluator_type === "EMPLOYEE",
+        )?.rating ?? null;
+      const supervisor =
+        detail.ratings.find(
+          (rating) =>
+            rating.criterion_id === criterion.id && rating.evaluator_type === "SUPERVISOR",
+        )?.rating ?? null;
+      const reviewing =
+        submittedRatings.get(criterion.id) ??
+        detail.ratings.find(
+          (rating) =>
+            rating.criterion_id === criterion.id &&
+            rating.evaluator_type === "REVIEWING_SUPERVISOR",
+        )?.rating ??
+        null;
+      return {
+        letter: criterion.letter,
+        title: criterion.title,
+        description: criterion.description,
+        employeeRating: employee,
+        supervisorRating: supervisor,
+        reviewingSupervisorRating: reviewing,
+        supervisorDifference:
+          employee !== null && supervisor !== null ? supervisor - employee : null,
+        reviewingDifference:
+          supervisor !== null && reviewing !== null ? reviewing - supervisor : null,
+      };
+    });
+    const accumulated =
+      (detail as typeof detail & { accumulatedStages?: unknown }).accumulatedStages ?? null;
+    const analysisContext = {
+      cycle: `${detail.cycle_name} (${detail.cycle_year})`,
+      factors,
+      currentReviewFields: data.currentValues,
+      immediateSupervisorContext: {
+        remarks: detail.supervisor_remarks ?? "",
+        overallExplanation: detail.supervisor_step2_overall_explanation ?? "",
+        strengths: detail.supervisor_step2_strengths ?? "",
+        weaknesses: detail.supervisor_step2_weaknesses ?? "",
+        effectiveness: detail.supervisor_step2_effectiveness ?? "",
+        developmentPotential: detail.supervisor_step2_development_potential ?? "",
+        advancementOutlook: detail.supervisor_step2_advancement_outlook ?? "",
+        growthSuggestions: detail.supervisor_step2_growth_suggestions ?? "",
+        transferInterest: detail.supervisor_step2_transfer_interest ?? "",
+        otherComments: detail.supervisor_step2_other_comments ?? "",
+      },
+      accumulatedEvaluationContext: accumulated,
+    };
+    const { generateAiText, AiUnavailableError, stripJsonFence, getAiProviderName } =
+      await import("./ai-provider.server");
+    const prompt = [
+      "You are assisting the Reviewing Supervisor / Division Head in completing the existing Step 3 review fields.",
+      "Return JSON with exactly these string keys: comments, recommendations.",
+      "The current Reviewing Supervisor ratings are the primary current assessment. Employee and Immediate Supervisor ratings are comparison context.",
+      "Use the existing factor descriptions and accumulated evaluation context. Do not copy or rewrite the Immediate Supervisor's Step 2 comments.",
+      "Treat rating differences as analytical indicators, not proof of incidents or specific behavior. Make specific behavioral claims only when supported by evaluation evidence.",
+      "Answer the actual review fields directly. Do not infer career ambitions, qualifications, promotion readiness, salary decisions, training approval, or missing values.",
+      "Do not use self-assessment language or say that Reviewing Supervisor ratings are missing when they are present.",
+      `Evaluation context: ${JSON.stringify(analysisContext)}`,
+      "Return only valid JSON without markdown or system disclaimers.",
+    ].join("\n");
+    let parsed: Record<string, unknown>;
+    try {
+      const text = stripJsonFence(await generateAiText(prompt, { json: true }));
+      parsed = JSON.parse(text) as Record<string, unknown>;
+    } catch (error) {
+      throw validationError(
+        error instanceof AiUnavailableError
+          ? error.message
+          : "AI assistance is unavailable. You can complete these fields manually.",
+      );
+    }
+    if (typeof parsed.comments !== "string" || typeof parsed.recommendations !== "string")
+      throw validationError("AI returned invalid Reviewing Supervisor suggestions.");
+    const generatedAt = new Date().toISOString();
+    await writeAudit(
+      {
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
+        action: data.regenerate
+          ? "AI_REVIEWING_SUGGESTION_REGENERATED"
+          : "AI_REVIEWING_SUGGESTION_GENERATED",
+        module: "Reviewing Supervisor",
+        entityType: "evaluation",
+        entityId: data.evaluationId,
+        evaluationId: data.evaluationId,
+        newValue: { fields: ["comments", "recommendations"], generatedAt },
+      },
+      { ip: null, userAgent: null, correlationId: data.actionId },
+    );
+    return {
+      suggestions: {
+        comments: parsed.comments.toString().slice(0, 4000),
+        recommendations: parsed.recommendations.toString().slice(0, 4000),
+      },
+      provider: getAiProviderName() === "openrouter" ? "openrouter" : "development-mock",
+      generatedAt,
+    };
+  });
+
+export const recordReviewingSupervisorAiAction = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => reviewingActionSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      loadEvaluationDetail,
+    } = await import("./server-core.server");
+    await requirePermission(context.userId, "evaluations.review_step3", "Reviewing Supervisor");
+    const detail = await loadEvaluationDetail(data.evaluationId);
+    if (!detail || detail.is_finalized || detail.version !== data.version)
+      throw validationError("This evaluation is no longer editable.");
+    const admin = await getAdmin();
+    const { data: review } = await admin
+      .from("reviewing_supervisor_reviews")
+      .select("reviewer_user_id")
+      .eq("evaluation_id", data.evaluationId)
+      .maybeSingle();
+    if (review?.reviewer_user_id && review.reviewer_user_id !== context.userId)
+      throw validationError("This evaluation is assigned to another Reviewing Supervisor.");
+    if (
+      (
+        await admin
+          .from("audit_logs")
+          .select("id")
+          .eq("correlation_id", data.actionId)
+          .maybeSingle()
+      ).data
+    )
+      return { ok: true, duplicate: true };
+    await writeAudit(
+      {
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
+        action:
+          data.action === "ACCEPTED"
+            ? "AI_REVIEWING_SUGGESTION_ACCEPTED"
+            : "AI_REVIEWING_SUGGESTION_DISCARDED",
+        module: "Reviewing Supervisor",
         entityType: "evaluation",
         entityId: data.evaluationId,
         evaluationId: data.evaluationId,

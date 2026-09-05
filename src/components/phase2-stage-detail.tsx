@@ -42,6 +42,10 @@ import {
 } from "@/lib/phase2.functions";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
 import { userErrorMessage } from "@/lib/validation";
+import {
+  recordReviewingSupervisorAiAction,
+  suggestReviewingSupervisorFields,
+} from "@/lib/ai.functions";
 
 type Stage = "RATER" | "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE" | "PRESIDENT";
 
@@ -54,11 +58,89 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ReviewAiField({
+  label,
+  field,
+  value,
+  suggestion,
+  editing,
+  editable,
+  onChange,
+  onSuggestionChange,
+  onToggleEdit,
+  onUse,
+  onDiscard,
+}: {
+  label: string;
+  field: string;
+  value: string;
+  suggestion?: { suggestion: string; provider: "openrouter" | "development-mock" };
+  editing: boolean;
+  editable: boolean;
+  onChange: (value: string) => void;
+  onSuggestionChange: (value: string) => void;
+  onToggleEdit: () => void;
+  onUse: () => void;
+  onDiscard: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={`reviewing-${field}`}>{label} *</Label>
+      <Textarea
+        id={`reviewing-${field}`}
+        value={value}
+        rows={3}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={!editable}
+      />
+      {suggestion ? (
+        <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+            AI suggestion
+          </p>
+          <Textarea
+            aria-label={`${label} AI suggestion`}
+            className="mt-2 bg-background"
+            rows={3}
+            value={suggestion.suggestion}
+            readOnly={!editing || !editable}
+            onChange={(event) => onSuggestionChange(event.target.value)}
+          />
+          {suggestion.provider === "development-mock" ? (
+            <p className="mt-1 text-xs text-amber-700">
+              Development mock output. This is not real AI analysis.
+            </p>
+          ) : null}
+          <div className="mt-2 flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!editable}
+              onClick={onToggleEdit}
+            >
+              {editing ? "Done" : "Edit"}
+            </Button>
+            <Button type="button" size="sm" disabled={!editable} onClick={onUse}>
+              Use suggestion
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={onDiscard}>
+              Discard
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evaluationId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetch = useServerFn(getPhase2Evaluation);
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
+  const getReviewingSuggestions = useServerFn(suggestReviewingSupervisorFields);
+  const recordReviewingAction = useServerFn(recordReviewingSupervisorAiAction);
   const query = useQuery({
     queryKey: ["phase2-evaluation", evaluationId],
     queryFn: () => fetch({ data: { evaluationId, stage } }),
@@ -73,6 +155,12 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   const [correctionStage, setCorrectionStage] = useState("SUPERVISOR_DRAFT");
   const [documentHtml, setDocumentHtml] = useState<string | null>(null);
   const [documentOpen, setDocumentOpen] = useState(false);
+  const [reviewAiSuggestions, setReviewAiSuggestions] = useState<
+    Record<string, { suggestion: string; provider: "openrouter" | "development-mock" }>
+  >({});
+  const [reviewAiEditing, setReviewAiEditing] = useState<Record<string, boolean>>({});
+  const [reviewAiBusy, setReviewAiBusy] = useState(false);
+  const [reviewAiUnavailable, setReviewAiUnavailable] = useState("");
   const workflowDate = () => new Date().toISOString().slice(0, 10);
   const editableStatuses = {
     RATER: ["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"],
@@ -101,9 +189,20 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
     const record = (detail as typeof detail & { stageRecord?: Record<string, unknown> })
       .stageRecord;
     const source = detail as typeof detail & Record<string, unknown>;
-    const savedStageSignature = source["stageSignature"] as { method: "DRAWN" | "UPLOAD" | "TYPED"; signature_data: string | null } | null;
-    if (savedStageSignature?.signature_data && (savedStageSignature.method === "DRAWN" || savedStageSignature.method === "UPLOAD" || savedStageSignature.method === "TYPED"))
-      setSignature({ method: savedStageSignature.method === "TYPED" ? "DRAWN" : savedStageSignature.method, data: savedStageSignature.signature_data });
+    const savedStageSignature = source["stageSignature"] as {
+      method: "DRAWN" | "UPLOAD" | "TYPED";
+      signature_data: string | null;
+    } | null;
+    if (
+      savedStageSignature?.signature_data &&
+      (savedStageSignature.method === "DRAWN" ||
+        savedStageSignature.method === "UPLOAD" ||
+        savedStageSignature.method === "TYPED")
+    )
+      setSignature({
+        method: savedStageSignature.method === "TYPED" ? "DRAWN" : savedStageSignature.method,
+        data: savedStageSignature.signature_data,
+      });
     if (stage === "RATER")
       setValues({
         strengths: String(source["supervisor_step2_strengths"] ?? ""),
@@ -149,6 +248,93 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   }, [detail, stage]);
   const update = (key: string, value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
+
+  async function generateReviewSuggestions() {
+    if (!detail || stage !== "REVIEWING_SUPERVISOR") return;
+    setReviewAiBusy(true);
+    setReviewAiUnavailable("");
+    try {
+      const result = await getReviewingSuggestions({
+        data: {
+          evaluationId,
+          version: detail.version,
+          reviewingRatings: Object.entries(ratings)
+            .filter(([, rating]) => typeof rating === "number")
+            .map(([criterionId, rating]) => ({ criterionId, rating: rating as number })),
+          currentValues: {
+            comments: values.comments ?? "",
+            recommendations: values.recommendations ?? "",
+          },
+          actionId: crypto.randomUUID(),
+          regenerate: Object.keys(reviewAiSuggestions).length > 0,
+        },
+      });
+      setReviewAiSuggestions(
+        Object.fromEntries(
+          Object.entries(result.suggestions).map(([field, suggestion]) => [
+            field,
+            { suggestion, provider: result.provider },
+          ]),
+        ),
+      );
+      setReviewAiEditing({});
+    } catch (error) {
+      const message = userErrorMessage(
+        error,
+        "AI assistance unavailable. You can complete these fields manually.",
+      );
+      setReviewAiUnavailable(message);
+      toast.error(message);
+    } finally {
+      setReviewAiBusy(false);
+    }
+  }
+
+  function applyReviewSuggestion(field: "comments" | "recommendations") {
+    const suggestion = reviewAiSuggestions[field];
+    if (!suggestion) return;
+    update(field, suggestion.suggestion);
+    void recordReviewingAction({
+      data: {
+        evaluationId,
+        version: detail?.version ?? 1,
+        field,
+        action: "ACCEPTED",
+        actionId: crypto.randomUUID(),
+        edited: Boolean(reviewAiEditing[field]),
+      },
+    }).catch(() => undefined);
+    setReviewAiSuggestions((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function discardReviewSuggestion(field: "comments" | "recommendations") {
+    void recordReviewingAction({
+      data: {
+        evaluationId,
+        version: detail?.version ?? 1,
+        field,
+        action: "DISMISSED",
+        actionId: crypto.randomUUID(),
+        edited: Boolean(reviewAiEditing[field]),
+      },
+    }).catch(() => undefined);
+    setReviewAiSuggestions((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function editReviewSuggestion(field: "comments" | "recommendations", value: string) {
+    setReviewAiSuggestions((current) => ({
+      ...current,
+      [field]: { ...current[field], suggestion: value },
+    }));
+  }
   async function openDocument() {
     setDocumentOpen(true);
     try {
@@ -161,7 +347,9 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
       setDocumentHtml(result.html);
     } catch (error) {
       setDocumentOpen(false);
-      toast.error(error instanceof Error ? error.message : "The evaluation document is not available yet.");
+      toast.error(
+        error instanceof Error ? error.message : "The evaluation document is not available yet.",
+      );
     }
   }
 
@@ -191,7 +379,9 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
         return submitReviewingSupervisor({
           data: {
             ...base,
-            ratings: Object.entries(ratings).filter(([, rating]) => rating !== null).map(([criterionId, rating]) => ({ criterionId, rating: rating! })),
+            ratings: Object.entries(ratings)
+              .filter(([, rating]) => rating !== null)
+              .map(([criterionId, rating]) => ({ criterionId, rating: rating! })),
             comments: values.comments ?? "",
             recommendations: values.recommendations ?? "",
             date: submit ? values.date || workflowDate() : values.date || "",
@@ -258,7 +448,8 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                   : "/president/evaluations",
       });
     },
-    onError: (error: Error) => toast.error(userErrorMessage(error, "Could not save this workflow stage.")),
+    onError: (error: Error) =>
+      toast.error(userErrorMessage(error, "Could not save this workflow stage.")),
   });
   if (query.isLoading) return <LoadingBlock rows={6} />;
   if (query.isError || !detail)
@@ -324,10 +515,22 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                 <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={ratings}
-                  employeeValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
-                  supervisorValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "SUPERVISOR")]))}
+                  employeeValues={Object.fromEntries(
+                    detail.criteria.map((criterion) => [
+                      criterion.id,
+                      ratingFor(detail.ratings, criterion.id, "EMPLOYEE"),
+                    ]),
+                  )}
+                  supervisorValues={Object.fromEntries(
+                    detail.criteria.map((criterion) => [
+                      criterion.id,
+                      ratingFor(detail.ratings, criterion.id, "SUPERVISOR"),
+                    ]),
+                  )}
                   readOnly={!editable}
-                  onChange={(criterionId, value) => setRatings((current) => ({ ...current, [criterionId]: value }))}
+                  onChange={(criterionId, value) =>
+                    setRatings((current) => ({ ...current, [criterionId]: value }))
+                  }
                 />
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
@@ -349,14 +552,23 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                 ].map(([label, key]) => (
                   <div key={key}>
                     <p className="text-xs font-semibold text-muted-foreground">{label}</p>
-                    <p className="whitespace-pre-wrap text-sm">{String((detail as Record<string, unknown>)[key] ?? "—")}</p>
+                    <p className="whitespace-pre-wrap text-sm">
+                      {String((detail as Record<string, unknown>)[key] ?? "—")}
+                    </p>
                   </div>
                 ))}
                 {(detail as Record<string, unknown>)["rater_signature"] ? (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">Rater Signature</p>
                     <img
-                      src={String(((detail as Record<string, unknown>)["rater_signature"] as Record<string, unknown>)?.["signature_data"] ?? "")}
+                      src={String(
+                        (
+                          (detail as Record<string, unknown>)["rater_signature"] as Record<
+                            string,
+                            unknown
+                          >
+                        )?.["signature_data"] ?? "",
+                      )}
                       alt="Rater electronic signature"
                       className="mt-1 h-20 max-w-xs object-contain"
                     />
@@ -371,16 +583,35 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                 <h3 className="font-semibold">STEP 1 — Performance Evaluation (read-only)</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
-                  values={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, null]))}
-                  employeeValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "EMPLOYEE")]))}
-                  supervisorValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "SUPERVISOR")]))}
-                  reviewingValues={Object.fromEntries(detail.criteria.map((criterion) => [criterion.id, ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR")]))}
+                  values={Object.fromEntries(
+                    detail.criteria.map((criterion) => [criterion.id, null]),
+                  )}
+                  employeeValues={Object.fromEntries(
+                    detail.criteria.map((criterion) => [
+                      criterion.id,
+                      ratingFor(detail.ratings, criterion.id, "EMPLOYEE"),
+                    ]),
+                  )}
+                  supervisorValues={Object.fromEntries(
+                    detail.criteria.map((criterion) => [
+                      criterion.id,
+                      ratingFor(detail.ratings, criterion.id, "SUPERVISOR"),
+                    ]),
+                  )}
+                  reviewingValues={Object.fromEntries(
+                    detail.criteria.map((criterion) => [
+                      criterion.id,
+                      ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR"),
+                    ]),
+                  )}
                   readOnly={true}
                   onChange={() => {}}
                 />
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">STEP 2 — Supervisor conclusions and comments (read-only)</h3>
+                <h3 className="font-semibold">
+                  STEP 2 — Supervisor conclusions and comments (read-only)
+                </h3>
                 {[
                   ["Overall rating explanation", "supervisor_step2_overall_explanation"],
                   ["Principal Strengths", "supervisor_step2_strengths"],
@@ -398,96 +629,148 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                 ].map(([label, key]) => (
                   <div key={key}>
                     <p className="text-xs font-semibold text-muted-foreground">{label}</p>
-                    <p className="whitespace-pre-wrap text-sm">{String((detail as Record<string, unknown>)[key] ?? "—")}</p>
+                    <p className="whitespace-pre-wrap text-sm">
+                      {String((detail as Record<string, unknown>)[key] ?? "—")}
+                    </p>
                   </div>
                 ))}
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
                 <h3 className="font-semibold">STEP 3 — Reviewing Supervisor review (read-only)</h3>
                 {(() => {
-                  const accStages = (detail as Record<string, unknown> & { accumulatedStages?: Record<string, unknown> })
-                    ?.accumulatedStages as Record<string, unknown> | undefined;
-                  const revSupReview = accStages?.reviewingSupervisorReview as Record<string, unknown> | undefined;
+                  const accStages = (
+                    detail as Record<string, unknown> & {
+                      accumulatedStages?: Record<string, unknown>;
+                    }
+                  )?.accumulatedStages as Record<string, unknown> | undefined;
+                  const revSupReview = accStages?.reviewingSupervisorReview as
+                    Record<string, unknown> | undefined;
                   return revSupReview ? (
                     <>
                       <div>
                         <p className="text-xs font-semibold text-muted-foreground">Comments</p>
-                        <p className="whitespace-pre-wrap text-sm">{String(revSupReview["comments"] ?? "—")}</p>
+                        <p className="whitespace-pre-wrap text-sm">
+                          {String(revSupReview["comments"] ?? "—")}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Recommendations</p>
-                        <p className="whitespace-pre-wrap text-sm">{String(revSupReview["recommendations"] ?? "—")}</p>
+                        <p className="text-xs font-semibold text-muted-foreground">
+                          Recommendations
+                        </p>
+                        <p className="whitespace-pre-wrap text-sm">
+                          {String(revSupReview["recommendations"] ?? "—")}
+                        </p>
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Reviewing Supervisor review not yet completed</p>
+                    <p className="text-sm text-muted-foreground">
+                      Reviewing Supervisor review not yet completed
+                    </p>
                   );
                 })()}
               </div>
-              {stage !== "PERSONNEL" && (() => {
-                const accStages = (detail as Record<string, unknown> & { accumulatedStages?: Record<string, unknown> })
-                  ?.accumulatedStages as Record<string, unknown> | undefined;
-                const personnel = accStages?.personnelProcessing as Record<string, unknown> | undefined;
-                return personnel && detail.status !== "PERSONNEL_PROCESSING" ? (
-                  <div className="space-y-2 rounded-md border border-border p-4">
-                    <h3 className="font-semibold">Personnel Office processing (read-only)</h3>
-                    <div className="grid gap-4 sm:grid-cols-2 text-sm">
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Present Salary</p>
-                        <p>{String(personnel["present_salary"] ?? "—")}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Last Increase Date</p>
-                        <p>{String(personnel["last_increase_date"] ?? "—")}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Last Increase Amount</p>
-                        <p>{String(personnel["last_increase_amount"] ?? "—")}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Total Points</p>
-                        <p>{String(personnel["total_points"] ?? "—")}</p>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <p className="text-xs font-semibold text-muted-foreground">Nature of Last Increase</p>
-                        <p className="whitespace-pre-wrap">{String(personnel["last_increase_nature"] ?? "—")}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Adjective Rating</p>
-                        <p>{String(personnel["adjective_rating"] ?? "—")}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Recommended Increase / Bonus</p>
-                        <p className="whitespace-pre-wrap">{String(personnel["recommended_increase_bonus"] ?? "—")}</p>
+              {stage !== "PERSONNEL" &&
+                (() => {
+                  const accStages = (
+                    detail as Record<string, unknown> & {
+                      accumulatedStages?: Record<string, unknown>;
+                    }
+                  )?.accumulatedStages as Record<string, unknown> | undefined;
+                  const personnel = accStages?.personnelProcessing as
+                    Record<string, unknown> | undefined;
+                  return personnel && detail.status !== "PERSONNEL_PROCESSING" ? (
+                    <div className="space-y-2 rounded-md border border-border p-4">
+                      <h3 className="font-semibold">Personnel Office processing (read-only)</h3>
+                      <div className="grid gap-4 sm:grid-cols-2 text-sm">
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Present Salary
+                          </p>
+                          <p>{String(personnel["present_salary"] ?? "—")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Last Increase Date
+                          </p>
+                          <p>{String(personnel["last_increase_date"] ?? "—")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Last Increase Amount
+                          </p>
+                          <p>{String(personnel["last_increase_amount"] ?? "—")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Total Points
+                          </p>
+                          <p>{String(personnel["total_points"] ?? "—")}</p>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Nature of Last Increase
+                          </p>
+                          <p className="whitespace-pre-wrap">
+                            {String(personnel["last_increase_nature"] ?? "—")}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Adjective Rating
+                          </p>
+                          <p>{String(personnel["adjective_rating"] ?? "—")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Recommended Increase / Bonus
+                          </p>
+                          <p className="whitespace-pre-wrap">
+                            {String(personnel["recommended_increase_bonus"] ?? "—")}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : null;
-              })()}
-              {stage !== "COMMITTEE" && (() => {
-                const accStages = (detail as Record<string, unknown> & { accumulatedStages?: Record<string, unknown> })
-                  ?.accumulatedStages as Record<string, unknown> | undefined;
-                const committee = accStages?.committeeReview as Record<string, unknown> | undefined;
-                return committee && detail.status !== "COMMITTEE_REVIEW" ? (
-                  <div className="space-y-2 rounded-md border border-border p-4">
-                    <h3 className="font-semibold">Committee recommendation (read-only)</h3>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Final Action</p>
-                        <p>{String(committee["final_action"] ?? "—")}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Action Details</p>
-                        <p className="whitespace-pre-wrap">{String(committee["action_details"] ?? "—")}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Committee Recommendation</p>
-                        <p className="whitespace-pre-wrap">{String(committee["recommendation"] ?? "—")}</p>
+                  ) : null;
+                })()}
+              {stage !== "COMMITTEE" &&
+                (() => {
+                  const accStages = (
+                    detail as Record<string, unknown> & {
+                      accumulatedStages?: Record<string, unknown>;
+                    }
+                  )?.accumulatedStages as Record<string, unknown> | undefined;
+                  const committee = accStages?.committeeReview as
+                    Record<string, unknown> | undefined;
+                  return committee && detail.status !== "COMMITTEE_REVIEW" ? (
+                    <div className="space-y-2 rounded-md border border-border p-4">
+                      <h3 className="font-semibold">Committee recommendation (read-only)</h3>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Final Action
+                          </p>
+                          <p>{String(committee["final_action"] ?? "—")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Action Details
+                          </p>
+                          <p className="whitespace-pre-wrap">
+                            {String(committee["action_details"] ?? "—")}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Committee Recommendation
+                          </p>
+                          <p className="whitespace-pre-wrap">
+                            {String(committee["recommendation"] ?? "—")}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : null;
-              })()}
+                  ) : null;
+                })()}
             </>
           ) : null}
           <EvaluationDocumentPreview
@@ -508,10 +791,75 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             </>
           ) : stage === "REVIEWING_SUPERVISOR" ? (
             <>
-              {field("comments", "Comments")} {field("recommendations", "Recommendations")}
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-primary">Review analysis assistance</p>
+                    <p className="text-xs text-muted-foreground">
+                      Generate coordinated suggestions for the Reviewing Supervisor's editable
+                      review fields.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={reviewAiBusy || !editable}
+                    onClick={generateReviewSuggestions}
+                  >
+                    {reviewAiBusy
+                      ? "Analyzing Evaluation..."
+                      : Object.keys(reviewAiSuggestions).length
+                        ? "Regenerate AI Suggestions"
+                        : "Generate AI Suggestions"}
+                  </Button>
+                </div>
+                {reviewAiUnavailable ? (
+                  <p className="mt-2 text-sm text-muted-foreground">{reviewAiUnavailable}</p>
+                ) : null}
+              </div>
+              <ReviewAiField
+                label="Comments"
+                field="comments"
+                value={values.comments ?? ""}
+                suggestion={reviewAiSuggestions.comments}
+                editing={Boolean(reviewAiEditing.comments)}
+                editable={editable}
+                onChange={(value) => update("comments", value)}
+                onSuggestionChange={(value) => editReviewSuggestion("comments", value)}
+                onToggleEdit={() =>
+                  setReviewAiEditing((current) => ({ ...current, comments: !current.comments }))
+                }
+                onUse={() => applyReviewSuggestion("comments")}
+                onDiscard={() => discardReviewSuggestion("comments")}
+              />
+              <ReviewAiField
+                label="Recommendations"
+                field="recommendations"
+                value={values.recommendations ?? ""}
+                suggestion={reviewAiSuggestions.recommendations}
+                editing={Boolean(reviewAiEditing.recommendations)}
+                editable={editable}
+                onChange={(value) => update("recommendations", value)}
+                onSuggestionChange={(value) => editReviewSuggestion("recommendations", value)}
+                onToggleEdit={() =>
+                  setReviewAiEditing((current) => ({
+                    ...current,
+                    recommendations: !current.recommendations,
+                  }))
+                }
+                onUse={() => applyReviewSuggestion("recommendations")}
+                onDiscard={() => discardReviewSuggestion("recommendations")}
+              />
               <div className="space-y-1.5">
                 <Label htmlFor="phase2-date">Date *</Label>
-                <Input id="phase2-date" type="date" value={values.date ?? workflowDate()} onChange={(event) => update("date", event.target.value)} disabled={!editable} readOnly />
+                <Input
+                  id="phase2-date"
+                  type="date"
+                  value={values.date ?? workflowDate()}
+                  onChange={(event) => update("date", event.target.value)}
+                  disabled={!editable}
+                  readOnly
+                />
               </div>
             </>
           ) : stage === "PERSONNEL" ? (
@@ -547,8 +895,18 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Total points (calculated)" value={detail.score?.finalScore === null || detail.score?.finalScore === undefined ? "—" : String(detail.score.finalScore)} />
-                <Field label="Adjective rating (calculated)" value={detail.score?.finalRatingLabel ?? "—"} />
+                <Field
+                  label="Total points (calculated)"
+                  value={
+                    detail.score?.finalScore === null || detail.score?.finalScore === undefined
+                      ? "—"
+                      : String(detail.score.finalScore)
+                  }
+                />
+                <Field
+                  label="Adjective rating (calculated)"
+                  value={detail.score?.finalRatingLabel ?? "—"}
+                />
               </div>
               {field("lastIncreaseNature", "Nature of last increase", false)}
               {field("recommendedIncreaseBonus", "Recommended increase / bonus")}
@@ -622,12 +980,22 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
               ) : null}
             </>
           )}
-          <SignatureField {...(signature ? { value: signature } : {})} disabled={!editable} onChange={setSignature} />
+          <SignatureField
+            {...(signature ? { value: signature } : {})}
+            disabled={!editable}
+            onChange={setSignature}
+          />
           {stage === "PRESIDENT" ? (
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={openDocument}>Preview Evaluation</Button>
-              <Button type="button" variant="outline" onClick={openDocument}>Print / Export PDF</Button>
-              <Button type="button" variant="secondary" onClick={openDocument}>Refresh PDF</Button>
+              <Button type="button" variant="outline" onClick={openDocument}>
+                Preview Evaluation
+              </Button>
+              <Button type="button" variant="outline" onClick={openDocument}>
+                Print / Export PDF
+              </Button>
+              <Button type="button" variant="secondary" onClick={openDocument}>
+                Refresh PDF
+              </Button>
             </div>
           ) : null}
           <div className="flex gap-2">
