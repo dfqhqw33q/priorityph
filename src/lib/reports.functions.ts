@@ -266,7 +266,7 @@ export const getDigital201File = createServerFn({ method: "POST" })
       admin
         .from("evaluations")
         .select(
-          "id, status, employee_submitted_at, supervisor_submitted_at, finalized_at, created_at, updated_at, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, supervisor_user_id, president_user_id, evaluation_cycles!inner(id, name, year)",
+          "id, status, employee_submitted_at, supervisor_submitted_at, supervisor_step2_submitted_at, supervisor_step2_date, finalized_at, created_at, updated_at, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, supervisor_user_id, president_user_id, evaluation_cycles!inner(id, name, year)",
           { count: "exact" },
         )
         .eq("employee_id", data.employeeId)
@@ -278,6 +278,11 @@ export const getDigital201File = createServerFn({ method: "POST" })
     if (!employee) throw validationError("Employee record not found");
 
     const historyRows = history ?? [];
+    const { data: evaluationOptions } = await admin
+      .from("evaluations")
+      .select("id, status, evaluation_cycles!inner(name, year)")
+      .eq("employee_id", data.employeeId)
+      .order("created_at", { ascending: false });
     const evaluationIds = Array.from(
       new Set(
         [
@@ -315,6 +320,31 @@ export const getDigital201File = createServerFn({ method: "POST" })
       : { data: [] };
     const criterionMap = new Map((criteria ?? []).map((criterion) => [criterion.id, criterion]));
     const scoreMap = new Map((scores ?? []).map((score) => [score.evaluation_id, score]));
+    const [{ data: reviewRecords }, { data: stageUsers }] = await Promise.all([
+      evaluationIds.length > 0
+        ? admin
+            .from("reviewing_supervisor_reviews")
+            .select("evaluation_id, reviewer_user_id, submitted_at, reviewing_supervisor_date")
+            .in("evaluation_id", evaluationIds)
+        : Promise.resolve({ data: [] }),
+      evaluationIds.length > 0
+        ? admin.from("evaluations").select("supervisor_user_id").in("id", evaluationIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+    const reviewerIds = (reviewRecords ?? []).map((record) => record.reviewer_user_id);
+    const supervisorIds = (stageUsers ?? [])
+      .map((record) => record.supervisor_user_id)
+      .filter(Boolean);
+    const userIds = Array.from(
+      new Set([...reviewerIds, ...supervisorIds].filter(Boolean)),
+    ) as string[];
+    const { data: evaluatorUsers } = userIds.length
+      ? await admin.from("internal_users").select("id, full_name").in("id", userIds)
+      : { data: [] };
+    const evaluatorNames = new Map((evaluatorUsers ?? []).map((user) => [user.id, user.full_name]));
+    const reviewMap = new Map(
+      (reviewRecords ?? []).map((record) => [record.evaluation_id, record]),
+    );
     const ratingsByEvaluation = new Map<string, typeof ratings>();
     for (const rating of ratings ?? []) {
       ratingsByEvaluation.set(rating.evaluation_id, [
@@ -351,6 +381,18 @@ export const getDigital201File = createServerFn({ method: "POST" })
         division: row.division_snapshot,
         section: row.section_snapshot,
         supervisorUserId: row.supervisor_user_id,
+        supervisorName: row.supervisor_user_id
+          ? (evaluatorNames.get(row.supervisor_user_id) ?? null)
+          : null,
+        reviewingSupervisorName: reviewMap.get(row.id)
+          ? (evaluatorNames.get(reviewMap.get(row.id)!.reviewer_user_id) ?? null)
+          : null,
+        reviewingSupervisorDate: reviewMap.get(row.id)?.reviewing_supervisor_date ?? null,
+        evaluationDate:
+          row.supervisor_step2_date ??
+          row.supervisor_step2_submitted_at ??
+          row.finalized_at ??
+          row.employee_submitted_at,
         presidentUserId: row.president_user_id,
         scores: score
           ? {
@@ -378,7 +420,7 @@ export const getDigital201File = createServerFn({ method: "POST" })
       const { data: selectedRows } = await admin
         .from("evaluations")
         .select(
-          "id, status, employee_submitted_at, supervisor_submitted_at, finalized_at, created_at, updated_at, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, supervisor_user_id, president_user_id, evaluation_cycles!inner(id, name, year)",
+          "id, status, employee_submitted_at, supervisor_submitted_at, supervisor_step2_submitted_at, supervisor_step2_date, finalized_at, created_at, updated_at, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, supervisor_user_id, president_user_id, evaluation_cycles!inner(id, name, year)",
         )
         .eq("employee_id", data.employeeId)
         .in("id", comparisonIds);
@@ -404,6 +446,15 @@ export const getDigital201File = createServerFn({ method: "POST" })
 
     return {
       employee,
+      evaluationOptions: (evaluationOptions ?? []).map((row) => {
+        const cycle = row.evaluation_cycles as { name: string; year: number } | null;
+        return {
+          id: row.id,
+          status: row.status,
+          cycleName: cycle?.name ?? "",
+          cycleYear: cycle?.year ?? 0,
+        };
+      }),
       history: historyRows.map(toEvaluation),
       selected: selectedEvaluationId
         ? rowMap.get(selectedEvaluationId)

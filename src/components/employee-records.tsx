@@ -68,6 +68,10 @@ type HistoryEvaluation = {
   status: string;
   employeeSubmittedAt: string | null;
   supervisorSubmittedAt: string | null;
+  supervisorName: string | null;
+  reviewingSupervisorName: string | null;
+  reviewingSupervisorDate: string | null;
+  evaluationDate: string | null;
   finalizedAt: string | null;
   jobTitle: string;
   division: string;
@@ -81,6 +85,8 @@ type HistoryEvaluation = {
   } | null;
   ratings: HistoryRating[];
 };
+
+type EvaluationPeriodOption = Pick<HistoryEvaluation, "id" | "cycleName" | "cycleYear">;
 
 export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean }) {
   const fetchEmployees = useServerFn(listDigital201Employees);
@@ -97,6 +103,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
   const [compareOpen, setCompareOpen] = useState(false);
   const [comparisonFirstId, setComparisonFirstId] = useState("");
   const [comparisonSecondId, setComparisonSecondId] = useState("");
+  const comparisonContentRef = useRef<HTMLDivElement>(null);
   const [documentCategory, setDocumentCategory] = useState("SUPPORTING_DOCUMENTS");
   const [uploading, setUploading] = useState(false);
   const [documentHtml, setDocumentHtml] = useState<string | null>(null);
@@ -379,7 +386,9 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
           <div className="space-y-5 px-6 pb-6">
             {!selectedEvaluationId || !comparisonEvaluationId ? (
               <ComparisonPicker
-                evaluations={(detailQuery.data?.history ?? []) as unknown as HistoryEvaluation[]}
+                evaluations={
+                  (detailQuery.data?.evaluationOptions ?? []) as EvaluationPeriodOption[]
+                }
                 firstId={comparisonFirstId}
                 secondId={comparisonSecondId}
                 onFirstChange={setComparisonFirstId}
@@ -398,6 +407,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
               <ComparisonResults
                 selected={detailQuery.data?.selected as unknown as HistoryEvaluation | null}
                 comparison={detailQuery.data?.comparison as unknown as HistoryEvaluation | null}
+                contentRef={comparisonContentRef}
                 onBack={() => {
                   setSelectedEvaluationId(null);
                   setComparisonEvaluationId(null);
@@ -647,7 +657,7 @@ function ComparisonPicker({
   onCancel,
   onCompare,
 }: {
-  evaluations: HistoryEvaluation[];
+  evaluations: EvaluationPeriodOption[];
   firstId: string;
   secondId: string;
   onFirstChange: (value: string) => void;
@@ -687,10 +697,12 @@ function ComparisonPicker({
 function ComparisonResults({
   selected,
   comparison,
+  contentRef,
   onBack,
 }: {
   selected: HistoryEvaluation | null;
   comparison: HistoryEvaluation | null;
+  contentRef: RefObject<HTMLDivElement | null>;
   onBack: () => void;
 }) {
   const criteria = Array.from(
@@ -701,45 +713,63 @@ function ComparisonResults({
     ).values(),
   ).sort((a, b) => (a?.position ?? 0) - (b?.position ?? 0));
   return (
-    <div className="space-y-5">
-      <div className="grid gap-3 md:grid-cols-2">
-        <PeriodSummary label="Selected evaluation" evaluation={selected} />
-        <PeriodSummary label="Comparison evaluation" evaluation={comparison} />
-      </div>
+    <div ref={contentRef} className="space-y-5 bg-background p-1">
+      <h3 className="text-lg font-semibold">Performance Evaluation Comparison</h3>
+      <EvaluationInformationTable selected={selected} comparison={comparison} />
+      <h3 className="text-lg font-semibold">A–J Performance Comparison</h3>
       <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-muted/50">
             <tr>
               <th className="px-3 py-2">Criterion</th>
-              <th className="px-3 py-2">Selected</th>
-              <th className="px-3 py-2">Comparison</th>
-              <th className="px-3 py-2">Difference</th>
+              <th className="px-3 py-2">{comparison?.cycleYear ?? "—"} Self</th>
+              <th className="px-3 py-2">{comparison?.cycleYear ?? "—"} Supervisor / Rater</th>
+              <th className="px-3 py-2">{comparison?.cycleYear ?? "—"} Reviewing Supervisor</th>
+              <th className="px-3 py-2">{selected?.cycleYear ?? "—"} Self</th>
+              <th className="px-3 py-2">{selected?.cycleYear ?? "—"} Supervisor / Rater</th>
+              <th className="px-3 py-2">{selected?.cycleYear ?? "—"} Reviewing Supervisor</th>
               <th className="px-3 py-2">Trend</th>
             </tr>
           </thead>
           <tbody>
             {criteria.map((criterion) => {
-              const current = ratingFor(selected, criterion?.id ?? "", "SUPERVISOR");
-              const previous = ratingFor(comparison, criterion?.id ?? "", "SUPERVISOR");
-              const difference = current !== null && previous !== null ? current - previous : null;
+              const selectedSelf = ratingFor(selected, criterion?.id ?? "", "EMPLOYEE");
+              const selectedSupervisor = ratingFor(selected, criterion?.id ?? "", "SUPERVISOR");
+              const selectedReview = ratingFor(
+                selected,
+                criterion?.id ?? "",
+                "REVIEWING_SUPERVISOR",
+              );
+              const comparisonSelf = ratingFor(comparison, criterion?.id ?? "", "EMPLOYEE");
+              const comparisonSupervisor = ratingFor(comparison, criterion?.id ?? "", "SUPERVISOR");
+              const comparisonReview = ratingFor(
+                comparison,
+                criterion?.id ?? "",
+                "REVIEWING_SUPERVISOR",
+              );
+              const difference =
+                selectedSupervisor !== null && comparisonSupervisor !== null
+                  ? selectedSupervisor - comparisonSupervisor
+                  : null;
               return (
                 <tr key={criterion?.id} className="border-t border-border">
                   <td className="px-3 py-2">
                     <strong>{criterion?.letter}</strong> {criterion?.title}
                   </td>
-                  <td className="px-3 py-2">{current ?? "—"}</td>
-                  <td className="px-3 py-2">{previous ?? "—"}</td>
-                  <td className="px-3 py-2">
-                    {difference === null ? "—" : difference > 0 ? `+${difference}` : difference}
-                  </td>
+                  <td className="px-3 py-2">{comparisonSelf ?? "N/A"}</td>
+                  <td className="px-3 py-2">{comparisonSupervisor ?? "N/A"}</td>
+                  <td className="px-3 py-2">{comparisonReview ?? "N/A"}</td>
+                  <td className="px-3 py-2">{selectedSelf ?? "N/A"}</td>
+                  <td className="px-3 py-2">{selectedSupervisor ?? "N/A"}</td>
+                  <td className="px-3 py-2">{selectedReview ?? "N/A"}</td>
                   <td className="px-3 py-2">
                     {difference === null
-                      ? "—"
+                      ? "N/A"
                       : difference > 0
-                        ? "Increase"
+                        ? `↑ Improved (+${difference})`
                         : difference < 0
-                          ? "Decrease"
-                          : "Unchanged"}
+                          ? `↓ Decreased (${difference})`
+                          : "→ No Change"}
                   </td>
                 </tr>
               );
@@ -747,11 +777,120 @@ function ComparisonResults({
           </tbody>
         </table>
       </div>
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={() => printComparison(contentRef.current?.innerHTML ?? "")}
+        >
+          Print Comparison
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => exportComparison(contentRef.current?.innerHTML ?? "")}
+        >
+          Export Comparison
+        </Button>
         <Button variant="outline" onClick={onBack}>
           Back to periods
         </Button>
       </div>
+    </div>
+  );
+}
+
+function printComparison(content: string) {
+  if (!content) return;
+  const printWindow = window.open("", "_blank", "noopener,noreferrer,width=1200,height=800");
+  if (!printWindow) return;
+  printWindow.document.write(
+    `<!doctype html><html><head><title>Performance Evaluation Comparison</title><style>body{font-family:Arial,sans-serif;color:#111;padding:24px}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #d1d5db;padding:8px;text-align:left;font-size:12px}th{background:#f3f4f6}h3{margin:18px 0 8px}@media print{body{padding:0}}</style></head><body>${content}</body></html>`,
+  );
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+
+function exportComparison(content: string) {
+  if (!content) return;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Performance Evaluation Comparison</title></head><body>${content}</body></html>`;
+  const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "performance-evaluation-comparison.html";
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function EvaluationInformationTable({
+  selected,
+  comparison,
+}: {
+  selected: HistoryEvaluation | null;
+  comparison: HistoryEvaluation | null;
+}) {
+  const rows: Array<[string, string, string]> = [
+    ["Evaluation Period", comparison?.cycleName ?? "N/A", selected?.cycleName ?? "N/A"],
+    ["Status", comparison?.status ?? "N/A", selected?.status ?? "N/A"],
+    ["Employee", comparison?.fullName ?? "N/A", selected?.fullName ?? "N/A"],
+    ["Employee No.", comparison?.employeeNumber ?? "N/A", selected?.employeeNumber ?? "N/A"],
+    ["Position", comparison?.jobTitle ?? "N/A", selected?.jobTitle ?? "N/A"],
+    ["Department / Division", comparison?.division ?? "N/A", selected?.division ?? "N/A"],
+    [
+      "Immediate Supervisor / Rater",
+      comparison?.supervisorName ?? "N/A",
+      selected?.supervisorName ?? "N/A",
+    ],
+    [
+      "Reviewing Supervisor",
+      comparison?.reviewingSupervisorName ?? "N/A",
+      selected?.reviewingSupervisorName ?? "N/A",
+    ],
+    [
+      "Evaluation Date",
+      formatDateTime(comparison?.evaluationDate ?? null),
+      formatDateTime(selected?.evaluationDate ?? null),
+    ],
+    [
+      "Self Average",
+      formatScore(comparison?.scores?.employeeAverage),
+      formatScore(selected?.scores?.employeeAverage),
+    ],
+    [
+      "Supervisor / Rater Average",
+      formatScore(comparison?.scores?.supervisorAverage),
+      formatScore(selected?.scores?.supervisorAverage),
+    ],
+    [
+      "Final Evaluation Score",
+      formatScore(comparison?.scores?.finalScore),
+      formatScore(selected?.scores?.finalScore),
+    ],
+    [
+      "Final Evaluation Rating",
+      comparison?.scores?.finalRatingLabel ?? "N/A",
+      selected?.scores?.finalRatingLabel ?? "N/A",
+    ],
+  ];
+  return (
+    <div className="overflow-x-auto rounded-md border border-border">
+      <table className="w-full min-w-[680px] text-left text-sm">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="px-3 py-2">Evaluation Information</th>
+            <th className="px-3 py-2">{comparison?.cycleYear ?? "—"} Evaluation</th>
+            <th className="px-3 py-2">{selected?.cycleYear ?? "—"} Evaluation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([label, first, second]) => (
+            <tr key={label} className="border-t border-border">
+              <th className="px-3 py-2 font-medium">{label}</th>
+              <td className="px-3 py-2">{first}</td>
+              <td className="px-3 py-2">{second}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -764,7 +903,7 @@ function PeriodSelect({
 }: {
   label: string;
   value: string;
-  options: HistoryEvaluation[];
+  options: EvaluationPeriodOption[];
   onChange: (value: string) => void;
 }) {
   return (
