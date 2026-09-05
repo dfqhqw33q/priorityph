@@ -1,18 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -93,7 +94,9 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
   const [selected, setSelected] = useState<string | null>(null);
   const [selectedEvaluationId, setSelectedEvaluationId] = useState<string | null>(null);
   const [comparisonEvaluationId, setComparisonEvaluationId] = useState<string | null>(null);
-  const [historyPage, setHistoryPage] = useState(0);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [comparisonFirstId, setComparisonFirstId] = useState("");
+  const [comparisonSecondId, setComparisonSecondId] = useState("");
   const [documentCategory, setDocumentCategory] = useState("SUPPORTING_DOCUMENTS");
   const [uploading, setUploading] = useState(false);
   const [documentHtml, setDocumentHtml] = useState<string | null>(null);
@@ -107,20 +110,14 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
   });
 
   const detailQuery = useQuery({
-    queryKey: [
-      "digital-201-file",
-      selected,
-      selectedEvaluationId,
-      comparisonEvaluationId,
-      historyPage,
-    ],
+    queryKey: ["digital-201-file", selected, selectedEvaluationId, comparisonEvaluationId],
     queryFn: () =>
       fetch201File({
         data: {
           employeeId: selected as string,
           selectedEvaluationId,
           comparisonEvaluationId,
-          page: historyPage,
+          page: 0,
           pageSize: 25,
         },
       }),
@@ -287,7 +284,9 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
                           setSelected(row.id);
                           setSelectedEvaluationId(null);
                           setComparisonEvaluationId(null);
-                          setHistoryPage(0);
+                          setCompareOpen(false);
+                          setComparisonFirstId("");
+                          setComparisonSecondId("");
                         }}
                       >
                         History
@@ -301,25 +300,27 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
         </div>
       )}
 
-      <Sheet
+      <Dialog
         open={selected !== null}
         onOpenChange={(open) => {
           if (!open) {
             setSelected(null);
             setSelectedEvaluationId(null);
             setComparisonEvaluationId(null);
-            setHistoryPage(0);
+            setCompareOpen(false);
+            setComparisonFirstId("");
+            setComparisonSecondId("");
           }
         }}
       >
-        <SheetContent className="w-full overflow-y-auto sm:max-w-6xl">
-          <SheetHeader>
-            <SheetTitle>{detailQuery.data?.employee.full_name ?? "Digital 201 File"}</SheetTitle>
-            <SheetDescription>
-              Secure employee record, evaluation history, and period comparison.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="space-y-4 px-4 pb-6">
+        <DialogContent className="max-h-[90vh] w-[calc(100%-2rem)] max-w-4xl overflow-y-auto p-0">
+          <DialogHeader className="border-b border-border px-6 py-5 pr-12">
+            <DialogTitle>{detailQuery.data?.employee.full_name ?? "Employee File"}</DialogTitle>
+            <DialogDescription>
+              Digital 201 File · Employee records and evaluation history
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5 px-6 pb-6">
             {detailQuery.isLoading ? (
               <LoadingBlock rows={3} />
             ) : detailQuery.isError ? (
@@ -330,95 +331,82 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
             ) : (detailQuery.data?.history ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground">No evaluations recorded yet.</p>
             ) : (
-              <Digital201History
+              <EmployeeFileContent
+                employee={detailQuery.data?.employee}
                 history={(detailQuery.data?.history ?? []) as unknown as HistoryEvaluation[]}
-                selected={
-                  (detailQuery.data?.selected ?? null) as unknown as HistoryEvaluation | null
-                }
-                comparison={
-                  (detailQuery.data?.comparison ?? null) as unknown as HistoryEvaluation | null
-                }
-                selectedEvaluationId={
-                  selectedEvaluationId ?? detailQuery.data?.selected?.id ?? null
-                }
-                comparisonEvaluationId={
-                  comparisonEvaluationId ?? detailQuery.data?.comparison?.id ?? null
-                }
-                historyPage={historyPage}
                 totalCount={detailQuery.data?.totalCount ?? 0}
-                onSelectedChange={setSelectedEvaluationId}
-                onComparisonChange={setComparisonEvaluationId}
-                onPageChange={setHistoryPage}
                 onOpenDocument={openFinalEvaluationDocument}
+                onCompare={() => setCompareOpen(true)}
               />
             )}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Employee file</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <FileCategory
-                  label="Performance Evaluations"
-                  count={
-                    (detailQuery.data?.history ?? []).filter((item) => item.status === "FINALIZED")
-                      .length
-                  }
-                />
-                <FileCategory label="Awards and Recognition" />
-                <FileCategory label="Training and Certificates" />
-                <FileCategory label="Supporting Documents" />
-                <FileCategory label="Other Documents" />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Employee documents</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <select
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                    value={documentCategory}
-                    onChange={(event) => setDocumentCategory(event.target.value)}
-                    aria-label="Document category"
-                  >
-                    <option value="AWARDS_RECOGNITION">Awards and Recognition</option>
-                    <option value="TRAINING_CERTIFICATES">Training and Certificates</option>
-                    <option value="SUPPORTING_DOCUMENTS">Supporting Documents</option>
-                    <option value="OTHER_DOCUMENTS">Other Documents</option>
-                  </select>
-                  <input
-                    ref={fileInput}
-                    type="file"
-                    className="max-w-full text-sm"
-                    disabled={uploading}
-                    onChange={(event) =>
-                      event.target.files?.[0] && handleUpload(event.target.files[0])
-                    }
-                  />
-                </div>
-                {documentsQuery.isLoading ? (
-                  <LoadingBlock rows={2} />
-                ) : (
-                  (documentsQuery.data ?? []).map((document) => (
-                    <button
-                      key={document.id}
-                      type="button"
-                      className="flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-left text-sm hover:bg-accent"
-                      onClick={() => openDocument(document.id)}
-                    >
-                      <span>{document.file_name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {document.category.replaceAll("_", " ")}
-                      </span>
-                    </button>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+            <DocumentSections
+              documents={documentsQuery.data ?? []}
+              loading={documentsQuery.isLoading}
+              documentCategory={documentCategory}
+              onCategoryChange={setDocumentCategory}
+              fileInput={fileInput}
+              uploading={uploading}
+              onUpload={handleUpload}
+              onOpenDocument={openDocument}
+              evaluationCount={
+                (detailQuery.data?.history ?? []).filter((item) => item.status === "FINALIZED")
+                  .length
+              }
+            />
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={compareOpen}
+        onOpenChange={(open) => {
+          setCompareOpen(open);
+          if (!open) {
+            setSelectedEvaluationId(null);
+            setComparisonEvaluationId(null);
+            setComparisonFirstId("");
+            setComparisonSecondId("");
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] w-[calc(100%-2rem)] max-w-5xl overflow-y-auto p-0">
+          <DialogHeader className="border-b border-border px-6 py-5 pr-12">
+            <DialogTitle>Compare performance evaluations</DialogTitle>
+            <DialogDescription>
+              Select two different evaluation periods to compare.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5 px-6 pb-6">
+            {!selectedEvaluationId || !comparisonEvaluationId ? (
+              <ComparisonPicker
+                evaluations={(detailQuery.data?.history ?? []) as unknown as HistoryEvaluation[]}
+                firstId={comparisonFirstId}
+                secondId={comparisonSecondId}
+                onFirstChange={setComparisonFirstId}
+                onSecondChange={setComparisonSecondId}
+                onCancel={() => setCompareOpen(false)}
+                onCompare={() => {
+                  setSelectedEvaluationId(comparisonFirstId);
+                  setComparisonEvaluationId(comparisonSecondId);
+                }}
+              />
+            ) : detailQuery.isFetching ||
+              !detailQuery.data?.selected ||
+              !detailQuery.data?.comparison ? (
+              <LoadingBlock rows={6} />
+            ) : (
+              <ComparisonResults
+                selected={detailQuery.data?.selected as unknown as HistoryEvaluation | null}
+                comparison={detailQuery.data?.comparison as unknown as HistoryEvaluation | null}
+                onBack={() => {
+                  setSelectedEvaluationId(null);
+                  setComparisonEvaluationId(null);
+                }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <EvaluationDocumentPreview
         html={documentHtml}
@@ -451,30 +439,259 @@ function Info({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Digital201History({
+function EmployeeFileContent({
+  employee,
   history,
+  totalCount,
+  onOpenDocument,
+  onCompare,
+}: {
+  employee:
+    | {
+        full_name?: string;
+        employee_number?: string;
+        job_title?: string;
+        division?: string;
+        section?: string;
+        employment_status?: string;
+      }
+    | undefined;
+  history: HistoryEvaluation[];
+  totalCount: number;
+  onOpenDocument: (evaluationId: string, mode: "preview" | "print" | "export") => void;
+  onCompare: () => void;
+}) {
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-3 border-b border-border pb-4 sm:grid-cols-[1fr_auto]">
+        <div>
+          <p className="text-lg font-semibold">{employee?.full_name ?? "Employee"}</p>
+          <p className="text-sm text-muted-foreground">
+            Employee no. {employee?.employee_number ?? "—"}
+          </p>
+          <p className="mt-1 text-sm text-foreground">
+            {employee?.job_title ?? "—"} · {employee?.division ?? "—"}
+            {employee?.section ? ` · ${employee.section}` : ""}
+          </p>
+        </div>
+        <div className="text-left text-sm sm:text-right">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Employment status</p>
+          <p className="mt-1 font-medium">{employee?.employment_status ?? "—"}</p>
+        </div>
+      </div>
+
+      <section aria-labelledby="performance-evaluations-heading">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 id="performance-evaluations-heading" className="font-semibold">
+              Performance Evaluations
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              {totalCount} historical record{totalCount === 1 ? "" : "s"}
+            </p>
+          </div>
+          {history.length > 1 ? (
+            <Button size="sm" onClick={onCompare}>
+              Compare Evaluations
+            </Button>
+          ) : null}
+        </div>
+        <div className="divide-y divide-border rounded-md border border-border">
+          {history.map((item) => (
+            <div
+              key={item.id}
+              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <p className="font-medium">
+                  {item.cycleName} ({item.cycleYear})
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <EvaluationStatusBadge status={item.status as EvaluationStatus} />
+                  <span>{item.jobTitle}</span>
+                  <span>·</span>
+                  <span>{item.division}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Finalized {formatDateTime(item.finalizedAt)}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {item.status === "FINALIZED" ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onOpenDocument(item.id, "preview")}
+                    >
+                      Preview
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onOpenDocument(item.id, "print")}
+                    >
+                      Print
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onOpenDocument(item.id, "export")}
+                    >
+                      Export
+                    </Button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DocumentSections({
+  documents,
+  loading,
+  documentCategory,
+  onCategoryChange,
+  fileInput,
+  uploading,
+  onUpload,
+  onOpenDocument,
+  evaluationCount,
+}: {
+  documents: Array<{ id: string; file_name: string; category: string }>;
+  loading: boolean;
+  documentCategory: string;
+  onCategoryChange: (value: string) => void;
+  fileInput: RefObject<HTMLInputElement | null>;
+  uploading: boolean;
+  onUpload: (file: File) => void;
+  onOpenDocument: (id: string) => void;
+  evaluationCount: number;
+}) {
+  const categories = [
+    ["Awards and Recognition", "AWARDS_RECOGNITION"],
+    ["Training and Certificates", "TRAINING_CERTIFICATES"],
+    ["Supporting Documents", "SUPPORTING_DOCUMENTS"],
+    ["Other Documents", "OTHER_DOCUMENTS"],
+  ];
+  return (
+    <div className="space-y-2">
+      <FileCategory label="Performance Evaluations" count={evaluationCount} />
+      {categories.map(([label, category]) => {
+        const records = documents.filter((document) => document.category === category);
+        return (
+          <details key={category} className="rounded-md border border-border px-4 py-3">
+            <summary className="cursor-pointer list-none font-medium">
+              {label}
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {records.length} records
+              </span>
+            </summary>
+            <div className="mt-3 space-y-2">
+              {loading ? (
+                <LoadingBlock rows={1} />
+              ) : records.length ? (
+                records.map((document) => (
+                  <button
+                    key={document.id}
+                    type="button"
+                    className="flex w-full justify-between rounded border border-border px-3 py-2 text-left text-sm hover:bg-muted"
+                    onClick={() => onOpenDocument(document.id)}
+                  >
+                    <span>{document.file_name}</span>
+                    <span className="text-xs text-muted-foreground">Open</span>
+                  </button>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground">No records available.</p>
+              )}
+            </div>
+          </details>
+        );
+      })}
+      <div className="flex flex-wrap gap-2 pt-2">
+        <select
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          value={documentCategory}
+          onChange={(event) => onCategoryChange(event.target.value)}
+          aria-label="Document category"
+        >
+          {categories.map(([label, category]) => (
+            <option key={category} value={category}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <input
+          ref={fileInput}
+          type="file"
+          className="max-w-full text-sm"
+          disabled={uploading}
+          onChange={(event) => event.target.files?.[0] && onUpload(event.target.files[0])}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ComparisonPicker({
+  evaluations,
+  firstId,
+  secondId,
+  onFirstChange,
+  onSecondChange,
+  onCancel,
+  onCompare,
+}: {
+  evaluations: HistoryEvaluation[];
+  firstId: string;
+  secondId: string;
+  onFirstChange: (value: string) => void;
+  onSecondChange: (value: string) => void;
+  onCancel: () => void;
+  onCompare: () => void;
+}) {
+  const valid = firstId !== "" && secondId !== "" && firstId !== secondId;
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <PeriodSelect
+          label="First evaluation period"
+          value={firstId}
+          options={evaluations}
+          onChange={onFirstChange}
+        />
+        <PeriodSelect
+          label="Second evaluation period"
+          value={secondId}
+          options={evaluations}
+          onChange={onSecondChange}
+        />
+      </div>
+      <div className="flex justify-end gap-2 border-t border-border pt-4">
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button disabled={!valid} onClick={onCompare}>
+          Compare
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ComparisonResults({
   selected,
   comparison,
-  selectedEvaluationId,
-  comparisonEvaluationId,
-  historyPage,
-  totalCount,
-  onSelectedChange,
-  onComparisonChange,
-  onPageChange,
-  onOpenDocument,
+  onBack,
 }: {
-  history: HistoryEvaluation[];
   selected: HistoryEvaluation | null;
   comparison: HistoryEvaluation | null;
-  selectedEvaluationId: string | null;
-  comparisonEvaluationId: string | null;
-  historyPage: number;
-  totalCount: number;
-  onSelectedChange: (value: string) => void;
-  onComparisonChange: (value: string) => void;
-  onPageChange: (value: number) => void;
-  onOpenDocument: (evaluationId: string, mode: "preview" | "print" | "export") => void;
+  onBack: () => void;
 }) {
   const criteria = Array.from(
     new Map(
@@ -482,147 +699,58 @@ function Digital201History({
         .filter((rating) => rating.criterion)
         .map((rating) => [rating.criterionId, rating.criterion]),
     ).values(),
-  ).sort((first, second) => (first?.position ?? 0) - (second?.position ?? 0));
-
+  ).sort((a, b) => (a?.position ?? 0) - (b?.position ?? 0));
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
-        <PeriodSelect
-          label="Selected evaluation period"
-          value={selectedEvaluationId ?? ""}
-          options={history}
-          onChange={onSelectedChange}
-        />
-        <PeriodSelect
-          label="Comparison period"
-          value={comparisonEvaluationId ?? ""}
-          options={history}
-          onChange={onComparisonChange}
-        />
-      </div>
-
       <div className="grid gap-3 md:grid-cols-2">
-        <PeriodSummary
-          label="Selected period"
-          evaluation={selected}
-          onOpenDocument={onOpenDocument}
-        />
-        <PeriodSummary
-          label="Comparison period"
-          evaluation={comparison}
-          onOpenDocument={onOpenDocument}
-        />
+        <PeriodSummary label="Selected evaluation" evaluation={selected} />
+        <PeriodSummary label="Comparison evaluation" evaluation={comparison} />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">A–J trend comparison</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
-          {criteria.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
-              No criterion ratings are available for these periods.
-            </p>
-          ) : (
-            <table className="w-full min-w-[720px] text-left text-sm">
-              <caption className="sr-only">A–J evaluation trend comparison</caption>
-              <thead className="border-b border-border bg-muted/50">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Criterion</th>
-                  <th className="px-4 py-3 font-semibold">Selected</th>
-                  <th className="px-4 py-3 font-semibold">Comparison</th>
-                  <th className="px-4 py-3 font-semibold">Trend</th>
+      <div className="overflow-x-auto rounded-md border border-border">
+        <table className="w-full min-w-[720px] text-left text-sm">
+          <thead className="bg-muted/50">
+            <tr>
+              <th className="px-3 py-2">Criterion</th>
+              <th className="px-3 py-2">Selected</th>
+              <th className="px-3 py-2">Comparison</th>
+              <th className="px-3 py-2">Difference</th>
+              <th className="px-3 py-2">Trend</th>
+            </tr>
+          </thead>
+          <tbody>
+            {criteria.map((criterion) => {
+              const current = ratingFor(selected, criterion?.id ?? "", "SUPERVISOR");
+              const previous = ratingFor(comparison, criterion?.id ?? "", "SUPERVISOR");
+              const difference = current !== null && previous !== null ? current - previous : null;
+              return (
+                <tr key={criterion?.id} className="border-t border-border">
+                  <td className="px-3 py-2">
+                    <strong>{criterion?.letter}</strong> {criterion?.title}
+                  </td>
+                  <td className="px-3 py-2">{current ?? "—"}</td>
+                  <td className="px-3 py-2">{previous ?? "—"}</td>
+                  <td className="px-3 py-2">
+                    {difference === null ? "—" : difference > 0 ? `+${difference}` : difference}
+                  </td>
+                  <td className="px-3 py-2">
+                    {difference === null
+                      ? "—"
+                      : difference > 0
+                        ? "Increase"
+                        : difference < 0
+                          ? "Decrease"
+                          : "Unchanged"}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {criteria.map((criterion) => {
-                  const selectedScore = ratingFor(selected, criterion?.id ?? "", "SUPERVISOR");
-                  const comparisonScore = ratingFor(comparison, criterion?.id ?? "", "SUPERVISOR");
-                  const difference =
-                    selectedScore !== null && comparisonScore !== null
-                      ? selectedScore - comparisonScore
-                      : null;
-                  return (
-                    <tr key={criterion?.id} className="border-b border-border last:border-0">
-                      <td className="px-4 py-3">
-                        <span className="font-semibold">{criterion?.letter}</span>
-                        <span className="ml-2 text-muted-foreground">{criterion?.title}</span>
-                      </td>
-                      <td className="px-4 py-3 tabular-nums">
-                        {ratingSummary(selected, criterion?.id ?? "")}
-                      </td>
-                      <td className="px-4 py-3 tabular-nums">
-                        {ratingSummary(comparison, criterion?.id ?? "")}
-                      </td>
-                      <td className="px-4 py-3 font-semibold">
-                        {difference === null
-                          ? "—"
-                          : difference > 0
-                            ? `↑ +${difference}`
-                            : difference < 0
-                              ? `↓ ${difference}`
-                              : "→ 0"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
-        Trend values compare the Immediate Supervisor / Rater score for each factor. Self and
-        Reviewing Supervisor scores remain visible in each period cell for audit context.
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold">Historical evaluation records</h3>
-        {history.map((item) => (
-          <div key={item.id} className="rounded-lg border border-border p-3 text-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-medium">
-                {item.cycleName} ({item.cycleYear})
-              </span>
-              <EvaluationStatusBadge status={item.status as EvaluationStatus} />
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {item.jobTitle} · {item.division}
-              {item.section ? ` · ${item.section}` : ""}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Submitted {formatDateTime(item.employeeSubmittedAt)} · Finalized{" "}
-              {formatDateTime(item.finalizedAt)}
-            </p>
-          </div>
-        ))}
-        {totalCount > history.length ? (
-          <div className="flex items-center justify-between gap-3 pt-2">
-            <span className="text-xs text-muted-foreground">
-              Showing {historyPage * 25 + 1}–{Math.min((historyPage + 1) * 25, totalCount)} of{" "}
-              {totalCount}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={historyPage === 0}
-                onClick={() => onPageChange(historyPage - 1)}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={(historyPage + 1) * 25 >= totalCount}
-                onClick={() => onPageChange(historyPage + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        ) : null}
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={onBack}>
+          Back to periods
+        </Button>
       </div>
     </div>
   );
@@ -665,7 +793,7 @@ function PeriodSummary({
 }: {
   label: string;
   evaluation: HistoryEvaluation | null;
-  onOpenDocument: (evaluationId: string, mode: "preview" | "print" | "export") => void;
+  onOpenDocument?: (evaluationId: string, mode: "preview" | "print" | "export") => void;
 }) {
   if (!evaluation)
     return (
@@ -695,7 +823,7 @@ function PeriodSummary({
           <Info label="Final score" value={formatScore(evaluation.scores?.finalScore)} />
           <Info label="Final rating" value={evaluation.scores?.finalRatingLabel ?? "—"} />
         </div>
-        {evaluation.status === "FINALIZED" ? (
+        {evaluation.status === "FINALIZED" && onOpenDocument ? (
           <Button
             variant="outline"
             size="sm"

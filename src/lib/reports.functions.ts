@@ -323,8 +323,15 @@ export const getDigital201File = createServerFn({ method: "POST" })
       ]);
     }
 
-    const selectedEvaluationId = data.selectedEvaluationId ?? historyRows[0]?.id ?? null;
-    const comparisonEvaluationId = data.comparisonEvaluationId ?? historyRows[1]?.id ?? null;
+    const selectedEvaluationId = data.selectedEvaluationId ?? null;
+    const comparisonEvaluationId = data.comparisonEvaluationId ?? null;
+    if (
+      selectedEvaluationId &&
+      comparisonEvaluationId &&
+      selectedEvaluationId === comparisonEvaluationId
+    ) {
+      throw validationError("Select two different evaluation periods to compare");
+    }
     const toEvaluation = (row: (typeof historyRows)[number]) => {
       const cycle = row.evaluation_cycles as { id: string; name: string; year: number } | null;
       const score = scoreMap.get(row.id);
