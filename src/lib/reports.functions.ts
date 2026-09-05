@@ -30,6 +30,21 @@ export type ReportRow = {
   finalizedAt: string | null;
 };
 
+export const listDigital201Employees = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { getAdmin, requirePermission } = await import("./server-core.server");
+    await requirePermission(context.userId, "evaluations.view_201", "Digital 201 File");
+    const admin = await getAdmin();
+    const { data } = await admin
+      .from("employees")
+      .select(
+        "id, employee_number, full_name, job_title, division, section, employment_status, created_at",
+      )
+      .order("employee_number");
+    return data ?? [];
+  });
+
 export const getReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: Partial<ReportFilters>) => reportFiltersSchema.parse(input ?? {}))

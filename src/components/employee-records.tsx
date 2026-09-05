@@ -31,7 +31,7 @@ import {
   formatDateTime,
 } from "@/components/ui-bits";
 import { EvaluationDocumentPreview } from "@/components/evaluation-document-preview";
-import { listEmployees } from "@/lib/admin.functions";
+import { listDigital201Employees } from "@/lib/reports.functions";
 import {
   getEvaluationDocumentUrl,
   getEmployeeDocumentUrl,
@@ -82,7 +82,7 @@ type HistoryEvaluation = {
 };
 
 export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean }) {
-  const fetchEmployees = useServerFn(listEmployees);
+  const fetchEmployees = useServerFn(listDigital201Employees);
   const fetch201File = useServerFn(getDigital201File);
   const fetchDocuments = useServerFn(listEmployeeDocuments);
   const getDocumentUrl = useServerFn(getEmployeeDocumentUrl);
@@ -438,6 +438,15 @@ function FileCategory({ label, count = 0 }: { label: string; count?: number }) {
     <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
       <span>{label}</span>
       <span className="text-xs text-muted-foreground">{count} records</span>
+    </div>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1 font-medium text-foreground">{value || "—"}</p>
     </div>
   );
 }
