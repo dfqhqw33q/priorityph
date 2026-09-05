@@ -32,20 +32,20 @@ The client uses the publishable Supabase key. Trusted server functions load the 
 
 ## 3. Tech Stack
 
-| Area | Technology |
-| --- | --- |
-| Language | TypeScript |
-| UI | React 19 |
-| Build and development | Vite, TanStack Start, Nitro |
-| Routing | TanStack Router |
-| Server state | TanStack Query |
-| Forms and validation | React Hook Form, Zod |
-| Tables and charts | TanStack Table, Recharts |
-| UI primitives | Radix UI, Tailwind CSS, shadcn/ui-style components |
-| Backend | TanStack Start server functions |
-| Data and authentication | Supabase Auth, PostgreSQL, Row Level Security |
-| Documents | Supabase Storage, PDF-Lib |
-| Notifications and icons | Sonner, Lucide React |
+| Area                    | Technology                                         |
+| ----------------------- | -------------------------------------------------- |
+| Language                | TypeScript                                         |
+| UI                      | React 19                                           |
+| Build and development   | Vite, TanStack Start, Nitro                        |
+| Routing                 | TanStack Router                                    |
+| Server state            | TanStack Query                                     |
+| Forms and validation    | React Hook Form, Zod                               |
+| Tables and charts       | TanStack Table, Recharts                           |
+| UI primitives           | Radix UI, Tailwind CSS, shadcn/ui-style components |
+| Backend                 | TanStack Start server functions                    |
+| Data and authentication | Supabase Auth, PostgreSQL, Row Level Security      |
+| Documents               | Supabase Storage, PDF-Lib                          |
+| Notifications and icons | Sonner, Lucide React                               |
 
 ## 4. Prerequisites
 
@@ -94,14 +94,14 @@ npm.cmd run dev
 
 Available npm scripts:
 
-| Command | Purpose |
-| --- | --- |
-| `npm.cmd run dev` | Start Vite development mode |
-| `npm.cmd run build` | Build the client and Nitro server |
-| `npm.cmd run build:dev` | Build using development mode |
-| `npm.cmd run preview` | Preview the production build |
-| `npm.cmd run lint` | Run ESLint |
-| `npm.cmd run format` | Format the repository with Prettier |
+| Command                 | Purpose                             |
+| ----------------------- | ----------------------------------- |
+| `npm.cmd run dev`       | Start Vite development mode         |
+| `npm.cmd run build`     | Build the client and Nitro server   |
+| `npm.cmd run build:dev` | Build using development mode        |
+| `npm.cmd run preview`   | Preview the production build        |
+| `npm.cmd run lint`      | Run ESLint                          |
+| `npm.cmd run format`    | Format the repository with Prettier |
 
 On PowerShell systems where script shims are blocked, use `npm.cmd` and `npx.cmd`.
 
@@ -109,15 +109,16 @@ On PowerShell systems where script shims are blocked, use `npm.cmd` and `npx.cmd
 
 Create a local `.env` file. It is ignored by Git. Do not commit service keys, access tokens, or AI keys.
 
-| Variable | Used by | Description |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | Browser client | Supabase project URL exposed at build time |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser client | Supabase publishable key exposed at build time |
-| `SUPABASE_URL` | SSR and server functions | Supabase project URL |
-| `SUPABASE_PUBLISHABLE_KEY` | SSR auth client | Supabase publishable key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only admin client | Service-role key; never expose to the browser |
-| `GEMINI_API_KEY` | AI server functions | Gemini provider credential, when AI features are used |
-| `GEMINI_MODEL` | AI server functions | Gemini model identifier |
+| Variable                        | Used by                  | Description                                                        |
+| ------------------------------- | ------------------------ | ------------------------------------------------------------------ |
+| `VITE_SUPABASE_URL`             | Browser client           | Supabase project URL exposed at build time                         |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser client           | Supabase publishable key exposed at build time                     |
+| `SUPABASE_URL`                  | SSR and server functions | Supabase project URL                                               |
+| `SUPABASE_PUBLISHABLE_KEY`      | SSR auth client          | Supabase publishable key                                           |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Server-only admin client | Service-role key; never expose to the browser                      |
+| `OPENROUTER_API_KEY`            | AI server functions      | OpenRouter credential; server-only, never expose to the browser    |
+| `OPENROUTER_MODEL`              | AI server functions      | OpenRouter model identifier; defaults to `minimax/minimax-m3:free` |
+| `AI_PROVIDER`                   | AI server functions      | Set to `mock` only for non-production local testing                |
 
 The browser and deployed server must point to the same Supabase project. The repository runbook identifies the linked project in `SUPABASE-RESET-AND-SEED.md`; credentials are intentionally not reproduced here.
 
@@ -160,18 +161,18 @@ The reset reapplies migrations. Auth users and their application roles are provi
 
 Backend operations are implemented as TanStack Start server functions in `src/lib/`. They are not a separate REST service.
 
-| Module | Server functions |
-| --- | --- |
-| `access.functions.ts` | `getMyAccess`, `recordLoginEvent`, `recordAuthFailure`, `needsBootstrap`, `bootstrapAdministrator` |
-| `admin.functions.ts` | User, role matrix, audit log, employee, and administration statistics operations |
-| `cycles.functions.ts` | `listTemplates`, `listCycles`, `getCycle`, `saveCycle`, `changeCycleStatus`, `regenerateCycleToken`, `deleteDraftCycle` |
+| Module                     | Server functions                                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `access.functions.ts`      | `getMyAccess`, `recordLoginEvent`, `recordAuthFailure`, `needsBootstrap`, `bootstrapAdministrator`                                  |
+| `admin.functions.ts`       | User, role matrix, audit log, employee, and administration statistics operations                                                    |
+| `cycles.functions.ts`      | `listTemplates`, `listCycles`, `getCycle`, `saveCycle`, `changeCycleStatus`, `regenerateCycleToken`, `deleteDraftCycle`             |
 | `evaluations.functions.ts` | Supervisor and President queues, filters, evaluation detail, supervisor draft/submit/reopen, President review, dashboard statistics |
-| `president.functions.ts` | President statistics, steps, ratings, and step answers |
-| `public.functions.ts` | `getPublicCycle`, `submitStep1` |
-| `reports.functions.ts` | `getReport`, `getEvaluationHistory` |
-| `scoring.functions.ts` | Scoring rules, score calculation, finalization, and correction operations |
-| `documents.functions.ts` | Employee/evaluation document listing, signed URLs, and uploads |
-| `ai.functions.ts` | AI analysis, field suggestions, suggestion decisions, and saved analyses |
+| `president.functions.ts`   | President statistics, steps, ratings, and step answers                                                                              |
+| `public.functions.ts`      | `getPublicCycle`, `submitStep1`                                                                                                     |
+| `reports.functions.ts`     | `getReport`, `getEvaluationHistory`                                                                                                 |
+| `scoring.functions.ts`     | Scoring rules, score calculation, finalization, and correction operations                                                           |
+| `documents.functions.ts`   | Employee/evaluation document listing, signed URLs, and uploads                                                                      |
+| `ai.functions.ts`          | AI analysis, field suggestions, suggestion decisions, and saved analyses                                                            |
 
 Each function validates input with Zod where input is accepted and applies authentication or permission checks appropriate to the operation.
 
@@ -202,26 +203,26 @@ Each function validates input with Zod where input is accepted and applies authe
 
 Implemented routes:
 
-| Area | Routes |
-| --- | --- |
-| Public | `/`, `/evaluation/:cycleToken`, `/evaluation-submitted` |
-| Authentication | `/login`, `/forgot-password`, `/reset-password`, `/setup` |
-| Administrator | `/admin`, `/admin/users`, `/admin/roles`, `/admin/employees`, `/admin/audit-logs` |
-| HR | `/hr`, `/hr/cycles`, `/hr/cycles/:cycleId`, `/hr/evaluation-history`, `/hr/evaluation-history/:evaluationId` |
-| Supervisor | `/supervisor`, `/supervisor/evaluations`, `/supervisor/evaluations/:evaluationId` |
-| President | `/president`, `/president/evaluations`, `/president/evaluations/:evaluationId`, `/president/employees` |
-| Shared states | `/unauthorized`, not-found route, route error pages |
+| Area           | Routes                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------ |
+| Public         | `/`, `/evaluation/:cycleToken`, `/evaluation-submitted`                                                      |
+| Authentication | `/login`, `/forgot-password`, `/reset-password`, `/setup`                                                    |
+| Administrator  | `/admin`, `/admin/users`, `/admin/roles`, `/admin/employees`, `/admin/audit-logs`                            |
+| HR             | `/hr`, `/hr/cycles`, `/hr/cycles/:cycleId`, `/hr/evaluation-history`, `/hr/evaluation-history/:evaluationId` |
+| Supervisor     | `/supervisor`, `/supervisor/evaluations`, `/supervisor/evaluations/:evaluationId`                            |
+| President      | `/president`, `/president/evaluations`, `/president/evaluations/:evaluationId`, `/president/employees`       |
+| Shared states  | `/unauthorized`, not-found route, route error pages                                                          |
 
 ## 12. Role-Based Access Control (RBAC)
 
 Application roles are `ADMINISTRATOR`, `PRESIDENT`, `HR`, and `SUPERVISOR`. Permission codes are defined in `src/lib/domain.ts` and stored as `module.action` values.
 
-| Role | Typical permitted areas implemented in the application |
-| --- | --- |
-| Administrator | Users, role permissions, employees, audit logs, and system administration |
-| HR/Personnel | Evaluation cycles, templates, links, employee records, and evaluation history |
-| Supervisor | Step 1 submissions, supervisor ratings, President submission, and permitted history |
-| President | President queue, Step 2, Step 3, employee records, and President review operations |
+| Role          | Typical permitted areas implemented in the application                              |
+| ------------- | ----------------------------------------------------------------------------------- |
+| Administrator | Users, role permissions, employees, audit logs, and system administration           |
+| HR/Personnel  | Evaluation cycles, templates, links, employee records, and evaluation history       |
+| Supervisor    | Step 1 submissions, supervisor ratings, President submission, and permitted history |
+| President     | President queue, Step 2, Step 3, employee records, and President review operations  |
 
 Permission codes include `users.view`, `users.manage`, `users.assign_roles`, `users.reset_password`, `users.revoke_sessions`, `roles.manage`, `permissions.manage`, `employees.view`, `templates.manage`, `cycles.view`, `cycles.manage`, `cycles.manage_link`, `evaluations.view_step1`, `evaluations.rate_supervisor`, `evaluations.submit_president`, `evaluations.reopen_supervisor`, `evaluations.view_history`, `president.view`, `president.step2`, `president.step3`, `evaluations.finalize`, `reports.view`, `audit.view`, `scoring.manage`, `scores.view`, and `evaluations.correct`.
 
@@ -254,15 +255,15 @@ npx.cmd supabase db push --linked --yes
 
 ## 15. Troubleshooting
 
-| Symptom | Resolution |
-| --- | --- |
-| PowerShell blocks `npm` or `npx` | Use `npm.cmd` and `npx.cmd`. |
-| Missing Supabase variables | Set the variables in `.env` locally or in Vercel project settings. |
-| Browser uses the wrong Supabase project | Verify `VITE_SUPABASE_URL` against the linked project documented in the runbook. |
-| Supabase reset reports IPv6 is unsupported | Run `npx.cmd supabase link --project-ref <project-ref>` and retry the linked reset. |
-| Authenticated user is unauthorized | Verify `internal_users`, `user_roles`, role permissions, active status, and lock status. |
-| Public evaluation link is unavailable | Verify the cycle is active and its cycle token has not been regenerated or disabled. |
-| Deployment has stale environment values | Update Vercel environment variables and deploy again. |
+| Symptom                                    | Resolution                                                                               |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| PowerShell blocks `npm` or `npx`           | Use `npm.cmd` and `npx.cmd`.                                                             |
+| Missing Supabase variables                 | Set the variables in `.env` locally or in Vercel project settings.                       |
+| Browser uses the wrong Supabase project    | Verify `VITE_SUPABASE_URL` against the linked project documented in the runbook.         |
+| Supabase reset reports IPv6 is unsupported | Run `npx.cmd supabase link --project-ref <project-ref>` and retry the linked reset.      |
+| Authenticated user is unauthorized         | Verify `internal_users`, `user_roles`, role permissions, active status, and lock status. |
+| Public evaluation link is unavailable      | Verify the cycle is active and its cycle token has not been regenerated or disabled.     |
+| Deployment has stale environment values    | Update Vercel environment variables and deploy again.                                    |
 
 ## 16. Contributing
 

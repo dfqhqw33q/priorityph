@@ -29,7 +29,7 @@ import { EvaluationRatingCards, ratingFor } from "@/components/rating-matrix";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluation } from "@/lib/evaluations.functions";
 import { saveRaterStep2 } from "@/lib/phase2.functions";
-import { recordRaterAiAction, suggestRaterField, type RaterAiSuggestion } from "@/lib/ai.functions";
+import { recordRaterAiAction, suggestRaterFields } from "@/lib/ai.functions";
 import { SignatureField } from "@/components/signature-field";
 import { userErrorMessage } from "@/lib/validation";
 
@@ -63,9 +63,10 @@ type Step2Props = {
   editable: boolean;
   canEdit: boolean;
   setDirty: (dirty: boolean) => void;
-  ai?: RaterAiSuggestion;
-  aiBusy?: boolean;
-  onSuggest?: () => void;
+  ai?: { suggestion: string; provider: "openrouter" | "development-mock" };
+  onEdit?: (value: string) => void;
+  editing?: boolean;
+  onToggleEdit?: () => void;
   onUse?: () => void;
   onDiscard?: () => void;
   aiUnavailable?: string;
@@ -90,7 +91,6 @@ function Step2Textarea({ field, label, step2, setStep2, editable, canEdit, setDi
 }
 
 function RaterAiField(props: Step2Props) {
-  if (!props.onSuggest) return <Step2Textarea {...props} />;
   return (
     <div className="space-y-2">
       <Step2Textarea {...props} />
@@ -99,29 +99,34 @@ function RaterAiField(props: Step2Props) {
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
             AI suggestion
           </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={props.aiBusy || !props.editable || !props.canEdit}
-            onClick={props.onSuggest}
-          >
-            {props.aiBusy ? "Generating..." : props.ai ? "Regenerate" : "Generate suggestion"}
-          </Button>
         </div>
         {props.aiUnavailable ? (
           <p className="mt-2 text-xs text-muted-foreground">{props.aiUnavailable}</p>
         ) : props.ai ? (
           <>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
-              {props.ai.suggestion}
-            </p>
+            <Textarea
+              className="mt-2 bg-background"
+              rows={3}
+              value={props.ai.suggestion}
+              readOnly={!props.editing || !props.editable || !props.canEdit}
+              onChange={(event) => props.onEdit?.(event.target.value)}
+              aria-label={`${props.label} AI suggestion`}
+            />
             {props.ai.provider === "development-mock" ? (
               <p className="mt-1 text-xs text-amber-700">
                 Development mock output. This is not real AI analysis.
               </p>
             ) : null}
             <div className="mt-2 flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!props.editable || !props.canEdit}
+                onClick={props.onToggleEdit}
+              >
+                {props.editing ? "Done" : "Edit"}
+              </Button>
               <Button
                 type="button"
                 size="sm"
@@ -194,7 +199,7 @@ function SupervisorReviewPage() {
   const { can } = useAccess();
   const fetchEvaluation = useServerFn(getEvaluation);
   const submitStep2 = useServerFn(saveRaterStep2);
-  const getRaterSuggestion = useServerFn(suggestRaterField);
+  const getRaterSuggestions = useServerFn(suggestRaterFields);
   const recordRaterAction = useServerFn(recordRaterAiAction);
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
   const [remarks, setRemarks] = useState("");
@@ -219,9 +224,12 @@ function SupervisorReviewPage() {
   const [errors, setErrors] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [aiSuggestions, setAiSuggestions] = useState<Record<string, RaterAiSuggestion>>({});
-  const [aiBusy, setAiBusy] = useState<string | null>(null);
-  const [aiUnavailable, setAiUnavailable] = useState<Record<string, string>>({});
+  const [aiSuggestions, setAiSuggestions] = useState<
+    Record<string, { suggestion: string; provider: "openrouter" | "development-mock" }>
+  >({});
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiUnavailable, setAiUnavailable] = useState("");
+  const [aiEditing, setAiEditing] = useState<Record<string, boolean>>({});
   const query = useQuery({
     queryKey: ["evaluation", evaluationId],
     queryFn: () => fetchEvaluation({ data: { evaluationId } }),
@@ -284,33 +292,44 @@ function SupervisorReviewPage() {
       .filter(([, value]) => typeof value === "number")
       .map(([criterionId, value]) => ({ criterionId, rating: value as number }));
 
-  async function generateSuggestion(
-    field: "strengths" | "weaknesses" | "effectiveness" | "growthSuggestions" | "otherComments",
-  ) {
+  async function generateSuggestions() {
     if (!detail) return;
-    setAiBusy(field);
-    setAiUnavailable((current) => ({ ...current, [field]: "" }));
+    setAiBusy(true);
+    setAiUnavailable("");
     try {
-      const result = await getRaterSuggestion({
+      const result = await getRaterSuggestions({
         data: {
           evaluationId,
           version: detail.version,
-          field,
-          currentValue: step2[field] ?? "",
+          currentValues: {
+            strengths: step2.strengths ?? "",
+            weaknesses: step2.weaknesses ?? "",
+            effectiveness: step2.effectiveness ?? "",
+            growthSuggestions: step2.growthSuggestions ?? "",
+            otherComments: step2.otherComments ?? "",
+          },
           actionId: crypto.randomUUID(),
-          regenerate: Boolean(aiSuggestions[field]),
+          regenerate: Object.keys(aiSuggestions).length > 0,
         },
       });
-      setAiSuggestions((current) => ({ ...current, [field]: result }));
+      setAiSuggestions(
+        Object.fromEntries(
+          Object.entries(result.suggestions).map(([field, suggestion]) => [
+            field,
+            { suggestion, provider: result.provider },
+          ]),
+        ),
+      );
+      setAiEditing({});
     } catch (error) {
       const message = userErrorMessage(
         error,
-        "AI assistance unavailable. You can complete this field manually.",
+        "AI assistance unavailable. You can complete these fields manually.",
       );
-      setAiUnavailable((current) => ({ ...current, [field]: message }));
+      setAiUnavailable(message);
       toast.error(message);
     } finally {
-      setAiBusy(null);
+      setAiBusy(false);
     }
   }
 
@@ -327,9 +346,20 @@ function SupervisorReviewPage() {
           "strengths" | "weaknesses" | "effectiveness" | "growthSuggestions" | "otherComments",
         action: "ACCEPTED",
         actionId: crypto.randomUUID(),
-        edited: false,
+        edited: Boolean(aiEditing[field]),
       },
     }).catch(() => undefined);
+  }
+
+  function editSuggestion(field: string, value: string) {
+    setAiSuggestions((current) => ({
+      ...current,
+      [field]: { ...current[field], suggestion: value },
+    }));
+  }
+
+  function toggleSuggestionEdit(field: string) {
+    setAiEditing((current) => ({ ...current, [field]: !current[field] }));
   }
 
   function discardSuggestion(field: string) {
@@ -345,6 +375,11 @@ function SupervisorReviewPage() {
       },
     }).catch(() => undefined);
     setAiSuggestions((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setAiEditing((current) => {
       const next = { ...current };
       delete next[field];
       return next;
@@ -491,6 +526,32 @@ function SupervisorReviewPage() {
         </CardHeader>
         <CardContent className="space-y-5">
           <h3 className="font-semibold">STEP TWO: Develop conclusion and comments</h3>
+          <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-primary">Competency analysis assistance</p>
+                <p className="text-xs text-muted-foreground">
+                  Generate coordinated suggestions for the development and comments fields from the
+                  recorded A–J ratings.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={aiBusy || !editable || !can("evaluations.step2")}
+                onClick={generateSuggestions}
+              >
+                {aiBusy
+                  ? "Analyzing Evaluation..."
+                  : Object.keys(aiSuggestions).length
+                    ? "Regenerate AI Suggestions"
+                    : "Generate AI Suggestions"}
+              </Button>
+            </div>
+            {aiUnavailable ? (
+              <p className="mt-2 text-sm text-muted-foreground">{aiUnavailable}</p>
+            ) : null}
+          </div>
           <Step2Textarea
             label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents."
             field="overallExplanation"
@@ -513,9 +574,9 @@ function SupervisorReviewPage() {
               canEdit={can("evaluations.step2")}
               setDirty={setDirty}
               ai={aiSuggestions.strengths}
-              aiUnavailable={aiUnavailable.strengths}
-              aiBusy={aiBusy === "strengths"}
-              onSuggest={() => generateSuggestion("strengths")}
+              onEdit={(value) => editSuggestion("strengths", value)}
+              editing={Boolean(aiEditing.strengths)}
+              onToggleEdit={() => toggleSuggestionEdit("strengths")}
               onUse={() => applySuggestion("strengths")}
               onDiscard={() => discardSuggestion("strengths")}
             />
@@ -528,9 +589,9 @@ function SupervisorReviewPage() {
               canEdit={can("evaluations.step2")}
               setDirty={setDirty}
               ai={aiSuggestions.weaknesses}
-              aiUnavailable={aiUnavailable.weaknesses}
-              aiBusy={aiBusy === "weaknesses"}
-              onSuggest={() => generateSuggestion("weaknesses")}
+              onEdit={(value) => editSuggestion("weaknesses", value)}
+              editing={Boolean(aiEditing.weaknesses)}
+              onToggleEdit={() => toggleSuggestionEdit("weaknesses")}
               onUse={() => applySuggestion("weaknesses")}
               onDiscard={() => discardSuggestion("weaknesses")}
             />
@@ -544,9 +605,9 @@ function SupervisorReviewPage() {
             canEdit={can("evaluations.step2")}
             setDirty={setDirty}
             ai={aiSuggestions.effectiveness}
-            aiUnavailable={aiUnavailable.effectiveness}
-            aiBusy={aiBusy === "effectiveness"}
-            onSuggest={() => generateSuggestion("effectiveness")}
+            onEdit={(value) => editSuggestion("effectiveness", value)}
+            editing={Boolean(aiEditing.effectiveness)}
+            onToggleEdit={() => toggleSuggestionEdit("effectiveness")}
             onUse={() => applySuggestion("effectiveness")}
             onDiscard={() => discardSuggestion("effectiveness")}
           />
@@ -591,9 +652,9 @@ function SupervisorReviewPage() {
             canEdit={can("evaluations.step2")}
             setDirty={setDirty}
             ai={aiSuggestions.growthSuggestions}
-            aiUnavailable={aiUnavailable.growthSuggestions}
-            aiBusy={aiBusy === "growthSuggestions"}
-            onSuggest={() => generateSuggestion("growthSuggestions")}
+            onEdit={(value) => editSuggestion("growthSuggestions", value)}
+            editing={Boolean(aiEditing.growthSuggestions)}
+            onToggleEdit={() => toggleSuggestionEdit("growthSuggestions")}
             onUse={() => applySuggestion("growthSuggestions")}
             onDiscard={() => discardSuggestion("growthSuggestions")}
           />
@@ -647,9 +708,9 @@ function SupervisorReviewPage() {
             canEdit={can("evaluations.step2")}
             setDirty={setDirty}
             ai={aiSuggestions.otherComments}
-            aiUnavailable={aiUnavailable.otherComments}
-            aiBusy={aiBusy === "otherComments"}
-            onSuggest={() => generateSuggestion("otherComments")}
+            onEdit={(value) => editSuggestion("otherComments", value)}
+            editing={Boolean(aiEditing.otherComments)}
+            onToggleEdit={() => toggleSuggestionEdit("otherComments")}
             onUse={() => applySuggestion("otherComments")}
             onDiscard={() => discardSuggestion("otherComments")}
           />

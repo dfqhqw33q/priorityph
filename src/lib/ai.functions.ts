@@ -21,8 +21,13 @@ const decisionSchema = requestSchema.extend({
   edited: z.boolean(),
 });
 const raterSuggestionSchema = requestSchema.extend({
-  field: z.enum(["strengths", "weaknesses", "effectiveness", "growthSuggestions", "otherComments"]),
-  currentValue: z.string().max(4000),
+  currentValues: z.object({
+    strengths: z.string().max(4000),
+    weaknesses: z.string().max(4000),
+    effectiveness: z.string().max(4000),
+    growthSuggestions: z.string().max(4000),
+    otherComments: z.string().max(4000),
+  }),
   actionId: z.string().uuid(),
   regenerate: z.boolean().default(false),
 });
@@ -43,9 +48,11 @@ export type EvaluationAiAnalysis = {
 };
 
 export type RaterAiSuggestion = {
-  field: string;
-  provider: "gemini" | "development-mock";
-  suggestion: string;
+  provider: "openrouter" | "development-mock";
+  suggestions: Record<
+    "strengths" | "weaknesses" | "effectiveness" | "growthSuggestions" | "otherComments",
+    string
+  >;
   evidence: {
     factors: Array<{
       letter: string;
@@ -58,7 +65,7 @@ export type RaterAiSuggestion = {
   generatedAt: string;
 };
 
-export const suggestRaterField = createServerFn({ method: "POST" })
+export const suggestRaterFields = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => raterSuggestionSchema.parse(input))
   .handler(async ({ data, context }): Promise<RaterAiSuggestion> => {
@@ -102,46 +109,55 @@ export const suggestRaterField = createServerFn({ method: "POST" })
             rating.criterion_id === criterion.id && rating.evaluator_type === "SUPERVISOR",
         )?.rating ?? null,
     }));
-    const sorted = [...factorRatings].sort(
-      (a, b) =>
-        (b.supervisorRating ?? b.employeeRating ?? 0) -
-        (a.supervisorRating ?? a.employeeRating ?? 0),
-    );
-    const factors =
-      data.field === "strengths"
-        ? sorted.slice(0, 4)
-        : data.field === "weaknesses" ||
-            data.field === "effectiveness" ||
-            data.field === "growthSuggestions"
-          ? sorted.slice(-4).reverse()
-          : factorRatings;
-    const evidence = { factors, cycle: `${detail.cycle_name} (${detail.cycle_year})` };
-    const purpose = {
-      strengths: "Summarize evidence-based employee strengths.",
-      weaknesses: "Describe possible development areas without inventing incidents.",
-      effectiveness: "Suggest practical ways to improve effectiveness in the current job.",
-      growthSuggestions: "Suggest professional development actions based on the recorded factors.",
-      otherComments: "Draft concise, evidence-based additional evaluation comments.",
-    }[data.field];
-    const { generateAiText, AiUnavailableError } = await import("./ai-provider.server");
+    const analysisContext = {
+      cycle: `${detail.cycle_name} (${detail.cycle_year})`,
+      factors: factorRatings,
+      existingFields: data.currentValues,
+      purposes: {
+        strengths: "Evidence-supported strengths.",
+        weaknesses: "Supported areas needing improvement.",
+        effectiveness: "Development information explaining current-job needs.",
+        growthSuggestions: "Practical development actions and training directions.",
+        otherComments: "Development-oriented career considerations.",
+      },
+    };
+    const { generateAiText, AiUnavailableError, stripJsonFence, getAiProviderName } =
+      await import("./ai-provider.server");
     const prompt = [
       "You are an advisory assistant embedded in an annual performance evaluation.",
+      "Return JSON with exactly these string keys: strengths, weaknesses, effectiveness, growthSuggestions, otherComments.",
+      "Generate all five fields together from the same evidence and avoid repeating sentences or recommendations across fields.",
       "Use only the structured evidence below. Do not invent achievements, incidents, qualifications, or personal facts.",
       "Do not change ratings, assign scores, approve training, promotion, salary, or any HR decision.",
-      `Field purpose: ${purpose}`,
-      `Current draft for tone only: ${data.currentValue || "(empty)"}`,
-      `Evidence: ${JSON.stringify(evidence)}`,
-      "Return 2-4 professional sentences only, with no markdown or preamble.",
+      `Evaluation context: ${JSON.stringify(analysisContext)}`,
+      "Keep each field concise and relevant to its purpose. Return only valid JSON, with no markdown fences.",
     ].join("\n");
     let suggestion: string;
     try {
-      suggestion = (await generateAiText(prompt)).trim();
+      suggestion = stripJsonFence(await generateAiText(prompt, { json: true }));
     } catch (error) {
       throw validationError(
         error instanceof AiUnavailableError ? error.message : "AI suggestion is unavailable.",
       );
     }
-    if (!suggestion) throw validationError("AI returned an empty suggestion.");
+    let suggestions: RaterAiSuggestion["suggestions"];
+    try {
+      const parsed = JSON.parse(suggestion) as Record<string, unknown>;
+      const fields = [
+        "strengths",
+        "weaknesses",
+        "effectiveness",
+        "growthSuggestions",
+        "otherComments",
+      ] as const;
+      if (fields.some((field) => typeof parsed[field] !== "string"))
+        throw new Error("Invalid field output");
+      suggestions = Object.fromEntries(
+        fields.map((field) => [field, String(parsed[field]).slice(0, 4000)]),
+      ) as RaterAiSuggestion["suggestions"];
+    } catch {
+      throw validationError("AI returned invalid field suggestions.");
+    }
     const generatedAt = new Date().toISOString();
     await writeAudit(
       {
@@ -154,16 +170,15 @@ export const suggestRaterField = createServerFn({ method: "POST" })
         entityType: "evaluation",
         entityId: data.evaluationId,
         evaluationId: data.evaluationId,
-        newValue: { field: data.field, generatedAt },
+        newValue: { fields: Object.keys(suggestions), generatedAt },
       },
       { ip: null, userAgent: null, correlationId: data.actionId },
     );
     return {
-      field: data.field,
-      suggestion: suggestion.slice(0, 4000),
-      evidence,
+      suggestions,
+      evidence: { factors: factorRatings, cycle: analysisContext.cycle },
       generatedAt,
-      provider: (await import("./ai-provider.server")).getAiProviderName(),
+      provider: getAiProviderName() === "openrouter" ? "openrouter" : "development-mock",
     };
   });
 
