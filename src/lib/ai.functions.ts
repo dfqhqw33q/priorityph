@@ -4,7 +4,10 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { AiSuggestionResult } from "@/lib/ai-suggestions";
 
-const requestSchema = z.object({ evaluationId: z.string().uuid(), version: z.number().int().positive() });
+const requestSchema = z.object({
+  evaluationId: z.string().uuid(),
+  version: z.number().int().positive(),
+});
 const saveSchema = requestSchema.extend({ analysis: z.record(z.unknown()), approved: z.boolean() });
 const suggestionSchema = requestSchema.extend({
   itemId: z.string().uuid(),
@@ -17,7 +20,18 @@ const decisionSchema = requestSchema.extend({
   decision: z.enum(["ACCEPTED", "DISMISSED"]),
   edited: z.boolean(),
 });
-
+const raterSuggestionSchema = requestSchema.extend({
+  field: z.enum(["strengths", "weaknesses", "effectiveness", "growthSuggestions", "otherComments"]),
+  currentValue: z.string().max(4000),
+  actionId: z.string().uuid(),
+  regenerate: z.boolean().default(false),
+});
+const raterActionSchema = requestSchema.extend({
+  field: z.enum(["strengths", "weaknesses", "effectiveness", "growthSuggestions", "otherComments"]),
+  action: z.enum(["ACCEPTED", "DISMISSED"]),
+  actionId: z.string().uuid(),
+  edited: z.boolean().default(false),
+});
 
 export type EvaluationAiAnalysis = {
   performanceSummary: string;
@@ -28,36 +42,258 @@ export type EvaluationAiAnalysis = {
   coachingSuggestions: string[];
 };
 
+export type RaterAiSuggestion = {
+  field: string;
+  provider: "gemini" | "development-mock";
+  suggestion: string;
+  evidence: {
+    factors: Array<{
+      letter: string;
+      title: string;
+      employeeRating: number | null;
+      supervisorRating: number | null;
+    }>;
+    cycle: string;
+  };
+  generatedAt: string;
+};
+
+export const suggestRaterField = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => raterSuggestionSchema.parse(input))
+  .handler(async ({ data, context }): Promise<RaterAiSuggestion> => {
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      loadEvaluationDetail,
+    } = await import("./server-core.server");
+    await requirePermission(context.userId, "evaluations.step2", "Rater Step 2");
+    const detail = await loadEvaluationDetail(data.evaluationId);
+    if (!detail) throw validationError("Evaluation not found");
+    if (detail.is_finalized)
+      throw validationError("This evaluation is finalized. AI drafting is disabled.");
+    if (detail.version !== data.version)
+      throw validationError("This evaluation changed in another session. Reload and try again.");
+    if (detail.supervisor_user_id && detail.supervisor_user_id !== context.userId)
+      throw validationError("This evaluation is assigned to another supervisor.");
+    if (!["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"].includes(detail.status))
+      throw validationError("This evaluation is not available for Rater Step 2.");
+    const admin = await getAdmin();
+    const { data: priorAction } = await admin
+      .from("audit_logs")
+      .select("id")
+      .eq("correlation_id", data.actionId)
+      .maybeSingle();
+    if (priorAction) throw validationError("This AI action was already processed.");
+
+    const factorRatings = detail.criteria.map((criterion) => ({
+      letter: criterion.letter,
+      title: criterion.title,
+      employeeRating:
+        detail.ratings.find(
+          (rating) => rating.criterion_id === criterion.id && rating.evaluator_type === "EMPLOYEE",
+        )?.rating ?? null,
+      supervisorRating:
+        detail.ratings.find(
+          (rating) =>
+            rating.criterion_id === criterion.id && rating.evaluator_type === "SUPERVISOR",
+        )?.rating ?? null,
+    }));
+    const sorted = [...factorRatings].sort(
+      (a, b) =>
+        (b.supervisorRating ?? b.employeeRating ?? 0) -
+        (a.supervisorRating ?? a.employeeRating ?? 0),
+    );
+    const factors =
+      data.field === "strengths"
+        ? sorted.slice(0, 4)
+        : data.field === "weaknesses" ||
+            data.field === "effectiveness" ||
+            data.field === "growthSuggestions"
+          ? sorted.slice(-4).reverse()
+          : factorRatings;
+    const evidence = { factors, cycle: `${detail.cycle_name} (${detail.cycle_year})` };
+    const purpose = {
+      strengths: "Summarize evidence-based employee strengths.",
+      weaknesses: "Describe possible development areas without inventing incidents.",
+      effectiveness: "Suggest practical ways to improve effectiveness in the current job.",
+      growthSuggestions: "Suggest professional development actions based on the recorded factors.",
+      otherComments: "Draft concise, evidence-based additional evaluation comments.",
+    }[data.field];
+    const { generateAiText, AiUnavailableError } = await import("./ai-provider.server");
+    const prompt = [
+      "You are an advisory assistant embedded in an annual performance evaluation.",
+      "Use only the structured evidence below. Do not invent achievements, incidents, qualifications, or personal facts.",
+      "Do not change ratings, assign scores, approve training, promotion, salary, or any HR decision.",
+      `Field purpose: ${purpose}`,
+      `Current draft for tone only: ${data.currentValue || "(empty)"}`,
+      `Evidence: ${JSON.stringify(evidence)}`,
+      "Return 2-4 professional sentences only, with no markdown or preamble.",
+    ].join("\n");
+    let suggestion: string;
+    try {
+      suggestion = (await generateAiText(prompt)).trim();
+    } catch (error) {
+      throw validationError(
+        error instanceof AiUnavailableError ? error.message : "AI suggestion is unavailable.",
+      );
+    }
+    if (!suggestion) throw validationError("AI returned an empty suggestion.");
+    const generatedAt = new Date().toISOString();
+    await writeAudit(
+      {
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
+        action: data.regenerate
+          ? "AI_RATER_SUGGESTION_REGENERATED"
+          : "AI_RATER_SUGGESTION_GENERATED",
+        module: "Rater Step 2",
+        entityType: "evaluation",
+        entityId: data.evaluationId,
+        evaluationId: data.evaluationId,
+        newValue: { field: data.field, generatedAt },
+      },
+      { ip: null, userAgent: null, correlationId: data.actionId },
+    );
+    return {
+      field: data.field,
+      suggestion: suggestion.slice(0, 4000),
+      evidence,
+      generatedAt,
+      provider: (await import("./ai-provider.server")).getAiProviderName(),
+    };
+  });
+
+export const recordRaterAiAction = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => raterActionSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      loadEvaluationDetail,
+    } = await import("./server-core.server");
+    await requirePermission(context.userId, "evaluations.step2", "Rater Step 2");
+    const detail = await loadEvaluationDetail(data.evaluationId);
+    if (
+      !detail ||
+      detail.is_finalized ||
+      detail.version !== data.version ||
+      !["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"].includes(detail.status)
+    )
+      throw validationError("This evaluation is not available for Rater Step 2.");
+    if (detail.supervisor_user_id && detail.supervisor_user_id !== context.userId)
+      throw validationError("This evaluation is assigned to another supervisor.");
+    const admin = await getAdmin();
+    const { data: priorAction } = await admin
+      .from("audit_logs")
+      .select("id")
+      .eq("correlation_id", data.actionId)
+      .maybeSingle();
+    if (priorAction) return { ok: true, duplicate: true };
+    await writeAudit(
+      {
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
+        action:
+          data.action === "ACCEPTED"
+            ? "AI_RATER_SUGGESTION_ACCEPTED"
+            : "AI_RATER_SUGGESTION_DISCARDED",
+        module: "Rater Step 2",
+        entityType: "evaluation",
+        entityId: data.evaluationId,
+        evaluationId: data.evaluationId,
+        newValue: { field: data.field, edited: data.edited },
+      },
+      { ip: null, userAgent: null, correlationId: data.actionId },
+    );
+    return { ok: true, duplicate: false };
+  });
+
 export const generateEvaluationAiAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => requestSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError, loadEvaluationDetail } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      loadEvaluationDetail,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "president.view", "President Review");
-    const { generateAiText, AiUnavailableError, stripJsonFence } = await import("./ai-provider.server");
+    const { generateAiText, AiUnavailableError, stripJsonFence } =
+      await import("./ai-provider.server");
     const detail = await loadEvaluationDetail(data.evaluationId);
     if (!detail) throw validationError("Evaluation not found");
     const admin = await getAdmin();
-    const { data: score } = await admin.from("evaluation_scores").select("final_score, final_rating_label, president_average").eq("evaluation_id", data.evaluationId).maybeSingle();
+    const { data: score } = await admin
+      .from("evaluation_scores")
+      .select("final_score, final_rating_label, president_average")
+      .eq("evaluation_id", data.evaluationId)
+      .maybeSingle();
     const prompt = [
       "You are an advisory performance evaluation assistant. Do not make decisions, change ratings, or finalize anything.",
       "Return JSON with keys performanceSummary, strengths, areasForImprovement, developmentRecommendations, trainingRecommendations, coachingSuggestions.",
       "Each list must contain concise strings. Analyze only this structured evaluation:",
-      JSON.stringify({ employee: { number: detail.employee_number_snapshot, name: detail.full_name_snapshot, title: detail.job_title_snapshot, division: detail.division_snapshot, section: detail.section_snapshot }, ratings: detail.ratings, score, supervisorRemarks: detail.supervisor_remarks, cycle: detail.cycle_name, year: detail.cycle_year }),
+      JSON.stringify({
+        employee: {
+          number: detail.employee_number_snapshot,
+          name: detail.full_name_snapshot,
+          title: detail.job_title_snapshot,
+          division: detail.division_snapshot,
+          section: detail.section_snapshot,
+        },
+        ratings: detail.ratings,
+        score,
+        supervisorRemarks: detail.supervisor_remarks,
+        cycle: detail.cycle_name,
+        year: detail.cycle_year,
+      }),
     ].join("\n");
     let text: string;
     try {
       text = stripJsonFence(await generateAiText(prompt, { json: true }));
     } catch (error) {
-      throw validationError(error instanceof AiUnavailableError ? error.message : "AI analysis is unavailable.");
+      throw validationError(
+        error instanceof AiUnavailableError ? error.message : "AI analysis is unavailable.",
+      );
     }
     let analysis: EvaluationAiAnalysis;
-    try { analysis = JSON.parse(text) as EvaluationAiAnalysis; } catch { throw validationError("AI returned invalid analysis data."); }
+    try {
+      analysis = JSON.parse(text) as EvaluationAiAnalysis;
+    } catch {
+      throw validationError("AI returned invalid analysis data.");
+    }
     const generatedAt = new Date().toISOString();
-    const { error } = await admin.from("evaluations").update({ ai_analysis: analysis, ai_generated_at: generatedAt, ai_approved: false, ai_source_version: data.version } as never).eq("id", data.evaluationId).eq("version", data.version);
+    const { error } = await admin
+      .from("evaluations")
+      .update({
+        ai_analysis: analysis,
+        ai_generated_at: generatedAt,
+        ai_approved: false,
+        ai_source_version: data.version,
+      } as never)
+      .eq("id", data.evaluationId)
+      .eq("version", data.version);
     if (error) throw validationError(error.message);
-    await writeAudit({ actorUserId: context.userId, actorRole: (await getActorRoles(context.userId)).join(","), action: "AI_ANALYSIS_GENERATED", module: "President Review", entityType: "evaluation", entityId: data.evaluationId, evaluationId: data.evaluationId, newValue: { generatedAt, sourceVersion: data.version } });
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "AI_ANALYSIS_GENERATED",
+      module: "President Review",
+      entityType: "evaluation",
+      entityId: data.evaluationId,
+      evaluationId: data.evaluationId,
+      newValue: { generatedAt, sourceVersion: data.version },
+    });
     return { analysis, generatedAt };
   });
 
@@ -72,15 +308,26 @@ export const suggestPresidentField = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => suggestionSchema.parse(input))
   .handler(async ({ data, context }): Promise<AiSuggestionResult> => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError, loadEvaluationDetail } =
-      await import("./server-core.server");
-    await requirePermission(context.userId, data.step === 2 ? "president.step2" : "president.step3", "President Review");
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      loadEvaluationDetail,
+    } = await import("./server-core.server");
+    await requirePermission(
+      context.userId,
+      data.step === 2 ? "president.step2" : "president.step3",
+      "President Review",
+    );
     const { AI_FIELD_MAPPINGS } = await import("./ai-suggestions");
     const { generateAiText, AiUnavailableError } = await import("./ai-provider.server");
 
     const detail = await loadEvaluationDetail(data.evaluationId);
     if (!detail) throw validationError("Evaluation not found");
-    if (detail.is_finalized) throw validationError("This evaluation is finalized. AI drafting is disabled.");
+    if (detail.is_finalized)
+      throw validationError("This evaluation is finalized. AI drafting is disabled.");
 
     const admin = await getAdmin();
     const { data: item } = await admin
@@ -105,7 +352,8 @@ export const suggestPresidentField = createServerFn({ method: "POST" })
       rating: number;
     }[];
     const ratingFor = (criterionId: string, type: "EMPLOYEE" | "SUPERVISOR" | "PRESIDENT") =>
-      ratings.find((r) => r.criterion_id === criterionId && r.evaluator_type === type)?.rating ?? null;
+      ratings.find((r) => r.criterion_id === criterionId && r.evaluator_type === type)?.rating ??
+      null;
 
     const allFactors = criteria.map((criterion) => ({
       letter: criterion.letter,
@@ -163,7 +411,9 @@ export const suggestPresidentField = createServerFn({ method: "POST" })
     try {
       suggestion = (await generateAiText(prompt)).trim();
     } catch (error) {
-      throw validationError(error instanceof AiUnavailableError ? error.message : "AI suggestion is unavailable.");
+      throw validationError(
+        error instanceof AiUnavailableError ? error.message : "AI suggestion is unavailable.",
+      );
     }
     if (!suggestion) throw validationError("AI returned an empty suggestion.");
     if (suggestion.length > 4000) suggestion = suggestion.slice(0, 4000);
@@ -197,7 +447,11 @@ export const recordAiSuggestionDecision = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => decisionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { requirePermission, writeAudit, getActorRoles } = await import("./server-core.server");
-    await requirePermission(context.userId, data.step === 2 ? "president.step2" : "president.step3", "President Review");
+    await requirePermission(
+      context.userId,
+      data.step === 2 ? "president.step2" : "president.step3",
+      "President Review",
+    );
     await writeAudit({
       actorUserId: context.userId,
       actorRole: (await getActorRoles(context.userId)).join(","),
@@ -211,16 +465,30 @@ export const recordAiSuggestionDecision = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-
 export const saveEvaluationAiAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => saveSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "president.view", "President Review");
     const admin = await getAdmin();
-    const { error } = await admin.from("evaluations").update({ ai_analysis: data.analysis, ai_approved: data.approved } as never).eq("id", data.evaluationId).eq("version", data.version).eq("is_finalized", false);
+    const { error } = await admin
+      .from("evaluations")
+      .update({ ai_analysis: data.analysis, ai_approved: data.approved } as never)
+      .eq("id", data.evaluationId)
+      .eq("version", data.version)
+      .eq("is_finalized", false);
     if (error) throw validationError(error.message);
-    await writeAudit({ actorUserId: context.userId, actorRole: (await getActorRoles(context.userId)).join(","), action: data.approved ? "AI_RECOMMENDATION_APPROVED" : "AI_RECOMMENDATION_EDITED", module: "President Review", entityType: "evaluation", entityId: data.evaluationId, evaluationId: data.evaluationId, newValue: { approved: data.approved } });
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: data.approved ? "AI_RECOMMENDATION_APPROVED" : "AI_RECOMMENDATION_EDITED",
+      module: "President Review",
+      entityType: "evaluation",
+      entityId: data.evaluationId,
+      evaluationId: data.evaluationId,
+      newValue: { approved: data.approved },
+    });
     return { ok: true };
   });

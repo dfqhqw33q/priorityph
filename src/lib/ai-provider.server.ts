@@ -1,14 +1,24 @@
 /**
  * Server-side AI text generation for President review assistance.
  *
- * Uses Google Gemini when GEMINI_API_KEY is configured, and otherwise falls back
- * to the Lovable AI Gateway (LOVABLE_API_KEY). Both keys stay server-side.
+ * Uses Google Gemini when GEMINI_API_KEY is configured. A deterministic mock is
+ * available only when explicitly enabled outside production for local testing.
  */
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/responses";
-const GATEWAY_MODEL = "openai/gpt-5.6-sol";
-
 export class AiUnavailableError extends Error {}
+
+export type AiProviderName = "gemini" | "development-mock" | "unavailable";
+
+export function getAiProviderName(): AiProviderName {
+  if (process.env["GEMINI_API_KEY"]) return "gemini";
+  if (process.env["AI_PROVIDER"] === "mock" && process.env["NODE_ENV"] !== "production")
+    return "development-mock";
+  return "unavailable";
+}
+
+function timeoutSignal(milliseconds: number): AbortSignal {
+  return AbortSignal.timeout ? AbortSignal.timeout(milliseconds) : new AbortController().signal;
+}
 
 async function callGemini(apiKey: string, prompt: string, json: boolean): Promise<string> {
   const model = process.env["GEMINI_MODEL"] || "gemini-2.5-flash";
@@ -17,6 +27,7 @@ async function callGemini(apiKey: string, prompt: string, json: boolean): Promis
     {
       method: "POST",
       headers: { "content-type": "application/json" },
+      signal: timeoutSignal(15_000),
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         ...(json ? { generationConfig: { responseMimeType: "application/json" } } : {}),
@@ -32,79 +43,43 @@ async function callGemini(apiKey: string, prompt: string, json: boolean): Promis
   return text;
 }
 
-async function callLovableGateway(apiKey: string, prompt: string, json: boolean): Promise<string> {
-  const response = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": apiKey,
-      "X-Lovable-AIG-SDK": "fetch",
-    },
-    body: JSON.stringify({
-      model: GATEWAY_MODEL,
-      input: json ? `${prompt}\n\nReturn only valid JSON. No markdown fences.` : prompt,
-      stream: true,
-      reasoning: { effort: "low", summary: "auto" },
-    }),
-  });
-
-  if (response.status === 429) throw new AiUnavailableError("AI is rate limited. Try again shortly.");
-  if (response.status === 402) throw new AiUnavailableError("AI credits are exhausted for this workspace.");
-  if (!response.ok || !response.body) {
-    throw new AiUnavailableError(`AI request failed (${response.status}).`);
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let text = "";
-  while (true) {
-    const chunk = await reader.read();
-    if (chunk.done) break;
-    buffer += decoder.decode(chunk.value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
-      const raw = line.slice(5).trim();
-      if (!raw || raw === "[DONE]") continue;
-      try {
-        const event = JSON.parse(raw) as { type?: string; delta?: string; response?: { output_text?: string } };
-        if (event.type === "response.output_text.delta" && typeof event.delta === "string") {
-          text += event.delta;
-        } else if (event.type === "response.completed" && !text && event.response?.output_text) {
-          text = event.response.output_text;
-        }
-      } catch {
-        // Ignore keep-alive or non-JSON frames.
-      }
-    }
-  }
-
-  const result = text.trim();
-  if (!result) throw new AiUnavailableError("AI returned no content.");
-  return result;
-}
-
 export function stripJsonFence(text: string): string {
   const trimmed = text.trim();
   if (!trimmed.startsWith("```")) return trimmed;
-  return trimmed.replace(/^```[a-zA-Z]*\n?/, "").replace(/```$/, "").trim();
+  return trimmed
+    .replace(/^```[a-zA-Z]*\n?/, "")
+    .replace(/```$/, "")
+    .trim();
 }
 
-export async function generateAiText(prompt: string, options?: { json?: boolean }): Promise<string> {
+export async function generateAiText(
+  prompt: string,
+  options?: { json?: boolean },
+): Promise<string> {
   const json = options?.json ?? false;
-  const geminiKey = process.env["GEMINI_API_KEY"];
-  const lovableKey = process.env["LOVABLE_API_KEY"];
-
-  if (geminiKey) {
+  const provider = getAiProviderName();
+  if (provider === "gemini") {
     try {
-      return await callGemini(geminiKey, prompt, json);
+      return await callGemini(process.env["GEMINI_API_KEY"]!, prompt, json);
     } catch (error) {
-      if (!lovableKey) throw error;
+      if (error instanceof DOMException && error.name === "TimeoutError")
+        throw new AiUnavailableError("AI timed out. You can complete the field manually.");
+      if (error instanceof AiUnavailableError) throw error;
+      throw new AiUnavailableError(
+        "AI assistance unavailable. You can complete this field manually.",
+      );
     }
   }
-
-  if (!lovableKey) throw new AiUnavailableError("AI assistance is not configured on this server.");
-  return callLovableGateway(lovableKey, prompt, json);
+  if (provider === "development-mock")
+    return json
+      ? JSON.stringify({
+          performanceSummary: "Development mock output",
+          strengths: [],
+          areasForImprovement: [],
+          developmentRecommendations: [],
+          trainingRecommendations: [],
+          coachingSuggestions: [],
+        })
+      : "[Development mock suggestion] Review the recorded evaluation factors and complete this field using your professional observations.";
+  throw new AiUnavailableError("AI assistance unavailable. You can complete this field manually.");
 }

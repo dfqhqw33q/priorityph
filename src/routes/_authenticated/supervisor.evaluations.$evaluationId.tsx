@@ -29,6 +29,7 @@ import { EvaluationRatingCards, ratingFor } from "@/components/rating-matrix";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluation } from "@/lib/evaluations.functions";
 import { saveRaterStep2 } from "@/lib/phase2.functions";
+import { recordRaterAiAction, suggestRaterField, type RaterAiSuggestion } from "@/lib/ai.functions";
 import { SignatureField } from "@/components/signature-field";
 import { userErrorMessage } from "@/lib/validation";
 
@@ -36,9 +37,16 @@ export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$ev
   head: () => ({
     meta: [
       { title: "Supervisor review | Priority Handling Logistics, Inc." },
-      { name: "description", content: "Review an employee Step 1 assessment, rate all ten factors and submit to the Reviewing Supervisor." },
+      {
+        name: "description",
+        content:
+          "Review an employee Step 1 assessment, rate all ten factors and submit to the Reviewing Supervisor.",
+      },
       { property: "og:title", content: "Supervisor review" },
-      { property: "og:description", content: "Rate performance factors A–J and submit to the Reviewing Supervisor." },
+      {
+        property: "og:description",
+        content: "Rate performance factors A–J and submit to the Reviewing Supervisor.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -47,18 +55,136 @@ export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$ev
 });
 
 type Step2State = Record<string, string>;
-type Step2Props = { field: string; label: string; step2: Step2State; setStep2: React.Dispatch<React.SetStateAction<Step2State>>; editable: boolean; canEdit: boolean; setDirty: (dirty: boolean) => void };
+type Step2Props = {
+  field: string;
+  label: string;
+  step2: Step2State;
+  setStep2: React.Dispatch<React.SetStateAction<Step2State>>;
+  editable: boolean;
+  canEdit: boolean;
+  setDirty: (dirty: boolean) => void;
+  ai?: RaterAiSuggestion;
+  aiBusy?: boolean;
+  onSuggest?: () => void;
+  onUse?: () => void;
+  onDiscard?: () => void;
+  aiUnavailable?: string;
+};
 
 function Step2Textarea({ field, label, step2, setStep2, editable, canEdit, setDirty }: Step2Props) {
-  return <div className="space-y-1.5"><Label htmlFor={`step2-${field}`}>{label}</Label><Textarea id={`step2-${field}`} rows={3} value={step2[field] ?? ""} disabled={!editable || !canEdit} onChange={(event) => { setStep2((current) => ({ ...current, [field]: event.target.value })); setDirty(true); }} /></div>;
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={`step2-${field}`}>{label}</Label>
+      <Textarea
+        id={`step2-${field}`}
+        rows={3}
+        value={step2[field] ?? ""}
+        disabled={!editable || !canEdit}
+        onChange={(event) => {
+          setStep2((current) => ({ ...current, [field]: event.target.value }));
+          setDirty(true);
+        }}
+      />
+    </div>
+  );
+}
+
+function RaterAiField(props: Step2Props) {
+  if (!props.onSuggest) return <Step2Textarea {...props} />;
+  return (
+    <div className="space-y-2">
+      <Step2Textarea {...props} />
+      <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+            AI suggestion
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={props.aiBusy || !props.editable || !props.canEdit}
+            onClick={props.onSuggest}
+          >
+            {props.aiBusy ? "Generating..." : props.ai ? "Regenerate" : "Generate suggestion"}
+          </Button>
+        </div>
+        {props.aiUnavailable ? (
+          <p className="mt-2 text-xs text-muted-foreground">{props.aiUnavailable}</p>
+        ) : props.ai ? (
+          <>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
+              {props.ai.suggestion}
+            </p>
+            {props.ai.provider === "development-mock" ? (
+              <p className="mt-1 text-xs text-amber-700">
+                Development mock output. This is not real AI analysis.
+              </p>
+            ) : null}
+            <div className="mt-2 flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                disabled={!props.editable || !props.canEdit}
+                onClick={props.onUse}
+              >
+                Use suggestion
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={props.onDiscard}>
+                Discard
+              </Button>
+            </div>
+          </>
+        ) : (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Advisory only. It will not change the official field until you choose Use suggestion.
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function Step2Input(props: Step2Props) {
-  return <div className="space-y-1.5"><Label htmlFor={`step2-${props.field}`}>{props.label}</Label><input id={`step2-${props.field}`} className="h-10 w-full rounded-md border border-input bg-background px-3" value={props.step2[props.field] ?? ""} disabled={!props.editable || !props.canEdit} onChange={(event) => { props.setStep2((current) => ({ ...current, [props.field]: event.target.value })); props.setDirty(true); }} /></div>;
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={`step2-${props.field}`}>{props.label}</Label>
+      <input
+        id={`step2-${props.field}`}
+        className="h-10 w-full rounded-md border border-input bg-background px-3"
+        value={props.step2[props.field] ?? ""}
+        disabled={!props.editable || !props.canEdit}
+        onChange={(event) => {
+          props.setStep2((current) => ({ ...current, [props.field]: event.target.value }));
+          props.setDirty(true);
+        }}
+      />
+    </div>
+  );
 }
 
 function Step2Choice({ field, label, options, ...props }: Step2Props & { options: string[] }) {
-  return <fieldset className="space-y-2"><legend className="text-sm font-medium">{label}</legend>{options.map((option) => <label key={option} className="flex items-start gap-2 text-sm"><input type="radio" name={`step2-${field}`} value={option} checked={props.step2[field] === option} disabled={!props.editable || !props.canEdit} onChange={() => { props.setStep2((current) => ({ ...current, [field]: option })); props.setDirty(true); }} /><span>{option}</span></label>)}</fieldset>;
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-sm font-medium">{label}</legend>
+      {options.map((option) => (
+        <label key={option} className="flex items-start gap-2 text-sm">
+          <input
+            type="radio"
+            name={`step2-${field}`}
+            value={option}
+            checked={props.step2[field] === option}
+            disabled={!props.editable || !props.canEdit}
+            onChange={() => {
+              props.setStep2((current) => ({ ...current, [field]: option }));
+              props.setDirty(true);
+            }}
+          />
+          <span>{option}</span>
+        </label>
+      ))}
+    </fieldset>
+  );
 }
 
 function SupervisorReviewPage() {
@@ -68,14 +194,39 @@ function SupervisorReviewPage() {
   const { can } = useAccess();
   const fetchEvaluation = useServerFn(getEvaluation);
   const submitStep2 = useServerFn(saveRaterStep2);
+  const getRaterSuggestion = useServerFn(suggestRaterField);
+  const recordRaterAction = useServerFn(recordRaterAiAction);
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
   const [remarks, setRemarks] = useState("");
-  const [step2, setStep2] = useState<Step2State>({ overallExplanation: "", strengths: "", weaknesses: "", effectiveness: "", developmentPotential: "", advancementOutlook: "", growthSuggestions: "", transferInterest: "", transferJob: "", transferWhere: "", transferQualified: "", otherComments: "", date: "" });
-  const [signature, setSignature] = useState<{ method: "DRAWN" | "UPLOAD"; data: string } | undefined>();
+  const [step2, setStep2] = useState<Step2State>({
+    overallExplanation: "",
+    strengths: "",
+    weaknesses: "",
+    effectiveness: "",
+    developmentPotential: "",
+    advancementOutlook: "",
+    growthSuggestions: "",
+    transferInterest: "",
+    transferJob: "",
+    transferWhere: "",
+    transferQualified: "",
+    otherComments: "",
+    date: "",
+  });
+  const [signature, setSignature] = useState<
+    { method: "DRAWN" | "UPLOAD"; data: string } | undefined
+  >();
   const [errors, setErrors] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const query = useQuery({ queryKey: ["evaluation", evaluationId], queryFn: () => fetchEvaluation({ data: { evaluationId } }), retry: false });
+  const [aiSuggestions, setAiSuggestions] = useState<Record<string, RaterAiSuggestion>>({});
+  const [aiBusy, setAiBusy] = useState<string | null>(null);
+  const [aiUnavailable, setAiUnavailable] = useState<Record<string, string>>({});
+  const query = useQuery({
+    queryKey: ["evaluation", evaluationId],
+    queryFn: () => fetchEvaluation({ data: { evaluationId } }),
+    retry: false,
+  });
   const detail = query.data ?? null;
 
   useEffect(() => {
@@ -87,9 +238,27 @@ function SupervisorReviewPage() {
     setRatings(next);
     setRemarks(detail.supervisor_remarks);
     const source = detail as typeof detail & Record<string, string | null>;
-    setStep2({ overallExplanation: source["supervisor_step2_overall_explanation"] ?? "", strengths: source["supervisor_step2_strengths"] ?? "", weaknesses: source["supervisor_step2_weaknesses"] ?? "", effectiveness: source["supervisor_step2_effectiveness"] ?? "", developmentPotential: source["supervisor_step2_development_potential"] ?? "", advancementOutlook: source["supervisor_step2_advancement_outlook"] ?? "", growthSuggestions: source["supervisor_step2_growth_suggestions"] ?? "", transferInterest: source["supervisor_step2_transfer_interest"] ?? "", transferJob: source["supervisor_step2_transfer_job"] ?? "", transferWhere: source["supervisor_step2_transfer_where"] ?? "", transferQualified: source["supervisor_step2_transfer_qualified"] ?? "", otherComments: source["supervisor_step2_other_comments"] ?? "", date: source["supervisor_step2_date"] ?? "" });
-    const savedSignature = source["rater_signature"] as { method: "DRAWN" | "UPLOAD"; signature_data: string | null } | null;
-    if (savedSignature?.signature_data) setSignature({ method: savedSignature.method, data: savedSignature.signature_data });
+    setStep2({
+      overallExplanation: source["supervisor_step2_overall_explanation"] ?? "",
+      strengths: source["supervisor_step2_strengths"] ?? "",
+      weaknesses: source["supervisor_step2_weaknesses"] ?? "",
+      effectiveness: source["supervisor_step2_effectiveness"] ?? "",
+      developmentPotential: source["supervisor_step2_development_potential"] ?? "",
+      advancementOutlook: source["supervisor_step2_advancement_outlook"] ?? "",
+      growthSuggestions: source["supervisor_step2_growth_suggestions"] ?? "",
+      transferInterest: source["supervisor_step2_transfer_interest"] ?? "",
+      transferJob: source["supervisor_step2_transfer_job"] ?? "",
+      transferWhere: source["supervisor_step2_transfer_where"] ?? "",
+      transferQualified: source["supervisor_step2_transfer_qualified"] ?? "",
+      otherComments: source["supervisor_step2_other_comments"] ?? "",
+      date: source["supervisor_step2_date"] ?? "",
+    });
+    const savedSignature = source["rater_signature"] as {
+      method: "DRAWN" | "UPLOAD";
+      signature_data: string | null;
+    } | null;
+    if (savedSignature?.signature_data)
+      setSignature({ method: savedSignature.method, data: savedSignature.signature_data });
     setDirty(false);
   }, [detail]);
 
@@ -108,16 +277,92 @@ function SupervisorReviewPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [dirty]);
 
-  const editable =
-    detail?.status === "EMPLOYEE_SUBMITTED" || detail?.status === "SUPERVISOR_DRAFT";
+  const editable = detail?.status === "EMPLOYEE_SUBMITTED" || detail?.status === "SUPERVISOR_DRAFT";
 
   const ratingPayload = () =>
     Object.entries(ratings)
       .filter(([, value]) => typeof value === "number")
       .map(([criterionId, value]) => ({ criterionId, rating: value as number }));
 
+  async function generateSuggestion(
+    field: "strengths" | "weaknesses" | "effectiveness" | "growthSuggestions" | "otherComments",
+  ) {
+    if (!detail) return;
+    setAiBusy(field);
+    setAiUnavailable((current) => ({ ...current, [field]: "" }));
+    try {
+      const result = await getRaterSuggestion({
+        data: {
+          evaluationId,
+          version: detail.version,
+          field,
+          currentValue: step2[field] ?? "",
+          actionId: crypto.randomUUID(),
+          regenerate: Boolean(aiSuggestions[field]),
+        },
+      });
+      setAiSuggestions((current) => ({ ...current, [field]: result }));
+    } catch (error) {
+      const message = userErrorMessage(
+        error,
+        "AI assistance unavailable. You can complete this field manually.",
+      );
+      setAiUnavailable((current) => ({ ...current, [field]: message }));
+      toast.error(message);
+    } finally {
+      setAiBusy(null);
+    }
+  }
+
+  function applySuggestion(field: string) {
+    const suggestion = aiSuggestions[field];
+    if (!suggestion) return;
+    setStep2((current) => ({ ...current, [field]: suggestion.suggestion }));
+    setDirty(true);
+    void recordRaterAction({
+      data: {
+        evaluationId,
+        version: detail?.version ?? 1,
+        field: field as
+          "strengths" | "weaknesses" | "effectiveness" | "growthSuggestions" | "otherComments",
+        action: "ACCEPTED",
+        actionId: crypto.randomUUID(),
+        edited: false,
+      },
+    }).catch(() => undefined);
+  }
+
+  function discardSuggestion(field: string) {
+    void recordRaterAction({
+      data: {
+        evaluationId,
+        version: detail?.version ?? 1,
+        field: field as
+          "strengths" | "weaknesses" | "effectiveness" | "growthSuggestions" | "otherComments",
+        action: "DISMISSED",
+        actionId: crypto.randomUUID(),
+        edited: false,
+      },
+    }).catch(() => undefined);
+    setAiSuggestions((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
   const draftMutation = useMutation({
-    mutationFn: () => submitStep2({ data: { evaluationId, version: detail?.version ?? 1, ratings: ratingPayload(), remarks, ...step2, submit: false } }),
+    mutationFn: () =>
+      submitStep2({
+        data: {
+          evaluationId,
+          version: detail?.version ?? 1,
+          ratings: ratingPayload(),
+          remarks,
+          ...step2,
+          submit: false,
+        },
+      }),
     onSuccess: async () => {
       toast.success("Draft saved");
       setDirty(false);
@@ -128,7 +373,17 @@ function SupervisorReviewPage() {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      return submitStep2({ data: { evaluationId, version: detail?.version ?? 1, ratings: ratingPayload(), remarks, ...step2, submit: true, signature } });
+      return submitStep2({
+        data: {
+          evaluationId,
+          version: detail?.version ?? 1,
+          ratings: ratingPayload(),
+          remarks,
+          ...step2,
+          submit: true,
+          signature,
+        },
+      });
     },
     onSuccess: async () => {
       toast.success("Step 2 submitted for Reviewing Supervisor review");
@@ -161,7 +416,8 @@ function SupervisorReviewPage() {
     const message = query.error instanceof Error ? query.error.message : "Unavailable";
     return <EmptyState title="Unable to open this evaluation" description={message} />;
   }
-  if (!detail) return <EmptyState title="Evaluation not found" description="It may have been removed." />;
+  if (!detail)
+    return <EmptyState title="Evaluation not found" description="It may have been removed." />;
 
   return (
     <div className="space-y-6">
@@ -181,7 +437,10 @@ function SupervisorReviewPage() {
           <Field label="Job title" value={detail.job_title_snapshot} />
           <Field label="Division / department" value={detail.division_snapshot} />
           <Field label="Section / unit" value={detail.section_snapshot} />
-          <Field label="Self-assessment submitted" value={formatDateTime(detail.employee_submitted_at)} />
+          <Field
+            label="Self-assessment submitted"
+            value={formatDateTime(detail.employee_submitted_at)}
+          />
         </CardContent>
       </Card>
 
@@ -232,31 +491,193 @@ function SupervisorReviewPage() {
         </CardHeader>
         <CardContent className="space-y-5">
           <h3 className="font-semibold">STEP TWO: Develop conclusion and comments</h3>
-          <Step2Textarea label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents." field="overallExplanation" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <p className="font-semibold">2. Summarize the principal strengths and weakness of the employee.</p>
+          <Step2Textarea
+            label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents."
+            field="overallExplanation"
+            step2={step2}
+            setStep2={setStep2}
+            editable={editable}
+            canEdit={can("evaluations.step2")}
+            setDirty={setDirty}
+          />
+          <p className="font-semibold">
+            2. Summarize the principal strengths and weakness of the employee.
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Step2Textarea label="Principal Strengths" field="strengths" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-            <Step2Textarea label="Principal Weakness" field="weaknesses" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+            <RaterAiField
+              label="Principal Strengths"
+              field="strengths"
+              step2={step2}
+              setStep2={setStep2}
+              editable={editable}
+              canEdit={can("evaluations.step2")}
+              setDirty={setDirty}
+              ai={aiSuggestions.strengths}
+              aiUnavailable={aiUnavailable.strengths}
+              aiBusy={aiBusy === "strengths"}
+              onSuggest={() => generateSuggestion("strengths")}
+              onUse={() => applySuggestion("strengths")}
+              onDiscard={() => discardSuggestion("strengths")}
+            />
+            <RaterAiField
+              label="Principal Weakness"
+              field="weaknesses"
+              step2={step2}
+              setStep2={setStep2}
+              editable={editable}
+              canEdit={can("evaluations.step2")}
+              setDirty={setDirty}
+              ai={aiSuggestions.weaknesses}
+              aiUnavailable={aiUnavailable.weaknesses}
+              aiBusy={aiBusy === "weaknesses"}
+              onSuggest={() => generateSuggestion("weaknesses")}
+              onUse={() => applySuggestion("weaknesses")}
+              onDiscard={() => discardSuggestion("weaknesses")}
+            />
           </div>
-          <Step2Textarea label="To be more effective on present job the employee should:" field="effectiveness" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <Step2Choice label="3. The employee's development potential on present job is:" field="developmentPotential" options={["Very marked growth expected on present job", "Considerable improvement expected on present job", "Only moderate improvement ahead on present job", "Likely to maintain present performance level on present job", "Likely to become less effective on present job"]} step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <Step2Choice label="4. The employee's advancement outlook is:" field="advancementOutlook" options={["Promising. Should be able to advance to jobs several levels beyond his present one.", "Fairly Promising. Should be able to advance to job in the next higher level.", "Present job or jobs within the same grade level represent his advancement.", "Employee has difficulty in advancing to his job ceiling.", "Employee should be transferred. Not suited to this job; would fit better in some other jobs."]} step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <Step2Textarea label="5. Suggest ways to accelerate employee's growth and development." field="growthSuggestions" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          <Step2Choice label="6. Has the employee expressed any interest in assuming another job or transferring to another company / division / department / section?" field="transferInterest" options={["YES", "NO", "NOT_AWARE"]} step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          {step2.transferInterest === "YES" ? <div className="grid gap-4 sm:grid-cols-3">
-            <Step2Input label="What job?" field="transferJob" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-            <Step2Input label="Where?" field="transferWhere" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-            <Step2Input label="Is he qualified?" field="transferQualified" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
-          </div> : null}
-          <Step2Textarea label="7. Other comments and recommendations" field="otherComments" step2={step2} setStep2={setStep2} editable={editable} canEdit={can("evaluations.step2")} setDirty={setDirty} />
+          <RaterAiField
+            label="To be more effective on present job the employee should:"
+            field="effectiveness"
+            step2={step2}
+            setStep2={setStep2}
+            editable={editable}
+            canEdit={can("evaluations.step2")}
+            setDirty={setDirty}
+            ai={aiSuggestions.effectiveness}
+            aiUnavailable={aiUnavailable.effectiveness}
+            aiBusy={aiBusy === "effectiveness"}
+            onSuggest={() => generateSuggestion("effectiveness")}
+            onUse={() => applySuggestion("effectiveness")}
+            onDiscard={() => discardSuggestion("effectiveness")}
+          />
+          <Step2Choice
+            label="3. The employee's development potential on present job is:"
+            field="developmentPotential"
+            options={[
+              "Very marked growth expected on present job",
+              "Considerable improvement expected on present job",
+              "Only moderate improvement ahead on present job",
+              "Likely to maintain present performance level on present job",
+              "Likely to become less effective on present job",
+            ]}
+            step2={step2}
+            setStep2={setStep2}
+            editable={editable}
+            canEdit={can("evaluations.step2")}
+            setDirty={setDirty}
+          />
+          <Step2Choice
+            label="4. The employee's advancement outlook is:"
+            field="advancementOutlook"
+            options={[
+              "Promising. Should be able to advance to jobs several levels beyond his present one.",
+              "Fairly Promising. Should be able to advance to job in the next higher level.",
+              "Present job or jobs within the same grade level represent his advancement.",
+              "Employee has difficulty in advancing to his job ceiling.",
+              "Employee should be transferred. Not suited to this job; would fit better in some other jobs.",
+            ]}
+            step2={step2}
+            setStep2={setStep2}
+            editable={editable}
+            canEdit={can("evaluations.step2")}
+            setDirty={setDirty}
+          />
+          <RaterAiField
+            label="5. Suggest ways to accelerate employee's growth and development."
+            field="growthSuggestions"
+            step2={step2}
+            setStep2={setStep2}
+            editable={editable}
+            canEdit={can("evaluations.step2")}
+            setDirty={setDirty}
+            ai={aiSuggestions.growthSuggestions}
+            aiUnavailable={aiUnavailable.growthSuggestions}
+            aiBusy={aiBusy === "growthSuggestions"}
+            onSuggest={() => generateSuggestion("growthSuggestions")}
+            onUse={() => applySuggestion("growthSuggestions")}
+            onDiscard={() => discardSuggestion("growthSuggestions")}
+          />
+          <Step2Choice
+            label="6. Has the employee expressed any interest in assuming another job or transferring to another company / division / department / section?"
+            field="transferInterest"
+            options={["YES", "NO", "NOT_AWARE"]}
+            step2={step2}
+            setStep2={setStep2}
+            editable={editable}
+            canEdit={can("evaluations.step2")}
+            setDirty={setDirty}
+          />
+          {step2.transferInterest === "YES" ? (
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Step2Input
+                label="What job?"
+                field="transferJob"
+                step2={step2}
+                setStep2={setStep2}
+                editable={editable}
+                canEdit={can("evaluations.step2")}
+                setDirty={setDirty}
+              />
+              <Step2Input
+                label="Where?"
+                field="transferWhere"
+                step2={step2}
+                setStep2={setStep2}
+                editable={editable}
+                canEdit={can("evaluations.step2")}
+                setDirty={setDirty}
+              />
+              <Step2Input
+                label="Is he qualified?"
+                field="transferQualified"
+                step2={step2}
+                setStep2={setStep2}
+                editable={editable}
+                canEdit={can("evaluations.step2")}
+                setDirty={setDirty}
+              />
+            </div>
+          ) : null}
+          <RaterAiField
+            label="7. Other comments and recommendations"
+            field="otherComments"
+            step2={step2}
+            setStep2={setStep2}
+            editable={editable}
+            canEdit={can("evaluations.step2")}
+            setDirty={setDirty}
+            ai={aiSuggestions.otherComments}
+            aiUnavailable={aiUnavailable.otherComments}
+            aiBusy={aiBusy === "otherComments"}
+            onSuggest={() => generateSuggestion("otherComments")}
+            onUse={() => applySuggestion("otherComments")}
+            onDiscard={() => discardSuggestion("otherComments")}
+          />
 
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="rater-signature">Signature of Rater</Label>
-            <SignatureField {...(signature ? { value: signature } : {})} disabled={!editable} onChange={(value) => { setSignature(value); setDirty(true); }} />
+            <SignatureField
+              {...(signature ? { value: signature } : {})}
+              disabled={!editable}
+              onChange={(value) => {
+                setSignature(value);
+                setDirty(true);
+              }}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="step2-date">Date</Label>
-            <input id="step2-date" type="date" className="h-10 rounded-md border border-input bg-background px-3" value={step2["date"]} disabled={!editable || !can("evaluations.step2")} onChange={(event) => { setStep2((current) => ({ ...current, date: event.target.value })); setDirty(true); }} />
+            <input
+              id="step2-date"
+              type="date"
+              className="h-10 rounded-md border border-input bg-background px-3"
+              value={step2["date"]}
+              disabled={!editable || !can("evaluations.step2")}
+              onChange={(event) => {
+                setStep2((current) => ({ ...current, date: event.target.value }));
+                setDirty(true);
+              }}
+            />
           </div>
         </CardContent>
       </Card>
@@ -282,8 +703,9 @@ function SupervisorReviewPage() {
       </div>
 
       {!editable ? (
-          <p className="text-sm text-muted-foreground">
-          This assessment is locked because it has already been submitted to the Reviewing Supervisor.
+        <p className="text-sm text-muted-foreground">
+          This assessment is locked because it has already been submitted to the Reviewing
+          Supervisor.
         </p>
       ) : null}
 
@@ -292,8 +714,8 @@ function SupervisorReviewPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Submit to the Reviewing Supervisor?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your ratings and remarks will be locked and forwarded to the Reviewing Supervisor. This action is
-              recorded in the audit trail.
+              Your ratings and remarks will be locked and forwarded to the Reviewing Supervisor.
+              This action is recorded in the audit trail.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -302,7 +724,6 @@ function SupervisorReviewPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }

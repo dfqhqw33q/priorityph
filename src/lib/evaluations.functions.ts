@@ -2,10 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  supervisorDraftSchema,
-  queueFiltersSchema,
-} from "./schemas";
+import { supervisorDraftSchema, queueFiltersSchema } from "./schemas";
 import type { EvaluationDetail, EvaluationListItem } from "./domain";
 
 const SUPERVISOR_QUEUE_STATUSES = [
@@ -14,9 +11,7 @@ const SUPERVISOR_QUEUE_STATUSES = [
   "RETURNED_FOR_CORRECTION",
 ];
 
-const PRESIDENT_QUEUE_STATUSES = [
-  "PRESIDENT_APPROVAL",
-];
+const PRESIDENT_QUEUE_STATUSES = ["PRESIDENT_APPROVAL"];
 
 /**
  * Supervisor queue. Every authorised Supervisor sees every eligible Step 1
@@ -97,14 +92,12 @@ export const getEvaluation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<EvaluationDetail | null> => {
-    const { requirePermissionAny, loadEvaluationDetail, writeAudit, getActorRoles } =
+    const { requirePermission, loadEvaluationDetail, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
-    await requirePermissionAny(
-      context.userId,
-      ["evaluations.view_step1", "president.view"],
-      "Evaluation Review",
-    );
+    await requirePermission(context.userId, "evaluations.view_step1", "Supervisor Review");
     const detail = await loadEvaluationDetail(data.evaluationId);
+    if (detail?.supervisor_user_id && detail.supervisor_user_id !== context.userId)
+      throw validationError("This evaluation is assigned to another supervisor.");
     if (detail) {
       await writeAudit({
         actorUserId: context.userId,

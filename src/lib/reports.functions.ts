@@ -45,6 +45,134 @@ export const listDigital201Employees = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+export const getCompetencyProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ employeeId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { getAdmin, requirePermission, validationError, writeAudit, getActorRoles } =
+      await import("./server-core.server");
+    await requirePermission(context.userId, "evaluations.view_201", "Competency Management");
+    const admin = await getAdmin();
+    const [{ data: employee }, { data: evaluations, error }] = await Promise.all([
+      admin
+        .from("employees")
+        .select("id, employee_number, full_name, job_title, division, section")
+        .eq("id", data.employeeId)
+        .maybeSingle(),
+      admin
+        .from("evaluations")
+        .select(
+          "id, cycle_id, full_name_snapshot, employee_number_snapshot, job_title_snapshot, division_snapshot, section_snapshot, finalized_at, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_effectiveness, supervisor_step2_growth_suggestions, supervisor_step2_other_comments, evaluation_cycles!inner(name, year)",
+        )
+        .eq("employee_id", data.employeeId)
+        .eq("status", "FINALIZED")
+        .order("finalized_at", { ascending: false }),
+    ]);
+    if (error) throw validationError("Could not load finalized competency history");
+    if (!employee) throw validationError("Employee record not found");
+    const rows = evaluations ?? [];
+    const ids = rows.map((row) => row.id);
+    const { data: ratings } = ids.length
+      ? await admin
+          .from("evaluation_ratings")
+          .select("evaluation_id, criterion_id, evaluator_type, rating")
+          .in("evaluation_id", ids)
+      : { data: [] };
+    const criterionIds = Array.from(new Set((ratings ?? []).map((rating) => rating.criterion_id)));
+    const { data: criteria } = criterionIds.length
+      ? await admin
+          .from("evaluation_criteria")
+          .select("id, letter, title, description, position")
+          .in("id", criterionIds)
+          .order("position")
+      : { data: [] };
+    const criterionMap = new Map((criteria ?? []).map((criterion) => [criterion.id, criterion]));
+    const byEvaluation = new Map<string, typeof ratings>();
+    for (const rating of ratings ?? [])
+      byEvaluation.set(rating.evaluation_id, [
+        ...(byEvaluation.get(rating.evaluation_id) ?? []),
+        rating,
+      ]);
+    const classify = (values: number[]) => {
+      if (values.length === 0) return "Needs Further Development";
+      const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+      const range = Math.max(...values) - Math.min(...values);
+      if (average >= 4) return "Competency Strength";
+      if (average <= 2) return "Development Need";
+      if (range >= 2) return "Possible Development Area";
+      return "Consistent Performance";
+    };
+    const history = rows.map((row) => {
+      const cycle = row.evaluation_cycles as { name: string; year: number } | null;
+      const factorRows = (criteria ?? []).map((criterion) => {
+        const values = (byEvaluation.get(row.id) ?? []).filter(
+          (rating) => rating.criterion_id === criterion.id,
+        );
+        const find = (type: string) =>
+          values.find((rating) => rating.evaluator_type === type)?.rating ?? null;
+        const numbers = values.map((rating) => rating.rating);
+        return {
+          letter: criterion.letter,
+          title: criterion.title,
+          description: criterion.description,
+          employee: find("EMPLOYEE"),
+          supervisor: find("SUPERVISOR"),
+          reviewingSupervisor: find("REVIEWING_SUPERVISOR"),
+          analysis: classify(numbers),
+        };
+      });
+      return {
+        id: row.id,
+        cycleName: cycle?.name ?? "",
+        cycleYear: cycle?.year ?? 0,
+        finalizedAt: row.finalized_at,
+        strengths: row.supervisor_step2_strengths ?? "",
+        weaknesses: row.supervisor_step2_weaknesses ?? "",
+        developmentRecommendations: row.supervisor_step2_growth_suggestions ?? "",
+        development:
+          row.supervisor_step2_effectiveness ?? row.supervisor_step2_growth_suggestions ?? "",
+        sourceLabel: `${cycle?.year ?? ""} Annual Performance Evaluation`,
+        factors: factorRows,
+      };
+    });
+    const latest = history[0] ?? null;
+    const previous = history[1] ?? null;
+    const currentFactors = (latest?.factors ?? []).map((factor) => ({
+      ...factor,
+      trend: previous
+        ? averageFactor(factor) >
+          averageFactor(previous.factors.find((item) => item.letter === factor.letter))
+          ? "Improving"
+          : averageFactor(factor) <
+              averageFactor(previous.factors.find((item) => item.letter === factor.letter))
+            ? "Declining"
+            : "Consistent"
+        : "—",
+    }));
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "COMPETENCY_PROFILE_VIEWED",
+      module: "Competency Management",
+      entityType: "employee",
+      entityId: data.employeeId,
+      newValue: { finalizedEvaluations: history.length },
+    });
+    return { employee, latest: latest ? { ...latest, factors: currentFactors } : null, history };
+  });
+
+function averageFactor(
+  factor:
+    | { employee: number | null; supervisor: number | null; reviewingSupervisor: number | null }
+    | undefined,
+) {
+  if (!factor) return 0;
+  const values = [factor.employee, factor.supervisor, factor.reviewingSupervisor].filter(
+    (value): value is number => value !== null,
+  );
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+}
+
 export const getReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: Partial<ReportFilters>) => reportFiltersSchema.parse(input ?? {}))

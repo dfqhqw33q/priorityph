@@ -18,8 +18,18 @@ const transitions: Partial<Record<EvaluationStatus, EvaluationStatus[]>> = {
   PERSONNEL_PROCESSING: ["COMMITTEE_REVIEW"],
   COMMITTEE_REVIEW: ["PRESIDENT_APPROVAL"],
   PRESIDENT_APPROVAL: ["FINALIZED", "RETURNED_FOR_CORRECTION"],
-  RETURNED_FOR_CORRECTION: ["SUPERVISOR_DRAFT", "REVIEWING_SUPERVISOR_REVIEW", "PERSONNEL_PROCESSING", "COMMITTEE_REVIEW"],
-  RESUBMITTED: ["SUPERVISOR_DRAFT", "REVIEWING_SUPERVISOR_REVIEW", "PERSONNEL_PROCESSING", "COMMITTEE_REVIEW"],
+  RETURNED_FOR_CORRECTION: [
+    "SUPERVISOR_DRAFT",
+    "REVIEWING_SUPERVISOR_REVIEW",
+    "PERSONNEL_PROCESSING",
+    "COMMITTEE_REVIEW",
+  ],
+  RESUBMITTED: [
+    "SUPERVISOR_DRAFT",
+    "REVIEWING_SUPERVISOR_REVIEW",
+    "PERSONNEL_PROCESSING",
+    "COMMITTEE_REVIEW",
+  ],
 };
 
 export const getPhase2Evaluation = createServerFn({ method: "GET" })
@@ -50,12 +60,16 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const { data: row } = await admin
       .from("evaluations")
-      .select("status,version,is_finalized,correction_stage")
+      .select("status,version,is_finalized,correction_stage,supervisor_user_id")
       .eq("id", data.evaluationId)
       .maybeSingle();
     const allowedStatus = {
       RATER: ["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT", "RETURNED_FOR_CORRECTION"],
-      REVIEWING_SUPERVISOR: ["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW", "RETURNED_FOR_CORRECTION"],
+      REVIEWING_SUPERVISOR: [
+        "SUPERVISOR_SUBMITTED",
+        "REVIEWING_SUPERVISOR_REVIEW",
+        "RETURNED_FOR_CORRECTION",
+      ],
       PERSONNEL: ["PERSONNEL_PROCESSING", "RETURNED_FOR_CORRECTION"],
       COMMITTEE: ["COMMITTEE_REVIEW", "RETURNED_FOR_CORRECTION"],
       PRESIDENT: ["PRESIDENT_APPROVAL", "RETURNED_FOR_CORRECTION"],
@@ -406,11 +420,13 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const { data: evaluation } = await admin
       .from("evaluations")
-      .select("status,version,is_finalized,correction_stage")
+      .select("status,version,is_finalized,correction_stage,supervisor_user_id")
       .eq("id", data.evaluationId)
       .maybeSingle();
     if (!evaluation || evaluation.version !== data.version || evaluation.is_finalized)
       throw validationError("This evaluation can no longer be edited");
+    if (evaluation.supervisor_user_id && evaluation.supervisor_user_id !== context.userId)
+      throw validationError("This evaluation is assigned to another supervisor");
     if (
       evaluation.status !== "EMPLOYEE_SUBMITTED" &&
       evaluation.status !== "SUPERVISOR_DRAFT" &&
@@ -426,7 +442,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
         `Invalid workflow transition from ${evaluation.status} to ${nextStatus}`,
       );
     const workflowDate = new Date().toISOString().slice(0, 10);
-    const submissionDate = data.submit ? (data.date || workflowDate) : data.date || "";
+    const submissionDate = data.submit ? data.date || workflowDate : data.date || "";
     if (data.submit && !data.signature)
       throw validationError("A Rater signature is required before submission");
     if (data.ratings.length > 0) {
@@ -508,7 +524,8 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => reviewingSupervisorReviewSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError, upsertReviewingSupervisorRatings } = await import("./server-core.server");
+    const { getAdmin, requirePermission, validationError, upsertReviewingSupervisorRatings } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.review_step3", "Reviewing Supervisor");
     if (data.submit && !data.signature)
       throw validationError("A Reviewing Supervisor signature is required before submission");
@@ -524,17 +541,22 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
     )
       throw validationError("This evaluation is assigned to another correction stage");
     if (data.ratings.length > 0)
-      await upsertReviewingSupervisorRatings(data.evaluationId, data.ratings, context.userId, data.submit);
+      await upsertReviewingSupervisorRatings(
+        data.evaluationId,
+        data.ratings,
+        context.userId,
+        data.submit,
+      );
     const workflowDate = new Date().toISOString().slice(0, 10);
-    const submissionDate = data.submit ? (data.date || workflowDate) : data.date || "";
-    
+    const submissionDate = data.submit ? data.date || workflowDate : data.date || "";
+
     let nextStatus: EvaluationStatus;
     if (evaluation?.status === "SUPERVISOR_SUBMITTED") {
       nextStatus = data.submit ? "REVIEWING_SUPERVISOR_REVIEW" : "REVIEWING_SUPERVISOR_REVIEW";
     } else {
       nextStatus = data.submit ? "PERSONNEL_PROCESSING" : "REVIEWING_SUPERVISOR_REVIEW";
     }
-    
+
     const result = await transition(
       data.evaluationId,
       data.version,
@@ -542,7 +564,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       context.userId,
       "REVIEWING_SUPERVISOR_SUBMITTED",
     );
-    
+
     if (data.submit && nextStatus === "REVIEWING_SUPERVISOR_REVIEW") {
       const { data: updated } = await admin
         .from("evaluations")
@@ -593,8 +615,14 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
     if (data.submit && !data.signature)
       throw validationError("A Personnel Office signature is required before submission");
     const score = await computeScore(data.evaluationId);
-    if (data.submit && (score.status !== "CALCULATED" || score.finalScore === null || !score.finalRatingLabel))
-      throw validationError(score.notes || "Complete Employee, Supervisor, and Reviewing Supervisor ratings before submission");
+    if (
+      data.submit &&
+      (score.status !== "CALCULATED" || score.finalScore === null || !score.finalRatingLabel)
+    )
+      throw validationError(
+        score.notes ||
+          "Complete Employee, Supervisor, and Reviewing Supervisor ratings before submission",
+      );
     const admin = await getAdmin();
     const { data: evaluation } = await admin
       .from("evaluations")
@@ -607,7 +635,9 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
     )
       throw validationError("This evaluation is assigned to another correction stage");
     const workflowDate = new Date().toISOString().slice(0, 10);
-    const submissionDate = data.submit ? (data.lastIncreaseDate || workflowDate) : data.lastIncreaseDate || null;
+    const submissionDate = data.submit
+      ? data.lastIncreaseDate || workflowDate
+      : data.lastIncreaseDate || null;
     const result = await transition(
       data.evaluationId,
       data.version,

@@ -12,6 +12,7 @@ import {
   CalendarRange,
   UserCog,
   BadgeCheck,
+  BrainCircuit,
   LogOut,
   User,
 } from "lucide-react";
@@ -50,6 +51,7 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
   { prefix: "/admin", roles: ["ADMINISTRATOR"], permission: "users.view" },
   { prefix: "/president/employees", roles: ["PRESIDENT"], permission: "evaluations.view_201" },
   { prefix: "/hr/employees", roles: ["HR"], permission: "evaluations.view_201" },
+  { prefix: "/hr/competency", roles: ["HR"], permission: "evaluations.view_201" },
   {
     prefix: "/hr/evaluation-history",
     roles: ["HR", "PRESIDENT"],
@@ -102,6 +104,13 @@ const NAV: { group: string; items: NavItem[] }[] = [
         to: "/hr/employees",
         label: "Digital 201 files",
         icon: Users,
+        permission: "evaluations.view_201",
+        roles: ["HR"],
+      },
+      {
+        to: "/hr/competency",
+        label: "Competency",
+        icon: BrainCircuit,
         permission: "evaluations.view_201",
         roles: ["HR"],
       },
