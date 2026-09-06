@@ -26,17 +26,33 @@ const raterSuggestionSchema = requestSchema.extend({
     .max(10)
     .default([]),
   currentValues: z.object({
+    overallExplanation: z.string().max(4000),
     strengths: z.string().max(4000),
     weaknesses: z.string().max(4000),
     effectiveness: z.string().max(4000),
+    developmentPotential: z.string().max(4000),
+    advancementOutlook: z.string().max(4000),
     growthSuggestions: z.string().max(4000),
+    transferInterest: z.string().max(100),
+    transferJob: z.string().max(1000),
+    transferWhere: z.string().max(1000),
+    transferQualified: z.string().max(1000),
     otherComments: z.string().max(4000),
   }),
   actionId: z.string().uuid(),
   regenerate: z.boolean().default(false),
 });
 const raterActionSchema = requestSchema.extend({
-  field: z.enum(["strengths", "weaknesses", "effectiveness", "growthSuggestions", "otherComments"]),
+  field: z.enum([
+    "overallExplanation",
+    "strengths",
+    "weaknesses",
+    "effectiveness",
+    "developmentPotential",
+    "advancementOutlook",
+    "growthSuggestions",
+    "otherComments",
+  ]),
   action: z.enum(["ACCEPTED", "DISMISSED"]),
   actionId: z.string().uuid(),
   edited: z.boolean().default(false),
@@ -71,10 +87,13 @@ export type EvaluationAiAnalysis = {
 
 export type RaterAiSuggestion = {
   provider: "openrouter" | "development-mock";
+  q1Explanation: string | null;
   suggestions: Record<
     "strengths" | "weaknesses" | "effectiveness" | "growthSuggestions" | "otherComments",
     string
   >;
+  developmentPotential: { recommendedOption: string; reason: string } | null;
+  advancementOutlook: { recommendedOption: string; reason: string } | null;
   evidence: {
     factors: Array<{
       letter: string;
@@ -117,6 +136,22 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       .eq("correlation_id", data.actionId)
       .maybeSingle();
     if (priorAction) throw validationError("This AI action was already processed.");
+    const { data: optionItems } = await admin
+      .from("president_step_items")
+      .select("code, options")
+      .in("code", ["S2_DEVELOPMENT_POTENTIAL", "S2_ADVANCEMENT_OUTLOOK"]);
+    const optionsByCode = new Map(
+      (optionItems ?? []).map((item) => [
+        item.code,
+        Array.isArray(item.options)
+          ? item.options.filter((option): option is string => typeof option === "string")
+          : [],
+      ]),
+    );
+    const developmentOptions = optionsByCode.get("S2_DEVELOPMENT_POTENTIAL") ?? [];
+    const advancementOptions = optionsByCode.get("S2_ADVANCEMENT_OUTLOOK") ?? [];
+    if (developmentOptions.length === 0 || advancementOptions.length === 0)
+      throw validationError("The official development options are unavailable.");
 
     const submittedRatings = new Map(
       data.supervisorRatings.map((rating) => [rating.criterionId, rating.rating]),
@@ -151,10 +186,22 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
     const supervisorRatingsComplete = factorRatings.every(
       (factor) => factor.supervisorRating !== null,
     );
+    const supervisorValues = factorRatings
+      .map((factor) => factor.supervisorRating)
+      .filter((rating): rating is number => rating !== null);
+    const supervisorAverage = supervisorValues.length
+      ? supervisorValues.reduce((sum, rating) => sum + rating, 0) / supervisorValues.length
+      : null;
     const analysisContext = {
       cycle: `${detail.cycle_name} (${detail.cycle_year})`,
       factors: factorsWithDifferences,
       existingFields: data.currentValues,
+      q1Applies:
+        supervisorAverage !== null && (supervisorAverage <= 1.5 || supervisorAverage >= 4.5),
+      officialOptions: {
+        developmentPotential: developmentOptions,
+        advancementOutlook: advancementOptions,
+      },
       purposes: {
         strengths:
           "Principal Strengths: summarize strengths primarily supported by the Supervisor's current ratings.",
@@ -174,7 +221,9 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
     const prompt = [
       "You are an advisory assistant embedded in an annual performance evaluation.",
       "You are assisting the Immediate Supervisor/Rater, not the Employee/Ratee.",
-      "Return JSON with exactly these string keys: strengths, weaknesses, effectiveness, growthSuggestions, otherComments.",
+      "Return JSON with exactly these keys: q1Explanation, strengths, weaknesses, effectiveness, developmentPotential, advancementOutlook, growthSuggestions, otherComments.",
+      "q1Explanation must be null when q1Applies is false; otherwise return a concise Q1 justification grounded in the evidence. Do not invent incidents.",
+      "developmentPotential and advancementOutlook must each be objects with exactly recommendedOption and reason. recommendedOption must exactly match one of the official options supplied in the context.",
       "Generate all five fields together from the same evidence and avoid repeating sentences or recommendations across fields.",
       "The JSON values are the final text that will be placed into the PHLI performance evaluation form. Write as the Supervisor completing the form, not as an analyst reporting on the Supervisor.",
       "Use natural professional evaluation prose about the employee. Do not begin with or repeatedly use phrases such as 'the Supervisor assessment', 'the Supervisor ratings', 'the self-assessment', or 'the self-rating'.",
@@ -187,6 +236,7 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       "Use only the structured evidence below. Do not invent achievements, incidents, qualifications, or personal facts.",
       "Do not invent incidents or behaviors from a rating alone. Use cautious wording such as 'may benefit from further development' when the rating identifies an area without supporting evidence.",
       "Do not make promotion, salary, transfer, succession, advancement, or training-approval decisions unless the actual field and explicit evaluation evidence require it.",
+      "Q6 transfer interest and its job/location/qualification details are factual and manual. Never return, infer, or select Q6 values.",
       `Evaluation context: ${JSON.stringify(analysisContext)}`,
       "Field writing rules: strengths summarize supported strengths; weaknesses identify supported development areas; effectiveness gives practical present-job actions; growthSuggestions gives distinct practical development actions; otherComments gives a concise overall conclusion. Do not repeat the same factors or recommendation in every field. Keep each value concise and directly answer its field question. Return only valid JSON, with no markdown fences.",
     ].join("\n");
@@ -199,6 +249,9 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       );
     }
     let suggestions: RaterAiSuggestion["suggestions"];
+    let q1Explanation: string | null;
+    let developmentPotential: RaterAiSuggestion["developmentPotential"];
+    let advancementOutlook: RaterAiSuggestion["advancementOutlook"];
     try {
       const parsed = JSON.parse(suggestion) as Record<string, unknown>;
       const fields = [
@@ -213,6 +266,29 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       suggestions = Object.fromEntries(
         fields.map((field) => [field, String(parsed[field]).slice(0, 4000)]),
       ) as RaterAiSuggestion["suggestions"];
+      if (!analysisContext.q1Applies && parsed.q1Explanation !== null)
+        throw new Error("Q1 is not applicable");
+      if (analysisContext.q1Applies && typeof parsed.q1Explanation !== "string")
+        throw new Error("Q1 explanation is required");
+      q1Explanation = analysisContext.q1Applies
+        ? String(parsed.q1Explanation).slice(0, 4000)
+        : null;
+      const parseRecommendation = (value: unknown, options: string[]) => {
+        if (!value || typeof value !== "object") throw new Error("Invalid recommendation");
+        const recommendation = value as { recommendedOption?: unknown; reason?: unknown };
+        if (
+          typeof recommendation.recommendedOption !== "string" ||
+          !options.includes(recommendation.recommendedOption) ||
+          typeof recommendation.reason !== "string"
+        )
+          throw new Error("Invalid recommendation option");
+        return {
+          recommendedOption: recommendation.recommendedOption,
+          reason: recommendation.reason.slice(0, 1000),
+        };
+      };
+      developmentPotential = parseRecommendation(parsed.developmentPotential, developmentOptions);
+      advancementOutlook = parseRecommendation(parsed.advancementOutlook, advancementOptions);
     } catch {
       throw validationError("AI returned invalid field suggestions.");
     }
@@ -228,12 +304,23 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
         entityType: "evaluation",
         entityId: data.evaluationId,
         evaluationId: data.evaluationId,
-        newValue: { fields: Object.keys(suggestions), generatedAt },
+        newValue: {
+          fields: [
+            "q1Explanation",
+            ...Object.keys(suggestions),
+            "developmentPotential",
+            "advancementOutlook",
+          ],
+          generatedAt,
+        },
       },
       { ip: null, userAgent: null, correlationId: data.actionId },
     );
     return {
       suggestions,
+      q1Explanation,
+      developmentPotential,
+      advancementOutlook,
       evidence: { factors: factorsWithDifferences, cycle: analysisContext.cycle },
       generatedAt,
       provider: getAiProviderName() === "openrouter" ? "openrouter" : "development-mock",

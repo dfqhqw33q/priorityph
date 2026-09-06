@@ -150,6 +150,43 @@ function RaterAiField(props: Step2Props) {
   );
 }
 
+function RecommendationPanel({
+  label,
+  recommendation,
+  editable,
+  onApply,
+  onDismiss,
+}: {
+  label: string;
+  recommendation: { recommendedOption: string; reason: string } | null;
+  editable: boolean;
+  onApply: () => void;
+  onDismiss: () => void;
+}) {
+  if (!recommendation) return null;
+  return (
+    <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+        AI recommendation: {label}
+      </p>
+      <p className="mt-2 text-sm">
+        <span className="font-semibold">Recommended:</span> {recommendation.recommendedOption}
+      </p>
+      <p className="mt-1 text-sm">
+        <span className="font-semibold">Reason:</span> {recommendation.reason}
+      </p>
+      <div className="mt-2 flex gap-2">
+        <Button type="button" size="sm" disabled={!editable} onClick={onApply}>
+          Apply Recommendation
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onDismiss}>
+          Dismiss
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function Step2Input(props: Step2Props) {
   return (
     <div className="space-y-1.5">
@@ -230,6 +267,10 @@ function SupervisorReviewPage() {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiUnavailable, setAiUnavailable] = useState("");
   const [aiEditing, setAiEditing] = useState<Record<string, boolean>>({});
+  const [aiRecommendations, setAiRecommendations] = useState<{
+    developmentPotential: { recommendedOption: string; reason: string } | null;
+    advancementOutlook: { recommendedOption: string; reason: string } | null;
+  }>({ developmentPotential: null, advancementOutlook: null });
   const query = useQuery({
     queryKey: ["evaluation", evaluationId],
     queryFn: () => fetchEvaluation({ data: { evaluationId } }),
@@ -305,24 +346,38 @@ function SupervisorReviewPage() {
             .filter(([, rating]) => typeof rating === "number")
             .map(([criterionId, rating]) => ({ criterionId, rating: rating as number })),
           currentValues: {
+            overallExplanation: step2.overallExplanation ?? "",
             strengths: step2.strengths ?? "",
             weaknesses: step2.weaknesses ?? "",
             effectiveness: step2.effectiveness ?? "",
+            developmentPotential: step2.developmentPotential ?? "",
+            advancementOutlook: step2.advancementOutlook ?? "",
             growthSuggestions: step2.growthSuggestions ?? "",
+            transferInterest: step2.transferInterest ?? "",
+            transferJob: step2.transferJob ?? "",
+            transferWhere: step2.transferWhere ?? "",
+            transferQualified: step2.transferQualified ?? "",
             otherComments: step2.otherComments ?? "",
           },
           actionId: crypto.randomUUID(),
           regenerate: Object.keys(aiSuggestions).length > 0,
         },
       });
-      setAiSuggestions(
-        Object.fromEntries(
+      setAiSuggestions({
+        ...(result.q1Explanation
+          ? { overallExplanation: { suggestion: result.q1Explanation, provider: result.provider } }
+          : {}),
+        ...Object.fromEntries(
           Object.entries(result.suggestions).map(([field, suggestion]) => [
             field,
             { suggestion, provider: result.provider },
           ]),
         ),
-      );
+      });
+      setAiRecommendations({
+        developmentPotential: result.developmentPotential,
+        advancementOutlook: result.advancementOutlook,
+      });
       setAiEditing({});
     } catch (error) {
       const message = userErrorMessage(
@@ -346,12 +401,29 @@ function SupervisorReviewPage() {
         evaluationId,
         version: detail?.version ?? 1,
         field: field as
-          "strengths" | "weaknesses" | "effectiveness" | "growthSuggestions" | "otherComments",
+          | "overallExplanation"
+          | "strengths"
+          | "weaknesses"
+          | "effectiveness"
+          | "developmentPotential"
+          | "advancementOutlook"
+          | "growthSuggestions"
+          | "otherComments",
         action: "ACCEPTED",
         actionId: crypto.randomUUID(),
         edited: Boolean(aiEditing[field]),
       },
     }).catch(() => undefined);
+    setAiSuggestions((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setAiEditing((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
   }
 
   function editSuggestion(field: string, value: string) {
@@ -359,6 +431,38 @@ function SupervisorReviewPage() {
       ...current,
       [field]: { ...current[field], suggestion: value },
     }));
+  }
+
+  function applyRecommendation(field: "developmentPotential" | "advancementOutlook") {
+    const recommendation = aiRecommendations[field];
+    if (!recommendation) return;
+    setStep2((current) => ({ ...current, [field]: recommendation.recommendedOption }));
+    setDirty(true);
+    void recordRaterAction({
+      data: {
+        evaluationId,
+        version: detail?.version ?? 1,
+        field,
+        action: "ACCEPTED",
+        actionId: crypto.randomUUID(),
+        edited: false,
+      },
+    }).catch(() => undefined);
+    setAiRecommendations((current) => ({ ...current, [field]: null }));
+  }
+
+  function discardRecommendation(field: "developmentPotential" | "advancementOutlook") {
+    void recordRaterAction({
+      data: {
+        evaluationId,
+        version: detail?.version ?? 1,
+        field,
+        action: "DISMISSED",
+        actionId: crypto.randomUUID(),
+        edited: false,
+      },
+    }).catch(() => undefined);
+    setAiRecommendations((current) => ({ ...current, [field]: null }));
   }
 
   function toggleSuggestionEdit(field: string) {
@@ -371,7 +475,14 @@ function SupervisorReviewPage() {
         evaluationId,
         version: detail?.version ?? 1,
         field: field as
-          "strengths" | "weaknesses" | "effectiveness" | "growthSuggestions" | "otherComments",
+          | "overallExplanation"
+          | "strengths"
+          | "weaknesses"
+          | "effectiveness"
+          | "developmentPotential"
+          | "advancementOutlook"
+          | "growthSuggestions"
+          | "otherComments",
         action: "DISMISSED",
         actionId: crypto.randomUUID(),
         edited: false,
@@ -555,7 +666,7 @@ function SupervisorReviewPage() {
               <p className="mt-2 text-sm text-muted-foreground">{aiUnavailable}</p>
             ) : null}
           </div>
-          <Step2Textarea
+          <RaterAiField
             label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents."
             field="overallExplanation"
             step2={step2}
@@ -563,6 +674,12 @@ function SupervisorReviewPage() {
             editable={editable}
             canEdit={can("evaluations.step2")}
             setDirty={setDirty}
+            ai={aiSuggestions.overallExplanation}
+            onEdit={(value) => editSuggestion("overallExplanation", value)}
+            editing={Boolean(aiEditing.overallExplanation)}
+            onToggleEdit={() => toggleSuggestionEdit("overallExplanation")}
+            onUse={() => applySuggestion("overallExplanation")}
+            onDiscard={() => discardSuggestion("overallExplanation")}
           />
           <p className="font-semibold">
             2. Summarize the principal strengths and weakness of the employee.
@@ -630,21 +747,35 @@ function SupervisorReviewPage() {
             canEdit={can("evaluations.step2")}
             setDirty={setDirty}
           />
+          <RecommendationPanel
+            label="Development Potential"
+            recommendation={aiRecommendations.developmentPotential}
+            editable={editable && can("evaluations.step2")}
+            onApply={() => applyRecommendation("developmentPotential")}
+            onDismiss={() => discardRecommendation("developmentPotential")}
+          />
           <Step2Choice
             label="4. The employee's advancement outlook is:"
             field="advancementOutlook"
             options={[
               "Promising. Should be able to advance to jobs several levels beyond his present one.",
-              "Fairly Promising. Should be able to advance to job in the next higher level.",
+              "Fairly promising. Should be able to advance to a job in the next higher level.",
               "Present job or jobs within the same grade level represent his advancement.",
               "Employee has difficulty in advancing to his job ceiling.",
-              "Employee should be transferred. Not suited to this job; would fit better in some other jobs.",
+              "Employee should be transferred. Not suited to this job; would fit better in some other job.",
             ]}
             step2={step2}
             setStep2={setStep2}
             editable={editable}
             canEdit={can("evaluations.step2")}
             setDirty={setDirty}
+          />
+          <RecommendationPanel
+            label="Advancement Outlook"
+            recommendation={aiRecommendations.advancementOutlook}
+            editable={editable && can("evaluations.step2")}
+            onApply={() => applyRecommendation("advancementOutlook")}
+            onDismiss={() => discardRecommendation("advancementOutlook")}
           />
           <RaterAiField
             label="5. Suggest ways to accelerate employee's growth and development."

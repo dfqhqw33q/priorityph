@@ -90,6 +90,16 @@ export async function generateAiText(
             "Development mock: review the lowest recorded factors and add supported areas for improvement.",
           effectiveness:
             "Development mock: describe how the employee can improve effectiveness in the current role.",
+          q1Explanation: null,
+          developmentPotential: {
+            recommendedOption: "Only moderate improvement ahead on present job",
+            reason: "Development mock recommendation based on the recorded assessment.",
+          },
+          advancementOutlook: {
+            recommendedOption:
+              "Present job or jobs within the same grade level represent his advancement.",
+            reason: "Development mock recommendation based on the recorded assessment.",
+          },
           growthSuggestions:
             "Development mock: add practical development or training actions based on the evaluation.",
           otherComments:
