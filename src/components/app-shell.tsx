@@ -97,11 +97,16 @@ function routeAccess(pathname: string) {
   );
 }
 
-const NAV: Array<{ roles: AppRole[]; direct: NavItem[]; categories: NavCategory[] }> = [
+const NAV: Array<{
+  roles: AppRole[];
+  direct: NavItem[];
+  categories: NavCategory[];
+  bottom?: NavItem[];
+}> = [
   {
     roles: ["HR"],
-    direct: [
-      { to: "/hr", label: "Dashboard", icon: Gauge, permission: "cycles.view" },
+    direct: [{ to: "/hr", label: "Dashboard", icon: Gauge, permission: "cycles.view" }],
+    bottom: [
       { label: "Reports", icon: FileClock },
       { label: "Settings", icon: Settings },
     ],
@@ -267,6 +272,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const categories = group.categories
     .map((category) => ({ ...category, children: category.children.filter(allowed) }))
     .filter((category) => category.children.length > 0);
+  const bottom = (group.bottom ?? []).filter(allowed);
 
   const renderItem = (item: NavItem, active = false) => {
     const Icon = item.icon;
@@ -287,8 +293,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     );
   };
 
-  return (
-    <SidebarMenu>
+  const primaryItems = (
+    <>
       {direct.map((item) => (
         <SidebarMenuItem key={item.label}>
           {renderItem(item, Boolean(item.to && pathname.startsWith(item.to)))}
@@ -337,7 +343,20 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           </SidebarMenuItem>
         );
       })}
-    </SidebarMenu>
+    </>
+  );
+
+  return (
+    <>
+      <SidebarMenu>{primaryItems}</SidebarMenu>
+      {bottom.length > 0 ? (
+        <SidebarMenu className="mt-auto border-t border-sidebar-border pt-3">
+          {bottom.map((item) => (
+            <SidebarMenuItem key={item.label}>{renderItem(item)}</SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      ) : null}
+    </>
   );
 }
 
@@ -379,7 +398,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <Sidebar collapsible="none" className="border-r border-border bg-card">
+      <Sidebar collapsible="offcanvas" className="border-r border-border bg-card">
         <SidebarHeader className="flex h-16 shrink-0 items-center border-b border-border px-4">
           <Link to="/" className="flex items-center gap-2">
             <img
@@ -398,7 +417,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SidebarInset>
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
-            <SidebarTrigger className="md:hidden" aria-label="Open navigation" />
+            <SidebarTrigger aria-label="Toggle navigation" />
 
             <Link to="/" className="flex items-center gap-3 lg:hidden">
               <img
