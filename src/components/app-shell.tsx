@@ -1,18 +1,23 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   ClipboardList,
   FileClock,
   Gauge,
-  Menu,
+  Activity,
+  BriefcaseBusiness,
+  Handshake,
+  History,
+  Medal,
+  Settings,
   Shield,
   Users,
-  CalendarRange,
   UserCog,
   BadgeCheck,
   BrainCircuit,
+  GraduationCap,
   LogOut,
   User,
 } from "lucide-react";
@@ -28,20 +33,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { recordLoginEvent } from "@/lib/access.functions";
 import { APP_NAME, ROLE_LABELS, type AppRole, type Permission } from "@/lib/domain";
 import { useAccess } from "@/hooks/use-access";
-import { cn } from "@/lib/utils";
 
 type NavItem = {
-  to: string;
+  to?: string;
   label: string;
-  icon: typeof Gauge;
+  icon?: typeof Gauge;
   permission?: Permission;
   roles?: AppRole[];
 };
+
+type NavCategory = NavItem & { children: NavItem[] };
 
 const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permission }> = [
   { prefix: "/admin/users", roles: ["ADMINISTRATOR"], permission: "users.view" },
@@ -76,172 +97,155 @@ function routeAccess(pathname: string) {
   );
 }
 
-function activeNavPath(pathname: string, items: NavItem[]) {
-  return items
-    .filter((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
-    .sort((first, second) => second.to.length - first.to.length)[0]?.to;
-}
-
-const NAV: { group: string; items: NavItem[] }[] = [
+const NAV: Array<{ roles: AppRole[]; direct: NavItem[]; categories: NavCategory[] }> = [
   {
-    group: "HR / Personnel",
-    items: [
-      {
-        to: "/hr/cycles",
-        label: "Evaluation cycles",
-        icon: CalendarRange,
-        permission: "cycles.view",
-        roles: ["HR"],
-      },
-      {
-        to: "/hr/evaluation-history",
-        label: "Evaluation history",
-        icon: FileClock,
-        permission: "evaluations.view_201",
-        roles: ["HR"],
-      },
-      {
-        to: "/hr/employees",
-        label: "Digital 201 files",
-        icon: Users,
-        permission: "evaluations.view_201",
-        roles: ["HR"],
-      },
-      {
-        to: "/hr/competency",
-        label: "Competency",
-        icon: BrainCircuit,
-        permission: "evaluations.view_201",
-        roles: ["HR"],
-      },
+    roles: ["HR"],
+    direct: [
+      { to: "/hr", label: "Dashboard", icon: Gauge, permission: "cycles.view" },
+      { label: "Reports", icon: FileClock },
+      { label: "Settings", icon: Settings },
     ],
-  },
-
-  {
-    group: "Supervisor",
-    items: [
+    categories: [
       {
-        to: "/supervisor",
-        label: "Dashboard",
-        icon: Gauge,
-        permission: "evaluations.view_step1",
-        roles: ["SUPERVISOR"],
+        label: "Employees",
+        icon: Users,
+        children: [
+          { to: "/hr/employees", label: "Directory", permission: "evaluations.view_201" },
+          { to: "/hr/employees", label: "201 Files", permission: "evaluations.view_201" },
+        ],
       },
       {
-        to: "/supervisor/evaluations",
-        label: "Evaluations to review",
+        label: "Performance",
         icon: ClipboardList,
-        permission: "evaluations.view_step1",
-        roles: ["SUPERVISOR"],
+        children: [
+          { to: "/hr/cycles", label: "Evaluation Cycles", permission: "cycles.view" },
+          { to: "/hr/evaluation-history", label: "History", permission: "evaluations.view_201" },
+        ],
+      },
+      {
+        label: "Competencies",
+        icon: BrainCircuit,
+        children: [
+          { to: "/hr/competency", label: "Profiles", permission: "evaluations.view_201" },
+          { label: "Gaps" },
+        ],
+      },
+      { label: "Development", icon: GraduationCap, children: [{ label: "Development Records" }] },
+      { label: "Training", icon: BriefcaseBusiness, children: [{ label: "Recommendations" }] },
+      { label: "Career", icon: Handshake, children: [{ label: "Succession" }] },
+      { label: "Recognition", icon: Medal, children: [{ label: "Recognition" }] },
+      {
+        label: "Processing",
+        icon: ClipboardList,
+        children: [{ to: "/personnel", label: "For Review", permission: "personnel.process" }],
       },
     ],
   },
   {
-    group: "President",
-    items: [
+    roles: ["SUPERVISOR"],
+    direct: [
+      { to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1" },
+      { label: "History", icon: History },
+    ],
+    categories: [
       {
-        to: "/president",
-        label: "Dashboard",
-        icon: Gauge,
-        permission: "president.view",
-        roles: ["PRESIDENT"],
-      },
-      {
-        to: "/president/evaluations",
-        label: "Evaluations to review",
-        icon: BadgeCheck,
-        permission: "president.view",
-        roles: ["PRESIDENT"],
-      },
-      {
-        to: "/president/employees",
-        label: "Digital 201 files",
-        icon: Users,
-        permission: "evaluations.view_201",
-        roles: ["PRESIDENT"],
+        label: "Evaluations",
+        icon: ClipboardList,
+        children: [
+          {
+            to: "/supervisor/evaluations",
+            label: "To Review",
+            permission: "evaluations.view_step1",
+          },
+          { label: "Completed" },
+        ],
       },
     ],
   },
   {
-    group: "Reviewing Supervisor / Division Head",
-    items: [
+    roles: ["REVIEWING_SUPERVISOR"],
+    direct: [
       {
         to: "/reviewing-supervisor",
-        label: "Evaluations for review",
-        icon: BadgeCheck,
+        label: "Dashboard",
+        icon: Gauge,
         permission: "evaluations.review_step3",
-        roles: ["REVIEWING_SUPERVISOR"],
       },
+      { label: "History", icon: History },
     ],
-  },
-  {
-    group: "Personnel Office",
-    items: [
+    categories: [
       {
-        to: "/personnel",
-        label: "Personnel processing",
+        label: "Evaluations",
         icon: ClipboardList,
-        permission: "personnel.process",
-        roles: ["HR"],
+        children: [
+          {
+            to: "/reviewing-supervisor",
+            label: "To Review",
+            permission: "evaluations.review_step3",
+          },
+          { label: "Completed" },
+        ],
       },
     ],
   },
   {
-    group: "Performance Evaluation Committee",
-    items: [
+    roles: ["COMMITTEE"],
+    direct: [
+      { to: "/committee", label: "Dashboard", icon: Gauge, permission: "committee.review" },
+      { label: "History", icon: History },
+    ],
+    categories: [
       {
-        to: "/committee",
-        label: "Evaluations for review",
+        label: "Evaluations",
+        icon: ClipboardList,
+        children: [
+          { to: "/committee", label: "To Review", permission: "committee.review" },
+          { label: "Completed" },
+        ],
+      },
+    ],
+  },
+  {
+    roles: ["PRESIDENT"],
+    direct: [
+      { to: "/president", label: "Dashboard", icon: Gauge, permission: "president.view" },
+      { label: "History", icon: History },
+    ],
+    categories: [
+      {
+        label: "Approvals",
         icon: BadgeCheck,
-        permission: "committee.review",
-        roles: ["COMMITTEE"],
+        children: [
+          { to: "/president/evaluations", label: "Pending", permission: "president.view" },
+          { label: "Returned" },
+          { label: "Completed" },
+        ],
       },
     ],
   },
   {
-    group: "Administration",
-    items: [
+    roles: ["ADMINISTRATOR"],
+    direct: [
+      { to: "/admin", label: "Dashboard", icon: Shield, permission: "users.view" },
+      { to: "/admin/audit-logs", label: "Audit Logs", icon: FileClock, permission: "audit.view" },
+      { label: "Activity", icon: Activity },
+    ],
+    categories: [
       {
-        to: "/admin",
-        label: "Overview",
-        icon: Shield,
-        permission: "users.view",
-        roles: ["ADMINISTRATOR"],
-      },
-      {
-        to: "/admin/users",
-        label: "User accounts",
-        icon: Users,
-        permission: "users.view",
-        roles: ["ADMINISTRATOR"],
-      },
-      {
-        to: "/admin/roles",
-        label: "Roles & permissions",
+        label: "Users",
         icon: UserCog,
-        permission: "roles.manage",
-        roles: ["ADMINISTRATOR"],
+        children: [
+          { to: "/admin/users", label: "User List", permission: "users.view" },
+          { to: "/admin/roles", label: "Roles & Permissions", permission: "roles.manage" },
+        ],
       },
       {
-        to: "/admin/employees",
-        label: "Employee records",
+        label: "Employees",
         icon: Users,
-        permission: "employees.view",
-        roles: ["ADMINISTRATOR"],
-      },
-      {
-        to: "/admin/employee-profiles",
-        label: "Employee profiles",
-        icon: UserCog,
-        permission: "employees.manage",
-        roles: ["ADMINISTRATOR"],
-      },
-      {
-        to: "/admin/audit-logs",
-        label: "Audit logs",
-        icon: FileClock,
-        permission: "audit.view",
-        roles: ["ADMINISTRATOR"],
+        children: [
+          { to: "/admin/employees", label: "Records", permission: "employees.view" },
+          { to: "/admin/employee-profiles", label: "Profiles", permission: "employees.manage" },
+        ],
       },
     ],
   },
@@ -249,54 +253,91 @@ const NAV: { group: string; items: NavItem[] }[] = [
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const { access, can } = useAccess();
+  const { isMobile, setOpenMobile } = useSidebar();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const group = NAV.find((item) => item.roles.some((role) => (access?.roles ?? []).includes(role)));
+  if (!group) return null;
+
+  const allowed = (item: NavItem) => !item.permission || can(item.permission);
+  const navigate = () => {
+    onNavigate?.();
+    if (isMobile) setOpenMobile(false);
+  };
+  const direct = group.direct.filter(allowed);
+  const categories = group.categories
+    .map((category) => ({ ...category, children: category.children.filter(allowed) }))
+    .filter((category) => category.children.length > 0);
+
+  const renderItem = (item: NavItem, active = false) => {
+    const Icon = item.icon;
+    if (!item.to)
+      return (
+        <SidebarMenuButton type="button">
+          {Icon ? <Icon className="size-4" /> : null}
+          <span>{item.label}</span>
+        </SidebarMenuButton>
+      );
+    return (
+      <SidebarMenuButton asChild isActive={active}>
+        <Link to={item.to} onClick={navigate}>
+          {Icon ? <Icon className="size-4" /> : null}
+          <span>{item.label}</span>
+        </Link>
+      </SidebarMenuButton>
+    );
+  };
 
   return (
-    <nav className="space-y-6">
-      {NAV.map((group) => {
-        const items = group.items.filter(
-          (item) =>
-            (!item.roles || item.roles.some((role) => (access?.roles ?? []).includes(role))) &&
-            (!item.permission || can(item.permission)),
+    <SidebarMenu>
+      {direct.map((item) => (
+        <SidebarMenuItem key={item.label}>
+          {renderItem(item, Boolean(item.to && pathname.startsWith(item.to)))}
+        </SidebarMenuItem>
+      ))}
+      {categories.map((category) => {
+        const activeChild = category.children.some(
+          (child) => child.to && (pathname === child.to || pathname.startsWith(`${child.to}/`)),
         );
-        if (items.length === 0) return null;
-        const activePath = activeNavPath(pathname, items);
+        const CategoryIcon = category.icon;
         return (
-          <div key={group.group}>
-            <p className="px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              {group.group}
-            </p>
-            <div className="mt-2 space-y-1">
-              {items.map((item) => {
-                const active = item.to === activePath;
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    onClick={onNavigate}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                      active
-                        ? "border-primary bg-primary font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover hover:text-primary-foreground"
-                        : "border-transparent text-foreground hover:border-border hover:bg-muted hover:text-foreground",
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        "size-4 shrink-0",
-                        active ? "text-primary-foreground" : "text-muted-foreground",
-                      )}
-                    />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+          <SidebarMenuItem key={category.label}>
+            <Collapsible defaultOpen={activeChild} className="group/collapsible">
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton className="w-full">
+                  {CategoryIcon ? <CategoryIcon className="size-4" /> : null}
+                  <span>{category.label}</span>
+                  <span className="ml-auto text-xs" aria-hidden="true">
+                    ›
+                  </span>
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenuSub>
+                  {category.children.map((child) => {
+                    const childActive = Boolean(
+                      child.to && (pathname === child.to || pathname.startsWith(`${child.to}/`)),
+                    );
+                    return (
+                      <SidebarMenuSubItem key={child.label}>
+                        {child.to ? (
+                          <SidebarMenuSubButton asChild isActive={childActive}>
+                            <Link to={child.to} onClick={navigate}>
+                              {child.label}
+                            </Link>
+                          </SidebarMenuSubButton>
+                        ) : (
+                          <SidebarMenuSubButton>{child.label}</SidebarMenuSubButton>
+                        )}
+                      </SidebarMenuSubItem>
+                    );
+                  })}
+                </SidebarMenuSub>
+              </CollapsibleContent>
+            </Collapsible>
+          </SidebarMenuItem>
         );
       })}
-    </nav>
+    </SidebarMenu>
   );
 }
 
@@ -306,7 +347,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const queryClient = useQueryClient();
   const logEvent = useServerFn(recordLoginEvent);
-  const [open, setOpen] = useState(false);
   const accessRule = routeAccess(pathname);
   const accessDenied =
     !isLoading &&
@@ -338,9 +378,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background lg:flex">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 shrink-0 flex-col border-r border-border bg-card lg:flex">
-        <div className="flex h-16 shrink-0 items-center border-b border-border px-4">
+    <SidebarProvider>
+      <Sidebar collapsible="none" className="border-r border-border bg-card">
+        <SidebarHeader className="flex h-16 shrink-0 items-center border-b border-border px-4">
           <Link to="/" className="flex items-center gap-2">
             <img
               src="/priority-handling-logo.png"
@@ -349,36 +389,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             />
             <span className="sr-only">{APP_NAME}</span>
           </Link>
-        </div>
-        <div className="flex-1 overflow-y-auto px-3 py-5">
+        </SidebarHeader>
+        <SidebarContent className="px-3 py-5">
           <NavLinks />
-        </div>
-      </aside>
+        </SidebarContent>
+      </Sidebar>
 
-      <div className="flex min-h-screen w-full min-w-0 flex-1 flex-col lg:pl-64">
+      <SidebarInset>
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
-            <Sheet open={open} onOpenChange={setOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="lg:hidden"
-                  aria-label="Open navigation"
-                >
-                  <Menu className="size-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="left"
-                className="w-72 overflow-y-auto p-4 border-r border-border bg-background"
-              >
-                <SheetTitle className="mb-4 text-base font-bold text-foreground">
-                  {APP_NAME}
-                </SheetTitle>
-                <NavLinks onNavigate={() => setOpen(false)} />
-              </SheetContent>
-            </Sheet>
+            <SidebarTrigger className="md:hidden" aria-label="Open navigation" />
 
             <Link to="/" className="flex items-center gap-3 lg:hidden">
               <img
@@ -427,7 +447,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 space-y-6 px-4 py-6 sm:px-6">
           {children}
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
