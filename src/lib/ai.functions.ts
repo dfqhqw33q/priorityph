@@ -216,23 +216,30 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       },
       supervisorRatingsComplete,
     };
-    const { generateAiText, AiUnavailableError, stripJsonFence, getAiProviderName } =
+    const {
+      generateAiText,
+      AiUnavailableError,
+      stripJsonFence,
+      getAiProviderName,
+      rewriteEvaluationText,
+      containsEvaluationMetaLanguage,
+    } =
       await import("./ai-provider.server");
     const prompt = [
       "You are an advisory assistant embedded in an annual performance evaluation.",
-      "You are assisting the Immediate Supervisor/Rater, not the Employee/Ratee.",
+      "Write the actual evaluation content directly about the employee and their performance.",
       "Return JSON with exactly these keys: q1Explanation, strengths, weaknesses, effectiveness, developmentPotential, advancementOutlook, growthSuggestions, otherComments.",
       "q1Explanation must be null when q1Applies is false; otherwise return a concise Q1 justification grounded in the evidence. Do not invent incidents.",
       "developmentPotential and advancementOutlook must each be objects with exactly recommendedOption and reason. recommendedOption must exactly match one of the official options supplied in the context.",
       "Generate all five fields together from the same evidence and avoid repeating sentences or recommendations across fields.",
-      "The JSON values are the final text that will be placed into the PHLI performance evaluation form. Write as the Supervisor completing the form, not as an analyst reporting on the Supervisor.",
-      "Use natural professional evaluation prose about the employee. Do not begin with or repeatedly use phrases such as 'the Supervisor assessment', 'the Supervisor ratings', 'the self-assessment', or 'the self-rating'.",
+      "The JSON values are the final text that will be placed directly into the PHLI performance evaluation form. Write about the employee, never about the person completing the form.",
+      "Use natural professional evaluation prose about the employee. Do not mention the Supervisor assessment, Supervisor ratings, Immediate Supervisor, Reviewing Supervisor, evaluator, evaluation process, system, AI, or model unless attribution is genuinely required by the field.",
       "Do not explain your reasoning, the workflow, the AI, the data sources, or the role generating the text. Do not include disclaimers or meta-analysis in any returned field.",
       "The current Supervisor/Rater ratings are the primary current assessment. Use Employee/Ratee ratings only as comparison context.",
       "When Supervisor ratings are present, never say that supervisor ratings are missing, unavailable, or not yet recorded.",
       "Do not call the Supervisor assessment a self-assessment or self-rating. Do not write generic system disclaimers.",
       "Interpret meaningful Employee-versus-Supervisor differences explicitly when relevant, without treating a difference alone as a confirmed competency gap.",
-      "If Supervisor ratings are incomplete, state only that the Supervisor assessment is incomplete and use available evidence; do not invent missing ratings.",
+      "If ratings are incomplete, use only the available evidence without describing the missing data or the evaluation process.",
       "Use only the structured evidence below. Do not invent achievements, incidents, qualifications, or personal facts.",
       "Do not invent incidents or behaviors from a rating alone. Use cautious wording such as 'may benefit from further development' when the rating identifies an area without supporting evidence.",
       "Do not make promotion, salary, transfer, succession, advancement, or training-approval decisions unless the actual field and explicit evaluation evidence require it.",
@@ -264,15 +271,21 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       if (fields.some((field) => typeof parsed[field] !== "string"))
         throw new Error("Invalid field output");
       suggestions = Object.fromEntries(
-        fields.map((field) => [field, String(parsed[field]).slice(0, 4000)]),
+        fields.map((field) => {
+          const value = rewriteEvaluationText(String(parsed[field]));
+          if (containsEvaluationMetaLanguage(value)) throw new Error("Meta-language in field output");
+          return [field, value.slice(0, 4000)];
+        }),
       ) as RaterAiSuggestion["suggestions"];
       if (!analysisContext.q1Applies && parsed.q1Explanation !== null)
         throw new Error("Q1 is not applicable");
       if (analysisContext.q1Applies && typeof parsed.q1Explanation !== "string")
         throw new Error("Q1 explanation is required");
       q1Explanation = analysisContext.q1Applies
-        ? String(parsed.q1Explanation).slice(0, 4000)
+        ? rewriteEvaluationText(String(parsed.q1Explanation)).slice(0, 4000)
         : null;
+      if (q1Explanation && containsEvaluationMetaLanguage(q1Explanation))
+        throw new Error("Meta-language in Q1 output");
       const parseRecommendation = (value: unknown, options: string[]) => {
         if (!value || typeof value !== "object") throw new Error("Invalid recommendation");
         const recommendation = value as { recommendedOption?: unknown; reason?: unknown };
@@ -282,9 +295,11 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
           typeof recommendation.reason !== "string"
         )
           throw new Error("Invalid recommendation option");
+        const reason = rewriteEvaluationText(recommendation.reason);
+        if (containsEvaluationMetaLanguage(reason)) throw new Error("Meta-language in recommendation");
         return {
           recommendedOption: recommendation.recommendedOption,
-          reason: recommendation.reason.slice(0, 1000),
+          reason: reason.slice(0, 1000),
         };
       };
       developmentPotential = parseRecommendation(parsed.developmentPotential, developmentOptions);
@@ -468,20 +483,27 @@ export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" 
       },
       accumulatedEvaluationContext: accumulated,
     };
-    const { generateAiText, AiUnavailableError, stripJsonFence, getAiProviderName } =
+    const {
+      generateAiText,
+      AiUnavailableError,
+      stripJsonFence,
+      getAiProviderName,
+      rewriteEvaluationText,
+      containsEvaluationMetaLanguage,
+    } =
       await import("./ai-provider.server");
     const prompt = [
       "You are assisting the Reviewing Supervisor / Division Head in completing the existing Step 3 review fields.",
       "Return JSON with exactly these string keys: comments, recommendations.",
-      "The JSON values are the final text that will be placed into the PHLI Reviewing Supervisor form. Write as the Reviewing Supervisor completing the form, not as an analyst reporting on the Reviewing Supervisor.",
-      "Use natural professional evaluation prose about the employee. Do not begin with or repeatedly use phrases such as 'the Reviewing Supervisor ratings', 'the Supervisor assessment', 'the self-assessment', or 'the self-rating'.",
+      "The JSON values are the final text that will be placed directly into the PHLI form. Write the actual evaluation content about the employee, never about the person completing the form.",
+      "Use natural professional evaluation prose about the employee. Do not mention the Supervisor assessment, Supervisor ratings, Immediate Supervisor, Reviewing Supervisor, evaluator, evaluation process, system, AI, or model unless attribution is genuinely required by the field.",
       "Do not explain your reasoning, workflow, AI, data sources, or evaluator role. Do not include disclaimers or meta-analysis in the returned comments or recommendations.",
       "The current Reviewing Supervisor ratings are the primary current assessment. Employee and Immediate Supervisor ratings are comparison context.",
       "Use the existing factor descriptions and accumulated evaluation context. Do not copy or rewrite the Immediate Supervisor's Step 2 comments.",
       "Treat rating differences as analytical indicators, not proof of incidents or specific behavior. Make specific behavioral claims only when supported by evaluation evidence; otherwise use cautious development wording.",
       "Comments must give a concise current overall assessment with important strengths and areas requiring attention. Recommendations must give practical, evidence-based next steps. Do not repeat the Immediate Supervisor's Step 2 comments or produce a long report.",
       "Do not infer career ambitions, qualifications, promotion readiness, salary decisions, training approval, or missing values.",
-      "Do not use self-assessment language or say that Reviewing Supervisor ratings are missing when they are present.",
+      "Do not describe missing data, the evaluation process, or the person completing the form.",
       `Evaluation context: ${JSON.stringify(analysisContext)}`,
       "Return only valid JSON without markdown or system disclaimers.",
     ].join("\n");
@@ -498,6 +520,10 @@ export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" 
     }
     if (typeof parsed.comments !== "string" || typeof parsed.recommendations !== "string")
       throw validationError("AI returned invalid Reviewing Supervisor suggestions.");
+    const comments = rewriteEvaluationText(parsed.comments);
+    const recommendations = rewriteEvaluationText(parsed.recommendations);
+    if (containsEvaluationMetaLanguage(comments) || containsEvaluationMetaLanguage(recommendations))
+      throw validationError("AI returned evaluator-focused text. Please regenerate the suggestion.");
     const generatedAt = new Date().toISOString();
     await writeAudit(
       {
@@ -516,8 +542,8 @@ export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" 
     );
     return {
       suggestions: {
-        comments: parsed.comments.toString().slice(0, 4000),
-        recommendations: parsed.recommendations.toString().slice(0, 4000),
+        comments: comments.slice(0, 4000),
+        recommendations: recommendations.slice(0, 4000),
       },
       provider: getAiProviderName() === "openrouter" ? "openrouter" : "development-mock",
       generatedAt,
@@ -683,7 +709,12 @@ export const suggestPresidentField = createServerFn({ method: "POST" })
       "President Review",
     );
     const { AI_FIELD_MAPPINGS } = await import("./ai-suggestions");
-    const { generateAiText, AiUnavailableError } = await import("./ai-provider.server");
+    const {
+      generateAiText,
+      AiUnavailableError,
+      rewriteEvaluationText,
+      containsEvaluationMetaLanguage,
+    } = await import("./ai-provider.server");
 
     const detail = await loadEvaluationDetail(data.evaluationId);
     if (!detail) throw validationError("Evaluation not found");
@@ -760,23 +791,27 @@ export const suggestPresidentField = createServerFn({ method: "POST" })
     const prompt = [
       "You are an advisory writing assistant for a performance evaluation form.",
       "You must not make decisions, change ratings, recommend a final score, or finalize anything.",
+      "Write the actual evaluation content directly about the employee and their performance.",
       "Use ONLY the evidence provided below. Never invent incidents, dates, names or facts.",
       `Task: ${mapping.purpose}`,
       `Field label: ${item.label}`,
       "Write 2-4 professional sentences in plain prose. Reply with the draft text only, no preamble, no markdown.",
+      "Do not mention the Supervisor assessment, Supervisor ratings, Immediate Supervisor, Reviewing Supervisor, evaluator, evaluation process, system, AI, or model unless attribution is genuinely required by the field.",
       `The President's current draft (for tone only, may be empty): ${data.currentValue || "(empty)"}`,
       `Evidence: ${JSON.stringify(evidence)}`,
     ].join("\n");
 
     let suggestion: string;
     try {
-      suggestion = (await generateAiText(prompt)).trim();
+      suggestion = rewriteEvaluationText(await generateAiText(prompt));
     } catch (error) {
       throw validationError(
         error instanceof AiUnavailableError ? error.message : "AI suggestion is unavailable.",
       );
     }
     if (!suggestion) throw validationError("AI returned an empty suggestion.");
+    if (containsEvaluationMetaLanguage(suggestion))
+      throw validationError("AI returned evaluator-focused text. Please regenerate the suggestion.");
     if (suggestion.length > 4000) suggestion = suggestion.slice(0, 4000);
 
     const generatedAt = new Date().toISOString();

@@ -73,6 +73,7 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
   { prefix: "/president/employees", roles: ["PRESIDENT"], permission: "evaluations.view_201" },
   { prefix: "/hr/employees", roles: ["HR"], permission: "evaluations.view_201" },
   { prefix: "/hr/competency", roles: ["HR"], permission: "evaluations.view_201" },
+  { prefix: "/hr/development-records", roles: ["HR"], permission: "learning.view" },
   {
     prefix: "/hr/evaluation-history",
     roles: ["HR", "PRESIDENT"],
@@ -123,10 +124,7 @@ const NAV: Array<{
       {
         label: "Employees",
         icon: Users,
-        children: [
-          { to: "/hr/employees", label: "Directory", permission: "evaluations.view_201" },
-          { to: "/hr/employees", label: "201 Files", permission: "evaluations.view_201" },
-        ],
+        children: [{ to: "/hr/employees", label: "201 Files", permission: "evaluations.view_201" }],
       },
       {
         label: "Performance",
@@ -144,7 +142,17 @@ const NAV: Array<{
           { label: "Gaps" },
         ],
       },
-      { label: "Development", icon: GraduationCap, children: [{ label: "Development Records" }] },
+      {
+        label: "Learning Management",
+        icon: GraduationCap,
+        children: [
+          {
+            to: "/hr/development-records",
+            label: "Development Records",
+            permission: "learning.view",
+          },
+        ],
+      },
       { label: "Training", icon: BriefcaseBusiness, children: [{ label: "Recommendations" }] },
       { label: "Career", icon: Handshake, children: [{ label: "Succession" }] },
       { label: "Recognition", icon: Medal, children: [{ label: "Recognition" }] },
@@ -157,7 +165,9 @@ const NAV: Array<{
   },
   {
     roles: ["SUPERVISOR"],
-    direct: [{ to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1" }],
+    direct: [
+      { to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1" },
+    ],
     secondary: [{ label: "History", icon: History }],
     categories: [
       {
@@ -232,7 +242,13 @@ const NAV: Array<{
       {
         label: "Employees",
         icon: Users,
-        children: [{ to: "/president/employees", label: "Digital 201 Files", permission: "evaluations.view_201" }],
+        children: [
+          {
+            to: "/president/employees",
+            label: "Digital 201 Files",
+            permission: "evaluations.view_201",
+          },
+        ],
       },
     ],
   },
@@ -365,14 +381,18 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
       {secondary.length > 0 ? (
         <SidebarMenu className="border-t border-sidebar-border pt-3">
           {secondary.map((item) => (
-            <SidebarMenuItem key={item.label}>{renderItem(item, isCurrentRoute(item.to))}</SidebarMenuItem>
+            <SidebarMenuItem key={item.label}>
+              {renderItem(item, isCurrentRoute(item.to))}
+            </SidebarMenuItem>
           ))}
         </SidebarMenu>
       ) : null}
       {bottom.length > 0 ? (
         <SidebarMenu className="border-t border-sidebar-border pt-3">
           {bottom.map((item) => (
-            <SidebarMenuItem key={item.label}>{renderItem(item, isCurrentRoute(item.to))}</SidebarMenuItem>
+            <SidebarMenuItem key={item.label}>
+              {renderItem(item, isCurrentRoute(item.to))}
+            </SidebarMenuItem>
           ))}
         </SidebarMenu>
       ) : null}

@@ -12,9 +12,8 @@ import {
 export const listScoringRules = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { requirePermissionAny, getAdmin, writeAudit, getActorRoles } = await import(
-      "./server-core.server"
-    );
+    const { requirePermissionAny, getAdmin, writeAudit, getActorRoles } =
+      await import("./server-core.server");
     const { loadScoringRule } = await import("./scoring.server");
     await requirePermissionAny(context.userId, ["scoring.manage", "scores.view"], "Scoring");
 
@@ -164,9 +163,8 @@ export const activateScoringRule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { ruleId: string; reason: string }) => input)
   .handler(async ({ data, context }) => {
-    const { requirePermission, getAdmin, writeAudit, getActorRoles, validationError } = await import(
-      "./server-core.server"
-    );
+    const { requirePermission, getAdmin, writeAudit, getActorRoles, validationError } =
+      await import("./server-core.server");
     const { loadScoringRule, validateScoringRule } = await import("./scoring.server");
     await requirePermission(context.userId, "scoring.manage", "Scoring");
 
@@ -218,7 +216,8 @@ export const getEvaluationScore = createServerFn({ method: "GET" })
   .inputValidator((input: { evaluationId: string }) => input)
   .handler(async ({ data, context }) => {
     const { requirePermissionAny } = await import("./server-core.server");
-    const { loadScore, checkFinalizationEligibility, computeScore } = await import("./scoring.server");
+    const { loadScore, checkFinalizationEligibility, computeScore } =
+      await import("./scoring.server");
     await requirePermissionAny(context.userId, ["scores.view", "president.view"], "Scoring");
 
     const [storedScore, eligibility] = await Promise.all([
@@ -279,9 +278,8 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
       assertVersion,
       safeMessage,
     } = await import("./server-core.server");
-    const { checkFinalizationEligibility, persistScore, emitNotification } = await import(
-      "./scoring.server"
-    );
+    const { checkFinalizationEligibility, persistScore, emitNotification } =
+      await import("./scoring.server");
     const { createFinalEvaluationDocument } = await import("./documents.server");
     await requirePermission(context.userId, "evaluations.finalize", "Evaluations");
 
@@ -322,6 +320,8 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
         .eq("evaluation_id", data.evaluationId);
 
       await createFinalEvaluationDocument(data.evaluationId, context.userId);
+      const { ensureDevelopmentRecordsForEvaluation } = await import("./development.functions");
+      await ensureDevelopmentRecordsForEvaluation(data.evaluationId);
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
       await queueEmployeeFinalizedStep1Email(data.evaluationId);
 
@@ -377,9 +377,8 @@ export const returnForCorrection = createServerFn({ method: "POST" })
     correctionSchema.parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { requirePermission, getAdmin, writeAudit, getActorRoles, validationError } = await import(
-      "./server-core.server"
-    );
+    const { requirePermission, getAdmin, writeAudit, getActorRoles, validationError } =
+      await import("./server-core.server");
     const { emitNotification } = await import("./scoring.server");
     await requirePermission(context.userId, "evaluations.correct", "Evaluations");
 

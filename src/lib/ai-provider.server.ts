@@ -7,6 +7,20 @@
 
 export class AiUnavailableError extends Error {}
 
+const evaluationMetaLanguage = /\b(?:the\s+)?(?:supervisor(?:'s)?|reviewing supervisor|immediate supervisor|evaluator|evaluation process|system|ai|model)\b/i;
+
+export function rewriteEvaluationText(text: string): string {
+  return text
+    .replace(/\bThe Supervisor ratings indicate areas for improvement in\b/gi, "Further development in")
+    .replace(/\bThe Supervisor assessment reflects solid performance in\b/gi, "The employee demonstrates solid performance in")
+    .replace(/\bThe Reviewing Supervisor ratings place the employee at a satisfactory level\b/gi, "The employee demonstrates satisfactory overall performance")
+    .trim();
+}
+
+export function containsEvaluationMetaLanguage(text: string): boolean {
+  return evaluationMetaLanguage.test(text);
+}
+
 export type AiProviderName = "openrouter" | "development-mock" | "unavailable";
 
 export function getAiProviderName(): AiProviderName {
@@ -85,26 +99,26 @@ export async function generateAiText(
     return json
       ? JSON.stringify({
           strengths:
-            "Development mock: review the strongest recorded factors and add evidence-based observations.",
+            "The employee demonstrates strengths in the highest-rated performance factors.",
           weaknesses:
-            "Development mock: review the lowest recorded factors and add supported areas for improvement.",
+            "Further development is recommended in the lower-rated performance factors.",
           effectiveness:
-            "Development mock: describe how the employee can improve effectiveness in the current role.",
+            "The employee can improve present-job effectiveness by focusing on the lower-rated performance factors.",
           q1Explanation: null,
           developmentPotential: {
             recommendedOption: "Only moderate improvement ahead on present job",
-            reason: "Development mock recommendation based on the recorded assessment.",
+            reason: "The current ratings support continued development in the present job.",
           },
           advancementOutlook: {
             recommendedOption:
               "Present job or jobs within the same grade level represent his advancement.",
-            reason: "Development mock recommendation based on the recorded assessment.",
+            reason: "The current ratings support advancement within the same grade level.",
           },
           growthSuggestions:
-            "Development mock: add practical development or training actions based on the evaluation.",
+            "Targeted coaching, guided practice, and job-specific training may support further growth.",
           otherComments:
-            "Development mock: add career and development considerations based on documented evaluation context.",
+            "The employee's current performance supports focused development in the identified areas.",
         })
-      : "[Development mock suggestion] Review the recorded evaluation factors and complete this field using your professional observations.";
+      : "The employee's recorded performance supports a concise, evidence-based evaluation statement.";
   throw new AiUnavailableError("AI assistance unavailable. You can complete this field manually.");
 }
