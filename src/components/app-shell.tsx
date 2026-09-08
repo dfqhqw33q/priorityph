@@ -97,6 +97,14 @@ function routeAccess(pathname: string) {
   );
 }
 
+const ROLE_DEFAULT_OPEN_ACCORDIONS: AppRole[] = [
+  "SUPERVISOR",
+  "REVIEWING_SUPERVISOR",
+  "COMMITTEE",
+  "PRESIDENT",
+  "ADMINISTRATOR",
+];
+
 const NAV: Array<{
   roles: AppRole[];
   direct: NavItem[];
@@ -148,10 +156,8 @@ const NAV: Array<{
   },
   {
     roles: ["SUPERVISOR"],
-    direct: [
-      { to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1" },
-      { label: "History", icon: History },
-    ],
+    direct: [{ to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1" }],
+    bottom: [{ label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -176,8 +182,8 @@ const NAV: Array<{
         icon: Gauge,
         permission: "evaluations.review_step3",
       },
-      { label: "History", icon: History },
     ],
+    bottom: [{ label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -195,10 +201,8 @@ const NAV: Array<{
   },
   {
     roles: ["COMMITTEE"],
-    direct: [
-      { to: "/committee", label: "Dashboard", icon: Gauge, permission: "committee.review" },
-      { label: "History", icon: History },
-    ],
+    direct: [{ to: "/committee", label: "Dashboard", icon: Gauge, permission: "committee.review" }],
+    bottom: [{ label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -212,10 +216,8 @@ const NAV: Array<{
   },
   {
     roles: ["PRESIDENT"],
-    direct: [
-      { to: "/president", label: "Dashboard", icon: Gauge, permission: "president.view" },
-      { label: "History", icon: History },
-    ],
+    direct: [{ to: "/president", label: "Dashboard", icon: Gauge, permission: "president.view" }],
+    bottom: [{ label: "History", icon: History }],
     categories: [
       {
         label: "Approvals",
@@ -224,6 +226,7 @@ const NAV: Array<{
           { to: "/president/evaluations", label: "Pending", permission: "president.view" },
           { label: "Returned" },
           { label: "Completed" },
+          { to: "/president/employees", label: "Digital 201 Files", permission: "evaluations.view_201" },
         ],
       },
     ],
@@ -273,6 +276,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     .map((category) => ({ ...category, children: category.children.filter(allowed) }))
     .filter((category) => category.children.length > 0);
   const bottom = (group.bottom ?? []).filter(allowed);
+  const isDefaultOpenRole = group.roles.some((role) => ROLE_DEFAULT_OPEN_ACCORDIONS.includes(role));
 
   const renderItem = (item: NavItem, active = false) => {
     const Icon = item.icon;
@@ -305,9 +309,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           (child) => child.to && (pathname === child.to || pathname.startsWith(`${child.to}/`)),
         );
         const CategoryIcon = category.icon;
+        const shouldDefaultOpen = isDefaultOpenRole || activeChild;
         return (
           <SidebarMenuItem key={category.label}>
-            <Collapsible defaultOpen={activeChild} className="group/collapsible">
+            <Collapsible defaultOpen={shouldDefaultOpen} className="group/collapsible">
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton className="w-full">
                   {CategoryIcon ? <CategoryIcon className="size-4" /> : null}
