@@ -61,8 +61,13 @@ export function NotificationCenter() {
           const incoming = latest.filter((notification) => !seenIds.current.has(notification.id));
           if (initialized.current) {
             const notification = incoming[0];
-            if (notification)
-              toast(notification.title, { description: notification.message, duration: 6000 });
+            if (notification) {
+              toast.success(notification.title, {
+                description: notification.message,
+                duration: 6000,
+                className: "min-w-[320px]",
+              });
+            }
           }
           latest.forEach((notification) => seenIds.current.add(notification.id));
           initialized.current = true;
