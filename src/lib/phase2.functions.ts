@@ -58,11 +58,6 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
     if (!detail) return null;
     const score = await computeScore(data.evaluationId);
     const admin = await getAdmin();
-    const { data: row } = await admin
-      .from("evaluations")
-      .select("status,version,is_finalized,correction_stage,supervisor_user_id")
-      .eq("id", data.evaluationId)
-      .maybeSingle();
     const allowedStatus = {
       RATER: ["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT", "RETURNED_FOR_CORRECTION"],
       REVIEWING_SUPERVISOR: [
@@ -85,9 +80,9 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
               ? "COMMITTEE_REVIEW"
               : "PRESIDENT_APPROVAL";
     if (
-      row &&
-      (!allowedStatus.includes(row.status) ||
-        (row.status === "RETURNED_FOR_CORRECTION" && row.correction_stage !== targetStatus))
+      (!allowedStatus.includes(detail.status) ||
+        (detail.status === "RETURNED_FOR_CORRECTION" &&
+          detail.correction_stage !== targetStatus))
     ) {
       throw (await import("./server-core.server")).validationError(
         "This evaluation is not assigned to this workflow stage",
@@ -198,9 +193,6 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
     }
     return {
       ...detail,
-      status: row?.status ?? detail.status,
-      version: row?.version ?? detail.version,
-      is_finalized: row?.is_finalized ?? detail.is_finalized,
       stageRecord,
       stageSignature,
       accumulatedStages,
@@ -304,7 +296,7 @@ async function transition(
   if (current.is_finalized) throw validationError("Finalized evaluations cannot be modified");
   if (!(transitions[current.status as EvaluationStatus] ?? []).includes(next))
     throw validationError(`Invalid workflow transition from ${current.status} to ${next}`);
-  const { error } = await admin
+  const { data: updatedEvaluation, error } = await admin
     .from("evaluations")
     .update({
       status: next,
@@ -317,8 +309,12 @@ async function transition(
       finalization_reason: next === "FINALIZED" ? reason : undefined,
     } as never)
     .eq("id", evaluationId)
-    .eq("version", expectedVersion);
+    .eq("version", expectedVersion)
+    .select("id")
+    .maybeSingle();
   if (error) throw validationError(error.message);
+  if (!updatedEvaluation)
+    throw validationError("This evaluation changed in another session. Reload and try again.");
   await admin.from("evaluation_events").insert({
     evaluation_id: evaluationId,
     event_type: action,
@@ -379,15 +375,17 @@ async function transition(
         finalizationReason: reason,
       });
       const { ensureDevelopmentRecordsForEvaluation } = await import("./development.functions");
-      await ensureDevelopmentRecordsForEvaluation(evaluationId);
       const { ensureTrainingRecommendationsForEvaluation } = await import("./training.functions");
-      await ensureTrainingRecommendationsForEvaluation(evaluationId);
       const { ensureSuccessionProfileForEvaluation } = await import("./succession.functions");
-      await ensureSuccessionProfileForEvaluation(evaluationId);
       const { ensureRecognitionCandidatesForEvaluation } = await import("./recognition.functions");
-      await ensureRecognitionCandidatesForEvaluation(evaluationId);
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
-      await queueEmployeeFinalizedStep1Email(evaluationId);
+      await Promise.all([
+        ensureDevelopmentRecordsForEvaluation(evaluationId),
+        ensureTrainingRecommendationsForEvaluation(evaluationId),
+        ensureSuccessionProfileForEvaluation(evaluationId),
+        ensureRecognitionCandidatesForEvaluation(evaluationId),
+        queueEmployeeFinalizedStep1Email(evaluationId),
+      ]);
     } catch (error) {
       console.error("[phase2] final evaluation downstream generation failed", error);
       throw error;

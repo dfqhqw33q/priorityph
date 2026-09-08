@@ -427,7 +427,9 @@ export const auditFiltersSchema = z.object({
   action: z.string().max(80).default(""),
   entityType: z.string().max(80).default(""),
   result: z.string().max(20).default(""),
-  limit: z.number().int().min(1).max(500).default(200),
+  page: z.number().int().min(0).default(0),
+  pageSize: z.number().int().min(1).max(100).default(25),
+  sortDir: z.enum(["asc", "desc"]).default("desc"),
 });
 export type AuditFiltersValues = z.infer<typeof auditFiltersSchema>;
 

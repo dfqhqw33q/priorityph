@@ -4,6 +4,30 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { AiSuggestionResult } from "@/lib/ai-suggestions";
 
+const raterSuggestionCache = new Map<
+  string,
+  { expiresAt: number; value: RaterAiSuggestion }
+>();
+const RATER_CACHE_TTL = 5 * 60_000;
+
+function readRaterSuggestionCache(key: string): RaterAiSuggestion | null {
+  const cached = raterSuggestionCache.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    raterSuggestionCache.delete(key);
+    return null;
+  }
+  return cached.value;
+}
+
+function writeRaterSuggestionCache(key: string, value: RaterAiSuggestion): void {
+  if (raterSuggestionCache.size >= 100) {
+    const oldestKey = raterSuggestionCache.keys().next().value;
+    if (oldestKey) raterSuggestionCache.delete(oldestKey);
+  }
+  raterSuggestionCache.set(key, { expiresAt: Date.now() + RATER_CACHE_TTL, value });
+}
+
 const requestSchema = z.object({
   evaluationId: z.string().uuid(),
   version: z.number().int().positive(),
@@ -216,6 +240,17 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       },
       supervisorRatingsComplete,
     };
+    const cacheKey = JSON.stringify({
+      evaluationId: data.evaluationId,
+      version: data.version,
+      supervisorRatings: data.supervisorRatings,
+      currentValues: data.currentValues,
+      officialOptions: analysisContext.officialOptions,
+    });
+    if (!data.regenerate) {
+      const cached = readRaterSuggestionCache(cacheKey);
+      if (cached) return cached;
+    }
     const {
       generateAiText,
       AiUnavailableError,
@@ -277,12 +312,12 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
           return [field, value.slice(0, 4000)];
         }),
       ) as RaterAiSuggestion["suggestions"];
-      if (!analysisContext.q1Applies && parsed.q1Explanation !== null)
+      if (!analysisContext.q1Applies && parsed["q1Explanation"] !== null)
         throw new Error("Q1 is not applicable");
-      if (analysisContext.q1Applies && typeof parsed.q1Explanation !== "string")
+      if (analysisContext.q1Applies && typeof parsed["q1Explanation"] !== "string")
         throw new Error("Q1 explanation is required");
       q1Explanation = analysisContext.q1Applies
-        ? rewriteEvaluationText(String(parsed.q1Explanation)).slice(0, 4000)
+        ? rewriteEvaluationText(String(parsed["q1Explanation"])).slice(0, 4000)
         : null;
       if (q1Explanation && containsEvaluationMetaLanguage(q1Explanation))
         throw new Error("Meta-language in Q1 output");
@@ -302,8 +337,14 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
           reason: reason.slice(0, 1000),
         };
       };
-      developmentPotential = parseRecommendation(parsed.developmentPotential, developmentOptions);
-      advancementOutlook = parseRecommendation(parsed.advancementOutlook, advancementOptions);
+      developmentPotential = parseRecommendation(
+        parsed["developmentPotential"],
+        developmentOptions,
+      );
+      advancementOutlook = parseRecommendation(
+        parsed["advancementOutlook"],
+        advancementOptions,
+      );
     } catch {
       throw validationError("AI returned invalid field suggestions.");
     }
@@ -331,7 +372,7 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       },
       { ip: null, userAgent: null, correlationId: data.actionId },
     );
-    return {
+    const result: RaterAiSuggestion = {
       suggestions,
       q1Explanation,
       developmentPotential,
@@ -340,6 +381,8 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       generatedAt,
       provider: getAiProviderName() === "openrouter" ? "openrouter" : "development-mock",
     };
+    writeRaterSuggestionCache(cacheKey, result);
+    return result;
   });
 
 export const recordRaterAiAction = createServerFn({ method: "POST" })
@@ -465,21 +508,22 @@ export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" 
     });
     const accumulated =
       (detail as typeof detail & { accumulatedStages?: unknown }).accumulatedStages ?? null;
+    const source = detail as typeof detail & Record<string, string | null>;
     const analysisContext = {
       cycle: `${detail.cycle_name} (${detail.cycle_year})`,
       factors,
       currentReviewFields: data.currentValues,
       immediateSupervisorContext: {
         remarks: detail.supervisor_remarks ?? "",
-        overallExplanation: detail.supervisor_step2_overall_explanation ?? "",
-        strengths: detail.supervisor_step2_strengths ?? "",
-        weaknesses: detail.supervisor_step2_weaknesses ?? "",
-        effectiveness: detail.supervisor_step2_effectiveness ?? "",
-        developmentPotential: detail.supervisor_step2_development_potential ?? "",
-        advancementOutlook: detail.supervisor_step2_advancement_outlook ?? "",
-        growthSuggestions: detail.supervisor_step2_growth_suggestions ?? "",
-        transferInterest: detail.supervisor_step2_transfer_interest ?? "",
-        otherComments: detail.supervisor_step2_other_comments ?? "",
+        overallExplanation: source["supervisor_step2_overall_explanation"] ?? "",
+        strengths: source["supervisor_step2_strengths"] ?? "",
+        weaknesses: source["supervisor_step2_weaknesses"] ?? "",
+        effectiveness: source["supervisor_step2_effectiveness"] ?? "",
+        developmentPotential: source["supervisor_step2_development_potential"] ?? "",
+        advancementOutlook: source["supervisor_step2_advancement_outlook"] ?? "",
+        growthSuggestions: source["supervisor_step2_growth_suggestions"] ?? "",
+        transferInterest: source["supervisor_step2_transfer_interest"] ?? "",
+        otherComments: source["supervisor_step2_other_comments"] ?? "",
       },
       accumulatedEvaluationContext: accumulated,
     };
@@ -518,10 +562,13 @@ export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" 
           : "AI assistance is unavailable. You can complete these fields manually.",
       );
     }
-    if (typeof parsed.comments !== "string" || typeof parsed.recommendations !== "string")
+    if (
+      typeof parsed["comments"] !== "string" ||
+      typeof parsed["recommendations"] !== "string"
+    )
       throw validationError("AI returned invalid Reviewing Supervisor suggestions.");
-    const comments = rewriteEvaluationText(parsed.comments);
-    const recommendations = rewriteEvaluationText(parsed.recommendations);
+    const comments = rewriteEvaluationText(String(parsed["comments"]));
+    const recommendations = rewriteEvaluationText(String(parsed["recommendations"]));
     if (containsEvaluationMetaLanguage(comments) || containsEvaluationMetaLanguage(recommendations))
       throw validationError("AI returned evaluator-focused text. Please regenerate the suggestion.");
     const generatedAt = new Date().toISOString();

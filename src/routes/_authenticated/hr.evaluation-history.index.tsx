@@ -17,6 +17,7 @@ import {
 } from "@/components/ui-bits";
 import { getReport, type ReportRow } from "@/lib/reports.functions";
 import { EVALUATION_STATUS_LABELS, EVALUATION_STATUSES } from "@/lib/domain";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const ALL = "";
 const PAGE_SIZE = 25;
@@ -41,12 +42,13 @@ export const Route = createFileRoute("/_authenticated/hr/evaluation-history/")({
 function HistoryPage() {
   const fetchReport = useServerFn(getReport);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [status, setStatus] = useState(ALL);
   const [page, setPage] = useState(0);
 
   const query = useQuery({
-    queryKey: ["evaluation-history", { search, status, page }],
-    queryFn: () => fetchReport({ data: { search, status, page, pageSize: PAGE_SIZE } }),
+    queryKey: ["evaluation-history", { search: debouncedSearch, status, page }],
+    queryFn: () => fetchReport({ data: { search: debouncedSearch, status, page, pageSize: PAGE_SIZE } }),
     retry: false,
   });
   const rows = (query.data?.rows ?? []) as ReportRow[];

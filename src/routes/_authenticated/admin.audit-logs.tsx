@@ -99,7 +99,9 @@ function AuditLogsPage() {
     action: action === ALL ? "" : action,
     entityType: entityType === ALL ? "" : entityType,
     result: result === ALL ? "" : result,
-    limit: 500,
+    page,
+    pageSize: PAGE_SIZE,
+    sortDir,
   };
 
   const query = useQuery({
@@ -109,14 +111,8 @@ function AuditLogsPage() {
   });
 
   const rows = useMemo(() => {
-    const list = [...((query.data?.rows ?? []) as AuditRow[])];
-    list.sort((a, b) =>
-      sortDir === "asc"
-        ? a.occurred_at.localeCompare(b.occurred_at)
-        : b.occurred_at.localeCompare(a.occurred_at),
-    );
-    return list;
-  }, [query.data, sortDir]);
+    return (query.data?.rows ?? []) as AuditRow[];
+  }, [query.data]);
 
   const options = useMemo(() => {
     const all = (query.data?.rows ?? []) as AuditRow[];
@@ -133,9 +129,9 @@ function AuditLogsPage() {
   const actorName = (id: string | null) =>
     (query.data?.actors ?? []).find((a) => a.id === id)?.full_name ?? (id ? "Unknown user" : "System");
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil((query.data?.totalCount ?? 0) / PAGE_SIZE));
   const current = Math.min(page, pageCount - 1);
-  const visible = rows.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
+  const visible = rows;
 
   if (query.isError) {
     const message = query.error instanceof Error ? query.error.message : "Unavailable";
@@ -282,8 +278,7 @@ function AuditLogsPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {current * PAGE_SIZE + 1}–{Math.min(rows.length, (current + 1) * PAGE_SIZE)} of{" "}
-              {rows.length}
+              Showing {query.data?.totalCount ? current * PAGE_SIZE + 1 : 0}–{Math.min(query.data?.totalCount ?? 0, (current + 1) * PAGE_SIZE)} of {query.data?.totalCount ?? 0}
             </p>
             <div className="flex gap-2">
               <Button

@@ -45,7 +45,7 @@ export function useAccess() {
     access,
     can,
     canAny,
-    isLoading: !authReady || query.isPending || query.isFetching,
+    isLoading: !authReady || query.isPending,
     isError: query.isError,
     refetch: query.refetch,
   };

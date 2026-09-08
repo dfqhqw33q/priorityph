@@ -22,6 +22,7 @@ import {
   updateSuccessionProfile,
   type SuccessionProfile,
 } from "@/lib/succession.functions";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 export const Route = createFileRoute("/_authenticated/hr/succession")({
   component: SuccessionPage,
@@ -32,11 +33,12 @@ function SuccessionPage() {
   const fetchProfiles = useServerFn(listSuccessionProfiles);
   const saveProfile = useServerFn(updateSuccessionProfile);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [transferInterest, setTransferInterest] = useState("");
   const [editing, setEditing] = useState<SuccessionProfile | null>(null);
   const query = useQuery({
-    queryKey: ["succession-profiles", { search, transferInterest }],
-    queryFn: () => fetchProfiles({ data: { search, transferInterest } }),
+    queryKey: ["succession-profiles", { search: debouncedSearch, transferInterest }],
+    queryFn: () => fetchProfiles({ data: { search: debouncedSearch, transferInterest } }),
     retry: false,
   });
   const mutation = useMutation({

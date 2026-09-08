@@ -55,21 +55,24 @@ export function NotificationCenter() {
           table: "user_notifications",
           filter: `user_id=eq.${access.userId}`,
         },
-        async () => {
-          const latest = await fetchNotifications({ data: { limit: 50 } });
-          queryClient.setQueryData(["my-notifications"], latest);
-          const incoming = latest.filter((notification) => !seenIds.current.has(notification.id));
-          if (initialized.current) {
-            const notification = incoming[0];
-            if (notification) {
-              toast.success(notification.title, {
-                description: notification.message,
-                duration: 6000,
-                className: "min-w-[320px]",
-              });
-            }
+        async (payload) => {
+          const incoming = await fetchNotifications({
+            data: { limit: 1, notificationId: String(payload.new.id) },
+          });
+          const notification = incoming[0];
+          if (!notification) return;
+          queryClient.setQueryData<AppNotification[]>(["my-notifications"], (current = []) => {
+            const merged = [notification, ...current.filter((item) => item.id !== notification.id)];
+            return merged.slice(0, 50);
+          });
+          if (initialized.current && !seenIds.current.has(notification.id)) {
+            toast.success(notification.title, {
+              description: notification.message,
+              duration: 6000,
+              className: "min-w-[320px]",
+            });
           }
-          latest.forEach((notification) => seenIds.current.add(notification.id));
+          seenIds.current.add(notification.id);
           initialized.current = true;
         },
       )

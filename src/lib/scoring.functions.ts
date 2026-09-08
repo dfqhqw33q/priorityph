@@ -325,31 +325,37 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
       await persistScore(data.evaluationId, score, context.userId);
 
       const now = new Date().toISOString();
-      const { error } = await admin
+      const { data: finalizedEvaluation, error } = await admin
         .from("evaluations")
         .update({
           status: "FINALIZED",
           is_finalized: true,
+          version: data.version + 1,
           finalized_at: now,
           finalized_by: context.userId,
           finalization_reason: data.reason,
         })
-        .eq("id", data.evaluationId);
-      if (error) throw validationError(error.message);
+        .eq("id", data.evaluationId)
+        .eq("version", data.version)
+        .select("id")
+        .maybeSingle();
+      if (error || !finalizedEvaluation) throw validationError("This evaluation changed while you were working. Reload and try again.");
 
       // Lock the score and the underlying ratings/responses.
-      await admin
-        .from("evaluation_scores")
-        .update({ is_locked: true })
-        .eq("evaluation_id", data.evaluationId);
-      await admin
-        .from("evaluation_ratings")
-        .update({ is_locked: true })
-        .eq("evaluation_id", data.evaluationId);
-      await admin
-        .from("president_responses")
-        .update({ is_locked: true })
-        .eq("evaluation_id", data.evaluationId);
+      await Promise.all([
+        admin
+          .from("evaluation_scores")
+          .update({ is_locked: true })
+          .eq("evaluation_id", data.evaluationId),
+        admin
+          .from("evaluation_ratings")
+          .update({ is_locked: true })
+          .eq("evaluation_id", data.evaluationId),
+        admin
+          .from("president_responses")
+          .update({ is_locked: true })
+          .eq("evaluation_id", data.evaluationId),
+      ]);
 
       await createFinalEvaluationDocument(data.evaluationId, context.userId);
       await processFinalizedEvaluationSupportModules(data.evaluationId);

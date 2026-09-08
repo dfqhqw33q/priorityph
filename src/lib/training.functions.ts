@@ -104,13 +104,13 @@ export const listTrainingData = createServerFn({ method: "GET" })
     let recommendations = admin
       .from("training_recommendations")
       .select(
-        "*, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, training_title, related_competency, source, recommendation, status, created_at, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
       )
       .order("created_at", { ascending: false });
     let records = admin
       .from("training_records")
       .select(
-        "*, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, training_title, provider, training_date, status, related_competency, notes, created_at, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
       )
       .order("created_at", { ascending: false });
     if (data.employeeId) {
@@ -231,7 +231,9 @@ export async function ensureTrainingRecommendationsForEvaluation(
   const admin = await getAdmin();
   const { data: raw } = await admin
     .from("evaluations")
-    .select("*")
+    .select(
+      "id, employee_id, is_finalized, ai_analysis, supervisor_step2_development, supervisor_step2_effectiveness, supervisor_step2_growth_suggestions, supervisor_step2_recommendations",
+    )
     .eq("id", evaluationId)
     .maybeSingle();
   const evaluation = raw as unknown as {
@@ -311,33 +313,33 @@ export async function ensureTrainingRecommendationsForEvaluation(
       );
     }
   }
-  for (const candidate of candidates) {
-    const { error } = await admin.from("training_recommendations").upsert(
-      {
-        employee_id: evaluation.employee_id,
-        source_evaluation_id: evaluation.id,
-        source_key: candidate.key,
-        training_title: candidate.title,
-        related_competency: candidate.competency,
-        source: candidate.source,
-        recommendation: candidate.recommendation,
-        status: "Recommended",
-      },
-      { onConflict: "source_evaluation_id,source_key" },
-    );
-    if (error) throw new Error(error.message);
-    await admin.from("notification_events").upsert(
-      {
-        evaluation_id: evaluation.id,
-        event_type: "TRAINING_RECOMMENDATION_CREATED",
-        audience_permission: "training.manage",
-        title: "Training Recommendation",
-        body: "A training recommendation is available for review.",
-        dedupe_key: `${evaluation.id}:TRAINING_RECOMMENDATION:${candidate.key}`,
-      } as never,
-      { onConflict: "dedupe_key" },
-    );
-  }
+  if (candidates.length === 0) return;
+  const { error } = await admin.from("training_recommendations").upsert(
+    candidates.map((candidate) => ({
+      employee_id: evaluation.employee_id,
+      source_evaluation_id: evaluation.id,
+      source_key: candidate.key,
+      training_title: candidate.title,
+      related_competency: candidate.competency,
+      source: candidate.source,
+      recommendation: candidate.recommendation,
+      status: "Recommended" as const,
+    })),
+    { onConflict: "source_evaluation_id,source_key" },
+  );
+  if (error) throw new Error(error.message);
+  const { error: notificationError } = await admin.from("notification_events").upsert(
+    candidates.map((candidate) => ({
+      evaluation_id: evaluation.id,
+      event_type: "TRAINING_RECOMMENDATION_CREATED",
+      audience_permission: "training.manage",
+      title: "Training Recommendation",
+      body: "A training recommendation is available for review.",
+      dedupe_key: `${evaluation.id}:TRAINING_RECOMMENDATION:${candidate.key}`,
+    })) as never,
+    { onConflict: "dedupe_key" },
+  );
+  if (notificationError) throw new Error(notificationError.message);
 }
 
 export async function ensureTrainingRequirementForCommitteeDecision(

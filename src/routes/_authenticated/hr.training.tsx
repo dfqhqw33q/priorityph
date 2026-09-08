@@ -23,6 +23,7 @@ import {
   updateTrainingRecord,
   type TrainingRecord,
 } from "@/lib/training.functions";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const statuses = ["Required", "Approved", "Completed"] as const;
 type FormState = {
@@ -42,17 +43,18 @@ function TrainingPage() {
   const fetchEmployees = useServerFn(listTrainingEmployees);
   const saveRecord = useServerFn(updateTrainingRecord);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [employeeId, setEmployeeId] = useState("");
   const [status, setStatus] = useState("");
   const [provider, setProvider] = useState("");
   const [relatedCompetency, setRelatedCompetency] = useState("");
   const [editing, setEditing] = useState<TrainingRecord | null>(null);
   const query = useQuery({
-    queryKey: ["training-management", { search, employeeId, status, provider, relatedCompetency }],
+    queryKey: ["training-management", { search: debouncedSearch, employeeId, status, provider, relatedCompetency }],
     queryFn: () =>
       fetchTraining({
         data: {
-          search,
+          search: debouncedSearch,
           employeeId: employeeId || null,
           status: status || null,
           provider,

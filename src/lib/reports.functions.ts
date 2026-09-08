@@ -200,6 +200,15 @@ export const getReport = createServerFn({ method: "POST" })
     if (data.status.trim()) query = query.eq("status", data.status.trim() as never);
     if (data.cycleId) query = query.eq("cycle_id", data.cycleId);
     if (data.year) query = query.eq("evaluation_cycles.year", data.year);
+    if (data.finalRating.trim()) {
+      const { data: matchingScores } = await admin
+        .from("evaluation_scores")
+        .select("evaluation_id")
+        .eq("final_rating_label", data.finalRating.trim());
+      const matchingIds = (matchingScores ?? []).map((score) => score.evaluation_id);
+      if (matchingIds.length > 0) query = query.in("id", matchingIds);
+      else query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
 
     const from = data.page * data.pageSize;
     const { data: rows, count } = await query.range(from, from + data.pageSize - 1);
@@ -256,23 +265,28 @@ export const getReport = createServerFn({ method: "POST" })
       };
     });
 
-    const filtered = data.finalRating.trim()
-      ? reportRows.filter((row) => row.finalRating === data.finalRating.trim())
-      : reportRows;
+    const filtered = reportRows;
 
-    // Cycle-wide aggregates, independent of pagination.
-    const { data: allScores } = await admin
-      .from("evaluation_scores")
-      .select("final_score, final_rating_label, calculation_status");
-    const calculated = (allScores ?? []).filter(
-      (score) => score.calculation_status === "CALCULATED",
-    );
+    // Cycle-wide aggregates, independent of pagination, are computed in the database.
+    const { data: summaryRows, error: summaryError } = (await admin.rpc(
+      "get_evaluation_score_summary" as never,
+      {} as never,
+    )) as unknown as {
+      data: Array<{
+        final_rating_label: string;
+        score_count: number;
+        score_total: number;
+      }> | null;
+      error: { message: string } | null;
+    };
+    if (summaryError) throw new Error(summaryError.message);
     const distribution = new Map<string, number>();
+    let scored = 0;
     let total = 0;
-    for (const score of calculated) {
-      const label = score.final_rating_label ?? "Unrated";
-      distribution.set(label, (distribution.get(label) ?? 0) + 1);
-      total += Number(score.final_score ?? 0);
+    for (const row of summaryRows ?? []) {
+      distribution.set(row.final_rating_label, Number(row.score_count));
+      scored += Number(row.score_count);
+      total += Number(row.score_total);
     }
 
     const [{ divisions, sections, years }, { data: cycles }] = await Promise.all([
@@ -293,8 +307,8 @@ export const getReport = createServerFn({ method: "POST" })
       rows: filtered,
       totalCount: count ?? 0,
       summary: {
-        scored: calculated.length,
-        averageFinalScore: calculated.length > 0 ? total / calculated.length : null,
+        scored,
+        averageFinalScore: scored > 0 ? total / scored : null,
         distribution: Array.from(distribution, ([label, value]) => ({ label, value })).sort(
           (a, b) => b.value - a.value,
         ),

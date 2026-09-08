@@ -27,6 +27,7 @@ import {
   type RecognitionCandidate,
   type RecognitionRecord,
 } from "@/lib/recognition.functions";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const types = [
   "Highest Rated Employee",
@@ -49,17 +50,18 @@ function RecognitionPage() {
   const createOther = useServerFn(createOtherRecognitionCandidate);
   const certificate = useServerFn(generateRecognitionCertificate);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [employeeId, setEmployeeId] = useState("");
   const [recognitionType, setRecognitionType] = useState("");
   const [status, setStatus] = useState("PENDING");
   const [reviewing, setReviewing] = useState<RecognitionCandidate | null>(null);
   const [otherOpen, setOtherOpen] = useState(false);
   const dataQuery = useQuery({
-    queryKey: ["recognition", { search, employeeId, recognitionType, status }],
+    queryKey: ["recognition", { search: debouncedSearch, employeeId, recognitionType, status }],
     queryFn: () =>
       fetchData({
         data: {
-          search,
+          search: debouncedSearch,
           employeeId: employeeId || null,
           recognitionType: (recognitionType || null) as (typeof types)[number] | null,
           status: (status || null) as (typeof statuses)[number] | null,

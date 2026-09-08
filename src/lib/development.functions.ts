@@ -78,7 +78,7 @@ export const listDevelopmentRecords = createServerFn({ method: "GET" })
     let query = admin
       .from("development_records")
       .select(
-        "*, employees!inner(full_name, employee_number), evaluations(id, evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, development_need, development_activity, status, record_date, notes, is_system_generated, created_at, employees!inner(full_name, employee_number), evaluations(id, evaluation_cycles(name, year))",
       )
       .order("record_date", { ascending: false })
       .order("created_at", { ascending: false });
@@ -184,7 +184,9 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
   const admin = await getAdmin();
   const { data: rawEvaluation } = await admin
     .from("evaluations")
-    .select("*")
+    .select(
+      "id, employee_id, is_finalized, finalized_at, supervisor_step2_development, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_effectiveness, supervisor_step2_growth_suggestions, supervisor_step2_recommendations, ai_analysis",
+    )
     .eq("id", evaluationId)
     .maybeSingle();
   const evaluation = rawEvaluation as unknown as {
@@ -234,31 +236,32 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
       add(`ai-training-${index}`, value, "External Training", "Advisory Gemini recommendation.");
   }
 
-  for (const candidate of candidates) {
-    const { error } = await admin.from("development_records").upsert(
-      {
-        employee_id: evaluation.employee_id,
-        source_evaluation_id: evaluation.id,
-        source_key: candidate.key,
-        development_need: candidate.need,
-        development_activity: candidate.activity,
-        status: "Recommended",
-        record_date: (evaluation.finalized_at ?? new Date().toISOString()).slice(0, 10),
-        notes: candidate.notes,
-        is_system_generated: true,
-      },
-      { onConflict: "source_evaluation_id,source_key" },
-    );
-    if (error) throw new Error(error.message);
-    await admin.from("notification_events").upsert(
-      {
-        event_type: "DEVELOPMENT_RECORD_CREATED",
-        audience_permission: "learning.manage",
-        title: "Development Record Created",
-        body: "A new employee development record has been created from a finalized performance evaluation.",
-        dedupe_key: `${evaluation.id}:DEVELOPMENT_RECORD:${candidate.key}`,
-      } as never,
-      { onConflict: "dedupe_key" },
-    );
-  }
+  if (candidates.length === 0) return;
+  const { error } = await admin.from("development_records").upsert(
+    candidates.map((candidate) => ({
+      employee_id: evaluation.employee_id,
+      source_evaluation_id: evaluation.id,
+      source_key: candidate.key,
+      development_need: candidate.need,
+      development_activity: candidate.activity,
+      status: "Recommended" as const,
+      record_date: (evaluation.finalized_at ?? new Date().toISOString()).slice(0, 10),
+      notes: candidate.notes,
+      is_system_generated: true,
+    })),
+    { onConflict: "source_evaluation_id,source_key" },
+  );
+  if (error) throw new Error(error.message);
+  const { error: notificationError } = await admin.from("notification_events").upsert(
+    candidates.map((candidate) => ({
+      evaluation_id: evaluation.id,
+      event_type: "DEVELOPMENT_RECORD_CREATED",
+      audience_permission: "learning.manage",
+      title: "Development Record Created",
+      body: "A new employee development record has been created from a finalized performance evaluation.",
+      dedupe_key: `${evaluation.id}:DEVELOPMENT_RECORD:${candidate.key}`,
+    })) as never,
+    { onConflict: "dedupe_key" },
+  );
+  if (notificationError) throw new Error(notificationError.message);
 }

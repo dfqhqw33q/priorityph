@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ export function EvaluationQueue({
 }) {
   const fetchOptions = useServerFn(listQueueFilterOptions);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [year, setYear] = useState<string>(ALL);
   const [division, setDivision] = useState<string>(ALL);
   const [section, setSection] = useState<string>(ALL);
@@ -65,7 +67,7 @@ export function EvaluationQueue({
   const [page, setPage] = useState(0);
 
   const filters = {
-    search,
+    search: debouncedSearch,
     year: year === ALL ? null : Number(year),
     division: division === ALL ? "" : division,
     section: section === ALL ? "" : section,

@@ -22,18 +22,21 @@ export const listTemplates = createServerFn({ method: "GET" })
 export const listCycles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<CycleSummary[]> => {
-    const { getAdmin, requirePermission, cycleCounts } = await import("./server-core.server");
+    const { getAdmin, requirePermission, cycleCountsForCycles } = await import(
+      "./server-core.server"
+    );
     await requirePermission(context.userId, "cycles.view", "Evaluation Cycles");
     const admin = await getAdmin();
     const { data } = await admin
       .from("evaluation_cycles")
-      .select("*")
+      .select(
+        "id, name, year, status, starts_at, ends_at, cycle_token, template_id, instructions, created_at, updated_at",
+      )
       .order("year", { ascending: false })
       .order("created_at", { ascending: false });
     const rows = data ?? [];
-    return Promise.all(
-      rows.map(async (row) => ({ ...(row as never as CycleSummary), ...(await cycleCounts(row.id)) })),
-    );
+    const counts = await cycleCountsForCycles(rows.map((row) => row.id));
+    return rows.map((row) => ({ ...(row as never as CycleSummary), ...counts[row.id] }));
   });
 
 export const getCycle = createServerFn({ method: "GET" })
@@ -45,7 +48,9 @@ export const getCycle = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const { data: row } = await admin
       .from("evaluation_cycles")
-      .select("*")
+      .select(
+        "id, name, year, status, starts_at, ends_at, cycle_token, template_id, instructions, created_at, updated_at",
+      )
       .eq("id", data.cycleId)
       .maybeSingle();
     if (!row) return null;

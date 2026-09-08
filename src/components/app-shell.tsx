@@ -493,17 +493,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <Sidebar collapsible="offcanvas" className="border-r border-border bg-card">
-        <SidebarHeader className="flex min-h-20 shrink-0 items-center border-b border-border px-4">
+        <SidebarHeader className="flex h-20 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-6 text-sidebar-foreground">
           <Link to="/" className="flex min-w-0 items-center gap-3">
             <img
               src="/logo.png"
               alt="Priority Handling Logistics, Inc."
               className="size-10 shrink-0 object-contain"
             />
-            <span className="min-w-0 text-[11px] font-bold uppercase leading-[1.08] tracking-[0.02em] text-brand-navy group-data-[collapsible=icon]:hidden">
-              Priority Handling
+            <span className="min-w-0 text-[11px] font-bold uppercase leading-[1.08] tracking-[0.02em] text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+              PRIORITY HANDLING
               <br />
-              Logistics, Inc.
+              LOGISTICS INC.
             </span>
           </Link>
         </SidebarHeader>
@@ -516,19 +516,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
             <SidebarTrigger aria-label="Toggle navigation" />
-
-            <Link to="/" className="flex items-center gap-3 lg:hidden">
-              <img
-                src="/logo.png"
-                alt="Priority Handling Logistics, Inc."
-                className="size-8 object-contain"
-              />
-              <span className="text-xs font-bold uppercase leading-tight tracking-wide text-brand-navy">
-                Priority Handling
-                <br />
-                Logistics, Inc.
-              </span>
-            </Link>
 
             <div className="ml-auto flex items-center gap-3">
               <NotificationCenter />

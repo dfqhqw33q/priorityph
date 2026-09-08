@@ -23,14 +23,16 @@ export const getMyAccess = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const userId = context.userId;
 
-    const { data: user } = await admin
-      .from("internal_users")
-      .select("id, email, full_name, job_title, is_active, is_locked, must_change_password")
-      .eq("id", userId)
-      .maybeSingle();
+    const [{ data: user }, { data: roleRows }] = await Promise.all([
+      admin
+        .from("internal_users")
+        .select("id, email, full_name, job_title, is_active, is_locked, must_change_password")
+        .eq("id", userId)
+        .maybeSingle(),
+      admin.from("user_roles").select("role").eq("user_id", userId),
+    ]);
     if (!user) return null;
 
-    const { data: roleRows } = await admin.from("user_roles").select("role").eq("user_id", userId);
     const roles = (roleRows ?? []).map((r) => r.role as AppRole);
 
     let permissions: Permission[] = [];

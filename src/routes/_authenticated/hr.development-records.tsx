@@ -23,6 +23,7 @@ import {
   updateDevelopmentRecord,
   type DevelopmentRecord,
 } from "@/lib/development.functions";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const activities = [
   "Coaching",
@@ -50,16 +51,17 @@ function DevelopmentRecordsPage() {
   const fetchEmployees = useServerFn(listDevelopmentEmployees);
   const saveRecord = useServerFn(updateDevelopmentRecord);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [employeeId, setEmployeeId] = useState("");
   const [status, setStatus] = useState("");
   const [activity, setActivity] = useState("");
   const [editing, setEditing] = useState<DevelopmentRecord | null>(null);
   const recordsQuery = useQuery({
-    queryKey: ["development-records", { search, employeeId, status, activity }],
+    queryKey: ["development-records", { search: debouncedSearch, employeeId, status, activity }],
     queryFn: () =>
       fetchRecords({
         data: {
-          search,
+          search: debouncedSearch,
           employeeId: employeeId || null,
           status: (status || null) as (typeof statuses)[number] | null,
           activity: (activity || null) as (typeof activities)[number] | null,

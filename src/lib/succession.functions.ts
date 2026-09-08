@@ -66,7 +66,7 @@ export const listSuccessionProfiles = createServerFn({ method: "GET" })
     let query = admin
       .from("succession_profiles")
       .select(
-        "*, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, development_potential, advancement_outlook, career_interest, transfer_interest, desired_job, desired_location, qualification, notes, updated_at, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
       )
       .order("updated_at", { ascending: false });
     if (data.search.trim()) {

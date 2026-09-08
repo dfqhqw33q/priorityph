@@ -327,14 +327,17 @@ export const listAuditLogs = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     let query = admin
       .from("audit_logs")
-      .select("*")
-      .order("occurred_at", { ascending: false })
-      .limit(data.limit);
+      .select(
+        "id, occurred_at, actor_user_id, actor_role, action, module, entity_type, entity_id, employee_id, evaluation_id, previous_value, new_value, reason, correlation_id, result",
+        { count: "exact" },
+      )
+      .order("occurred_at", { ascending: data.sortDir === "asc" })
+      .range(data.page * data.pageSize, data.page * data.pageSize + data.pageSize - 1);
     if (data.search.trim()) {
       const term = `%${data.search.trim()}%`;
       query = query.or(`action.ilike.${term},module.ilike.${term}`);
     }
-    const { data: rows } = await query;
+    const { data: rows, count } = await query;
     return rows ?? [];
   });
 
@@ -495,10 +498,13 @@ export const listAuditEvents = createServerFn({ method: "GET" })
     if (clean(data.entityType)) query = query.eq("entity_type", data.entityType.trim());
     if (clean(data.result)) query = query.eq("result", data.result.trim());
 
-    const [{ data: rows }, { data: actors }] = await Promise.all([
-      query,
-      admin.from("internal_users").select("id, full_name, email"),
-    ]);
+    const { data: rows } = await query;
+    const actorIds = Array.from(
+      new Set((rows ?? []).map((row) => row.actor_user_id).filter(Boolean) as string[]),
+    );
+    const { data: actors } = actorIds.length
+      ? await admin.from("internal_users").select("id, full_name, email").in("id", actorIds)
+      : { data: [] };
 
     await writeAudit({
       actorUserId: context.userId,
@@ -508,7 +514,7 @@ export const listAuditEvents = createServerFn({ method: "GET" })
       newValue: { filters: { ...data, search: clean(data.search) } },
     });
 
-    return { rows: rows ?? [], actors: actors ?? [] };
+    return { rows: rows ?? [], actors: actors ?? [], totalCount: count ?? 0 };
   });
 
 export const getEmployeeRecord = createServerFn({ method: "GET" })

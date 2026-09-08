@@ -113,19 +113,25 @@ function mapNotification(row: Record<string, unknown>): AppNotification {
 export const listMyNotifications = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ limit: z.number().int().min(1).max(100).default(50) }).parse(input),
+    z
+      .object({
+        limit: z.number().int().min(1).max(100).default(50),
+        notificationId: z.string().uuid().nullable().default(null),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { getAdmin } = await import("./server-core.server");
     const admin = await getAdmin();
-    const { data: rows, error } = await admin
+    let query = admin
       .from("user_notifications")
       .select(
         "id, notification_event_id, read_at, created_at, notification_events(id, event_type, title, occurred_at, evaluation_id)",
       )
       .eq("user_id", context.userId)
-      .order("created_at", { ascending: false })
-      .limit(data.limit);
+      .order("created_at", { ascending: false });
+    if (data.notificationId) query = query.eq("id", data.notificationId);
+    const { data: rows, error } = await query.limit(data.limit);
     if (error) throw new Error(error.message);
     return (rows ?? []).map((row) => mapNotification(row as unknown as Record<string, unknown>));
   });

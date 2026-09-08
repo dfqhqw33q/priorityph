@@ -234,37 +234,56 @@ export async function requirePermissionAny(
 
 export async function cycleCounts(cycleId: string) {
   const admin = await getAdmin();
-  const count = async (statuses: string[]) => {
-    const { count: value } = await admin
-      .from("evaluations")
-      .select("id", { count: "exact", head: true })
-      .eq("cycle_id", cycleId)
-      .in("status", statuses as never);
-    return value ?? 0;
-  };
-  const [step1, supervisor, president] = await Promise.all([
-    count([
-      "EMPLOYEE_SUBMITTED",
-      "SUPERVISOR_DRAFT",
-      "SUPERVISOR_SUBMITTED",
-      "REVIEWING_SUPERVISOR_REVIEW",
-      "PERSONNEL_PROCESSING",
-      "COMMITTEE_REVIEW",
-      "PRESIDENT_APPROVAL",
-      "FINALIZED",
-    ]),
-    count([
-      "SUPERVISOR_SUBMITTED",
-      "REVIEWING_SUPERVISOR_REVIEW",
-      "PERSONNEL_PROCESSING",
-      "COMMITTEE_REVIEW",
-      "PRESIDENT_APPROVAL",
-      "FINALIZED",
-    ]),
-    count(["PRESIDENT_APPROVAL", "FINALIZED"]),
-  ]);
-  return { step1_count: step1, supervisor_count: supervisor, president_count: president };
+  return cycleCountsForCycles([cycleId]).then((counts) => counts[cycleId]);
 }
+
+export async function cycleCountsForCycles(cycleIds: string[]) {
+  if (cycleIds.length === 0) return {} as Record<string, CycleCounts>;
+  const admin = await getAdmin();
+  const { data } = await admin
+    .from("evaluations")
+    .select("cycle_id, status")
+    .in("cycle_id", cycleIds);
+  const counts = Object.fromEntries(
+    cycleIds.map((id) => [id, { step1_count: 0, supervisor_count: 0, president_count: 0 }]),
+  ) as Record<string, CycleCounts>;
+  for (const row of data ?? []) {
+    const current = counts[row.cycle_id];
+    if (!current) continue;
+    if (
+      [
+        "EMPLOYEE_SUBMITTED",
+        "SUPERVISOR_DRAFT",
+        "SUPERVISOR_SUBMITTED",
+        "REVIEWING_SUPERVISOR_REVIEW",
+        "PERSONNEL_PROCESSING",
+        "COMMITTEE_REVIEW",
+        "PRESIDENT_APPROVAL",
+        "FINALIZED",
+      ].includes(row.status)
+    )
+      current.step1_count += 1;
+    if (
+      [
+        "SUPERVISOR_SUBMITTED",
+        "REVIEWING_SUPERVISOR_REVIEW",
+        "PERSONNEL_PROCESSING",
+        "COMMITTEE_REVIEW",
+        "PRESIDENT_APPROVAL",
+        "FINALIZED",
+      ].includes(row.status)
+    )
+      current.supervisor_count += 1;
+    if (["PRESIDENT_APPROVAL", "FINALIZED"].includes(row.status)) current.president_count += 1;
+  }
+  return counts;
+}
+
+type CycleCounts = {
+  step1_count: number;
+  supervisor_count: number;
+  president_count: number;
+};
 
 export type EvaluationQueueFilters = {
   search?: string;
@@ -411,28 +430,23 @@ export async function upsertSupervisorRatings(
     .eq("evaluation_id", evaluationId)
     .eq("evaluator_type", "SUPERVISOR");
   const byCriterion = new Map((existing ?? []).map((r) => [r.criterion_id, r]));
-
-  for (const entry of ratings) {
+  const payload = ratings.map((entry) => {
     const current = byCriterion.get(entry.criterionId);
-    if (current) {
-      if (current.is_locked) throw validationError("Locked ratings cannot be changed");
-      const { error } = await admin
-        .from("evaluation_ratings")
-        .update({ rating: entry.rating, is_locked: lock, evaluator_user_id: userId })
-        .eq("id", current.id);
-      if (error) throw validationError(error.message);
-    } else {
-      const { error } = await admin.from("evaluation_ratings").insert({
-        evaluation_id: evaluationId,
-        criterion_id: entry.criterionId,
-        evaluator_type: "SUPERVISOR",
-        rating: entry.rating,
-        is_locked: lock,
-        evaluator_user_id: userId,
-      });
-      if (error) throw validationError(error.message);
-    }
-  }
+    if (current?.is_locked) throw validationError("Locked ratings cannot be changed");
+    return {
+      evaluation_id: evaluationId,
+      criterion_id: entry.criterionId,
+      evaluator_type: "SUPERVISOR" as const,
+      rating: entry.rating,
+      is_locked: lock,
+      evaluator_user_id: userId,
+    };
+  });
+  if (payload.length === 0) return;
+  const { error } = await admin
+    .from("evaluation_ratings")
+    .upsert(payload, { onConflict: "evaluation_id,criterion_id,evaluator_type" });
+  if (error) throw validationError(error.message);
 }
 
 export async function upsertPresidentRatings(
@@ -447,23 +461,22 @@ export async function upsertPresidentRatings(
     .eq("evaluation_id", evaluationId)
     .eq("evaluator_type", "PRESIDENT");
   const byCriterion = new Map((existing ?? []).map((row) => [row.criterion_id, row]));
-  for (const entry of ratings) {
+  const payload = ratings.map((entry) => {
     const current = byCriterion.get(entry.criterionId);
     if (current?.is_locked) throw validationError("Locked President ratings cannot be changed");
-    const result = current
-      ? await admin
-          .from("evaluation_ratings")
-          .update({ rating: entry.rating, evaluator_user_id: userId })
-          .eq("id", current.id)
-      : await admin.from("evaluation_ratings").insert({
-          evaluation_id: evaluationId,
-          criterion_id: entry.criterionId,
-          evaluator_type: "PRESIDENT",
-          rating: entry.rating,
-          evaluator_user_id: userId,
-        });
-    if (result.error) throw validationError(result.error.message);
-  }
+    return {
+      evaluation_id: evaluationId,
+      criterion_id: entry.criterionId,
+      evaluator_type: "PRESIDENT" as const,
+      rating: entry.rating,
+      evaluator_user_id: userId,
+    };
+  });
+  if (payload.length === 0) return;
+  const { error } = await admin
+    .from("evaluation_ratings")
+    .upsert(payload, { onConflict: "evaluation_id,criterion_id,evaluator_type" });
+  if (error) throw validationError(error.message);
 }
 
 export async function upsertReviewingSupervisorRatings(
@@ -479,14 +492,24 @@ export async function upsertReviewingSupervisorRatings(
     .eq("evaluation_id", evaluationId)
     .eq("evaluator_type", "REVIEWING_SUPERVISOR" as never);
   const byCriterion = new Map((existing ?? []).map((row) => [row.criterion_id, row]));
-  for (const entry of ratings) {
+  const payload = ratings.map((entry) => {
     const current = byCriterion.get(entry.criterionId);
-    if (current?.is_locked) throw validationError("Locked Reviewing Supervisor ratings cannot be changed");
-    const result = current
-      ? await admin.from("evaluation_ratings").update({ rating: entry.rating, is_locked: lock, evaluator_user_id: userId }).eq("id", current.id)
-      : await admin.from("evaluation_ratings").insert({ evaluation_id: evaluationId, criterion_id: entry.criterionId, evaluator_type: "REVIEWING_SUPERVISOR" as never, rating: entry.rating, is_locked: lock, evaluator_user_id: userId });
-    if (result.error) throw validationError(result.error.message);
-  }
+    if (current?.is_locked)
+      throw validationError("Locked Reviewing Supervisor ratings cannot be changed");
+    return {
+      evaluation_id: evaluationId,
+      criterion_id: entry.criterionId,
+      evaluator_type: "REVIEWING_SUPERVISOR" as never,
+      rating: entry.rating,
+      is_locked: lock,
+      evaluator_user_id: userId,
+    };
+  });
+  if (payload.length === 0) return;
+  const { error } = await admin
+    .from("evaluation_ratings")
+    .upsert(payload, { onConflict: "evaluation_id,criterion_id,evaluator_type" });
+  if (error) throw validationError(error.message);
 }
 
 export async function dashboardStats(userId: string) {
@@ -641,28 +664,22 @@ export async function savePresidentStep(
     .eq("step", step);
   const existingByItem = new Map((existing ?? []).map((row) => [row.item_id, row]));
 
-  for (const item of current.items) {
-    const value = merged.get(item.id) ?? "";
+  const payload = current.items.map((item) => {
     const row = existingByItem.get(item.id);
-    if (row) {
-      if (row.is_locked) throw validationError("Locked President responses cannot be changed");
-      const { error } = await admin
-        .from("president_responses")
-        .update({ value_text: value, is_locked: submit, responded_by: userId })
-        .eq("id", row.id);
-      if (error) throw validationError(error.message);
-    } else {
-      const { error } = await admin.from("president_responses").insert({
-        evaluation_id: evaluationId,
-        item_id: item.id,
-        step,
-        value_text: value,
-        is_locked: submit,
-        responded_by: userId,
-      });
-      if (error) throw validationError(error.message);
-    }
-  }
+    if (row?.is_locked) throw validationError("Locked President responses cannot be changed");
+    return {
+      evaluation_id: evaluationId,
+      item_id: item.id,
+      step,
+      value_text: merged.get(item.id) ?? "",
+      is_locked: submit,
+      responded_by: userId,
+    };
+  });
+  const { error } = await admin
+    .from("president_responses")
+    .upsert(payload, { onConflict: "evaluation_id,item_id" });
+  if (error) throw validationError(error.message);
 
   return { itemCount: current.items.length };
 }

@@ -1,4 +1,5 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
@@ -25,7 +26,20 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+const performanceMiddleware = createMiddleware().server(async ({ next }) => {
+  if (process.env["PERFORMANCE_LOGGING"] !== "true") return next();
+  const startedAt = performance.now();
+  const response = await next();
+  const request = getRequest();
+  console.info(
+    `[performance] ${request?.method ?? "REQUEST"} ${request?.url ?? "unknown"} ${Math.round(
+      performance.now() - startedAt,
+    )}ms`,
+  );
+  return response;
+});
+
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware, csrfMiddleware],
+  requestMiddleware: [performanceMiddleware, errorMiddleware, csrfMiddleware],
 }));
