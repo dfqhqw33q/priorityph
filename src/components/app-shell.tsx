@@ -109,6 +109,7 @@ const NAV: Array<{
   roles: AppRole[];
   direct: NavItem[];
   categories: NavCategory[];
+  secondary?: NavItem[];
   bottom?: NavItem[];
 }> = [
   {
@@ -157,7 +158,7 @@ const NAV: Array<{
   {
     roles: ["SUPERVISOR"],
     direct: [{ to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1" }],
-    bottom: [{ label: "History", icon: History }],
+    secondary: [{ label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -183,7 +184,7 @@ const NAV: Array<{
         permission: "evaluations.review_step3",
       },
     ],
-    bottom: [{ label: "History", icon: History }],
+    secondary: [{ label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -202,7 +203,7 @@ const NAV: Array<{
   {
     roles: ["COMMITTEE"],
     direct: [{ to: "/committee", label: "Dashboard", icon: Gauge, permission: "committee.review" }],
-    bottom: [{ label: "History", icon: History }],
+    secondary: [{ label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -217,7 +218,7 @@ const NAV: Array<{
   {
     roles: ["PRESIDENT"],
     direct: [{ to: "/president", label: "Dashboard", icon: Gauge, permission: "president.view" }],
-    bottom: [{ label: "History", icon: History }],
+    secondary: [{ label: "History", icon: History }],
     categories: [
       {
         label: "Approvals",
@@ -226,8 +227,12 @@ const NAV: Array<{
           { to: "/president/evaluations", label: "Pending", permission: "president.view" },
           { label: "Returned" },
           { label: "Completed" },
-          { to: "/president/employees", label: "Digital 201 Files", permission: "evaluations.view_201" },
         ],
+      },
+      {
+        label: "Employees",
+        icon: Users,
+        children: [{ to: "/president/employees", label: "Digital 201 Files", permission: "evaluations.view_201" }],
       },
     ],
   },
@@ -275,6 +280,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const categories = group.categories
     .map((category) => ({ ...category, children: category.children.filter(allowed) }))
     .filter((category) => category.children.length > 0);
+  const secondary = (group.secondary ?? []).filter(allowed);
   const bottom = (group.bottom ?? []).filter(allowed);
   const isDefaultOpenRole = group.roles.some((role) => ROLE_DEFAULT_OPEN_ACCORDIONS.includes(role));
 
@@ -297,11 +303,13 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     );
   };
 
+  const isCurrentRoute = (to?: string) => Boolean(to && pathname === to);
+
   const primaryItems = (
     <>
       {direct.map((item) => (
         <SidebarMenuItem key={item.label}>
-          {renderItem(item, Boolean(item.to && pathname.startsWith(item.to)))}
+          {renderItem(item, isCurrentRoute(item.to))}
         </SidebarMenuItem>
       ))}
       {categories.map((category) => {
@@ -354,10 +362,17 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <SidebarMenu>{primaryItems}</SidebarMenu>
+      {secondary.length > 0 ? (
+        <SidebarMenu className="border-t border-sidebar-border pt-3">
+          {secondary.map((item) => (
+            <SidebarMenuItem key={item.label}>{renderItem(item, isCurrentRoute(item.to))}</SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      ) : null}
       {bottom.length > 0 ? (
-        <SidebarMenu className="mt-auto border-t border-sidebar-border pt-3">
+        <SidebarMenu className="border-t border-sidebar-border pt-3">
           {bottom.map((item) => (
-            <SidebarMenuItem key={item.label}>{renderItem(item)}</SidebarMenuItem>
+            <SidebarMenuItem key={item.label}>{renderItem(item, isCurrentRoute(item.to))}</SidebarMenuItem>
           ))}
         </SidebarMenu>
       ) : null}
