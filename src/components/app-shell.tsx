@@ -493,7 +493,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <Sidebar collapsible="offcanvas" className="border-r border-border bg-card">
-        <SidebarHeader className="flex h-20 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-6 text-sidebar-foreground">
+        <SidebarHeader className="flex h-16 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-5 text-sidebar-foreground">
           <Link to="/" className="flex min-w-0 items-center gap-3">
             <img
               src="/logo.png"
