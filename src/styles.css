@@ -249,24 +249,11 @@
   }
 
   [data-sidebar="content"] {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+    scrollbar-width: none;
   }
 
   [data-sidebar="content"]::-webkit-scrollbar {
-    width: 8px;
-    background: transparent;
-  }
-
-  [data-sidebar="content"]::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.45);
-    border-radius: 9999px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
-  }
-
-  [data-sidebar="content"]::-webkit-scrollbar-track {
-    background: transparent;
+    display: none;
   }
 
   /*
