@@ -18,7 +18,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/ui-bits";
 import {
-  createDevelopmentRecord,
   listDevelopmentEmployees,
   listDevelopmentRecords,
   updateDevelopmentRecord,
@@ -34,22 +33,12 @@ const activities = [
 ] as const;
 const statuses = ["Recommended", "Ongoing", "Completed"] as const;
 type FormState = {
-  employeeId: string;
   developmentNeed: string;
   developmentActivity: (typeof activities)[number];
   status: (typeof statuses)[number];
   recordDate: string;
   notes: string;
 };
-
-const emptyForm = (): FormState => ({
-  employeeId: "",
-  developmentNeed: "",
-  developmentActivity: "Coaching",
-  status: "Recommended",
-  recordDate: new Date().toISOString().slice(0, 10),
-  notes: "",
-});
 
 export const Route = createFileRoute("/_authenticated/hr/development-records")({
   component: DevelopmentRecordsPage,
@@ -59,14 +48,12 @@ function DevelopmentRecordsPage() {
   const queryClient = useQueryClient();
   const fetchRecords = useServerFn(listDevelopmentRecords);
   const fetchEmployees = useServerFn(listDevelopmentEmployees);
-  const addRecord = useServerFn(createDevelopmentRecord);
   const saveRecord = useServerFn(updateDevelopmentRecord);
   const [search, setSearch] = useState("");
   const [employeeId, setEmployeeId] = useState("");
   const [status, setStatus] = useState("");
   const [activity, setActivity] = useState("");
   const [editing, setEditing] = useState<DevelopmentRecord | null>(null);
-  const [adding, setAdding] = useState(false);
   const recordsQuery = useQuery({
     queryKey: ["development-records", { search, employeeId, status, activity }],
     queryFn: () =>
@@ -86,10 +73,8 @@ function DevelopmentRecordsPage() {
     retry: false,
   });
   const mutation = useMutation({
-    mutationFn: (form: FormState & { id?: string }) =>
-      form.id ? saveRecord({ data: { ...form, id: form.id } }) : addRecord({ data: form }),
+    mutationFn: (form: FormState & { id: string }) => saveRecord({ data: form }),
     onSuccess: async () => {
-      setAdding(false);
       setEditing(null);
       await queryClient.invalidateQueries({ queryKey: ["development-records"] });
     },
@@ -101,7 +86,6 @@ function DevelopmentRecordsPage() {
       <PageHeader
         title="Development Records"
         description="Track learning and development needs from finalized performance evaluations."
-        actions={<Button onClick={() => setAdding(true)}>Add development record</Button>}
       />
       <Card>
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -199,7 +183,7 @@ function DevelopmentRecordsPage() {
                           : "View evaluation"}
                       </Link>
                     ) : (
-                      "Manual record"
+                      "—"
                     )}
                   </td>
                   <td className="px-4 py-3">{record.status}</td>
@@ -221,18 +205,18 @@ function DevelopmentRecordsPage() {
         </div>
       )}
       <RecordDialog
-        open={adding || Boolean(editing)}
+        open={Boolean(editing)}
         record={editing}
-        employees={employeesQuery.data ?? []}
         pending={mutation.isPending}
         error={mutation.error ? (mutation.error as Error).message : null}
         onOpenChange={(open) => {
           if (!open) {
-            setAdding(false);
             setEditing(null);
           }
         }}
-        onSubmit={(form) => mutation.mutate(editing ? { ...form, id: editing.id } : form)}
+        onSubmit={(form) => {
+          if (editing) mutation.mutate({ ...form, id: editing.id });
+        }}
       />
     </div>
   );
@@ -271,7 +255,6 @@ function Filter({
 function RecordDialog({
   open,
   record,
-  employees,
   pending,
   error,
   onOpenChange,
@@ -279,13 +262,18 @@ function RecordDialog({
 }: {
   open: boolean;
   record: DevelopmentRecord | null;
-  employees: { id: string; full_name: string; employee_number: string }[];
   pending: boolean;
   error: string | null;
   onOpenChange: (open: boolean) => void;
   onSubmit: (form: FormState) => void;
 }) {
-  const [form, setForm] = useState<FormState>(emptyForm());
+  const [form, setForm] = useState<FormState>({
+    developmentNeed: "",
+    developmentActivity: "Coaching",
+    status: "Recommended",
+    recordDate: "",
+    notes: "",
+  });
   const [initializedFor, setInitializedFor] = useState<string | null>(null);
   const dialogKey = record?.id ?? (open ? "new" : null);
   useEffect(() => {
@@ -294,14 +282,19 @@ function RecordDialog({
     setForm(
       record
         ? {
-            employeeId: record.employeeId,
             developmentNeed: record.developmentNeed,
             developmentActivity: record.developmentActivity,
             status: record.status,
             recordDate: record.recordDate,
             notes: record.notes,
           }
-        : emptyForm(),
+        : {
+            developmentNeed: "",
+            developmentActivity: "Coaching",
+            status: "Recommended",
+            recordDate: "",
+            notes: "",
+          },
     );
   }, [dialogKey, initializedFor, record]);
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -310,28 +303,15 @@ function RecordDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{record ? "Edit development record" : "Add development record"}</DialogTitle>
+          <DialogTitle>Edit development record</DialogTitle>
           <DialogDescription>
             Maintain the employee learning and development record.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="development-employee">Employee</Label>
-            <select
-              id="development-employee"
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-              value={form.employeeId}
-              onChange={(event) => update("employeeId", event.target.value)}
-            >
-              <option value="">Select employee</option>
-              {employees.map((employee) => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.full_name} ({employee.employee_number})
-                </option>
-              ))}
-            </select>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Employee: {record?.employeeName ?? "—"} ({record?.employeeNumber ?? "—"})
+          </p>
           <div className="space-y-1.5">
             <Label htmlFor="development-need">Development Need</Label>
             <Textarea
@@ -379,10 +359,7 @@ function RecordDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            disabled={pending || !form.employeeId || !form.developmentNeed.trim()}
-            onClick={() => onSubmit(form)}
-          >
+          <Button disabled={pending || !form.developmentNeed.trim()} onClick={() => onSubmit(form)}>
             {pending ? "Saving..." : "Save record"}
           </Button>
         </DialogFooter>

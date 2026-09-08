@@ -13,7 +13,6 @@ const activitySchema = z.enum([
 ]);
 const statusSchema = z.enum(["Recommended", "Ongoing", "Completed"]);
 const recordFields = z.object({
-  employeeId: z.string().uuid(),
   developmentNeed: z.string().trim().min(1).max(4000),
   developmentActivity: activitySchema,
   status: statusSchema,
@@ -109,40 +108,6 @@ export const listDevelopmentEmployees = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-export const createDevelopmentRecord = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => recordFields.parse(input))
-  .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
-      await import("./server-core.server");
-    await requirePermission(context.userId, "learning.manage", "Learning Management");
-    const admin = await getAdmin();
-    const { data: row, error } = await admin
-      .from("development_records")
-      .insert({
-        employee_id: data.employeeId,
-        development_need: data.developmentNeed,
-        development_activity: data.developmentActivity,
-        status: data.status,
-        record_date: data.recordDate,
-        notes: data.notes,
-      })
-      .select("id")
-      .single();
-    if (error) throw validationError(error.message);
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "DEVELOPMENT_RECORD_CREATED",
-      module: "Learning Management",
-      entityType: "development_record",
-      entityId: row.id,
-      employeeId: data.employeeId,
-      newValue: data,
-    });
-    return { ok: true as const };
-  });
-
 export const updateDevelopmentRecord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => recordFields.extend({ id: z.string().uuid() }).parse(input))
@@ -160,7 +125,6 @@ export const updateDevelopmentRecord = createServerFn({ method: "POST" })
     const { error } = await admin
       .from("development_records")
       .update({
-        employee_id: data.employeeId,
         development_need: data.developmentNeed,
         development_activity: data.developmentActivity,
         status: data.status,
@@ -176,7 +140,6 @@ export const updateDevelopmentRecord = createServerFn({ method: "POST" })
       module: "Learning Management",
       entityType: "development_record",
       entityId: data.id,
-      employeeId: data.employeeId,
       previousValue: previous,
       newValue: data,
     });
@@ -269,23 +232,6 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
       add(`ai-coaching-${index}`, value, "Coaching", "Advisory Gemini recommendation.");
     for (const [index, value] of aiStrings(analysis["trainingRecommendations"]).entries())
       add(`ai-training-${index}`, value, "External Training", "Advisory Gemini recommendation.");
-  }
-
-  const { data: ratings } = await admin
-    .from("evaluation_ratings")
-    .select("criterion_id, evaluator_type, rating, evaluation_criteria(title, letter)")
-    .eq("evaluation_id", evaluationId)
-    .eq("evaluator_type", "SUPERVISOR");
-  for (const rating of ratings ?? []) {
-    if (rating.rating <= 2) {
-      const criterion = rating.evaluation_criteria as { title?: string; letter?: string } | null;
-      add(
-        `factor-${rating.criterion_id}`,
-        `${criterion?.letter ?? ""} ${criterion?.title ?? "Competency"}`.trim(),
-        "Coaching",
-        "Identified from a low A-J performance result.",
-      );
-    }
   }
 
   for (const candidate of candidates) {

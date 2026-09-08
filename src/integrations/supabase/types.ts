@@ -33,6 +33,234 @@ export type Database = {
   };
   public: {
     Tables: {
+      recognition_candidates: {
+        Row: {
+          created_at: string;
+          employee_id: string;
+          id: string;
+          recognition_type: string;
+          reason: string;
+          review_notes: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          source_evaluation_id: string;
+          source_key: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          employee_id: string;
+          id?: string;
+          recognition_type: string;
+          reason: string;
+          review_notes?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          source_evaluation_id: string;
+          source_key: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          employee_id?: string;
+          id?: string;
+          recognition_type?: string;
+          reason?: string;
+          review_notes?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          source_evaluation_id?: string;
+          source_key?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      recognition_records: {
+        Row: {
+          approved_at: string;
+          approved_by: string;
+          candidate_id: string;
+          certificate_generated_at: string | null;
+          created_at: string;
+          employee_id: string;
+          id: string;
+          reason: string;
+          recognition_date: string;
+          recognition_type: string;
+          source_evaluation_id: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          approved_at?: string;
+          approved_by: string;
+          candidate_id: string;
+          certificate_generated_at?: string | null;
+          created_at?: string;
+          employee_id: string;
+          id?: string;
+          reason: string;
+          recognition_date?: string;
+          recognition_type: string;
+          source_evaluation_id: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          approved_at?: string;
+          approved_by?: string;
+          candidate_id?: string;
+          certificate_generated_at?: string | null;
+          created_at?: string;
+          employee_id?: string;
+          id?: string;
+          reason?: string;
+          recognition_date?: string;
+          recognition_type?: string;
+          source_evaluation_id?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      succession_profiles: {
+        Row: {
+          advancement_outlook: string;
+          career_interest: string;
+          created_at: string;
+          desired_job: string;
+          desired_location: string;
+          development_potential: string;
+          employee_id: string;
+          id: string;
+          notes: string;
+          qualification: string;
+          source_evaluation_id: string;
+          transfer_interest: string;
+          updated_at: string;
+        };
+        Insert: {
+          advancement_outlook?: string;
+          career_interest?: string;
+          created_at?: string;
+          desired_job?: string;
+          desired_location?: string;
+          development_potential?: string;
+          employee_id: string;
+          id?: string;
+          notes?: string;
+          qualification?: string;
+          source_evaluation_id: string;
+          transfer_interest?: string;
+          updated_at?: string;
+        };
+        Update: {
+          advancement_outlook?: string;
+          career_interest?: string;
+          created_at?: string;
+          desired_job?: string;
+          desired_location?: string;
+          development_potential?: string;
+          employee_id?: string;
+          id?: string;
+          notes?: string;
+          qualification?: string;
+          source_evaluation_id?: string;
+          transfer_interest?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      training_recommendations: {
+        Row: {
+          created_at: string;
+          employee_id: string;
+          id: string;
+          recommendation: string;
+          related_competency: string;
+          source: string;
+          source_evaluation_id: string;
+          source_key: string;
+          status: string;
+          training_title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          employee_id: string;
+          id?: string;
+          recommendation: string;
+          related_competency?: string;
+          source: string;
+          source_evaluation_id: string;
+          source_key: string;
+          status?: string;
+          training_title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          employee_id?: string;
+          id?: string;
+          recommendation?: string;
+          related_competency?: string;
+          source?: string;
+          source_evaluation_id?: string;
+          source_key?: string;
+          status?: string;
+          training_title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      training_records: {
+        Row: {
+          created_at: string;
+          employee_id: string;
+          id: string;
+          notes: string;
+          provider: string;
+          related_competency: string;
+          source_evaluation_id: string;
+          source_key: string;
+          status: string;
+          training_date: string | null;
+          training_title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          employee_id: string;
+          id?: string;
+          notes?: string;
+          provider?: string;
+          related_competency?: string;
+          source_evaluation_id: string;
+          source_key: string;
+          status?: string;
+          training_date?: string | null;
+          training_title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          employee_id?: string;
+          id?: string;
+          notes?: string;
+          provider?: string;
+          related_competency?: string;
+          source_evaluation_id?: string;
+          source_key?: string;
+          status?: string;
+          training_date?: string | null;
+          training_title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       development_records: {
         Row: {
           created_at: string;

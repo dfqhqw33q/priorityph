@@ -722,6 +722,11 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
         context.userId,
         data.version,
       );
+    if (data.submit && data.finalAction === "TRAINING_REQUIRED") {
+      const { ensureTrainingRequirementForCommitteeDecision } =
+        await import("./training.functions");
+      await ensureTrainingRequirementForCommitteeDecision(data.evaluationId, data.actionDetails);
+    }
     return result;
   });
 

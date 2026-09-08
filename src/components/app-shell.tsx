@@ -74,6 +74,9 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
   { prefix: "/hr/employees", roles: ["HR"], permission: "evaluations.view_201" },
   { prefix: "/hr/competency", roles: ["HR"], permission: "evaluations.view_201" },
   { prefix: "/hr/development-records", roles: ["HR"], permission: "learning.view" },
+  { prefix: "/hr/training", roles: ["HR"], permission: "training.view" },
+  { prefix: "/hr/succession", roles: ["HR"], permission: "succession.view" },
+  { prefix: "/hr/recognition", roles: ["HR"], permission: "recognition.view" },
   {
     prefix: "/hr/evaluation-history",
     roles: ["HR", "PRESIDENT"],
@@ -153,9 +156,23 @@ const NAV: Array<{
           },
         ],
       },
-      { label: "Training", icon: BriefcaseBusiness, children: [{ label: "Recommendations" }] },
-      { label: "Career", icon: Handshake, children: [{ label: "Succession" }] },
-      { label: "Recognition", icon: Medal, children: [{ label: "Recognition" }] },
+      {
+        label: "Training",
+        icon: BriefcaseBusiness,
+        children: [
+          { to: "/hr/training", label: "Training Management", permission: "training.view" },
+        ],
+      },
+      {
+        label: "Career",
+        icon: Handshake,
+        children: [{ to: "/hr/succession", label: "Succession", permission: "succession.view" }],
+      },
+      {
+        label: "Recognition",
+        icon: Medal,
+        children: [{ to: "/hr/recognition", label: "Recognition", permission: "recognition.view" }],
+      },
       {
         label: "Processing",
         icon: ClipboardList,

@@ -322,6 +322,12 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
       await createFinalEvaluationDocument(data.evaluationId, context.userId);
       const { ensureDevelopmentRecordsForEvaluation } = await import("./development.functions");
       await ensureDevelopmentRecordsForEvaluation(data.evaluationId);
+      const { ensureTrainingRecommendationsForEvaluation } = await import("./training.functions");
+      await ensureTrainingRecommendationsForEvaluation(data.evaluationId);
+      const { ensureSuccessionProfileForEvaluation } = await import("./succession.functions");
+      await ensureSuccessionProfileForEvaluation(data.evaluationId);
+      const { ensureRecognitionCandidatesForEvaluation } = await import("./recognition.functions");
+      await ensureRecognitionCandidatesForEvaluation(data.evaluationId);
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
       await queueEmployeeFinalizedStep1Email(data.evaluationId);
 
