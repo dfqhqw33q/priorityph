@@ -104,6 +104,7 @@ function routeAccess(pathname: string) {
 }
 
 const ROLE_DEFAULT_OPEN_ACCORDIONS: AppRole[] = [
+  "HR",
   "SUPERVISOR",
   "REVIEWING_SUPERVISOR",
   "COMMITTEE",
