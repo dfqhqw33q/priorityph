@@ -326,6 +326,17 @@ export async function ensureTrainingRecommendationsForEvaluation(
       { onConflict: "source_evaluation_id,source_key" },
     );
     if (error) throw new Error(error.message);
+    await admin.from("notification_events").upsert(
+      {
+        evaluation_id: evaluation.id,
+        event_type: "TRAINING_RECOMMENDATION_CREATED",
+        audience_permission: "training.manage",
+        title: "Training recommendation created",
+        body: "A training recommendation is ready for HR review.",
+        dedupe_key: `${evaluation.id}:TRAINING_RECOMMENDATION:${candidate.key}`,
+      } as never,
+      { onConflict: "dedupe_key" },
+    );
   }
 }
 
@@ -357,4 +368,15 @@ export async function ensureTrainingRequirementForCommitteeDecision(
     { onConflict: "source_evaluation_id,source_key" },
   );
   if (error) throw new Error(error.message);
+  await admin.from("notification_events").upsert(
+    {
+      evaluation_id: evaluation.id,
+      event_type: "TRAINING_REQUIREMENT_CREATED",
+      audience_permission: "training.manage",
+      title: "Training requirement created",
+      body: "An official training requirement is ready for HR review.",
+      dedupe_key: `${evaluation.id}:TRAINING_REQUIREMENT`,
+    } as never,
+    { onConflict: "dedupe_key" },
+  );
 }

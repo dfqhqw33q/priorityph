@@ -250,5 +250,15 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
       { onConflict: "source_evaluation_id,source_key" },
     );
     if (error) throw new Error(error.message);
+    await admin.from("notification_events").upsert(
+      {
+        event_type: "DEVELOPMENT_RECORD_CREATED",
+        audience_permission: "learning.manage",
+        title: "Development record created",
+        body: "A development record is ready for HR tracking.",
+        dedupe_key: `${evaluation.id}:DEVELOPMENT_RECORD:${candidate.key}`,
+      } as never,
+      { onConflict: "dedupe_key" },
+    );
   }
 }

@@ -202,6 +202,17 @@ export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (error) throw validationError(error.message);
+    await admin.from("notification_events").upsert(
+      {
+        evaluation_id: candidate.source_evaluation_id,
+        event_type: "RECOGNITION_CANDIDATE_REVIEWED",
+        audience_permission: "recognition.manage",
+        title: `Recognition candidate ${data.decision.toLowerCase()}`,
+        body: "A recognition candidate review was completed.",
+        dedupe_key: `${candidate.id}:RECOGNITION_REVIEW:${data.decision}`,
+      } as never,
+      { onConflict: "dedupe_key" },
+    );
     if (data.decision === "APPROVED") {
       const { error: recordError } = await admin.from("recognition_records").upsert(
         {
@@ -217,6 +228,17 @@ export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
         { onConflict: "candidate_id" },
       );
       if (recordError) throw validationError(recordError.message);
+      await admin.from("notification_events").upsert(
+        {
+          evaluation_id: candidate.source_evaluation_id,
+          event_type: "RECOGNITION_APPROVED",
+          audience_permission: "recognition.view",
+          title: "Recognition approved",
+          body: "A recognition record was approved.",
+          dedupe_key: `${candidate.id}:RECOGNITION_APPROVED`,
+        } as never,
+        { onConflict: "dedupe_key" },
+      );
     }
     await writeAudit({
       actorUserId: context.userId,
@@ -273,6 +295,19 @@ export const createOtherRecognitionCandidate = createServerFn({ method: "POST" }
       { onConflict: "source_evaluation_id,source_key" },
     );
     if (error) throw validationError(error.message);
+    await admin.from("notification_events").upsert(
+      {
+        event_type: "RECOGNITION_CANDIDATE_CREATED",
+        audience_permission: "recognition.manage",
+        title: "Recognition candidate created",
+        body: "A recognition candidate is ready for review.",
+        dedupe_key: `${data.sourceEvaluationId}:OTHER_RECOGNITION:${data.reason
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .slice(0, 80)}`,
+      } as never,
+      { onConflict: "dedupe_key" },
+    );
     return { ok: true as const };
   });
 
@@ -420,5 +455,16 @@ export async function ensureRecognitionCandidatesForEvaluation(
       { onConflict: "source_evaluation_id,source_key" },
     );
     if (error) throw new Error(error.message);
+    await admin.from("notification_events").upsert(
+      {
+        evaluation_id: evaluation.id,
+        event_type: "RECOGNITION_CANDIDATE_CREATED",
+        audience_permission: "recognition.manage",
+        title: "Recognition candidate created",
+        body: "A recognition candidate is ready for review.",
+        dedupe_key: `${evaluation.id}:RECOGNITION_CANDIDATE:${candidate.key}`,
+      } as never,
+      { onConflict: "dedupe_key" },
+    );
   }
 }

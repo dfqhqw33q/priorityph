@@ -159,4 +159,15 @@ export async function ensureSuccessionProfileForEvaluation(evaluationId: string)
     { onConflict: "employee_id" },
   );
   if (error) throw new Error(error.message);
+  await admin.from("notification_events").upsert(
+    {
+      evaluation_id: evaluation.id,
+      event_type: "SUCCESSION_PROFILE_UPDATED",
+      audience_permission: "succession.manage",
+      title: "Succession profile updated",
+      body: "A Career and Succession Profile is ready for management review.",
+      dedupe_key: `${evaluation.id}:SUCCESSION_PROFILE_UPDATED`,
+    } as never,
+    { onConflict: "dedupe_key" },
+  );
 }

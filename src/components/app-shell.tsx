@@ -53,6 +53,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { recordLoginEvent } from "@/lib/access.functions";
 import { APP_NAME, ROLE_LABELS, type AppRole, type Permission } from "@/lib/domain";
 import { useAccess } from "@/hooks/use-access";
+import { NotificationCenter } from "@/components/notification-center";
 
 type NavItem = {
   to?: string;
@@ -485,6 +486,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
 
             <div className="ml-auto flex items-center gap-3">
+              <NotificationCenter />
               <ThemeToggle />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
