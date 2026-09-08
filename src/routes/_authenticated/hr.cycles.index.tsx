@@ -110,7 +110,7 @@ function CyclesPage() {
         <EmptyState title="No cycles yet" description="Create an annual cycle to get started." />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-          <Table className="min-w-[720px] table-fixed">
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Cycle</TableHead>
