@@ -672,8 +672,8 @@ export const submitStep1 = createServerFn({ method: "POST" })
       cycle_id: cycle.id,
       event_type: "STEP1_SUBMITTED",
       audience_permission: "evaluations.step2",
-      title: "Employee evaluation submitted",
-      body: "A Step 1 evaluation is ready for Rater Step 2.",
+      title: "New Evaluation Submitted",
+      body: "A new performance evaluation has been submitted to you for review and assessment.",
       dedupe_key: `${evaluation.id}:STEP1_SUBMITTED`,
     } as never);
     await admin

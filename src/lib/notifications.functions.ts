@@ -17,26 +17,62 @@ export type AppNotification = {
 
 function messageFor(eventType: string): string {
   const messages: Record<string, string> = {
-    STEP1_SUBMITTED: "A performance evaluation requires supervisor review.",
-    EMPLOYEE_STEP1_SUBMITTED: "A performance evaluation requires supervisor review.",
-    SUPERVISOR_SUBMITTED: "A performance evaluation requires reviewing supervisor action.",
-    PERSONNEL_SUBMITTED: "A performance evaluation requires Committee review.",
-    COMMITTEE_SUBMITTED: "A performance evaluation requires President action.",
+    STEP1_SUBMITTED:
+      "A new performance evaluation has been submitted to you for review and assessment.",
+    EMPLOYEE_STEP1_SUBMITTED:
+      "Your performance evaluation has been submitted successfully and is now being reviewed.",
+    RATER_STEP2_SUBMITTED:
+      "A performance evaluation has been submitted to you for review and assessment.",
+    REVIEWING_SUPERVISOR_SUBMITTED:
+      "A completed performance evaluation is ready for Personnel processing.",
+    PERSONNEL_SUBMITTED:
+      "A performance evaluation is ready for your Committee review and recommendation.",
+    COMMITTEE_SUBMITTED:
+      "A performance evaluation is ready for your review and final approval.",
     SUPERVISOR_SUBMITTED_TO_PRESIDENT:
-      "A performance evaluation requires reviewing supervisor action.",
-    PERSONNEL_SUBMITTED: "A performance evaluation requires Committee review.",
-    COMMITTEE_SUBMITTED: "A performance evaluation requires President action.",
-    PRESIDENT_RETURNED: "A performance evaluation was returned for correction.",
-    EVALUATION_FINALIZED: "A performance evaluation has been finalized.",
-    EVALUATION_FINALIZED_FOR_EMPLOYEE: "Your performance evaluation has been finalized.",
-    DEVELOPMENT_RECORD_CREATED: "A development record is ready for HR tracking.",
-    TRAINING_RECOMMENDATION_CREATED: "A training recommendation is ready for review.",
-    TRAINING_REQUIREMENT_CREATED: "An official training requirement is ready for review.",
-    SUCCESSION_PROFILE_UPDATED: "A Career and Succession Profile is ready for review.",
-    RECOGNITION_CANDIDATE_CREATED: "A recognition candidate is ready for review.",
-    RECOGNITION_APPROVED: "A recognition candidate was approved.",
+      "A performance evaluation has been submitted to you for review and assessment.",
+    PRESIDENT_RETURNED:
+      "A performance evaluation has been returned for further review and correction.",
+    RETURNED_FOR_CORRECTION:
+      "A performance evaluation has been returned to you for correction and resubmission.",
+    EVALUATION_FINALIZED: "Your performance evaluation has been finalized and is now complete.",
+    EVALUATION_FINALIZED_FOR_EMPLOYEE:
+      "Your performance evaluation has been finalized and is now complete.",
+    DEVELOPMENT_RECORD_CREATED:
+      "A new employee development record has been created from a finalized performance evaluation.",
+    TRAINING_RECOMMENDATION_CREATED: "A training recommendation is available for review.",
+    TRAINING_REQUIREMENT_CREATED:
+      "A training requirement has been identified for an employee and is ready for review.",
+    SUCCESSION_PROFILE_UPDATED:
+      "A Career & Succession profile has been updated from a finalized performance evaluation.",
+    RECOGNITION_CANDIDATE_CREATED:
+      "An employee has been identified as a recognition candidate and is ready for review.",
+    RECOGNITION_APPROVED: "An employee recognition has been approved successfully.",
   };
   return messages[eventType] ?? "A workflow action requires your attention.";
+}
+
+function titleFor(eventType: string): string | null {
+  const titles: Record<string, string> = {
+    STEP1_SUBMITTED: "New Evaluation Submitted",
+    EMPLOYEE_STEP1_SUBMITTED: "Evaluation Submitted",
+    RATER_STEP2_SUBMITTED: "New Evaluation Submitted",
+    REVIEWING_SUPERVISOR_SUBMITTED: "Evaluation Ready for Processing",
+    PERSONNEL_SUBMITTED: "Evaluation Ready for Review",
+    COMMITTEE_SUBMITTED: "Evaluation Awaiting Approval",
+    SUPERVISOR_SUBMITTED_TO_PRESIDENT: "New Evaluation Submitted",
+    PRESIDENT_RETURNED: "Evaluation Returned",
+    RETURNED_FOR_CORRECTION: "Evaluation Returned",
+    EVALUATION_FINALIZED: "Performance Evaluation Finalized",
+    EVALUATION_FINALIZED_FOR_EMPLOYEE: "Performance Evaluation Finalized",
+    DEVELOPMENT_RECORD_CREATED: "Development Record Created",
+    TRAINING_RECOMMENDATION_CREATED: "Training Recommendation",
+    TRAINING_REQUIREMENT_CREATED: "Training Required",
+    SUCCESSION_PROFILE_UPDATED: "Career & Succession Update",
+    RECOGNITION_CANDIDATE_CREATED: "Recognition Candidate",
+    RECOGNITION_APPROVED: "Recognition Approved",
+  };
+  return titles[eventType] ?? null;
 }
 
 function targetFor(eventType: string, evaluationId: string | null): string | null {
@@ -65,7 +101,7 @@ function mapNotification(row: Record<string, unknown>): AppNotification {
     id: String(row["id"]),
     eventId: String(event?.id ?? row["notification_event_id"]),
     eventType,
-    title: event?.title ?? "Workflow notification",
+    title: titleFor(eventType) ?? event?.title ?? "Workflow notification",
     message: messageFor(eventType),
     occurredAt: String(event?.occurred_at ?? row["created_at"]),
     readAt: (row["read_at"] as string | null) ?? null,

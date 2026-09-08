@@ -254,8 +254,8 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
       {
         event_type: "DEVELOPMENT_RECORD_CREATED",
         audience_permission: "learning.manage",
-        title: "Development record created",
-        body: "A development record is ready for HR tracking.",
+        title: "Development Record Created",
+        body: "A new employee development record has been created from a finalized performance evaluation.",
         dedupe_key: `${evaluation.id}:DEVELOPMENT_RECORD:${candidate.key}`,
       } as never,
       { onConflict: "dedupe_key" },

@@ -336,10 +336,37 @@ async function transition(
           "evaluations.view_history")
         : (notificationPermissionByStatus[next] ?? "evaluations.view_history"),
     title:
-      next === "RETURNED_FOR_CORRECTION"
-        ? "Evaluation returned for correction"
-        : "Evaluation workflow updated",
-    body: reason || `An evaluation entered ${next.replaceAll("_", " ").toLowerCase()}.`,
+      next === "SUPERVISOR_DRAFT"
+        ? "New Evaluation Submitted"
+        : next === "REVIEWING_SUPERVISOR_REVIEW"
+          ? "New Evaluation Submitted"
+          : next === "PERSONNEL_PROCESSING"
+            ? "Evaluation Ready for Processing"
+            : next === "COMMITTEE_REVIEW"
+              ? "Evaluation Ready for Review"
+              : next === "PRESIDENT_APPROVAL"
+                ? "Evaluation Awaiting Approval"
+                : next === "RETURNED_FOR_CORRECTION"
+                  ? "Evaluation Returned"
+                  : next === "FINALIZED"
+                    ? "Performance Evaluation Finalized"
+                    : "Evaluation workflow updated",
+    body:
+      next === "SUPERVISOR_DRAFT"
+        ? "A new performance evaluation has been submitted to you for review and assessment."
+        : next === "REVIEWING_SUPERVISOR_REVIEW"
+          ? "A performance evaluation has been submitted to you for review and assessment."
+          : next === "PERSONNEL_PROCESSING"
+            ? "A completed performance evaluation is ready for Personnel processing."
+            : next === "COMMITTEE_REVIEW"
+              ? "A performance evaluation is ready for your Committee review and recommendation."
+              : next === "PRESIDENT_APPROVAL"
+                ? "A performance evaluation is ready for your review and final approval."
+                : next === "RETURNED_FOR_CORRECTION"
+                  ? "A performance evaluation has been returned to you for correction and resubmission."
+                  : next === "FINALIZED"
+                    ? "Your performance evaluation has been finalized and is now complete."
+                    : reason || `An evaluation entered ${next.replaceAll("_", " ").toLowerCase()}.`,
     payload: { fromStatus: current.status, toStatus: next, reason, correctionStage },
     dedupe_key: `${evaluationId}:${action}:${expectedVersion}`,
   } as never);
@@ -351,10 +378,18 @@ async function transition(
         finalizedAt: finalizationStamp,
         finalizationReason: reason,
       });
+      const { ensureDevelopmentRecordsForEvaluation } = await import("./development.functions");
+      await ensureDevelopmentRecordsForEvaluation(evaluationId);
+      const { ensureTrainingRecommendationsForEvaluation } = await import("./training.functions");
+      await ensureTrainingRecommendationsForEvaluation(evaluationId);
+      const { ensureSuccessionProfileForEvaluation } = await import("./succession.functions");
+      await ensureSuccessionProfileForEvaluation(evaluationId);
+      const { ensureRecognitionCandidatesForEvaluation } = await import("./recognition.functions");
+      await ensureRecognitionCandidatesForEvaluation(evaluationId);
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
       await queueEmployeeFinalizedStep1Email(evaluationId);
     } catch (error) {
-      console.error("[phase2] final evaluation document generation failed", error);
+      console.error("[phase2] final evaluation downstream generation failed", error);
       throw error;
     }
   }
@@ -486,8 +521,8 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
         evaluation_id: data.evaluationId,
         event_type: "RATER_STEP2_SUBMITTED",
         audience_permission: "evaluations.review_step3",
-        title: "Rater Step 2 submitted",
-        body: "An evaluation is ready for Reviewing Supervisor review.",
+        title: "New Evaluation Submitted",
+        body: "A performance evaluation has been submitted to you for review and assessment.",
         dedupe_key: `${data.evaluationId}:RATER_STEP2_SUBMITTED:${data.version}`,
       } as never);
     if (data.signature)

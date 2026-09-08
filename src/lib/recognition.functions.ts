@@ -207,8 +207,11 @@ export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
         evaluation_id: candidate.source_evaluation_id,
         event_type: "RECOGNITION_CANDIDATE_REVIEWED",
         audience_permission: "recognition.manage",
-        title: `Recognition candidate ${data.decision.toLowerCase()}`,
-        body: "A recognition candidate review was completed.",
+        title: data.decision === "APPROVED" ? "Recognition Approved" : "Recognition Candidate",
+        body:
+          data.decision === "APPROVED"
+            ? "An employee recognition has been approved successfully."
+            : "An employee has been identified as a recognition candidate and is ready for review.",
         dedupe_key: `${candidate.id}:RECOGNITION_REVIEW:${data.decision}`,
       } as never,
       { onConflict: "dedupe_key" },
@@ -233,8 +236,8 @@ export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
           evaluation_id: candidate.source_evaluation_id,
           event_type: "RECOGNITION_APPROVED",
           audience_permission: "recognition.view",
-          title: "Recognition approved",
-          body: "A recognition record was approved.",
+          title: "Recognition Approved",
+          body: "An employee recognition has been approved successfully.",
           dedupe_key: `${candidate.id}:RECOGNITION_APPROVED`,
         } as never,
         { onConflict: "dedupe_key" },
@@ -299,8 +302,8 @@ export const createOtherRecognitionCandidate = createServerFn({ method: "POST" }
       {
         event_type: "RECOGNITION_CANDIDATE_CREATED",
         audience_permission: "recognition.manage",
-        title: "Recognition candidate created",
-        body: "A recognition candidate is ready for review.",
+        title: "Recognition Candidate",
+        body: "An employee has been identified as a recognition candidate and is ready for review.",
         dedupe_key: `${data.sourceEvaluationId}:OTHER_RECOGNITION:${data.reason
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
@@ -460,8 +463,8 @@ export async function ensureRecognitionCandidatesForEvaluation(
         evaluation_id: evaluation.id,
         event_type: "RECOGNITION_CANDIDATE_CREATED",
         audience_permission: "recognition.manage",
-        title: "Recognition candidate created",
-        body: "A recognition candidate is ready for review.",
+        title: "Recognition Candidate",
+        body: "An employee has been identified as a recognition candidate and is ready for review.",
         dedupe_key: `${evaluation.id}:RECOGNITION_CANDIDATE:${candidate.key}`,
       } as never,
       { onConflict: "dedupe_key" },

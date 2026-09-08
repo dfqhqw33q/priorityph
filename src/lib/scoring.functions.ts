@@ -1,5 +1,6 @@
 // Phase 8 — scoring configuration, calculation and finalization RPCs.
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
@@ -263,6 +264,37 @@ export const recalculateScore = createServerFn({ method: "POST" })
     return { ok: true as const, score: await loadScore(data.evaluationId) };
   });
 
+export async function processFinalizedEvaluationSupportModules(evaluationId: string): Promise<void> {
+  const { ensureDevelopmentRecordsForEvaluation } = await import("./development.functions");
+  const { ensureTrainingRecommendationsForEvaluation } = await import("./training.functions");
+  const { ensureSuccessionProfileForEvaluation } = await import("./succession.functions");
+  const { ensureRecognitionCandidatesForEvaluation } = await import("./recognition.functions");
+
+  await ensureDevelopmentRecordsForEvaluation(evaluationId);
+  await ensureTrainingRecommendationsForEvaluation(evaluationId);
+  await ensureSuccessionProfileForEvaluation(evaluationId);
+  await ensureRecognitionCandidatesForEvaluation(evaluationId);
+}
+
+export const reprocessFinalizedEvaluationSupportModules = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { requirePermission, getAdmin, validationError } = await import("./server-core.server");
+    await requirePermission(context.userId, "evaluations.finalize", "Evaluations");
+    const admin = await getAdmin();
+    const { data: evaluation } = await admin
+      .from("evaluations")
+      .select("id, status, is_finalized")
+      .eq("id", data.evaluationId)
+      .maybeSingle();
+    if (!evaluation) throw validationError("Evaluation not found");
+    if (!(evaluation.is_finalized || evaluation.status === "FINALIZED"))
+      throw validationError("Only finalized evaluations can be reprocessed");
+    await processFinalizedEvaluationSupportModules(data.evaluationId);
+    return { ok: true as const };
+  });
+
 export const finalizeEvaluation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { evaluationId: string; version: number; reason: string }) =>
@@ -320,14 +352,7 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
         .eq("evaluation_id", data.evaluationId);
 
       await createFinalEvaluationDocument(data.evaluationId, context.userId);
-      const { ensureDevelopmentRecordsForEvaluation } = await import("./development.functions");
-      await ensureDevelopmentRecordsForEvaluation(data.evaluationId);
-      const { ensureTrainingRecommendationsForEvaluation } = await import("./training.functions");
-      await ensureTrainingRecommendationsForEvaluation(data.evaluationId);
-      const { ensureSuccessionProfileForEvaluation } = await import("./succession.functions");
-      await ensureSuccessionProfileForEvaluation(data.evaluationId);
-      const { ensureRecognitionCandidatesForEvaluation } = await import("./recognition.functions");
-      await ensureRecognitionCandidatesForEvaluation(data.evaluationId);
+      await processFinalizedEvaluationSupportModules(data.evaluationId);
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
       await queueEmployeeFinalizedStep1Email(data.evaluationId);
 
@@ -343,8 +368,8 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
         evaluationId: data.evaluationId,
         eventType: "EVALUATION_FINALIZED",
         audiencePermission: "reports.view",
-        title: "Evaluation finalized",
-        body: `Final score ${score.finalScore ?? "—"} (${score.finalRatingLabel ?? "unrated"}).`,
+        title: "Performance Evaluation Finalized",
+        body: "Your performance evaluation has been finalized and is now complete.",
         dedupeKey: `finalized:${data.evaluationId}`,
       });
 
@@ -436,8 +461,8 @@ export const returnForCorrection = createServerFn({ method: "POST" })
       evaluationId: data.evaluationId,
       eventType: "EVALUATION_RETURNED_FOR_CORRECTION",
       audiencePermission: "evaluations.view_step1",
-      title: "Evaluation returned for correction",
-      body: data.reason,
+      title: "Evaluation Returned",
+      body: "A performance evaluation has been returned for further review and correction.",
       dedupeKey: `returned:${data.evaluationId}:${Date.now()}`,
     });
 
