@@ -1,6 +1,7 @@
 import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -32,8 +33,14 @@ export function EvaluationDocumentPreview({
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-border bg-white">
           {loading ? (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              Loading document...
+            <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
+              <Skeleton className="h-8 w-56" />
+              <Skeleton className="h-4 w-72 max-w-full" />
+              <div className="w-full max-w-2xl space-y-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-11/12" />
+                <Skeleton className="h-4 w-4/5" />
+              </div>
             </div>
           ) : html ? (
             <iframe

@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getMyAccess } from "@/lib/access.functions";
 import { APP_NAME, roleLandingPath } from "@/lib/domain";
 
@@ -67,12 +68,12 @@ function Index() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="text-center flex flex-col items-center">
         <img
-          src="/priority-handling-logo.png"
+          src="/logo.png"
           alt="Priority Handling Logistics, Inc."
-          className="h-10 w-auto max-w-56 object-contain mb-4 animate-pulse"
+          className="h-10 w-auto max-w-56 object-contain mb-4"
         />
         <h1 className="text-lg font-bold tracking-tight text-foreground">{APP_NAME}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Loading your workspace…</p>
+        <Skeleton className="mt-3 h-4 w-40" />
       </div>
     </div>
   );

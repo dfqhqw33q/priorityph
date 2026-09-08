@@ -451,7 +451,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
     onError: (error: Error) =>
       toast.error(userErrorMessage(error, "Could not save this workflow stage.")),
   });
-  if (query.isLoading) return <LoadingBlock rows={6} />;
+  if (query.isLoading) return <LoadingBlock rows={6} variant="detail" />;
   if (query.isError || !detail)
     return (
       <EmptyState

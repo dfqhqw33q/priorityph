@@ -19,7 +19,7 @@ function CompetencyProfilePage() {
     queryFn: () => fetchProfile({ data: { employeeId } }),
     retry: false,
   });
-  if (query.isLoading) return <LoadingBlock rows={8} />;
+  if (query.isLoading) return <LoadingBlock rows={8} variant="detail" />;
   if (query.isError || !query.data)
     return (
       <EmptyState

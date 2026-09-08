@@ -51,7 +51,7 @@ function PresidentDashboard() {
       />
 
       {query.isLoading ? (
-        <LoadingBlock rows={2} />
+        <LoadingBlock rows={4} variant="cards" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Waiting for your review" value={query.data?.awaiting ?? 0} />

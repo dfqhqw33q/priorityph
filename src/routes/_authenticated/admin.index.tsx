@@ -58,7 +58,7 @@ function AdminOverview() {
       />
 
       {query.isLoading ? (
-        <LoadingBlock rows={3} />
+        <LoadingBlock rows={4} variant="cards" />
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

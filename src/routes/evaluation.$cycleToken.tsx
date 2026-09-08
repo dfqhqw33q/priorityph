@@ -176,7 +176,7 @@ function PublicEvaluationPage() {
   if (query.isLoading) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
-        <LoadingBlock rows={6} />
+        <LoadingBlock rows={6} variant="detail" />
       </div>
     );
   }
@@ -273,7 +273,7 @@ function PublicEvaluationPage() {
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="/priority-handling-logo.png"
+              src="/logo.png"
               alt="Priority Handling Logistics, Inc."
               className="h-8 w-auto max-w-44 object-contain"
             />

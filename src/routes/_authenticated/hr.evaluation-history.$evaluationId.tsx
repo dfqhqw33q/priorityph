@@ -42,7 +42,7 @@ function HistoryDetailPage() {
     }
   }
 
-  if (query.isLoading) return <LoadingBlock rows={8} />;
+  if (query.isLoading) return <LoadingBlock rows={8} variant="detail" />;
   if (query.isError || !query.data?.detail)
     return (
       <EmptyState

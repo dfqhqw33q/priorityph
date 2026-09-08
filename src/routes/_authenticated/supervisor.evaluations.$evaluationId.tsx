@@ -560,7 +560,7 @@ function SupervisorReviewPage() {
     setConfirmOpen(true);
   }
 
-  if (query.isLoading) return <LoadingBlock rows={6} />;
+  if (query.isLoading) return <LoadingBlock rows={6} variant="detail" />;
   if (query.isError) {
     const message = query.error instanceof Error ? query.error.message : "Unavailable";
     return <EmptyState title="Unable to open this evaluation" description={message} />;

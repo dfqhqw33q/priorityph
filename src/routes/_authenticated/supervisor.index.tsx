@@ -51,7 +51,7 @@ function SupervisorDashboard() {
       />
 
       {query.isLoading ? (
-        <LoadingBlock rows={2} />
+        <LoadingBlock rows={5} variant="cards" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <StatCard label="Employee self-assessments" value={query.data?.totalStep1 ?? 0} />

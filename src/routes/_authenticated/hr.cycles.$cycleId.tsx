@@ -80,7 +80,7 @@ function CycleDetailPage() {
     onError: (error) => toast.error(error instanceof Error ? error.message : "Action failed"),
   });
 
-  if (isLoading) return <LoadingBlock rows={6} />;
+  if (isLoading) return <LoadingBlock rows={6} variant="detail" />;
   if (!cycle) return <p className="text-sm text-muted-foreground">Cycle not found.</p>;
 
   const canManage = can("cycles.manage");

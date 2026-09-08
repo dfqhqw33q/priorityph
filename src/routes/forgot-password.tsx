@@ -57,7 +57,7 @@ function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="mb-6 text-center flex flex-col items-center">
           <img
-            src="/priority-handling-logo.png"
+              src="/logo.png"
             alt="Priority Handling Logistics, Inc."
             className="h-10 w-auto max-w-56 object-contain mb-3"
           />

@@ -58,12 +58,68 @@ export function EmptyState({ title, description }: { title: string; description?
   );
 }
 
-export function LoadingBlock({ rows = 4 }: { rows?: number }) {
+export function LoadingBlock({
+  rows = 4,
+  variant = "table",
+}: {
+  rows?: number;
+  variant?: "table" | "cards" | "detail";
+}) {
+  if (variant === "cards") {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: Math.max(rows, 4) }).map((_, index) => (
+          <div key={index} className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="mt-3 h-9 w-20" />
+            <Skeleton className="mt-2 h-3 w-32" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (variant === "detail") {
+    return (
+      <div className="space-y-6">
+        {Array.from({ length: Math.max(2, Math.ceil(rows / 4)) }).map((_, index) => (
+          <div key={index} className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="mt-2 h-3 w-72 max-w-full" />
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              {Array.from({ length: 4 }).map((__, fieldIndex) => (
+                <div key={fieldIndex} className="space-y-2">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
-      {Array.from({ length: rows }).map((_, index) => (
-        <Skeleton key={index} className="h-12 w-full rounded-lg" />
-      ))}
+    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="grid grid-cols-2 gap-4 border-b border-border bg-muted/40 px-4 py-3 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className={cn("h-3", index === 1 ? "w-32" : "w-20")} />
+        ))}
+      </div>
+      <div>
+        {Array.from({ length: rows }).map((_, rowIndex) => (
+          <div
+            key={rowIndex}
+            className="grid grid-cols-2 gap-4 border-b border-border px-4 py-4 last:border-0 sm:grid-cols-4"
+          >
+            <Skeleton className="h-4 w-32 max-w-full" />
+            <Skeleton className="h-4 w-40 max-w-full" />
+            <Skeleton className="h-4 w-24 max-w-full" />
+            <Skeleton className="h-4 w-20 max-w-full" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
