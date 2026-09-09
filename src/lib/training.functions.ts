@@ -42,6 +42,8 @@ export type TrainingRecord = {
   provider: string;
   trainingDate: string | null;
   status: z.infer<typeof recordStatus>;
+  source: string;
+  committeeRecommendation: string;
   relatedCompetency: string;
   notes: string;
 };
@@ -74,6 +76,10 @@ function mapRecommendation(row: Record<string, unknown>): TrainingRecommendation
 }
 
 function mapRecord(row: Record<string, unknown>): TrainingRecord {
+  const evaluation = row["evaluations"] as {
+    evaluation_cycles?: { year?: number | null } | null;
+  } | null;
+  const year = evaluation?.evaluation_cycles?.year;
   return {
     id: String(row["id"]),
     ...sourceInfo(row),
@@ -81,6 +87,8 @@ function mapRecord(row: Record<string, unknown>): TrainingRecord {
     provider: String(row["provider"] ?? ""),
     trainingDate: (row["training_date"] as string | null) ?? null,
     status: row["status"] as TrainingRecord["status"],
+    source: year ? `Performance Evaluation ${year}` : "Performance Evaluation",
+    committeeRecommendation: String(row["committee_recommendation"] ?? ""),
     relatedCompetency: String(row["related_competency"] ?? ""),
     notes: String(row["notes"] ?? ""),
   };
@@ -110,7 +118,7 @@ export const listTrainingData = createServerFn({ method: "GET" })
     let records = admin
       .from("training_records")
       .select(
-        "id, employee_id, source_evaluation_id, training_title, provider, training_date, status, related_competency, notes, created_at, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, training_title, provider, training_date, status, related_competency, committee_recommendation, notes, created_at, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
       )
       .order("created_at", { ascending: false });
     if (data.employeeId) {
@@ -231,9 +239,7 @@ export async function ensureTrainingRecommendationsForEvaluation(
   const admin = await getAdmin();
   const { data: raw } = await admin
     .from("evaluations")
-    .select(
-      "id, employee_id, is_finalized, ai_analysis, supervisor_step2_development, supervisor_step2_effectiveness, supervisor_step2_growth_suggestions, supervisor_step2_recommendations",
-    )
+    .select("id, employee_id, is_finalized, ai_analysis")
     .eq("id", evaluationId)
     .maybeSingle();
   const evaluation = raw as unknown as {
@@ -241,10 +247,6 @@ export async function ensureTrainingRecommendationsForEvaluation(
     employee_id: string;
     is_finalized: boolean;
     ai_analysis: Json;
-    supervisor_step2_development: string;
-    supervisor_step2_effectiveness: string;
-    supervisor_step2_growth_suggestions: string;
-    supervisor_step2_recommendations: string;
   } | null;
   if (!evaluation?.is_finalized) return;
   const candidates: RecommendationCandidate[] = [];
@@ -268,50 +270,6 @@ export async function ensureTrainingRecommendationsForEvaluation(
   if (analysis && typeof analysis === "object" && !Array.isArray(analysis)) {
     for (const [index, value] of aiStrings(analysis["trainingRecommendations"]).entries())
       add(`gemini-training-${index}`, value, value, "Gemini recommendation");
-  }
-  add(
-    "evaluation-development",
-    "Development-related external training",
-    clean(evaluation.supervisor_step2_development),
-    "Performance Evaluation",
-  );
-  add(
-    "evaluation-effectiveness",
-    "Job effectiveness development",
-    clean(evaluation.supervisor_step2_effectiveness),
-    "Performance Evaluation",
-  );
-  add(
-    "evaluation-growth",
-    "Growth and development training",
-    clean(evaluation.supervisor_step2_growth_suggestions),
-    "Performance Evaluation",
-  );
-  add(
-    "evaluation-recommendations",
-    "Recommended external training",
-    clean(evaluation.supervisor_step2_recommendations),
-    "Performance Evaluation",
-  );
-
-  const { data: ratings } = await admin
-    .from("evaluation_ratings")
-    .select("criterion_id, rating, evaluator_type, evaluation_criteria(title, letter)")
-    .eq("evaluation_id", evaluationId)
-    .eq("evaluator_type", "SUPERVISOR");
-  for (const rating of ratings ?? []) {
-    if (rating.rating <= 2) {
-      const criterion = rating.evaluation_criteria as { title?: string; letter?: string } | null;
-      const competency =
-        `${criterion?.letter ?? ""} ${criterion?.title ?? "Competency gap"}`.trim();
-      add(
-        `competency-${rating.criterion_id}`,
-        `External training for ${competency}`,
-        `Consider third-party training to address the ${competency} competency gap.`,
-        "Competency Gap",
-        competency,
-      );
-    }
   }
   if (candidates.length === 0) return;
   const { error } = await admin.from("training_recommendations").upsert(
@@ -344,17 +302,23 @@ export async function ensureTrainingRecommendationsForEvaluation(
 
 export async function ensureTrainingRequirementForCommitteeDecision(
   evaluationId: string,
-  actionDetails: string,
 ): Promise<void> {
   const { getAdmin } = await import("./server-core.server");
   const admin = await getAdmin();
   const { data: evaluation } = await admin
     .from("evaluations")
-    .select("id, employee_id, is_finalized")
+    .select("id, employee_id, is_finalized, status")
     .eq("id", evaluationId)
     .maybeSingle();
-  if (!evaluation) return;
-  const title = clean(actionDetails) || "Training requirement from Committee review";
+  if (!evaluation?.is_finalized || evaluation.status !== "FINALIZED") return;
+  const { data: committee } = await admin
+    .from("committee_reviews")
+    .select("final_action, action_details, recommendation")
+    .eq("evaluation_id", evaluationId)
+    .maybeSingle();
+  if (!committee || committee.final_action !== "TRAINING_REQUIRED") return;
+  const title = clean(committee.action_details);
+  if (!title) return;
   const { error } = await admin.from("training_records").upsert(
     {
       employee_id: evaluation.employee_id,
@@ -365,7 +329,8 @@ export async function ensureTrainingRequirementForCommitteeDecision(
       provider: "",
       training_date: null,
       related_competency: "",
-      notes: "Officially required by the Performance Evaluation Committee.",
+      committee_recommendation: clean(committee.recommendation),
+      notes: "Officially required by the Performance Evaluation Committee after President finalization.",
     },
     { onConflict: "source_evaluation_id,source_key" },
   );

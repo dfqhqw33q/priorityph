@@ -296,6 +296,12 @@ export const committeeReviewSchema = z
         path: ["actionDetails"],
         message: "Action details are required for Other",
       });
+    if (value.submit && value.finalAction === "TRAINING_REQUIRED" && !value.actionDetails.trim())
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["actionDetails"],
+        message: "Action details are required for Training Required",
+      });
   });
 
 export const correctionStageSchema = z.enum([

@@ -375,13 +375,17 @@ async function transition(
         finalizationReason: reason,
       });
       const { ensureDevelopmentRecordsForEvaluation } = await import("./development.functions");
-      const { ensureTrainingRecommendationsForEvaluation } = await import("./training.functions");
+      const {
+        ensureTrainingRecommendationsForEvaluation,
+        ensureTrainingRequirementForCommitteeDecision,
+      } = await import("./training.functions");
       const { ensureSuccessionProfileForEvaluation } = await import("./succession.functions");
       const { ensureRecognitionCandidatesForEvaluation } = await import("./recognition.functions");
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
       await Promise.all([
         ensureDevelopmentRecordsForEvaluation(evaluationId),
         ensureTrainingRecommendationsForEvaluation(evaluationId),
+        ensureTrainingRequirementForCommitteeDecision(evaluationId),
         ensureSuccessionProfileForEvaluation(evaluationId),
         ensureRecognitionCandidatesForEvaluation(evaluationId),
         queueEmployeeFinalizedStep1Email(evaluationId),
@@ -755,11 +759,6 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
         context.userId,
         data.version,
       );
-    if (data.submit && data.finalAction === "TRAINING_REQUIRED") {
-      const { ensureTrainingRequirementForCommitteeDecision } =
-        await import("./training.functions");
-      await ensureTrainingRequirementForCommitteeDecision(data.evaluationId, data.actionDetails);
-    }
     return result;
   });
 

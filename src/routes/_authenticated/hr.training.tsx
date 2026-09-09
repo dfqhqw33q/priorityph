@@ -253,10 +253,12 @@ function TrainingRecords({
                 <tr>
                   {[
                     "Employee",
-                    "Training",
+                    "Training Title / Details",
                     "Provider",
                     "Training Date",
                     "Status",
+                    "Source",
+                    "Committee Recommendation",
                     "Related Competency",
                     "Related Evaluation",
                     "Actions",
@@ -279,13 +281,17 @@ function TrainingRecords({
                         {item.employeeNumber}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{item.trainingTitle}</td>
-                    <td className="px-4 py-3">{item.provider || "—"}</td>
+                    <td className="max-w-xs whitespace-pre-wrap px-4 py-3">{item.trainingTitle}</td>
+                    <td className="px-4 py-3">{item.provider || "Not specified"}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {formatDateTime(item.trainingDate)}
+                      {item.trainingDate ? formatDateTime(item.trainingDate) : "Not scheduled"}
                     </td>
                     <td className="px-4 py-3">{item.status}</td>
-                    <td className="px-4 py-3">{item.relatedCompetency || "—"}</td>
+                    <td className="px-4 py-3">{item.source}</td>
+                    <td className="max-w-xs whitespace-pre-wrap px-4 py-3">
+                      {item.committeeRecommendation || "Not specified"}
+                    </td>
+                    <td className="px-4 py-3">{item.relatedCompetency || "Not specified"}</td>
                     <td className="px-4 py-3">
                       <Link
                         className="text-primary hover:underline"
