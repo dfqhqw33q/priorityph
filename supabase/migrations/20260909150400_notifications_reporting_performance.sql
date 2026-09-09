@@ -1,3 +1,7 @@
+﻿-- Notifications, reporting, and performance indexes.
+-- Consolidated from reviewed repository SQL modules; preserve dependency order.
+
+-- BEGIN 20260908140000_realtime_notifications.sql
 -- Per-user inbox layered over the existing deduplicated notification_events stream.
 CREATE TABLE IF NOT EXISTS public.user_notifications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -52,3 +56,48 @@ FROM public.notification_events ne
 JOIN public.internal_users u
   ON u.is_active AND NOT u.is_locked AND public.has_permission(u.id, ne.audience_permission)
 ON CONFLICT (notification_event_id, user_id) DO NOTHING;
+-- END 20260908140000_realtime_notifications.sql
+
+-- BEGIN 20260909100000_performance_indexes.sql
+-- Targeted indexes for the existing evaluation queues, history views and audit feeds.
+-- These indexes do not change workflow behavior or access rules.
+CREATE INDEX IF NOT EXISTS idx_evaluations_queue_status_submitted
+  ON public.evaluations(status, employee_submitted_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_evaluations_cycle_status
+  ON public.evaluations(cycle_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_evaluations_employee_status_finalized
+  ON public.evaluations(employee_id, status, finalized_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_ratings_evaluation_type_criterion
+  ON public.evaluation_ratings(evaluation_id, evaluator_type, criterion_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_module_occurred
+  ON public.audit_logs(module, occurred_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notification_events_permission_occurred
+  ON public.notification_events(audience_permission, occurred_at DESC);
+-- END 20260909100000_performance_indexes.sql
+
+-- BEGIN 20260909110000_report_score_summary.sql
+-- Aggregate report summary in PostgreSQL instead of transferring every score row.
+CREATE OR REPLACE FUNCTION public.get_evaluation_score_summary()
+RETURNS TABLE(final_rating_label text, score_count bigint, score_total numeric)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT
+    COALESCE(final_rating_label, 'Unrated') AS final_rating_label,
+    COUNT(*)::bigint AS score_count,
+    COALESCE(SUM(final_score), 0)::numeric AS score_total
+  FROM public.evaluation_scores
+  WHERE calculation_status = 'CALCULATED'
+  GROUP BY final_rating_label;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_evaluation_score_summary() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_evaluation_score_summary() TO service_role;
+-- END 20260909110000_report_score_summary.sql

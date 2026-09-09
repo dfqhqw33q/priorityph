@@ -18,20 +18,27 @@ Do not use UUIDs, random identifiers, generic names such as `changes.sql`, or un
 
 ## Organization
 
-Each migration should contain one cohesive database change set, including its related tables, indexes, constraints, policies, grants, triggers, and seed rows. Small fragments that belong to the same feature should be kept together in the same migration before it is applied.
+The active migration directory is a clean five-file baseline for the disposable development database. Each migration is organized by responsibility and contains the reviewed SQL in dependency order:
 
-The existing migrations retain their original 14-digit Supabase version prefixes because those versions are already recorded in the remote migration history. Their UUID-like suffixes were replaced with descriptive names without changing any SQL.
+1. Core schema and RBAC
+2. Evaluation workflow and scoring
+3. Documents, storage access, and signatures
+4. Learning, training, succession, and recognition
+5. Notifications, reporting, and performance indexes
+
+The prior fragmented modules were flattened into these five files; there are no hidden migration fragments or include directives.
 
 ## Applied migration rule
 
-Never merge, delete, reorder, or change the version prefix of an applied migration. Supabase uses the version prefix as the migration ledger. To improve an already-applied design, create a new forward-only migration with a descriptive filename.
+This baseline replaces the prior fragmented history only for the disposable development project documented in `docs/SUPABASE-RESET-AND-SEED.md`. Do not apply it to production or any database whose data must be retained. For a retained deployment, keep its recorded history and create forward-only migrations instead.
 
 ## Verification
 
-Before pushing a migration:
+Before pushing the rebuilt development baseline:
 
 ```powershell
 npx.cmd supabase migration list --linked
+npx.cmd supabase db reset --linked --yes
 npx.cmd supabase db push --linked --yes
 ```
 

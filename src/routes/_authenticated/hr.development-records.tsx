@@ -31,6 +31,7 @@ const activities = [
   "Self-Development",
   "External Learning",
   "External Training",
+  "Not specified",
 ] as const;
 const statuses = ["Recommended", "Ongoing", "Completed"] as const;
 type FormState = {
@@ -181,7 +182,7 @@ function DevelopmentRecordsPage() {
                         params={{ evaluationId: record.sourceEvaluationId }}
                       >
                         {record.sourceCycleName
-                          ? `${record.sourceCycleName} (${record.sourceCycleYear})`
+                          ? `Performance Evaluation ${record.sourceCycleYear}`
                           : "View evaluation"}
                       </Link>
                     ) : (

@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Json } from "@/integrations/supabase/types";
 
 const activitySchema = z.enum([
   "Coaching",
@@ -10,6 +9,7 @@ const activitySchema = z.enum([
   "Self-Development",
   "External Learning",
   "External Training",
+  "Not specified",
 ]);
 const statusSchema = z.enum(["Recommended", "Ongoing", "Completed"]);
 const recordFields = z.object({
@@ -157,26 +157,31 @@ function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function aiStrings(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value
-        .filter((item): item is string => typeof item === "string")
-        .map(text)
-        .filter(Boolean)
-    : [];
-}
-
-function activityFor(
-  value: string,
-  fallback: DevelopmentRecord["developmentActivity"],
-): DevelopmentRecord["developmentActivity"] {
+function activityFor(value: string): DevelopmentRecord["developmentActivity"] {
   const lower = value.toLowerCase();
   if (lower.includes("mentor")) return "Mentoring";
-  if (lower.includes("external") || lower.includes("course") || lower.includes("seminar"))
-    return "External Learning";
-  if (lower.includes("train")) return "External Training";
+  if (lower.includes("self-development") || lower.includes("self development"))
+    return "Self-Development";
+  if (lower.includes("external learning")) return "External Learning";
+  if (lower.includes("external training")) return "External Training";
   if (lower.includes("coach")) return "Coaching";
-  return fallback;
+  return "Not specified";
+}
+
+function splitRecommendations(value: unknown): string[] {
+  const textValue = text(value);
+  if (!textValue) return [];
+  const lines = textValue
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
+    .filter(Boolean);
+  return lines.length > 0 ? lines : [textValue];
+}
+
+function isActionableDevelopment(value: string): boolean {
+  return /\b(should|need(?:s)? to|would benefit|focus on|develop|improv|strengthen|practice|coach|mentor|train|learn|growth|recommend)\b/i.test(
+    value,
+  );
 }
 
 export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string): Promise<void> {
@@ -185,7 +190,7 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
   const { data: rawEvaluation } = await admin
     .from("evaluations")
     .select(
-      "id, employee_id, is_finalized, finalized_at, supervisor_step2_development, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_effectiveness, supervisor_step2_growth_suggestions, supervisor_step2_recommendations, ai_analysis",
+      "id, employee_id, is_finalized, finalized_at, supervisor_step2_strengths, supervisor_step2_effectiveness, supervisor_step2_growth_suggestions, supervisor_step2_other_comments",
     )
     .eq("id", evaluationId)
     .maybeSingle();
@@ -194,13 +199,10 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
     employee_id: string;
     is_finalized: boolean;
     finalized_at: string | null;
-    supervisor_step2_development: string;
     supervisor_step2_strengths: string;
-    supervisor_step2_weaknesses: string;
     supervisor_step2_effectiveness: string;
     supervisor_step2_growth_suggestions: string;
-    supervisor_step2_recommendations: string;
-    ai_analysis: Json;
+    supervisor_step2_other_comments: string;
   } | null;
   if (!evaluation?.is_finalized) return;
 
@@ -208,37 +210,52 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
   const add = (
     key: string,
     need: string,
-    activity: DevelopmentRecord["developmentActivity"],
     notes = "",
   ) => {
-    const trimmed = need.trim();
-    if (trimmed)
-      candidates.push({ key, need: trimmed, activity: activityFor(trimmed, activity), notes });
+    for (const [index, recommendation] of splitRecommendations(need).entries()) {
+      if (!isActionableDevelopment(recommendation)) continue;
+      candidates.push({
+        key: `${key}-${index}`,
+        need: recommendation,
+        activity: activityFor(recommendation),
+        notes,
+      });
+    }
   };
-  add("step2-development", text(evaluation.supervisor_step2_development), "Self-Development");
-  add("step2-growth-suggestions", text(evaluation.supervisor_step2_growth_suggestions), "Coaching");
+  add("step2-growth-suggestions", evaluation.supervisor_step2_growth_suggestions);
   add(
     "step2-effectiveness",
-    text(evaluation.supervisor_step2_effectiveness),
-    "Coaching",
-    `Supporting information: ${text(evaluation.supervisor_step2_strengths)}`,
+    evaluation.supervisor_step2_effectiveness,
+    text(evaluation.supervisor_step2_strengths)
+      ? `Supporting information: ${text(evaluation.supervisor_step2_strengths)}`
+      : "",
   );
-  add("step2-weaknesses", text(evaluation.supervisor_step2_weaknesses), "Self-Development");
-  add("step2-recommendations", text(evaluation.supervisor_step2_recommendations), "Coaching");
+  add("step2-other-comments", evaluation.supervisor_step2_other_comments);
 
-  const analysis = (evaluation.ai_analysis ?? {}) as Json;
-  if (analysis && typeof analysis === "object" && !Array.isArray(analysis)) {
-    for (const [index, value] of aiStrings(analysis["developmentRecommendations"]).entries())
-      add(`ai-development-${index}`, value, "Self-Development", "Advisory Gemini recommendation.");
-    for (const [index, value] of aiStrings(analysis["coachingSuggestions"]).entries())
-      add(`ai-coaching-${index}`, value, "Coaching", "Advisory Gemini recommendation.");
-    for (const [index, value] of aiStrings(analysis["trainingRecommendations"]).entries())
-      add(`ai-training-${index}`, value, "External Training", "Advisory Gemini recommendation.");
-  }
-
+  const { data: existing } = await admin
+    .from("development_records")
+    .select("id, source_key, status")
+    .eq("source_evaluation_id", evaluation.id)
+    .eq("is_system_generated", true);
+  const candidateKeys = new Set(candidates.map((candidate) => candidate.key));
+  const staleIds = (existing ?? [])
+    .filter(
+      (record) =>
+        record.status === "Recommended" &&
+        !candidateKeys.has(record.source_key),
+    )
+    .map((record) => record.id);
+  if (staleIds.length > 0)
+    await admin.from("development_records").delete().in("id", staleIds);
   if (candidates.length === 0) return;
+  const existingByKey = new Map((existing ?? []).map((record) => [record.source_key, record]));
+  const candidatesToSync = candidates.filter((candidate) => {
+    const current = existingByKey.get(candidate.key);
+    return !current || current.status === "Recommended";
+  });
+  if (candidatesToSync.length === 0) return;
   const { error } = await admin.from("development_records").upsert(
-    candidates.map((candidate) => ({
+    candidatesToSync.map((candidate) => ({
       employee_id: evaluation.employee_id,
       source_evaluation_id: evaluation.id,
       source_key: candidate.key,
@@ -253,7 +270,7 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
   );
   if (error) throw new Error(error.message);
   const { error: notificationError } = await admin.from("notification_events").upsert(
-    candidates.map((candidate) => ({
+    candidatesToSync.map((candidate) => ({
       evaluation_id: evaluation.id,
       event_type: "DEVELOPMENT_RECORD_CREATED",
       audience_permission: "learning.manage",

@@ -1,3 +1,7 @@
+﻿-- Core schema and RBAC.
+-- Consolidated from reviewed repository SQL modules; preserve dependency order.
+
+-- BEGIN 20260826105519_initial_schema_and_rbac.sql
 -- ============ ENUMS ============
 DO $$ BEGIN
   CREATE TYPE public.app_role AS ENUM ('ADMINISTRATOR','PRESIDENT','HR','SUPERVISOR','REVIEWING_SUPERVISOR','COMMITTEE');
@@ -13,11 +17,14 @@ DO $$ BEGIN
     'EMPLOYEE_SUBMITTED',
     'SUPERVISOR_DRAFT',
     'SUPERVISOR_SUBMITTED',
+    'PRESIDENT_SUBMITTED',
     'REVIEWING_SUPERVISOR_REVIEW',
     'PERSONNEL_PROCESSING',
     'COMMITTEE_REVIEW',
     'PRESIDENT_APPROVAL',
+    'READY_FOR_FINALIZATION',
     'RETURNED_FOR_CORRECTION',
+    'RESUBMITTED',
     'FINALIZED'
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
@@ -475,3 +482,21 @@ INSERT INTO public.evaluation_criteria(template_id, letter, title, description, 
  ('11111111-1111-4111-8111-111111111111','I','DISCIPLINE','Consider the employee''s conduct on the job, attitude toward company rules, and efforts at promoting harmonious relationships among others.',9),
  ('11111111-1111-4111-8111-111111111111','J','SAFETY CONSCIOUSNESS/CARE OF EQUIPMENT','Consider the manner in which the employee handles themselves, materials, and equipment in a work situation and the employee''s safety consciousness.',10)
 ON CONFLICT (template_id, letter) DO NOTHING;
+-- END 20260826105519_initial_schema_and_rbac.sql
+
+-- BEGIN 20260826105553_security_function_grants.sql
+REVOKE ALL ON FUNCTION public.set_updated_at() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.has_permission(uuid, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.is_account_usable(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.count_active_administrators() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_last_admin_role() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_last_admin_user() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_finalized_evaluation() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.protect_locked_rating() FROM PUBLIC, anon, authenticated;
+
+-- Required by the row-level security policies, which evaluate as the signed-in role.
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.has_permission(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_account_usable(uuid) TO authenticated;
+-- END 20260826105553_security_function_grants.sql
