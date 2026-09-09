@@ -72,7 +72,7 @@ export const listDevelopmentRecords = createServerFn({ method: "GET" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission } = await import("./server-core.server");
+    const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "learning.view", "Learning Management");
     const admin = await getAdmin();
     let query = admin
@@ -97,7 +97,7 @@ export const listDevelopmentRecords = createServerFn({ method: "GET" })
 export const listDevelopmentEmployees = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { getAdmin, requirePermission } = await import("./server-core.server");
+    const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "learning.view", "Learning Management");
     const admin = await getAdmin();
     const { data, error } = await admin
@@ -113,7 +113,7 @@ export const updateDevelopmentRecord = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => recordFields.extend({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
-      await import("./server-core.server");
+      await import("../../lib/server-core.server");
     await requirePermission(context.userId, "learning.manage", "Learning Management");
     const admin = await getAdmin();
     const { data: previous } = await admin
@@ -185,7 +185,7 @@ function isActionableDevelopment(value: string): boolean {
 }
 
 export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string): Promise<void> {
-  const { getAdmin } = await import("./server-core.server");
+  const { getAdmin } = await import("../../lib/server-core.server");
   const admin = await getAdmin();
   const { data: rawEvaluation } = await admin
     .from("evaluations")

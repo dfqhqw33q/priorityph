@@ -60,7 +60,7 @@ export const listSuccessionProfiles = createServerFn({ method: "GET" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission } = await import("./server-core.server");
+    const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "succession.view", "Succession Planning");
     const admin = await getAdmin();
     let query = admin
@@ -87,7 +87,7 @@ export const updateSuccessionProfile = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => profileFields.extend({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError, writeAudit, getActorRoles } =
-      await import("./server-core.server");
+      await import("../../lib/server-core.server");
     await requirePermission(context.userId, "succession.manage", "Succession Planning");
     const admin = await getAdmin();
     const { data: previous } = await admin
@@ -116,7 +116,7 @@ export const updateSuccessionProfile = createServerFn({ method: "POST" })
   });
 
 export async function ensureSuccessionProfileForEvaluation(evaluationId: string): Promise<void> {
-  const { getAdmin } = await import("./server-core.server");
+  const { getAdmin } = await import("../../lib/server-core.server");
   const admin = await getAdmin();
   const { data: raw } = await admin
     .from("evaluations")

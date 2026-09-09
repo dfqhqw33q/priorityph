@@ -106,7 +106,7 @@ export const listTrainingData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => filterSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission } = await import("./server-core.server");
+    const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "training.view", "Training Management");
     const admin = await getAdmin();
     let recommendations = admin
@@ -162,7 +162,7 @@ export const listTrainingData = createServerFn({ method: "GET" })
 export const listTrainingEmployees = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { getAdmin, requirePermission } = await import("./server-core.server");
+    const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "training.view", "Training Management");
     const admin = await getAdmin();
     const { data, error } = await admin
@@ -178,7 +178,7 @@ export const updateTrainingRecord = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => recordFields.extend({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError, writeAudit, getActorRoles } =
-      await import("./server-core.server");
+      await import("../../lib/server-core.server");
     await requirePermission(context.userId, "training.manage", "Training Management");
     const admin = await getAdmin();
     const { data: previous } = await admin
@@ -235,7 +235,7 @@ function aiStrings(value: unknown): string[] {
 export async function ensureTrainingRecommendationsForEvaluation(
   evaluationId: string,
 ): Promise<void> {
-  const { getAdmin } = await import("./server-core.server");
+  const { getAdmin } = await import("../../lib/server-core.server");
   const admin = await getAdmin();
   const { data: raw } = await admin
     .from("evaluations")
@@ -303,7 +303,7 @@ export async function ensureTrainingRecommendationsForEvaluation(
 export async function ensureTrainingRequirementForCommitteeDecision(
   evaluationId: string,
 ): Promise<void> {
-  const { getAdmin } = await import("./server-core.server");
+  const { getAdmin } = await import("../../lib/server-core.server");
   const admin = await getAdmin();
   const { data: evaluation } = await admin
     .from("evaluations")

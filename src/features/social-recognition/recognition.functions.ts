@@ -91,7 +91,7 @@ export const listRecognitionData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => filterSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission } = await import("./server-core.server");
+    const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "recognition.view", "Social Recognition");
     const admin = await getAdmin();
     let candidates = admin
@@ -139,7 +139,7 @@ export const listRecognitionData = createServerFn({ method: "GET" })
 export const listRecognitionEmployees = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { getAdmin, requirePermission } = await import("./server-core.server");
+    const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "recognition.view", "Social Recognition");
     const admin = await getAdmin();
     const { data, error } = await admin
@@ -153,7 +153,7 @@ export const listRecognitionEmployees = createServerFn({ method: "GET" })
 export const listFinalizedEvaluationsForRecognition = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { getAdmin, requirePermission } = await import("./server-core.server");
+    const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "recognition.manage", "Social Recognition");
     const admin = await getAdmin();
     const { data, error } = await admin
@@ -180,7 +180,7 @@ export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError, getActorRoles, writeAudit } =
-      await import("./server-core.server");
+      await import("../../lib/server-core.server");
     await requirePermission(context.userId, "recognition.manage", "Social Recognition");
     const admin = await getAdmin();
     const { data: candidate } = await admin
@@ -269,7 +269,7 @@ export const createOtherRecognitionCandidate = createServerFn({ method: "POST" }
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, validationError } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "recognition.manage", "Social Recognition");
     const admin = await getAdmin();
     const { data: evaluation } = await admin
@@ -318,7 +318,7 @@ export const generateRecognitionCertificate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ recordId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, validationError } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "recognition.manage", "Social Recognition");
     const admin = await getAdmin();
     const { data: row } = await admin
@@ -384,7 +384,7 @@ export const generateRecognitionCertificate = createServerFn({ method: "POST" })
 export async function ensureRecognitionCandidatesForEvaluation(
   evaluationId: string,
 ): Promise<void> {
-  const { getAdmin } = await import("./server-core.server");
+  const { getAdmin } = await import("../../lib/server-core.server");
   const admin = await getAdmin();
   const { data: evaluation } = await admin
     .from("evaluations")
