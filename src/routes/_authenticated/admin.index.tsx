@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState, LoadingBlock, PageHeader, StatCard, formatDateTime } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader, StatCard, formatDateTime } from "@/components/shared/shared-ui";
 import { getAdminStats } from "@/lib/admin.functions";
 import { EVALUATION_STATUS_LABELS, ROLE_LABELS, type AppRole, type EvaluationStatus } from "@/lib/domain";
 import { humanizeToken } from "@/lib/domain";
@@ -139,10 +139,10 @@ function AdminOverview() {
                     {(stats?.security ?? []).map((event) => (
                       <li key={event.id} className="flex flex-wrap justify-between gap-2 py-2">
                         <span>
-                          {event.email ?? "unknown"} · {humanizeToken(event.event_type)}
+                          {event.email ?? "unknown"} Â· {humanizeToken(event.event_type)}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {event.result} · {formatDateTime(event.occurred_at)}
+                          {event.result} Â· {formatDateTime(event.occurred_at)}
                         </span>
                       </li>
                     ))}
@@ -156,3 +156,4 @@ function AdminOverview() {
     </div>
   );
 }
+

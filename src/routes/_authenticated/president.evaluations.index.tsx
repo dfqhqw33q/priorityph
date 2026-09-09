@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Phase2QueuePage } from "@/components/phase2-queue";
+import { EvaluationStageQueuePage } from "@/features/performance-management/components/evaluation-stage-queue";
 
 export const Route = createFileRoute("/_authenticated/president/evaluations/")({
   head: () => ({
@@ -16,5 +16,5 @@ export const Route = createFileRoute("/_authenticated/president/evaluations/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <Phase2QueuePage stage="PRESIDENT" />,
+  component: () => <EvaluationStageQueuePage stage="PRESIDENT" />,
 });

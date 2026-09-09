@@ -1,4 +1,4 @@
-import { Bell, CheckCheck } from "lucide-react";
+﻿import { Bell, CheckCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,7 +21,7 @@ import {
   type AppNotification,
 } from "@/lib/notifications.functions";
 import { useAccess } from "@/hooks/use-access";
-import { formatDateTime } from "@/components/ui-bits";
+import { formatDateTime } from "@/components/shared/shared-ui";
 
 export function NotificationCenter() {
   const { access } = useAccess();
@@ -169,3 +169,4 @@ export function NotificationCenter() {
     </DropdownMenu>
   );
 }
+

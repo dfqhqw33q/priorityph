@@ -33,7 +33,6 @@ export const submitInternalUserSignature = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const userId = context.userId;
 
-    // Verify evaluation exists and user has access
     const { data: evaluation, error: evalError } = await admin
       .from("evaluations")
       .select("id, status, supervisor_user_id, cycle_id")
@@ -44,7 +43,6 @@ export const submitInternalUserSignature = createServerFn({ method: "POST" })
       throw validationError("Evaluation not found");
     }
 
-    // Validate signature data format
     if (!data.signature.data.startsWith("data:image/")) {
       throw validationError("A valid signature image is required");
     }
@@ -52,7 +50,6 @@ export const submitInternalUserSignature = createServerFn({ method: "POST" })
     let storagePath: string | null = null;
     let inlineSignature: string | null = data.signature.data;
 
-    // Handle uploaded signatures
     if (data.signature.method === "UPLOAD") {
       const match = data.signature.data.match(/^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/);
       if (!match) throw validationError("Signature upload must be a PNG or JPEG image");
@@ -72,7 +69,6 @@ export const submitInternalUserSignature = createServerFn({ method: "POST" })
       inlineSignature = null;
     }
 
-    // Upsert signature record
     const { error: signatureError } = await admin.from("internal_user_signatures").upsert(
       {
         evaluation_id: evaluation.id,
@@ -92,7 +88,6 @@ export const submitInternalUserSignature = createServerFn({ method: "POST" })
     );
 
     if (signatureError) {
-      // Clean up storage if upload was successful but DB insert failed
       if (storagePath) {
         await admin.storage.from("employee-files").remove([storagePath]);
       }
@@ -118,8 +113,6 @@ export const getInternalUserSignature = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const admin = await getAdmin();
 
-    // Note: This would need evaluation ID and stage passed as parameters in a real implementation
-    // This is a template - the actual implementation depends on how you structure the request
 
     return { success: true };
   });

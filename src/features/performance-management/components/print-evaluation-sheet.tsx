@@ -177,7 +177,6 @@ export const PerformanceEvaluationSheet: React.FC<
     `}</style>
 
     <main className="max-w-5xl mx-auto bg-white text-[12px] leading-normal print:max-w-none print:mx-0">
-      {/* ===== HEADER SECTION ===== */}
       <header className="form-header mb-6 px-6 py-8 print:px-10 print:py-6">
         <h1 className="text-[18px] font-extrabold uppercase text-center leading-tight">
           {companyName}
@@ -193,7 +192,6 @@ export const PerformanceEvaluationSheet: React.FC<
           </h3>
         </div>
 
-        {/* Period Covered */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <span className="font-semibold text-[11px] uppercase whitespace-nowrap">
@@ -210,7 +208,6 @@ export const PerformanceEvaluationSheet: React.FC<
           </div>
         </div>
 
-        {/* Employee Information Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3 mb-6">
           <InfoField label="NAME OF RATEE" value={nameOfRatee} />
           <InfoField label="JOB TITLE OF RATEE" value={jobTitleOfRatee} />
@@ -221,7 +218,6 @@ export const PerformanceEvaluationSheet: React.FC<
         </div>
       </header>
 
-      {/* ===== RATING SCALE ===== */}
       <div className="rating-scale border border-black mx-6 print:mx-10 px-4 py-2 mb-6 flex flex-wrap justify-between gap-2 font-semibold text-[11px]">
         <span>RATING:</span>
         <span>1 - Poor</span>
@@ -231,7 +227,6 @@ export const PerformanceEvaluationSheet: React.FC<
         <span>5 - Excellent</span>
       </div>
 
-      {/* ===== EVALUATION TABLE ===== */}
       <div className="mx-6 print:mx-10 mb-8 overflow-x-auto">
         <table className="evaluation-table w-full text-left border border-black">
           <thead>
@@ -287,7 +282,6 @@ export const PerformanceEvaluationSheet: React.FC<
         </table>
       </div>
 
-      {/* ===== SIGNATURES SECTION ===== */}
       <div className="signatures-section border-t border-b border-black mx-6 print:mx-10 flex mb-8">
         <SignatureColumn
           heading="APPRAISED BY:"
@@ -306,7 +300,6 @@ export const PerformanceEvaluationSheet: React.FC<
         />
       </div>
 
-      {/* ===== CONCLUSIONS SECTION ===== */}
       <div className="conclusions-section mx-6 print:mx-10 mb-8 border-t border-black pt-6">
         <h4 className="text-center font-bold text-[12px] uppercase mb-4 leading-tight">
           Conclusions and Comments (Confidential: Not to be Shown to Ratee)
@@ -316,7 +309,6 @@ export const PerformanceEvaluationSheet: React.FC<
           <div className="font-bold text-[12px] mb-2">STEP TWO: Develop conclusion and comments</div>
         </div>
 
-        {/* Question 1 */}
         <div className="mb-6">
           <p className="text-[12px] mb-2">
             1. If the overall rating is excellent or poor, explain why the employee was
@@ -328,7 +320,6 @@ export const PerformanceEvaluationSheet: React.FC<
           <div className="border-b border-black min-h-[40px] px-2" />
         </div>
 
-        {/* Question 2 */}
         <div>
           <p className="text-[12px] mb-3">
             2. Summarize the principal strengths and weakness of the employee.

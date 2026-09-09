@@ -5,16 +5,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Priority Handling Logistics Design System
- * Official Brand Foundation:
- * - Brand Blue: #0000FE (Primary CTA, active states, key links, accents)
- * - Deep Navy: #080B3D (Primary dark structural color for navigation, headers, sidebars)
- * - Supporting Blue: #3B82F6 (Supporting interactive elements, hover states, info)
- * - Soft Background: #F8FAFC (Primary light mode background)
- * - White: #FFFFFF (Primary light mode surface color)
- */
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -24,14 +14,12 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Official Brand Constants */
   --color-brand-primary: var(--brand-primary);
   --color-brand-navy: var(--brand-navy);
   --color-brand-supporting: var(--brand-supporting);
   --color-brand-bg-soft: var(--brand-bg-soft);
   --color-brand-white: var(--brand-white);
 
-  /* Semantic Application Tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
@@ -91,14 +79,12 @@
 :root {
   --radius: 0.625rem;
 
-  /* Official Brand Colors */
   --brand-primary: #0000FE;
   --brand-navy: #080B3D;
   --brand-supporting: #3B82F6;
   --brand-bg-soft: #F8FAFC;
   --brand-white: #FFFFFF;
 
-  /* Light Mode Semantic Tokens */
   --background: #F8FAFC;
   --foreground: #080B3D;
   --surface: #FFFFFF;
@@ -155,14 +141,12 @@
 }
 
 .dark {
-  /* Official Brand Colors */
   --brand-primary: #0000FE;
   --brand-navy: #080B3D;
   --brand-supporting: #3B82F6;
   --brand-bg-soft: #F8FAFC;
   --brand-white: #FFFFFF;
 
-  /* Dark Mode Semantic Tokens */
   --background: #05081E;
   --foreground: #F8FAFC;
   --surface: #090E38;
@@ -203,7 +187,6 @@
   --ring: #60A5FA;
 
 
-  /* Structural dark surface uses official Deep Navy #080B3D */
   --sidebar: #080B3D;
   --sidebar-foreground: #F8FAFC;
   --sidebar-primary: #0000FE;
@@ -256,11 +239,6 @@
     display: none;
   }
 
-  /*
-   * Global form-control contrast. Applies to every module (Admin, HR,
-   * President, Evaluation, Employee assessment and the public assessment
-   * pages) so inputs stay readable in both light and dark mode.
-   */
   input,
   textarea,
   select,
@@ -291,7 +269,6 @@
     background-color: var(--color-surface-muted);
   }
 
-  /* Native date/time pickers render a dark glyph that disappears on dark surfaces. */
   .dark input::-webkit-calendar-picker-indicator {
     filter: invert(1);
   }
@@ -353,7 +330,6 @@
 
 
 @media print {
-  /* Only the official evaluation sheet prints. */
   header,
   aside,
   nav,

@@ -1,4 +1,3 @@
-// Phase 8 — scoring configuration, calculation and finalization RPCs.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -69,7 +68,6 @@ export const saveScoringRule = createServerFn({ method: "POST" })
         },
         count ?? 0,
       );
-      // Drafts may be saved incomplete, but evaluator weights must always balance.
       const evaluatorProblem = problems.find((problem) => problem.includes("total exactly 100"));
       if (evaluatorProblem) throw validationError(evaluatorProblem);
 
@@ -265,10 +263,10 @@ export const recalculateScore = createServerFn({ method: "POST" })
   });
 
 export async function processFinalizedEvaluationSupportModules(evaluationId: string): Promise<void> {
-  const { ensureDevelopmentRecordsForEvaluation } = await import("./development.functions");
-  const { ensureTrainingRecommendationsForEvaluation } = await import("./training.functions");
-  const { ensureSuccessionProfileForEvaluation } = await import("./succession.functions");
-  const { ensureRecognitionCandidatesForEvaluation } = await import("./recognition.functions");
+  const { ensureDevelopmentRecordsForEvaluation } = await import("@/features/learning-management/development.functions");
+  const { ensureTrainingRecommendationsForEvaluation } = await import("@/features/training-management/training.functions");
+  const { ensureSuccessionProfileForEvaluation } = await import("@/features/succession-planning/succession.functions");
+  const { ensureRecognitionCandidatesForEvaluation } = await import("@/features/social-recognition/recognition.functions");
 
   await ensureDevelopmentRecordsForEvaluation(evaluationId);
   await ensureTrainingRecommendationsForEvaluation(evaluationId);
@@ -341,7 +339,6 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
         .maybeSingle();
       if (error || !finalizedEvaluation) throw validationError("This evaluation changed while you were working. Reload and try again.");
 
-      // Lock the score and the underlying ratings/responses.
       await Promise.all([
         admin
           .from("evaluation_scores")
@@ -430,7 +427,6 @@ export const returnForCorrection = createServerFn({ method: "POST" })
     if (evaluation.version !== data.version)
       throw validationError("This record changed while you were working. Reload and try again.");
 
-    // Unlock so the authorised correction can be made, then re-open the workflow.
     await admin
       .from("evaluation_scores")
       .update({ is_locked: false })

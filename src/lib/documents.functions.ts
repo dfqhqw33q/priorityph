@@ -58,7 +58,6 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ 
     evaluationId: z.string().uuid(),
-    // Optional current unsaved UI values for President stage preview
     presidentSignatureData: z.string().optional(),
   }).parse(input))
   .handler(async ({ data, context }) => {
@@ -68,13 +67,11 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
     try {
       console.log(`[getEvaluationSheetHtml] Starting for evaluation: ${data.evaluationId}`);
       
-      // Check both permissions to allow access at different workflow stages
       await requirePermissionAny(context.userId, ["evaluations.view_201", "president.view", "evaluations.review_step3"], "Evaluation Sheet");
       console.log(`[getEvaluationSheetHtml] Permissions check passed`);
 
       const admin = await getAdmin();
       
-      // Get current authenticated user's information for President approval preview
       let presidentName = "";
       if (data.presidentSignatureData) {
         const { data: currentUser } = await admin
@@ -98,8 +95,6 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
 
       console.log(`[getEvaluationSheetHtml] Evaluation found, generating data...`);
       
-      // Generate the HTML on-demand - allow at any stage where user has permission
-      // Pass current unsaved UI values for President stage preview
       const evaluationData = await generateEvaluationData(data.evaluationId, {
         presidentSignatureData: data.presidentSignatureData,
         presidentName: presidentName,

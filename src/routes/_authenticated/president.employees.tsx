@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { EmployeeRecordsPage } from "@/components/employee-records";
+import { EmployeeRecordsPage } from "@/features/employee-management/components/employee-records";
 
 export const Route = createFileRoute("/_authenticated/president/employees")({
   head: () => ({

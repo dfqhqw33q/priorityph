@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -16,13 +16,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
 import {
   listTrainingData,
   listTrainingEmployees,
   updateTrainingRecord,
   type TrainingRecord,
-} from "@/lib/training.functions";
+} from "@/features/training-management/training.functions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const statuses = ["Required", "Approved", "Completed"] as const;
@@ -202,7 +202,7 @@ function TrainingRecommendations({
                       </span>
                     </td>
                     <td className="px-4 py-3">{item.trainingTitle}</td>
-                    <td className="px-4 py-3">{item.relatedCompetency || "—"}</td>
+                    <td className="px-4 py-3">{item.relatedCompetency || "â€”"}</td>
                     <td className="px-4 py-3">{item.source}</td>
                     <td className="max-w-xs whitespace-pre-wrap px-4 py-3">
                       {item.recommendation}
@@ -401,7 +401,7 @@ function RecordDialog({
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Employee: {record?.employeeName ?? "—"} ({record?.employeeNumber ?? "—"})
+            Employee: {record?.employeeName ?? "â€”"} ({record?.employeeNumber ?? "â€”"})
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="training-title">Training Title</Label>
@@ -466,3 +466,4 @@ function RecordDialog({
     </Dialog>
   );
 }
+

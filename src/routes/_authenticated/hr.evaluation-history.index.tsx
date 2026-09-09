@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -14,7 +14,7 @@ import {
   PageHeader,
   StatCard,
   formatDateTime,
-} from "@/components/ui-bits";
+} from "@/components/shared/shared-ui";
 import { getReport, type ReportRow } from "@/lib/reports.functions";
 import { EVALUATION_STATUS_LABELS, EVALUATION_STATUSES } from "@/lib/domain";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -64,7 +64,7 @@ function HistoryPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard label="Total evaluations" value={query.data.totalCount} />
           <StatCard label="Scored evaluations" value={query.data.summary.scored} />
-          <StatCard label="Average final score" value={query.data.summary.averageFinalScore?.toFixed(2) ?? "—"} />
+          <StatCard label="Average final score" value={query.data.summary.averageFinalScore?.toFixed(2) ?? "â€”"} />
         </div>
       ) : null}
 
@@ -157,12 +157,12 @@ function HistoryPage() {
                   <td className="px-4 py-3.5">
                     <EvaluationStatusBadge status={row.status as never} />
                   </td>
-                  <td className="px-4 py-3.5 tabular-nums text-foreground">{row.employeeAverage?.toFixed(2) ?? "—"}</td>
+                  <td className="px-4 py-3.5 tabular-nums text-foreground">{row.employeeAverage?.toFixed(2) ?? "â€”"}</td>
                   <td className="px-4 py-3.5 tabular-nums text-foreground">
-                    {row.supervisorAverage?.toFixed(2) ?? "—"}
+                    {row.supervisorAverage?.toFixed(2) ?? "â€”"}
                   </td>
                   <td className="px-4 py-3.5 font-semibold tabular-nums text-primary">
-                    {row.finalScore?.toFixed(2) ?? "—"} {row.finalRating ?? ""}
+                    {row.finalScore?.toFixed(2) ?? "â€”"} {row.finalRating ?? ""}
                   </td>
                   <td className="px-4 py-3.5 text-xs text-muted-foreground">{formatDateTime(row.finalizedAt)}</td>
                 </tr>
@@ -189,3 +189,4 @@ function HistoryPage() {
     </div>
   );
 }
+

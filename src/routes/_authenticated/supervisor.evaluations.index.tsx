@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 
-import { EvaluationQueue } from "@/components/evaluation-queue";
-import { PageHeader } from "@/components/ui-bits";
+import { EvaluationQueue } from "@/features/performance-management/components/evaluation-queue";
+import { PageHeader } from "@/components/shared/shared-ui";
 import { listSupervisorQueue } from "@/lib/evaluations.functions";
 
 export const Route = createFileRoute("/_authenticated/supervisor/evaluations/")({
@@ -41,3 +41,4 @@ function SupervisorQueuePage() {
     </div>
   );
 }
+

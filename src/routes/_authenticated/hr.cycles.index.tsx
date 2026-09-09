@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -32,7 +32,7 @@ import {
   TableRow,
   ResponsiveTableValue,
 } from "@/components/ui/table";
-import { CycleStatusBadge, EmptyState, LoadingBlock, PageHeader, formatCompactDateTime, formatCompactDateTimeParts } from "@/components/ui-bits";
+import { CycleStatusBadge, EmptyState, LoadingBlock, PageHeader, formatCompactDateTime, formatCompactDateTimeParts } from "@/components/shared/shared-ui";
 import { listCycles, listTemplates, saveCycle } from "@/lib/cycles.functions";
 import { useAccess } from "@/hooks/use-access";
 
@@ -244,3 +244,4 @@ function CyclesPage() {
     </div>
   );
 }
+

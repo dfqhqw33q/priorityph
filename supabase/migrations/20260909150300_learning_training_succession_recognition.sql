@@ -1,9 +1,4 @@
-﻿-- Learning, training, succession, and recognition.
--- Consolidated from reviewed repository SQL modules; preserve dependency order.
-
--- BEGIN 20260908100000_learning_management_development_records.sql
--- Learning Management stores only relevant development information from finalized evaluations.
-CREATE TABLE IF NOT EXISTS public.development_records (
+﻿CREATE TABLE IF NOT EXISTS public.development_records (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid NOT NULL REFERENCES public.employees(id) ON DELETE RESTRICT,
   source_evaluation_id uuid REFERENCES public.evaluations(id) ON DELETE SET NULL,
@@ -55,10 +50,6 @@ CREATE POLICY "HR can update development records" ON public.development_records
 FOR UPDATE TO authenticated
 USING (public.has_permission(auth.uid(), 'learning.manage'))
 WITH CHECK (public.has_permission(auth.uid(), 'learning.manage'));
--- END 20260908100000_learning_management_development_records.sql
-
--- BEGIN 20260908110000_training_management.sql
--- Training Management tracks third-party training recommendations and requirements only.
 CREATE TABLE IF NOT EXISTS public.training_recommendations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid NOT NULL REFERENCES public.employees(id) ON DELETE RESTRICT,
@@ -125,10 +116,6 @@ CREATE POLICY "HR can update training records" ON public.training_records
 FOR UPDATE TO authenticated
 USING (public.has_permission(auth.uid(), 'training.manage'))
 WITH CHECK (public.has_permission(auth.uid(), 'training.manage'));
--- END 20260908110000_training_management.sql
-
--- BEGIN 20260908120000_succession_planning.sql
--- Succession Planning organizes career and transfer information from finalized evaluations.
 CREATE TABLE IF NOT EXISTS public.succession_profiles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid NOT NULL UNIQUE REFERENCES public.employees(id) ON DELETE RESTRICT,
@@ -176,10 +163,6 @@ CREATE POLICY "Authorized HR can update succession profiles" ON public.successio
 FOR UPDATE TO authenticated
 USING (public.has_permission(auth.uid(), 'succession.manage'))
 WITH CHECK (public.has_permission(auth.uid(), 'succession.manage'));
--- END 20260908120000_succession_planning.sql
-
--- BEGIN 20260908130000_social_recognition.sql
--- Social Recognition is a reviewable support subsystem based on finalized evaluations.
 CREATE TABLE IF NOT EXISTS public.recognition_candidates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid NOT NULL REFERENCES public.employees(id) ON DELETE RESTRICT,
@@ -256,18 +239,11 @@ CREATE POLICY "Management can update recognition records" ON public.recognition_
 FOR UPDATE TO authenticated
 USING (public.has_permission(auth.uid(), 'recognition.manage'))
 WITH CHECK (public.has_permission(auth.uid(), 'recognition.manage'));
--- END 20260908130000_social_recognition.sql
-
--- BEGIN 20260909120000_committee_training_context.sql
 ALTER TABLE public.training_records
   ADD COLUMN IF NOT EXISTS committee_recommendation text NOT NULL DEFAULT '';
--- END 20260909120000_committee_training_context.sql
-
--- BEGIN 20260909130000_development_activity_unspecified.sql
 ALTER TABLE public.development_records
   DROP CONSTRAINT IF EXISTS development_records_development_activity_check;
 
 ALTER TABLE public.development_records
   ADD CONSTRAINT development_records_development_activity_check
   CHECK (development_activity IN ('Coaching', 'Mentoring', 'Self-Development', 'External Learning', 'External Training', 'Not specified'));
--- END 20260909130000_development_activity_unspecified.sql

@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 
-import { ThemeProvider } from "@/lib/theme-provider";
+import { ThemeProvider } from "@/components/shared/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 

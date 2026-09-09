@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PageHeader } from "@/components/ui-bits";
+import { PageHeader } from "@/components/shared/shared-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { recordLoginEvent } from "@/lib/access.functions";
 import { resetPasswordSchema } from "@/lib/schemas";
@@ -82,7 +82,7 @@ function ChangePasswordPage() {
                 ) : null}
               </div>
               <Button type="submit" disabled={pending}>
-                {pending ? "Saving…" : "Update password"}
+                {pending ? "Savingâ€¦" : "Update password"}
               </Button>
             </form>
           </CardContent>
@@ -91,3 +91,4 @@ function ChangePasswordPage() {
     </div>
   );
 }
+

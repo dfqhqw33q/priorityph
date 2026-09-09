@@ -32,7 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -53,7 +53,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { recordLoginEvent } from "@/lib/access.functions";
 import { ROLE_LABELS, type AppRole, type Permission } from "@/lib/domain";
 import { useAccess } from "@/hooks/use-access";
-import { NotificationCenter } from "@/components/notification-center";
+import { NotificationCenter } from "@/components/layout/notification-center";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type NavItem = {
@@ -483,7 +483,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     try {
       await logEvent({ data: { event: "LOGOUT" } });
     } catch {
-      // Sign-out proceeds even if the audit call fails.
     }
     await queryClient.cancelQueries();
     queryClient.clear();

@@ -1,9 +1,4 @@
-﻿-- Evaluation workflow and scoring.
--- Consolidated from reviewed repository SQL modules; preserve dependency order.
-
--- BEGIN 20260826112311_president_review_workflow.sql
--- 2. Configurable President step templates
-CREATE TABLE IF NOT EXISTS public.president_step_templates (
+﻿CREATE TABLE IF NOT EXISTS public.president_step_templates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   step integer NOT NULL CHECK (step IN (2,3)),
   title text NOT NULL,
@@ -47,7 +42,6 @@ DROP TRIGGER IF EXISTS trg_president_step_items_updated ON public.president_step
 CREATE TRIGGER trg_president_step_items_updated BEFORE UPDATE ON public.president_step_items
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- 3. President responses per evaluation
 CREATE TABLE IF NOT EXISTS public.president_responses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   evaluation_id uuid NOT NULL REFERENCES public.evaluations(id) ON DELETE CASCADE,
@@ -85,19 +79,16 @@ CREATE TRIGGER trg_protect_locked_president_response BEFORE UPDATE ON public.pre
 
 CREATE INDEX IF NOT EXISTS idx_president_responses_evaluation ON public.president_responses(evaluation_id);
 
--- 4. Submission timestamps on evaluations
 ALTER TABLE public.evaluations
   ADD COLUMN IF NOT EXISTS president_step2_submitted_at timestamptz,
   ADD COLUMN IF NOT EXISTS president_step3_submitted_at timestamptz;
 
--- 5. President role gains its step permissions
 INSERT INTO public.role_permissions (role_code, permission_code) VALUES
   ('PRESIDENT','president.step2'),
   ('PRESIDENT','president.step3'),
   ('PRESIDENT','evaluations.view_step1')
 ON CONFLICT DO NOTHING;
 
--- 6. Seed the official Step 2 and Step 3 templates
 INSERT INTO public.president_step_templates (id, step, title, description) VALUES
  ('22222222-2222-4222-8222-222222222222', 2, 'Step Two: Conclusions and Comments',
   'CONFIDENTIAL: NOT TO BE SHOWN TO RATEE. Develop conclusions and comments.'),
@@ -147,10 +138,6 @@ INSERT INTO public.president_step_items (template_id, position, code, label, hel
  ('33333333-3333-4333-8333-333333333333', 5, 'S3_RECOMMENDED_INCREASE',
   'Recommended increase / bonus', 'Configurable placeholder.', 'TEXT', '[]'::jsonb, false)
 ON CONFLICT (template_id, code) DO NOTHING;
--- END 20260826112311_president_review_workflow.sql
-
--- BEGIN 20260826114232_scoring_notifications_and_finalization.sql
--- Scoring rule status
 DO $$ BEGIN
   CREATE TYPE public.scoring_rule_status AS ENUM ('DRAFT','ACTIVE','RETIRED');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
@@ -163,7 +150,6 @@ DO $$ BEGIN
   CREATE TYPE public.calculation_status AS ENUM ('PENDING','CALCULATED','INVALID');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- ============ scoring_rules ============
 CREATE TABLE IF NOT EXISTS public.scoring_rules (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -198,11 +184,9 @@ DROP TRIGGER IF EXISTS trg_scoring_rules_updated ON public.scoring_rules;
 CREATE TRIGGER trg_scoring_rules_updated BEFORE UPDATE ON public.scoring_rules
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- only one ACTIVE rule per template
 CREATE UNIQUE INDEX IF NOT EXISTS scoring_rules_one_active_per_template
   ON public.scoring_rules (template_id) WHERE status = 'ACTIVE';
 
--- ============ scoring_rule_factor_weights ============
 CREATE TABLE IF NOT EXISTS public.scoring_rule_factor_weights (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   rule_id uuid NOT NULL REFERENCES public.scoring_rules(id) ON DELETE CASCADE,
@@ -219,7 +203,6 @@ DROP POLICY IF EXISTS "factor weights readable by signed-in users" ON public.sco
 CREATE POLICY "factor weights readable by signed-in users" ON public.scoring_rule_factor_weights FOR SELECT TO authenticated
   USING (public.is_account_usable(auth.uid()));
 
--- ============ scoring_rule_bands ============
 CREATE TABLE IF NOT EXISTS public.scoring_rule_bands (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   rule_id uuid NOT NULL REFERENCES public.scoring_rules(id) ON DELETE CASCADE,
@@ -237,7 +220,6 @@ DROP POLICY IF EXISTS "rating bands readable by signed-in users" ON public.scori
 CREATE POLICY "rating bands readable by signed-in users" ON public.scoring_rule_bands FOR SELECT TO authenticated
   USING (public.is_account_usable(auth.uid()));
 
--- ============ evaluation_scores ============
 CREATE TABLE IF NOT EXISTS public.evaluation_scores (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   evaluation_id uuid NOT NULL UNIQUE REFERENCES public.evaluations(id) ON DELETE CASCADE,
@@ -272,7 +254,6 @@ DROP TRIGGER IF EXISTS trg_evaluation_scores_updated ON public.evaluation_scores
 CREATE TRIGGER trg_evaluation_scores_updated BEFORE UPDATE ON public.evaluation_scores
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ============ notification_events ============
 CREATE TABLE IF NOT EXISTS public.notification_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   evaluation_id uuid REFERENCES public.evaluations(id) ON DELETE CASCADE,
@@ -297,14 +278,12 @@ CREATE POLICY "notifications viewable with evaluation access" ON public.notifica
     OR public.has_permission(auth.uid(), 'cycles.view')
   );
 
--- ============ finalization columns ============
 ALTER TABLE public.evaluations
   ADD COLUMN IF NOT EXISTS finalized_by uuid REFERENCES public.internal_users(id),
   ADD COLUMN IF NOT EXISTS finalized_at timestamptz,
   ADD COLUMN IF NOT EXISTS finalization_reason text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS correction_reason text NOT NULL DEFAULT '';
 
--- ============ permissions ============
 INSERT INTO public.permissions (code, module, description) VALUES
   ('scoring.manage', 'Scoring', 'Create, edit and activate scoring rule configurations'),
   ('scores.view', 'Scoring', 'View calculated evaluation scores and final ratings'),
@@ -369,10 +348,6 @@ BEGIN
 END $$;
 
 
--- END 20260826114232_scoring_notifications_and_finalization.sql
-
--- BEGIN 20260827130000_ai_assistance_fields.sql
--- Advisory AI output belongs to the existing annual evaluation record.
 ALTER TABLE public.evaluations
   ADD COLUMN IF NOT EXISTS ai_analysis jsonb NOT NULL DEFAULT '{}'::jsonb,
   ADD COLUMN IF NOT EXISTS ai_generated_at timestamptz,
@@ -380,10 +355,6 @@ ALTER TABLE public.evaluations
   ADD COLUMN IF NOT EXISTS ai_source_version integer;
 
 GRANT SELECT ON public.evaluations TO authenticated;
--- END 20260827130000_ai_assistance_fields.sql
-
--- BEGIN 20260828110100_phase2_stage_records_and_permissions.sql
--- Phase 2: stage records, permissions, and finalized-record protection.
 ALTER TABLE public.evaluations
   ADD COLUMN IF NOT EXISTS supervisor_step2_submitted_at timestamptz,
   ADD COLUMN IF NOT EXISTS supervisor_step2_strengths text NOT NULL DEFAULT '',
@@ -482,5 +453,4 @@ USING (
 UPDATE public.evaluations
 SET status = 'REVIEWING_SUPERVISOR_REVIEW'
 WHERE status = 'SUPERVISOR_SUBMITTED';
--- END 20260828110100_phase2_stage_records_and_permissions.sql
 

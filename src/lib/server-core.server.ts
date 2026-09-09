@@ -1,6 +1,3 @@
-// Server-only helpers: privileged data access, authorization and audit logging.
-// Never import this module from client code — always `await import()` it inside
-// a server function handler.
 import { getRequest } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -160,7 +157,6 @@ export function safeMessage(error: unknown, fallback: string): string {
         const message = parsed.map((issue) => issue.message).filter(Boolean).join("; ");
         if (message) return message;
       } catch {
-        // Ignore and fall through to readable fallback.
       }
       return "Please complete all required fields before submitting.";
     }
@@ -176,7 +172,6 @@ export function safeMessage(error: unknown, fallback: string): string {
         const message = parsed.map((issue) => issue.message).filter(Boolean).join("; ");
         if (message) return message;
       } catch {
-        // Ignore and fall through.
       }
       return "Please complete all required fields before submitting.";
     }
@@ -540,9 +535,6 @@ export async function dashboardStats(userId: string) {
   return { roles, activeCycles, employees, awaitingSupervisor, awaitingPresident, finalized };
 }
 
-// ---------------------------------------------------------------------------
-// President Step 2 / Step 3
-// ---------------------------------------------------------------------------
 
 export type PresidentAnswerInput = { itemId: string; value: string };
 
@@ -684,9 +676,6 @@ export async function savePresidentStep(
   return { itemCount: current.items.length };
 }
 
-// ---------------------------------------------------------------------------
-// Dashboard aggregates
-// ---------------------------------------------------------------------------
 
 async function countEvaluations(statuses: string[]) {
   const admin = await getAdmin();

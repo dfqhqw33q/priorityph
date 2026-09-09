@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Phase2StageDetail } from "@/components/phase2-stage-detail";
+import { EvaluationStageDetail } from "@/features/performance-management/components/evaluation-stage-detail";
 
 export const Route = createFileRoute("/_authenticated/president/evaluations/$evaluationId")({
   head: () => ({
@@ -16,5 +16,5 @@ export const Route = createFileRoute("/_authenticated/president/evaluations/$eva
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <Phase2StageDetail stage="PRESIDENT" evaluationId={Route.useParams().evaluationId} />,
+  component: () => <EvaluationStageDetail stage="PRESIDENT" evaluationId={Route.useParams().evaluationId} />,
 });

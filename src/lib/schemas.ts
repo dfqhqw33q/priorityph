@@ -348,7 +348,6 @@ export const userFormSchema = z.object({
   email: z.string().email(),
   fullName: trimmed(2, 160),
   jobTitle: z.string().max(160).default(""),
-  // Exactly one role per internal user.
   roles: z.array(z.enum(APP_ROLES)).length(1, "Select exactly one role"),
 });
 export type UserFormValues = z.infer<typeof userFormSchema>;
@@ -375,7 +374,6 @@ export const userAccessActionSchema = z.object({
 
 export const assignRolesSchema = z.object({
   userId: z.string().uuid(),
-  // A user may hold exactly one role; assigning a role replaces the previous one.
   roles: z.array(z.enum(APP_ROLES)).length(1, "Select exactly one role"),
   reason: reasonSchema,
 });
@@ -439,7 +437,6 @@ export const auditFiltersSchema = z.object({
 });
 export type AuditFiltersValues = z.infer<typeof auditFiltersSchema>;
 
-// --------------------------- Phase 8: scoring ------------------------------
 
 export const scoringBandSchema = z
   .object({

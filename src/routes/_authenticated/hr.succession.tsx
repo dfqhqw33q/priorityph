@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -16,12 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState, LoadingBlock, PageHeader } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader } from "@/components/shared/shared-ui";
 import {
   listSuccessionProfiles,
   updateSuccessionProfile,
   type SuccessionProfile,
-} from "@/lib/succession.functions";
+} from "@/features/succession-planning/succession.functions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 export const Route = createFileRoute("/_authenticated/hr/succession")({
@@ -127,16 +127,16 @@ function SuccessionPage() {
                     </span>
                   </td>
                   <td className="max-w-xs whitespace-pre-wrap px-4 py-3">
-                    {profile.developmentPotential || "—"}
+                    {profile.developmentPotential || "â€”"}
                   </td>
                   <td className="max-w-xs whitespace-pre-wrap px-4 py-3">
-                    {profile.advancementOutlook || "—"}
+                    {profile.advancementOutlook || "â€”"}
                   </td>
-                  <td className="px-4 py-3">{profile.careerInterest || "—"}</td>
-                  <td className="px-4 py-3">{profile.transferInterest || "—"}</td>
-                  <td className="px-4 py-3">{profile.desiredJob || "—"}</td>
-                  <td className="px-4 py-3">{profile.desiredLocation || "—"}</td>
-                  <td className="px-4 py-3">{profile.qualification || "—"}</td>
+                  <td className="px-4 py-3">{profile.careerInterest || "â€”"}</td>
+                  <td className="px-4 py-3">{profile.transferInterest || "â€”"}</td>
+                  <td className="px-4 py-3">{profile.desiredJob || "â€”"}</td>
+                  <td className="px-4 py-3">{profile.desiredLocation || "â€”"}</td>
+                  <td className="px-4 py-3">{profile.qualification || "â€”"}</td>
                   <td className="px-4 py-3">
                     <Link
                       className="text-primary hover:underline"
@@ -149,7 +149,7 @@ function SuccessionPage() {
                     </Link>
                   </td>
                   <td className="max-w-xs whitespace-pre-wrap px-4 py-3 text-muted-foreground">
-                    {profile.notes || "—"}
+                    {profile.notes || "â€”"}
                   </td>
                   <td className="px-4 py-3">
                     <Button variant="outline" size="sm" onClick={() => setEditing(profile)}>
@@ -230,3 +230,4 @@ function NotesDialog({
     </Dialog>
   );
 }
+

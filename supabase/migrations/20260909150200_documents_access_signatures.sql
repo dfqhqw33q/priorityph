@@ -1,9 +1,4 @@
-﻿-- Documents, access, and signatures.
--- Consolidated from reviewed repository SQL modules; preserve dependency order.
-
--- BEGIN 20260827140000_employee_file_documents_and_storage.sql
--- Minimal Digital Employee File metadata and private document storage.
-CREATE TABLE IF NOT EXISTS public.employee_documents (
+﻿CREATE TABLE IF NOT EXISTS public.employee_documents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid NOT NULL REFERENCES public.employees(id) ON DELETE CASCADE,
   evaluation_id uuid REFERENCES public.evaluations(id) ON DELETE SET NULL,
@@ -71,10 +66,6 @@ BEFORE INSERT OR UPDATE OF category, evaluation_id, evaluation_version
 ON public.employee_documents
 FOR EACH ROW
 EXECUTE FUNCTION public.ensure_finalized_evaluation_document();
--- END 20260827140000_employee_file_documents_and_storage.sql
-
--- BEGIN 20260828100000_phase1_profile_verification_signatures.sql
--- Phase 1: employee master profiles, public verification, signatures, and submission safeguards.
 ALTER TABLE public.employees
   ADD COLUMN IF NOT EXISTS first_name text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS middle_name text NOT NULL DEFAULT '',
@@ -207,9 +198,6 @@ WHERE permission_code = 'employees.view'
 INSERT INTO public.role_permissions (role_code, permission_code)
 VALUES ('PRESIDENT', 'employees.view')
 ON CONFLICT DO NOTHING;
--- END 20260828100000_phase1_profile_verification_signatures.sql
-
--- BEGIN 20260831120000_google_access_gate_and_employee_email_tracking.sql
 CREATE TABLE IF NOT EXISTS public.public_evaluation_access_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   cycle_id uuid NOT NULL REFERENCES public.evaluation_cycles(id) ON DELETE CASCADE,
@@ -254,10 +242,6 @@ DROP TRIGGER IF EXISTS trg_employee_email_deliveries_updated ON public.employee_
 CREATE TRIGGER trg_employee_email_deliveries_updated
 BEFORE UPDATE ON public.employee_email_deliveries
 FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
--- END 20260831120000_google_access_gate_and_employee_email_tracking.sql
-
--- BEGIN 20260901100000_internal_user_signatures.sql
--- Add signature support for all internal users (Supervisor, Reviewing Supervisor, HR, Committee, President)
 CREATE TABLE IF NOT EXISTS public.internal_user_signatures (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   evaluation_id uuid NOT NULL REFERENCES public.evaluations(id) ON DELETE CASCADE,
@@ -285,7 +269,6 @@ CREATE INDEX IF NOT EXISTS idx_internal_user_signatures_stage
 CREATE UNIQUE INDEX IF NOT EXISTS uq_internal_user_signatures_eval_user_stage
   ON public.internal_user_signatures(evaluation_id, user_id, stage);
 
--- Add RLS policies for internal user signatures
 ALTER TABLE public.internal_user_signatures ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view signatures for evaluations they have access to"
@@ -307,10 +290,6 @@ CREATE POLICY "Users can update their own signatures"
   FOR UPDATE
   USING (user_id = auth.uid() AND public.has_permission(auth.uid(), 'evaluations.step2'))
   WITH CHECK (user_id = auth.uid() AND public.has_permission(auth.uid(), 'evaluations.step2'));
--- END 20260901100000_internal_user_signatures.sql
-
--- BEGIN 20260906120000_digital_201_file_access.sql
--- Digital 201 File access and history query indexes.
 INSERT INTO public.permissions(code, module, description)
 VALUES ('evaluations.view_201', 'Digital 201 File', 'View authorized employee Digital 201 Files')
 ON CONFLICT (code) DO NOTHING;
@@ -328,13 +307,9 @@ CREATE INDEX IF NOT EXISTS idx_ratings_evaluation_criterion_type
 CREATE INDEX IF NOT EXISTS idx_audit_employee_occurred
   ON public.audit_logs(employee_id, occurred_at DESC)
   WHERE employee_id IS NOT NULL;
--- END 20260906120000_digital_201_file_access.sql
-
--- BEGIN 20260906140000_ai_action_idempotency.sql
 -- Correlation IDs supplied by retry-safe AI actions must be unique.
 -- Existing audit rows use generated UUID correlation IDs, so this partial
 -- index preserves nullable legacy rows while protecting action retries.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_audit_logs_correlation_id_unique
   ON public.audit_logs (correlation_id)
   WHERE correlation_id IS NOT NULL;
--- END 20260906140000_ai_action_idempotency.sql

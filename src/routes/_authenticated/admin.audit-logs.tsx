@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -30,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
 import { listAuditEvents } from "@/lib/admin.functions";
 import { humanizeToken } from "@/lib/domain";
 
@@ -258,7 +258,7 @@ function AuditLogsPage() {
                     <TableCell className="text-xs font-semibold">{humanizeToken(row.action)}</TableCell>
                     <TableCell className="text-sm">{row.module}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {row.entity_type ?? "—"}
+                      {row.entity_type ?? "â€”"}
                     </TableCell>
                     <TableCell>
                       <Badge variant={row.result === "SUCCESS" ? "secondary" : "destructive"}>
@@ -278,7 +278,7 @@ function AuditLogsPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {query.data?.totalCount ? current * PAGE_SIZE + 1 : 0}–{Math.min(query.data?.totalCount ?? 0, (current + 1) * PAGE_SIZE)} of {query.data?.totalCount ?? 0}
+              Showing {query.data?.totalCount ? current * PAGE_SIZE + 1 : 0}â€“{Math.min(query.data?.totalCount ?? 0, (current + 1) * PAGE_SIZE)} of {query.data?.totalCount ?? 0}
             </p>
             <div className="flex gap-2">
               <Button
@@ -310,15 +310,15 @@ function AuditLogsPage() {
           </SheetHeader>
           <div className="space-y-3 px-4 pb-10 text-sm">
             <Detail label="User" value={actorName(selected?.actor_user_id ?? null)} />
-            <Detail label="User role" value={selected?.actor_role ?? "—"} />
-            <Detail label="Area" value={selected?.module ?? "—"} />
-            <Detail label="Record type" value={selected?.entity_type ?? "—"} />
-            <Detail label="Record ID" value={selected?.entity_id ?? "—"} />
-            <Detail label="Employee ID" value={selected?.employee_id ?? "—"} />
-            <Detail label="Evaluation ID" value={selected?.evaluation_id ?? "—"} />
-            <Detail label="Reference ID" value={selected?.correlation_id ?? "—"} />
-            <Detail label="Result" value={selected?.result ?? "—"} />
-            <Detail label="Reason" value={selected?.reason ?? "—"} />
+            <Detail label="User role" value={selected?.actor_role ?? "â€”"} />
+            <Detail label="Area" value={selected?.module ?? "â€”"} />
+            <Detail label="Record type" value={selected?.entity_type ?? "â€”"} />
+            <Detail label="Record ID" value={selected?.entity_id ?? "â€”"} />
+            <Detail label="Employee ID" value={selected?.employee_id ?? "â€”"} />
+            <Detail label="Evaluation ID" value={selected?.evaluation_id ?? "â€”"} />
+            <Detail label="Reference ID" value={selected?.correlation_id ?? "â€”"} />
+            <Detail label="Result" value={selected?.result ?? "â€”"} />
+            <Detail label="Reason" value={selected?.reason ?? "â€”"} />
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Previous value</p>
               <pre className="mt-1 overflow-x-auto rounded-md bg-muted p-2 text-xs">
@@ -382,3 +382,4 @@ function FilterSelect({
     </div>
   );
 }
+

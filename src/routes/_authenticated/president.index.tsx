@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState, LoadingBlock, PageHeader, StatCard, formatDateTime } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader, StatCard, formatDateTime } from "@/components/shared/shared-ui";
 import { getPresidentStats } from "@/lib/president.functions";
 import { humanizeToken } from "@/lib/domain";
 
@@ -87,3 +87,4 @@ function PresidentDashboard() {
     </div>
   );
 }
+

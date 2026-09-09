@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LoadingBlock } from "@/components/ui-bits";
+import { LoadingBlock } from "@/components/shared/shared-ui";
 import { getPublicCycle, submitStep1, verifyEmployeeProfile } from "@/lib/public.functions";
 import { APP_NAME, RATING_SCALE } from "@/lib/domain";
 import { step1FormSchema } from "@/lib/schemas";
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/evaluation/$cycleToken")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Employee self-assessment — Priority Handling Logistics, Inc." },
+      { title: "Employee self-assessment â€” Priority Handling Logistics, Inc." },
       { name: "description", content: "Complete your annual Step 1 performance self-assessment." },
       { property: "og:title", content: "Employee self-assessment" },
       { property: "og:description", content: "Complete your annual Step 1 performance self-assessment." },
@@ -280,7 +280,7 @@ function PublicEvaluationPage() {
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{APP_NAME}</p>
               <h1 className="text-sm font-semibold text-foreground">
-                {cycle.name} · {cycle.year}
+                {cycle.name} Â· {cycle.year}
               </h1>
             </div>
           </div>
@@ -431,10 +431,11 @@ function PublicEvaluationPage() {
         </Card>
 
         <Button type="submit" className="w-full text-base font-semibold shadow-md py-6" size="lg" disabled={pending}>
-          {pending ? "Submitting…" : "Submit assessment"}
+          {pending ? "Submittingâ€¦" : "Submit assessment"}
         </Button>
         </> : <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Verify your employee profile to begin the assessment.</CardContent></Card>}
       </form>
     </div>
   );
 }
+

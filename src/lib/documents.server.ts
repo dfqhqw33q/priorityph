@@ -118,10 +118,8 @@ export function generateEvaluationHTML(params: {
     .join("");
 
   const renderCheckboxOptions = (selected: string, options: string[]) => {
-    // Normalize selected value for comparison
     const normalizedSelected = selected.trim().replace(/_/g, " ").toLowerCase();
     
-    // Render all options with checkboxes (☑ for selected, ☐ for unselected)
     return options
       .map((option) => {
         const normalizedOption = option.replace(/_/g, " ").toLowerCase();
@@ -835,7 +833,6 @@ export async function generateEvaluationData(
   const admin = await getAdmin();
 
   try {
-    // Fetch evaluation with its cycle
     const { data: evaluation, error: evalError } = (await admin
       .from("evaluations")
       .select(
@@ -853,7 +850,6 @@ export async function generateEvaluationData(
 
     const cycle = (evaluation as never as { evaluation_cycles: { name: string; year: number; starts_at: string; ends_at: string; template_id: string } }).evaluation_cycles;
 
-    // First batch of queries
     const [criteriaResult, ratingsResult, stageSignatureResult, employeeRecordResult, employeeSignaturesResult, internalUserSignaturesResult, reviewingReviewResult, personnelResult, committeeResult] = await Promise.all([
       admin.from("evaluation_criteria").select("id, letter, title, description, position").eq("template_id", cycle.template_id).order("position"),
       admin.from("evaluation_ratings").select("criterion_id, evaluator_type, rating").eq("evaluation_id", evaluationId),
@@ -872,10 +868,8 @@ export async function generateEvaluationData(
 
     console.log(`[generateEvaluationData] Criteria: ${criteriaResult.data?.length || 0}, Ratings: ${ratingsResult.data?.length || 0}, Signatures: ${stageSignatureResult.data?.length || 0}, Employee: ${!!employeeRecordResult?.data}`);
 
-    // Get reviewing supervisor info
     const { data: step3Result } = (await admin.from("reviewing_supervisor_reviews").select("reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle()) as any;
 
-    // Fetch internal users that we need
     const userIds = [
       evaluation.supervisor_user_id,
       step3Result?.reviewer_user_id,
@@ -936,10 +930,8 @@ export async function generateEvaluationData(
     const periodFrom = formatFormDate(cycle.starts_at) || `January 1, ${cycle.year}`;
     const periodTo = formatFormDate(cycle.ends_at) || `December 31, ${cycle.year}`;
 
-    // Convert employee signature to base64 data URL using helper function
     const reviewedWithMeSignature = await convertSignatureToDataUrl(admin, (employeeSignaturesResult.data?.[0] ?? null) as any);
 
-    // Get employee submission date
     const reviewedWithMeDateStr = evaluation.employee_submitted_at ? formatDate(evaluation.employee_submitted_at) : "—";
 
     // Use the actual saved stage signatures from the submitted workflow, with the internal-user table as a fallback only.
@@ -956,13 +948,11 @@ export async function generateEvaluationData(
     const presidentStage = stageSignatureMap.get("PRESIDENT") ?? internalSignatureMap.get("PRESIDENT_STEP3");
     const personnelSignature = personnelStage ? await convertSignatureToDataUrl(admin, personnelStage as any) : undefined;
     const committeeSignature = committeeStage ? await convertSignatureToDataUrl(admin, committeeStage as any) : undefined;
-    // Use current unsaved signature from UI if provided, otherwise use saved data
     const presidentSignature = options.presidentSignatureData || (presidentStage ? await convertSignatureToDataUrl(admin, presidentStage as any) : undefined);
     const raterStep2Date = evaluation.supervisor_step2_date ?? (stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at ?? null;
     const reviewerStep3Date = reviewingReviewResult.data?.reviewing_supervisor_date ?? (stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")?.signed_at ?? null;
     const personnelDate = personnelStage?.signed_at ?? personnelResult.data?.submitted_at ?? null;
     const committeeDate = committeeStage?.signed_at ?? committeeResult.data?.submitted_at ?? null;
-    // Use today's date if current unsaved signature is provided (for preview), otherwise use saved date
     const approvedDate = options.presidentSignatureData ? new Date().toISOString() : (presidentStage?.signed_at ?? evaluation.finalized_at ?? null);
 
     return {
@@ -1028,7 +1018,6 @@ export async function generateEvaluationData(
       committeeTitle: committeeUser?.job_title ?? "Performance Evaluation Committee",
       committeeDate: formatDate(committeeDate),
       committeeSignature,
-      // Use current President name if provided (for preview), otherwise use saved data
       approvedByName: options.presidentName || (presidentUser?.full_name ?? ""),
       approvedByTitle: presidentUser?.job_title ?? "President",
       approvedByDate: formatDate(approvedDate),

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
 import {
   createOtherRecognitionCandidate,
   generateRecognitionCertificate,
@@ -26,7 +26,7 @@ import {
   reviewRecognitionCandidate,
   type RecognitionCandidate,
   type RecognitionRecord,
-} from "@/lib/recognition.functions";
+} from "@/features/social-recognition/recognition.functions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const types = [
@@ -396,7 +396,7 @@ function ReviewDialog({
         <DialogHeader>
           <DialogTitle>Review recognition candidate</DialogTitle>
           <DialogDescription>
-            {candidate?.employeeName} · {candidate?.recognitionType}
+            {candidate?.employeeName} Â· {candidate?.recognitionType}
           </DialogDescription>
         </DialogHeader>
         <p className="whitespace-pre-wrap text-sm">{candidate?.reason}</p>
@@ -491,7 +491,7 @@ function OtherDialog({
             onChange={setSourceEvaluationId}
             options={available.map((evaluation) => ({
               value: evaluation.id,
-              label: `${evaluation.full_name_snapshot} · ${evaluation.evaluation_cycles?.year ?? ""}`,
+              label: `${evaluation.full_name_snapshot} Â· ${evaluation.evaluation_cycles?.year ?? ""}`,
             }))}
           />
           <div className="space-y-1.5">
@@ -519,3 +519,4 @@ function OtherDialog({
     </Dialog>
   );
 }
+

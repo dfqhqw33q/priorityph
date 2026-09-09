@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -16,13 +16,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
 import {
   listDevelopmentEmployees,
   listDevelopmentRecords,
   updateDevelopmentRecord,
   type DevelopmentRecord,
-} from "@/lib/development.functions";
+} from "@/features/learning-management/development.functions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const activities = [
@@ -186,7 +186,7 @@ function DevelopmentRecordsPage() {
                           : "View evaluation"}
                       </Link>
                     ) : (
-                      "—"
+                      "â€”"
                     )}
                   </td>
                   <td className="px-4 py-3">{record.status}</td>
@@ -194,7 +194,7 @@ function DevelopmentRecordsPage() {
                     {formatDateTime(record.recordDate)}
                   </td>
                   <td className="max-w-xs whitespace-pre-wrap px-4 py-3 text-xs text-muted-foreground">
-                    {record.notes || "—"}
+                    {record.notes || "â€”"}
                   </td>
                   <td className="px-4 py-3">
                     <Button variant="outline" size="sm" onClick={() => setEditing(record)}>
@@ -313,7 +313,7 @@ function RecordDialog({
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Employee: {record?.employeeName ?? "—"} ({record?.employeeNumber ?? "—"})
+            Employee: {record?.employeeName ?? "â€”"} ({record?.employeeNumber ?? "â€”"})
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="development-need">Development Need</Label>
@@ -370,3 +370,4 @@ function RecordDialog({
     </Dialog>
   );
 }
+

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { EmployeeProfileManagementPage } from "@/components/employee-profile-management";
+import { EmployeeProfileManagementPage } from "@/features/employee-management/components/employee-profile-management";
 
 export const Route = createFileRoute("/_authenticated/admin/employee-profiles")({
   head: () => ({

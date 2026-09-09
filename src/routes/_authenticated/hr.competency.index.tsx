@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { EmptyState, LoadingBlock, PageHeader } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader } from "@/components/shared/shared-ui";
 import { listDigital201Employees } from "@/lib/reports.functions";
 
 export const Route = createFileRoute("/_authenticated/hr/competency/")({
@@ -83,10 +83,10 @@ function CompetencyIndexPage() {
                     </Link>
                     <p className="text-xs text-muted-foreground">{employee.employee_number}</p>
                   </td>
-                  <td className="px-4 py-3">{employee.job_title || "—"}</td>
-                  <td className="px-4 py-3">{employee.division || "—"}</td>
+                  <td className="px-4 py-3">{employee.job_title || "â€”"}</td>
+                  <td className="px-4 py-3">{employee.division || "â€”"}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {employee.employment_status || "—"}
+                    {employee.employment_status || "â€”"}
                   </td>
                 </tr>
               ))}
@@ -97,3 +97,4 @@ function CompetencyIndexPage() {
     </div>
   );
 }
+

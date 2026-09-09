@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
@@ -15,7 +15,7 @@ import {
   ReasonDialog,
   StatCard,
   formatDateTime,
-} from "@/components/ui-bits";
+} from "@/components/shared/shared-ui";
 import {
   changeCycleStatus,
   deleteDraftCycle,
@@ -98,8 +98,8 @@ function CycleDetailPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`${cycle.name} · ${cycle.year}`}
-        description={`${formatDateTime(cycle.starts_at)} → ${formatDateTime(cycle.ends_at)}`}
+        title={`${cycle.name} Â· ${cycle.year}`}
+        description={`${formatDateTime(cycle.starts_at)} â†’ ${formatDateTime(cycle.ends_at)}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <CycleStatusBadge status={cycle.status} />
@@ -230,3 +230,4 @@ function CycleDetailPage() {
     </div>
   );
 }
+

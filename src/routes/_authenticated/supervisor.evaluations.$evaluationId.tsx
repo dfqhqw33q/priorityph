@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
@@ -24,13 +24,13 @@ import {
   LoadingBlock,
   PageHeader,
   formatDateTime,
-} from "@/components/ui-bits";
-import { EvaluationRatingCards, ratingFor } from "@/components/rating-matrix";
+} from "@/components/shared/shared-ui";
+import { EvaluationRatingCards, ratingFor } from "@/features/performance-management/components/rating-matrix";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluation } from "@/lib/evaluations.functions";
-import { saveRaterStep2 } from "@/lib/phase2.functions";
+import { saveRaterStep2 } from "@/lib/evaluation-workflow.functions";
 import { recordRaterAiAction, suggestRaterFields } from "@/lib/ai.functions";
-import { SignatureField } from "@/components/signature-field";
+import { SignatureField } from "@/features/performance-management/components/signature-field";
 import { userErrorMessage } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$evaluationId")({
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$ev
       { property: "og:title", content: "Supervisor review" },
       {
         property: "og:description",
-        content: "Rate performance factors A–J and submit to the Reviewing Supervisor.",
+        content: "Rate performance factors Aâ€“J and submit to the Reviewing Supervisor.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -572,7 +572,7 @@ function SupervisorReviewPage() {
     <div className="space-y-6">
       <PageHeader
         title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year}) · Employee no. ${detail.employee_number_snapshot}`}
+        description={`${detail.cycle_name} (${detail.cycle_year}) Â· Employee no. ${detail.employee_number_snapshot}`}
         actions={<EvaluationStatusBadge status={detail.status} />}
       />
 
@@ -646,7 +646,7 @@ function SupervisorReviewPage() {
                 <p className="font-semibold text-primary">Competency analysis assistance</p>
                 <p className="text-xs text-muted-foreground">
                   Generate coordinated suggestions for the development and comments fields from the
-                  recorded A–J ratings.
+                  recorded Aâ€“J ratings.
                 </p>
               </div>
               <Button
@@ -884,12 +884,12 @@ function SupervisorReviewPage() {
             onClick={() => draftMutation.mutate()}
             disabled={draftMutation.isPending}
           >
-            {draftMutation.isPending ? "Saving…" : "Save draft"}
+            {draftMutation.isPending ? "Savingâ€¦" : "Save draft"}
           </Button>
         ) : null}
         {editable && can("evaluations.step2") ? (
           <Button onClick={handleSubmitClick} disabled={submitMutation.isPending}>
-            {submitMutation.isPending ? "Submitting…" : "Submit for Reviewing Supervisor"}
+            {submitMutation.isPending ? "Submittingâ€¦" : "Submit for Reviewing Supervisor"}
           </Button>
         ) : null}
         <Button variant="ghost" onClick={() => navigate({ to: "/supervisor/evaluations" })}>
@@ -927,7 +927,8 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-medium text-foreground">{value || "—"}</p>
+      <p className="mt-0.5 font-medium text-foreground">{value || "â€”"}</p>
     </div>
   );
 }
+

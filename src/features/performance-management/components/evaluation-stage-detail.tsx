@@ -1,9 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-type Phase2Values = {
+type EvaluationStageValues = {
   [key: string]: string | undefined;
   strengths?: string;
   weaknesses?: string;
@@ -28,18 +28,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EvaluationRatingCards, ratingFor } from "@/components/rating-matrix";
-import { SignatureField, type SignatureValue } from "@/components/signature-field";
-import { EvaluationDocumentPreview } from "@/components/evaluation-document-preview";
-import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader } from "@/components/ui-bits";
+import { EvaluationRatingCards, ratingFor } from "@/features/performance-management/components/rating-matrix";
+import { SignatureField, type SignatureValue } from "@/features/performance-management/components/signature-field";
+import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
+import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader } from "@/components/shared/shared-ui";
 import {
-  getPhase2Evaluation,
+  getEvaluationStage,
   approveEvaluation,
   saveRaterStep2,
   submitCommitteeReview,
   submitPersonnelProcessing,
   submitReviewingSupervisor,
-} from "@/lib/phase2.functions";
+} from "@/lib/evaluation-workflow.functions";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
 import { userErrorMessage } from "@/lib/validation";
 import {
@@ -53,7 +53,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-medium text-foreground">{value || "—"}</p>
+      <p className="mt-0.5 font-medium text-foreground">{value || "â€”"}</p>
     </div>
   );
 }
@@ -134,10 +134,10 @@ function ReviewAiField({
   );
 }
 
-export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evaluationId: string }) {
+export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; evaluationId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const fetch = useServerFn(getPhase2Evaluation);
+  const fetch = useServerFn(getEvaluationStage);
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const getReviewingSuggestions = useServerFn(suggestReviewingSupervisorFields);
   const recordReviewingAction = useServerFn(recordReviewingSupervisorAiAction);
@@ -147,7 +147,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
     retry: false,
   });
   const detail = query.data;
-  const [values, setValues] = useState<Phase2Values>({});
+  const [values, setValues] = useState<EvaluationStageValues>({});
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
   const [signature, setSignature] = useState<SignatureValue | undefined>();
   const [action, setAction] = useState("RETAIN");
@@ -338,7 +338,6 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
   async function openDocument() {
     setDocumentOpen(true);
     try {
-      // For PRESIDENT stage, pass current unsaved signature for preview
       const params = { evaluationId };
       if (stage === "PRESIDENT" && signature) {
         Object.assign(params, { presidentSignatureData: signature.data });
@@ -478,7 +477,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
     <div className="space-y-6">
       <PageHeader
         title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year}) · Employee no. ${detail.employee_number_snapshot}`}
+        description={`${detail.cycle_name} (${detail.cycle_year}) Â· Employee no. ${detail.employee_number_snapshot}`}
         actions={<EvaluationStatusBadge status={detail.status} />}
       />
       <Card>
@@ -497,9 +496,9 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
         <CardHeader>
           <CardTitle className="text-base">
             {stage === "RATER"
-              ? "Step 2 — Conclusions and comments"
+              ? "Step 2 â€” Conclusions and comments"
               : stage === "REVIEWING_SUPERVISOR"
-                ? "Step 3 — Review"
+                ? "Step 3 â€” Review"
                 : stage === "PERSONNEL"
                   ? "Complete evaluation file (for review)"
                   : stage === "COMMITTEE"
@@ -511,7 +510,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
           {stage === "REVIEWING_SUPERVISOR" ? (
             <>
               <div>
-                <h3 className="mb-3 text-sm font-semibold">STEP 1 — Performance Evaluation</h3>
+                <h3 className="mb-3 text-sm font-semibold">STEP 1 â€” Performance Evaluation</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={ratings}
@@ -534,7 +533,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                 />
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">STEP 2 — Conclusions and comments (read-only)</h3>
+                <h3 className="font-semibold">STEP 2 â€” Conclusions and comments (read-only)</h3>
                 {[
                   ["Overall rating explanation", "supervisor_step2_overall_explanation"],
                   ["Principal Strengths", "supervisor_step2_strengths"],
@@ -553,7 +552,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                   <div key={key}>
                     <p className="text-xs font-semibold text-muted-foreground">{label}</p>
                     <p className="whitespace-pre-wrap text-sm">
-                      {String((detail as Record<string, unknown>)[key] ?? "—")}
+                      {String((detail as Record<string, unknown>)[key] ?? "â€”")}
                     </p>
                   </div>
                 ))}
@@ -580,7 +579,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
           {["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(stage) ? (
             <>
               <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">STEP 1 — Performance Evaluation (read-only)</h3>
+                <h3 className="font-semibold">STEP 1 â€” Performance Evaluation (read-only)</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={Object.fromEntries(
@@ -610,7 +609,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
                 <h3 className="font-semibold">
-                  STEP 2 — Supervisor conclusions and comments (read-only)
+                  STEP 2 â€” Supervisor conclusions and comments (read-only)
                 </h3>
                 {[
                   ["Overall rating explanation", "supervisor_step2_overall_explanation"],
@@ -630,13 +629,13 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                   <div key={key}>
                     <p className="text-xs font-semibold text-muted-foreground">{label}</p>
                     <p className="whitespace-pre-wrap text-sm">
-                      {String((detail as Record<string, unknown>)[key] ?? "—")}
+                      {String((detail as Record<string, unknown>)[key] ?? "â€”")}
                     </p>
                   </div>
                 ))}
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">STEP 3 — Reviewing Supervisor review (read-only)</h3>
+                <h3 className="font-semibold">STEP 3 â€” Reviewing Supervisor review (read-only)</h3>
                 {(() => {
                   const accStages = (
                     detail as Record<string, unknown> & {
@@ -650,7 +649,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                       <div>
                         <p className="text-xs font-semibold text-muted-foreground">Comments</p>
                         <p className="whitespace-pre-wrap text-sm">
-                          {String(revSupReview["comments"] ?? "—")}
+                          {String(revSupReview["comments"] ?? "â€”")}
                         </p>
                       </div>
                       <div>
@@ -658,7 +657,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                           Recommendations
                         </p>
                         <p className="whitespace-pre-wrap text-sm">
-                          {String(revSupReview["recommendations"] ?? "—")}
+                          {String(revSupReview["recommendations"] ?? "â€”")}
                         </p>
                       </div>
                     </>
@@ -686,46 +685,46 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                           <p className="text-xs font-semibold text-muted-foreground">
                             Present Salary
                           </p>
-                          <p>{String(personnel["present_salary"] ?? "—")}</p>
+                          <p>{String(personnel["present_salary"] ?? "â€”")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Last Increase Date
                           </p>
-                          <p>{String(personnel["last_increase_date"] ?? "—")}</p>
+                          <p>{String(personnel["last_increase_date"] ?? "â€”")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Last Increase Amount
                           </p>
-                          <p>{String(personnel["last_increase_amount"] ?? "—")}</p>
+                          <p>{String(personnel["last_increase_amount"] ?? "â€”")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Total Points
                           </p>
-                          <p>{String(personnel["total_points"] ?? "—")}</p>
+                          <p>{String(personnel["total_points"] ?? "â€”")}</p>
                         </div>
                         <div className="sm:col-span-2">
                           <p className="text-xs font-semibold text-muted-foreground">
                             Nature of Last Increase
                           </p>
                           <p className="whitespace-pre-wrap">
-                            {String(personnel["last_increase_nature"] ?? "—")}
+                            {String(personnel["last_increase_nature"] ?? "â€”")}
                           </p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Adjective Rating
                           </p>
-                          <p>{String(personnel["adjective_rating"] ?? "—")}</p>
+                          <p>{String(personnel["adjective_rating"] ?? "â€”")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Recommended Increase / Bonus
                           </p>
                           <p className="whitespace-pre-wrap">
-                            {String(personnel["recommended_increase_bonus"] ?? "—")}
+                            {String(personnel["recommended_increase_bonus"] ?? "â€”")}
                           </p>
                         </div>
                       </div>
@@ -749,14 +748,14 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                           <p className="text-xs font-semibold text-muted-foreground">
                             Final Action
                           </p>
-                          <p>{String(committee["final_action"] ?? "—")}</p>
+                          <p>{String(committee["final_action"] ?? "â€”")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Action Details
                           </p>
                           <p className="whitespace-pre-wrap">
-                            {String(committee["action_details"] ?? "—")}
+                            {String(committee["action_details"] ?? "â€”")}
                           </p>
                         </div>
                         <div>
@@ -764,7 +763,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                             Committee Recommendation
                           </p>
                           <p className="whitespace-pre-wrap">
-                            {String(committee["recommendation"] ?? "—")}
+                            {String(committee["recommendation"] ?? "â€”")}
                           </p>
                         </div>
                       </div>
@@ -864,7 +863,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             </>
           ) : stage === "PERSONNEL" ? (
             <>
-              <h3 className="text-sm font-semibold">Personnel Office section — editable</h3>
+              <h3 className="text-sm font-semibold">Personnel Office section â€” editable</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label>Present salary</Label>
@@ -899,13 +898,13 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
                   label="Total points (calculated)"
                   value={
                     detail.score?.finalScore === null || detail.score?.finalScore === undefined
-                      ? "—"
+                      ? "â€”"
                       : String(detail.score.finalScore)
                   }
                 />
                 <Field
                   label="Adjective rating (calculated)"
-                  value={detail.score?.finalRatingLabel ?? "—"}
+                  value={detail.score?.finalRatingLabel ?? "â€”"}
                 />
               </div>
               {field("lastIncreaseNature", "Nature of last increase", false)}
@@ -913,7 +912,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             </>
           ) : stage === "COMMITTEE" ? (
             <>
-              <h3 className="text-sm font-semibold">Committee recommendation — editable</h3>
+              <h3 className="text-sm font-semibold">Committee recommendation â€” editable</h3>
               <div>
                 <Label>Final action *</Label>
                 <select
@@ -941,7 +940,7 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
             </>
           ) : (
             <>
-              <h3 className="text-sm font-semibold">President final approval — editable</h3>
+              <h3 className="text-sm font-semibold">President final approval â€” editable</h3>
               <div>
                 <Label>Decision *</Label>
                 <select
@@ -1037,3 +1036,4 @@ export function Phase2StageDetail({ stage, evaluationId }: { stage: Stage; evalu
     </div>
   );
 }
+

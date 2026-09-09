@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -43,7 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EmptyState, LoadingBlock, PageHeader, ReasonDialog, formatDateTime } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader, ReasonDialog, formatDateTime } from "@/components/shared/shared-ui";
 import { useAccess } from "@/hooks/use-access";
 import {
   applyUserAccessAction,
@@ -397,7 +397,7 @@ function AdminUsersPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {current * PAGE_SIZE + 1}–{Math.min(rows.length, (current + 1) * PAGE_SIZE)} of{" "}
+              Showing {current * PAGE_SIZE + 1}â€“{Math.min(rows.length, (current + 1) * PAGE_SIZE)} of{" "}
               {rows.length}
             </p>
             <div className="flex gap-2">
@@ -546,7 +546,7 @@ function AdminUsersPage() {
                     <li key={event.id} className="flex justify-between gap-2 py-2">
                       <span>{humanizeToken(event.event_type)}</span>
                       <span className="text-xs text-muted-foreground">
-                        {event.result} · {formatDateTime(event.occurred_at)}
+                        {event.result} Â· {formatDateTime(event.occurred_at)}
                       </span>
                     </li>
                   ))}
@@ -666,10 +666,11 @@ function CreateUserDialog({
             Cancel
           </Button>
           <Button onClick={submit} disabled={pending}>
-            {pending ? "Creating…" : "Create user"}
+            {pending ? "Creatingâ€¦" : "Create user"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+

@@ -184,7 +184,6 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
     .maybeSingle();
   if (!evaluation) return { status: "SKIPPED" as const };
 
-  // Get the employee's email from the access session
   const { data: accessRows } = await admin
     .from("public_evaluation_access_sessions" as never)
     .select("email")
@@ -253,7 +252,6 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
   }
 
   try {
-    // Generate the finalized evaluation document
     const evaluationData = await generateEvaluationData(evaluationId);
     const documentPdf = await generateEmployeeFinalizedBrowserPDF(evaluationData);
     const base64Pdf = Buffer.from(documentPdf).toString("base64");
@@ -510,7 +508,6 @@ export const submitStep1 = createServerFn({ method: "POST" })
       throw validationError("Please rate every factor exactly once");
     }
 
-    // Master employee records are created only by authorized administrators.
     const { data: employee } = await admin
       .from("employees")
       .select(

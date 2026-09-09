@@ -32,7 +32,7 @@ const transitions: Partial<Record<EvaluationStatus, EvaluationStatus[]>> = {
   ],
 };
 
-export const getPhase2Evaluation = createServerFn({ method: "GET" })
+export const getEvaluationStage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
@@ -165,7 +165,6 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
         stageSignature = { ...stageSignature, signature_data: signed?.signedUrl ?? null };
       }
     }
-    // Load accumulated stage data for later-stage roles
     let accumulatedStages: Record<string, unknown> = {};
     if (["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(data.stage)) {
       const [reviewingSup, personnel, committee] = await Promise.all([
@@ -200,7 +199,7 @@ export const getPhase2Evaluation = createServerFn({ method: "GET" })
     };
   });
 
-export const listPhase2Queue = createServerFn({ method: "GET" })
+export const listEvaluationStageQueue = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
@@ -374,13 +373,13 @@ async function transition(
         finalizedAt: finalizationStamp,
         finalizationReason: reason,
       });
-      const { ensureDevelopmentRecordsForEvaluation } = await import("./development.functions");
+      const { ensureDevelopmentRecordsForEvaluation } = await import("@/features/learning-management/development.functions");
       const {
         ensureTrainingRecommendationsForEvaluation,
         ensureTrainingRequirementForCommitteeDecision,
-      } = await import("./training.functions");
-      const { ensureSuccessionProfileForEvaluation } = await import("./succession.functions");
-      const { ensureRecognitionCandidatesForEvaluation } = await import("./recognition.functions");
+      } = await import("@/features/training-management/training.functions");
+      const { ensureSuccessionProfileForEvaluation } = await import("@/features/succession-planning/succession.functions");
+      const { ensureRecognitionCandidatesForEvaluation } = await import("@/features/social-recognition/recognition.functions");
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
       await Promise.all([
         ensureDevelopmentRecordsForEvaluation(evaluationId),
@@ -391,7 +390,7 @@ async function transition(
         queueEmployeeFinalizedStep1Email(evaluationId),
       ]);
     } catch (error) {
-      console.error("[phase2] final evaluation downstream generation failed", error);
+      console.error("[evaluation-workflow] final evaluation downstream generation failed", error);
       throw error;
     }
   }

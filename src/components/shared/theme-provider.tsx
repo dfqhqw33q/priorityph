@@ -34,7 +34,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         return stored;
       }
     } catch {
-      // localStorage may be inaccessible in certain environments
     }
     return "light";
   });
@@ -46,7 +45,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (stored === "dark") return "dark";
       if (stored === "light") return "light";
     } catch {
-      // Fallback
     }
     return "light";
   });
@@ -60,7 +58,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, nextTheme);
     } catch {
-      // ignore storage errors
     }
     setThemeState(nextTheme);
   }

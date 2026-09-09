@@ -1,15 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader, formatDateTime } from "@/components/ui-bits";
+import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
 import { getEvaluationHistory } from "@/lib/reports.functions";
 import { humanizeToken } from "@/lib/domain";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
-import { EvaluationDocumentPreview } from "@/components/evaluation-document-preview";
+import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
 
 export const Route = createFileRoute("/_authenticated/hr/evaluation-history/$evaluationId")({
   component: HistoryDetailPage,
@@ -57,7 +57,7 @@ function HistoryDetailPage() {
     <div className="space-y-6">
       <PageHeader
         title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year}) · ${detail.employee_number_snapshot}`}
+        description={`${detail.cycle_name} (${detail.cycle_year}) Â· ${detail.employee_number_snapshot}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <EvaluationStatusBadge status={detail.status} />
@@ -92,7 +92,7 @@ function HistoryDetailPage() {
         <Info label="Self-assessment submitted" value={formatDateTime(detail.employee_submitted_at)} />
         <Info label="Supervisor review submitted" value={formatDateTime(detail.supervisor_submitted_at)} />
         <Info label="Finalized" value={formatDateTime(detail.finalized_at)} />
-        <Info label="Final rating" value={score?.finalRatingLabel ?? "—"} />
+        <Info label="Final rating" value={score?.finalRatingLabel ?? "â€”"} />
       </div>
 
       <Card className="border border-border bg-card shadow-sm">
@@ -105,7 +105,7 @@ function HistoryDetailPage() {
           <Info label="Job title" value={detail.job_title_snapshot} />
           <Info label="Division / department" value={detail.division_snapshot} />
           <Info label="Section / unit" value={detail.section_snapshot} />
-          <Info label="Supervisor" value={detail.supervisor_name ?? "—"} />
+          <Info label="Supervisor" value={detail.supervisor_name ?? "â€”"} />
         </CardContent>
       </Card>
 
@@ -114,10 +114,10 @@ function HistoryDetailPage() {
           <CardTitle className="text-base font-bold">Scores</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 text-sm sm:grid-cols-3">
-          <Info label="Employee self-rating average" value={String(score?.employeeAverage ?? "—")} />
-          <Info label="Supervisor rating average" value={String(score?.supervisorAverage ?? "—")} />
-          <Info label="Final score" value={String(score?.finalScore ?? "—")} />
-          <Info label="Scoring version" value={score?.ruleVersion ? String(score.ruleVersion) : "—"} />
+          <Info label="Employee self-rating average" value={String(score?.employeeAverage ?? "â€”")} />
+          <Info label="Supervisor rating average" value={String(score?.supervisorAverage ?? "â€”")} />
+          <Info label="Final score" value={String(score?.finalScore ?? "â€”")} />
+          <Info label="Scoring version" value={score?.ruleVersion ? String(score.ruleVersion) : "â€”"} />
         </CardContent>
       </Card>
 
@@ -132,11 +132,11 @@ function HistoryDetailPage() {
             events.map((event) => (
               <div key={event.id} className="border-b border-border pb-3 text-sm last:border-0 last:pb-0">
                 <p className="font-semibold text-foreground">
-                  {humanizeToken(event.event_type)} · {event.actorName}
+                  {humanizeToken(event.event_type)} Â· {event.actorName}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDateTime(event.occurred_at)}
-                  {event.reason ? ` · ${event.reason}` : ""}
+                  {event.reason ? ` Â· ${event.reason}` : ""}
                 </p>
               </div>
             ))
@@ -155,11 +155,11 @@ function HistoryDetailPage() {
             auditTrail.map((event) => (
               <div key={event.id} className="border-b border-border pb-3 text-sm last:border-0 last:pb-0">
                 <p className="font-semibold text-foreground">
-                  {humanizeToken(event.action)} · {event.module}
+                  {humanizeToken(event.action)} Â· {event.module}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDateTime(event.occurred_at)}
-                  {event.reason ? ` · ${event.reason}` : ""}
+                  {event.reason ? ` Â· ${event.reason}` : ""}
                 </p>
               </div>
             ))
@@ -169,7 +169,7 @@ function HistoryDetailPage() {
 
       <div>
         <Link className="text-sm font-medium text-primary hover:underline" to="/hr/evaluation-history">
-          ← Back to evaluation history
+          â† Back to evaluation history
         </Link>
       </div>
     </div>
@@ -180,7 +180,8 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 font-medium text-foreground">{value || "—"}</p>
+      <p className="mt-1 font-medium text-foreground">{value || "â€”"}</p>
     </div>
   );
 }
+

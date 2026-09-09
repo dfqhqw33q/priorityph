@@ -1,4 +1,3 @@
-// Client-safe domain constants and types shared by UI, validation and server code.
 
 export const APP_NAME = "Priority Handling Logistics, Inc.";
 
@@ -316,9 +315,6 @@ export function roleLandingPath(roles: AppRole[]): string {
   return "/unauthorized";
 }
 
-// ---------------------------------------------------------------------------
-// Phase 8 — approved scoring configuration and calculated results
-// ---------------------------------------------------------------------------
 
 export const SCORING_RULE_STATUSES = ["DRAFT", "ACTIVE", "RETIRED"] as const;
 export type ScoringRuleStatus = (typeof SCORING_RULE_STATUSES)[number];

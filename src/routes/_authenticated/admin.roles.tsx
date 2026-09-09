@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EmptyState, LoadingBlock, PageHeader, ReasonDialog } from "@/components/ui-bits";
+import { EmptyState, LoadingBlock, PageHeader, ReasonDialog } from "@/components/shared/shared-ui";
 import { useAccess } from "@/hooks/use-access";
 import { listRoleMatrix, listUsers, setRolePermissions } from "@/lib/admin.functions";
 import { APP_ROLES, ROLE_LABELS, permissionLabel, type AppRole, type Permission } from "@/lib/domain";
@@ -222,3 +222,4 @@ function AdminRolesPage() {
     </div>
   );
 }
+

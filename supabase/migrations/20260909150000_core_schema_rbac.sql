@@ -1,9 +1,4 @@
-﻿-- Core schema and RBAC.
--- Consolidated from reviewed repository SQL modules; preserve dependency order.
-
--- BEGIN 20260826105519_initial_schema_and_rbac.sql
--- ============ ENUMS ============
-DO $$ BEGIN
+﻿DO $$ BEGIN
   CREATE TYPE public.app_role AS ENUM ('ADMINISTRATOR','PRESIDENT','HR','SUPERVISOR','REVIEWING_SUPERVISOR','COMMITTEE');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
@@ -32,12 +27,10 @@ DO $$ BEGIN
   CREATE TYPE public.employment_status AS ENUM ('ACTIVE','INACTIVE');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- ============ COMMON ============
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql SET search_path = public AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
 
--- ============ INTERNAL USERS ============
 CREATE TABLE IF NOT EXISTS public.internal_users (
   id uuid PRIMARY KEY,
   email text NOT NULL UNIQUE CHECK (position('@' in email) > 1),
@@ -84,7 +77,6 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
 );
 CREATE INDEX IF NOT EXISTS idx_user_roles_user ON public.user_roles(user_id);
 
--- ============ EMPLOYEES ============
 CREATE TABLE IF NOT EXISTS public.employees (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_number text NOT NULL UNIQUE CHECK (length(btrim(employee_number)) > 0),
@@ -100,7 +92,6 @@ CREATE INDEX IF NOT EXISTS idx_employees_name ON public.employees(lower(full_nam
 DROP TRIGGER IF EXISTS trg_employees_updated ON public.employees;
 CREATE TRIGGER trg_employees_updated BEFORE UPDATE ON public.employees FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ============ TEMPLATES ============
 CREATE TABLE IF NOT EXISTS public.evaluation_templates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL UNIQUE,
@@ -125,7 +116,6 @@ CREATE TABLE IF NOT EXISTS public.evaluation_criteria (
 );
 CREATE INDEX IF NOT EXISTS idx_criteria_template ON public.evaluation_criteria(template_id);
 
--- ============ CYCLES ============
 CREATE TABLE IF NOT EXISTS public.evaluation_cycles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -148,7 +138,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_cycles_year ON public.evaluation_cycles(ye
 DROP TRIGGER IF EXISTS trg_cycles_updated ON public.evaluation_cycles;
 CREATE TRIGGER trg_cycles_updated BEFORE UPDATE ON public.evaluation_cycles FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ============ EVALUATIONS ============
 CREATE TABLE IF NOT EXISTS public.evaluations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   cycle_id uuid NOT NULL REFERENCES public.evaluation_cycles(id) ON DELETE RESTRICT,
@@ -203,7 +192,6 @@ CREATE TABLE IF NOT EXISTS public.evaluation_events (
 );
 CREATE INDEX IF NOT EXISTS idx_eval_events_eval ON public.evaluation_events(evaluation_id);
 
--- ============ AUDIT ============
 CREATE TABLE IF NOT EXISTS public.audit_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   occurred_at timestamptz NOT NULL DEFAULT now(),
@@ -248,7 +236,6 @@ CREATE TABLE IF NOT EXISTS public.password_reset_events (
   occurred_at timestamptz NOT NULL DEFAULT now()
 );
 
--- ============ AUTHZ FUNCTIONS ============
 CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
@@ -332,7 +319,6 @@ DROP TRIGGER IF EXISTS trg_protect_locked_rating ON public.evaluation_ratings;
 CREATE TRIGGER trg_protect_locked_rating BEFORE UPDATE ON public.evaluation_ratings
 FOR EACH ROW EXECUTE FUNCTION public.protect_locked_rating();
 
--- ============ GRANTS ============
 GRANT SELECT ON public.internal_users TO authenticated;
 GRANT SELECT ON public.roles TO authenticated;
 GRANT SELECT ON public.permissions TO authenticated;
@@ -354,7 +340,6 @@ GRANT ALL ON public.internal_users, public.roles, public.permissions, public.rol
   public.evaluation_cycles, public.evaluations, public.evaluation_ratings, public.evaluation_events,
   public.audit_logs, public.login_events, public.password_reset_events TO service_role;
 
--- ============ RLS ============
 ALTER TABLE public.internal_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.permissions ENABLE ROW LEVEL SECURITY;
@@ -418,7 +403,6 @@ DROP POLICY IF EXISTS "password reset events viewable with permission" ON public
 CREATE POLICY "password reset events viewable with permission" ON public.password_reset_events FOR SELECT TO authenticated
 USING (public.has_permission(auth.uid(), 'audit.view'));
 
--- ============ SEED ============
 INSERT INTO public.roles(code, name, description) VALUES
  ('ADMINISTRATOR','Administrator','Technical administration, access control and audit'),
  ('PRESIDENT','President','Executive evaluation authority'),
@@ -482,9 +466,6 @@ INSERT INTO public.evaluation_criteria(template_id, letter, title, description, 
  ('11111111-1111-4111-8111-111111111111','I','DISCIPLINE','Consider the employee''s conduct on the job, attitude toward company rules, and efforts at promoting harmonious relationships among others.',9),
  ('11111111-1111-4111-8111-111111111111','J','SAFETY CONSCIOUSNESS/CARE OF EQUIPMENT','Consider the manner in which the employee handles themselves, materials, and equipment in a work situation and the employee''s safety consciousness.',10)
 ON CONFLICT (template_id, letter) DO NOTHING;
--- END 20260826105519_initial_schema_and_rbac.sql
-
--- BEGIN 20260826105553_security_function_grants.sql
 REVOKE ALL ON FUNCTION public.set_updated_at() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.has_permission(uuid, text) FROM PUBLIC, anon, authenticated;
@@ -495,8 +476,6 @@ REVOKE ALL ON FUNCTION public.protect_last_admin_user() FROM PUBLIC, anon, authe
 REVOKE ALL ON FUNCTION public.protect_finalized_evaluation() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.protect_locked_rating() FROM PUBLIC, anon, authenticated;
 
--- Required by the row-level security policies, which evaluate as the signed-in role.
 GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.has_permission(uuid, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_account_usable(uuid) TO authenticated;
--- END 20260826105553_security_function_grants.sql
