@@ -39,6 +39,7 @@ supabase/.temp/
 # Local/generated artifacts
 *.docx
 /testing/
+/docs/
 
 .vercel
 .env*
