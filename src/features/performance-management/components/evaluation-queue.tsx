@@ -232,7 +232,7 @@ export function EvaluationQueue({
                     <TableCell className="text-sm text-muted-foreground">{row.job_title_snapshot}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {row.division_snapshot}
-                      {row.section_snapshot ? ` Â· ${row.section_snapshot}` : ""}
+                      {row.section_snapshot ? `  -  ${row.section_snapshot}` : ""}
                     </TableCell>
                     <TableCell className="text-sm">
                       {row.cycle_name} ({row.cycle_year})
@@ -261,7 +261,7 @@ export function EvaluationQueue({
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {current * PAGE_SIZE + 1}â€“{Math.min(rows.length, (current + 1) * PAGE_SIZE)} of{" "}
+              Showing {current * PAGE_SIZE + 1}-{Math.min(rows.length, (current + 1) * PAGE_SIZE)} of{" "}
               {rows.length}
             </p>
             <div className="flex gap-2">

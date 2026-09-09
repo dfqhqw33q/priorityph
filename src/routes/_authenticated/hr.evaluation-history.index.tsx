@@ -64,7 +64,7 @@ function HistoryPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard label="Total evaluations" value={query.data.totalCount} />
           <StatCard label="Scored evaluations" value={query.data.summary.scored} />
-          <StatCard label="Average final score" value={query.data.summary.averageFinalScore?.toFixed(2) ?? "â€”"} />
+          <StatCard label="Average final score" value={query.data.summary.averageFinalScore?.toFixed(2) ?? "-"} />
         </div>
       ) : null}
 
@@ -157,12 +157,12 @@ function HistoryPage() {
                   <td className="px-4 py-3.5">
                     <EvaluationStatusBadge status={row.status as never} />
                   </td>
-                  <td className="px-4 py-3.5 tabular-nums text-foreground">{row.employeeAverage?.toFixed(2) ?? "â€”"}</td>
+                  <td className="px-4 py-3.5 tabular-nums text-foreground">{row.employeeAverage?.toFixed(2) ?? "-"}</td>
                   <td className="px-4 py-3.5 tabular-nums text-foreground">
-                    {row.supervisorAverage?.toFixed(2) ?? "â€”"}
+                    {row.supervisorAverage?.toFixed(2) ?? "-"}
                   </td>
                   <td className="px-4 py-3.5 font-semibold tabular-nums text-primary">
-                    {row.finalScore?.toFixed(2) ?? "â€”"} {row.finalRating ?? ""}
+                    {row.finalScore?.toFixed(2) ?? "-"} {row.finalRating ?? ""}
                   </td>
                   <td className="px-4 py-3.5 text-xs text-muted-foreground">{formatDateTime(row.finalizedAt)}</td>
                 </tr>

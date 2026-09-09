@@ -28,6 +28,7 @@ import {
   type RecognitionRecord,
 } from "@/features/social-recognition/recognition.functions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { humanizeToken } from "@/lib/domain";
 
 const types = [
   "Highest Rated Employee",
@@ -235,7 +236,7 @@ function Candidates({
                           : "View"}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">{candidate.status}</td>
+                    <td className="px-4 py-3">{humanizeToken(candidate.status)}</td>
                     <td className="px-4 py-3">
                       {candidate.status === "PENDING" ? (
                         <Button variant="outline" size="sm" onClick={() => onReview(candidate)}>
@@ -396,7 +397,7 @@ function ReviewDialog({
         <DialogHeader>
           <DialogTitle>Review recognition candidate</DialogTitle>
           <DialogDescription>
-            {candidate?.employeeName} Â· {candidate?.recognitionType}
+            {candidate?.employeeName}  -  {candidate?.recognitionType}
           </DialogDescription>
         </DialogHeader>
         <p className="whitespace-pre-wrap text-sm">{candidate?.reason}</p>
@@ -491,7 +492,7 @@ function OtherDialog({
             onChange={setSourceEvaluationId}
             options={available.map((evaluation) => ({
               value: evaluation.id,
-              label: `${evaluation.full_name_snapshot} Â· ${evaluation.evaluation_cycles?.year ?? ""}`,
+              label: `${evaluation.full_name_snapshot}  -  ${evaluation.evaluation_cycles?.year ?? ""}`,
             }))}
           />
           <div className="space-y-1.5">

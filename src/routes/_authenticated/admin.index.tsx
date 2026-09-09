@@ -139,10 +139,10 @@ function AdminOverview() {
                     {(stats?.security ?? []).map((event) => (
                       <li key={event.id} className="flex flex-wrap justify-between gap-2 py-2">
                         <span>
-                          {event.email ?? "unknown"} Â· {humanizeToken(event.event_type)}
+                          {event.email ?? "unknown"}  -  {humanizeToken(event.event_type)}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {event.result} Â· {formatDateTime(event.occurred_at)}
+                          {event.result}  -  {formatDateTime(event.occurred_at)}
                         </span>
                       </li>
                     ))}

@@ -397,7 +397,7 @@ function AdminUsersPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {current * PAGE_SIZE + 1}â€“{Math.min(rows.length, (current + 1) * PAGE_SIZE)} of{" "}
+              Showing {current * PAGE_SIZE + 1}-{Math.min(rows.length, (current + 1) * PAGE_SIZE)} of{" "}
               {rows.length}
             </p>
             <div className="flex gap-2">
@@ -546,7 +546,7 @@ function AdminUsersPage() {
                     <li key={event.id} className="flex justify-between gap-2 py-2">
                       <span>{humanizeToken(event.event_type)}</span>
                       <span className="text-xs text-muted-foreground">
-                        {event.result} Â· {formatDateTime(event.occurred_at)}
+                        {event.result}  -  {formatDateTime(event.occurred_at)}
                       </span>
                     </li>
                   ))}
@@ -666,7 +666,7 @@ function CreateUserDialog({
             Cancel
           </Button>
           <Button onClick={submit} disabled={pending}>
-            {pending ? "Creatingâ€¦" : "Create user"}
+            {pending ? "Creating..." : "Create user"}
           </Button>
         </DialogFooter>
       </DialogContent>

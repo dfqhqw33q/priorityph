@@ -133,7 +133,11 @@ export function permissionLabel(code: string): string {
  */
 export function humanizeToken(value: string | null | undefined): string {
   if (!value) return "—";
-  return value.replace(/_/g, " ").trim();
+  return value
+    .replace(/_/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 export const CYCLE_STATUSES = ["DRAFT", "ACTIVE", "CLOSED", "DISABLED"] as const;

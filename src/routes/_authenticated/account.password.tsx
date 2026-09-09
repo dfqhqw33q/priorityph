@@ -82,7 +82,7 @@ function ChangePasswordPage() {
                 ) : null}
               </div>
               <Button type="submit" disabled={pending}>
-                {pending ? "Savingâ€¦" : "Update password"}
+                {pending ? "Saving..." : "Update password"}
               </Button>
             </form>
           </CardContent>

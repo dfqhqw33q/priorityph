@@ -19,7 +19,7 @@ export const Route = createFileRoute("/evaluation/$cycleToken")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Employee self-assessment â€” Priority Handling Logistics, Inc." },
+      { title: "Employee self-assessment - Priority Handling Logistics, Inc." },
       { name: "description", content: "Complete your annual Step 1 performance self-assessment." },
       { property: "og:title", content: "Employee self-assessment" },
       { property: "og:description", content: "Complete your annual Step 1 performance self-assessment." },
@@ -280,7 +280,7 @@ function PublicEvaluationPage() {
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{APP_NAME}</p>
               <h1 className="text-sm font-semibold text-foreground">
-                {cycle.name} Â· {cycle.year}
+                {cycle.name}  -  {cycle.year}
               </h1>
             </div>
           </div>
@@ -431,7 +431,7 @@ function PublicEvaluationPage() {
         </Card>
 
         <Button type="submit" className="w-full text-base font-semibold shadow-md py-6" size="lg" disabled={pending}>
-          {pending ? "Submittingâ€¦" : "Submit assessment"}
+          {pending ? "Submitting..." : "Submit assessment"}
         </Button>
         </> : <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Verify your employee profile to begin the assessment.</CardContent></Card>}
       </form>

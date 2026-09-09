@@ -280,6 +280,7 @@ async function transition(
   action: string,
   reason = "",
   correctionStage: string | null = null,
+  createNotification = true,
 ) {
   const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
     await import("./server-core.server");
@@ -322,49 +323,50 @@ async function transition(
     actor_user_id: actorUserId,
     reason: reason || null,
   });
-  await admin.from("notification_events").insert({
-    evaluation_id: evaluationId,
-    event_type: action,
-    audience_permission:
-      next === "RETURNED_FOR_CORRECTION" && correctionStage
-        ? (notificationPermissionByStatus[correctionStage as EvaluationStatus] ??
-          "evaluations.view_history")
-        : (notificationPermissionByStatus[next] ?? "evaluations.view_history"),
-    title:
-      next === "SUPERVISOR_DRAFT"
-        ? "New Evaluation Submitted"
-        : next === "REVIEWING_SUPERVISOR_REVIEW"
+  if (createNotification)
+    await admin.from("notification_events").insert({
+      evaluation_id: evaluationId,
+      event_type: action,
+      audience_permission:
+        next === "RETURNED_FOR_CORRECTION" && correctionStage
+          ? (notificationPermissionByStatus[correctionStage as EvaluationStatus] ??
+            "evaluations.view_history")
+          : (notificationPermissionByStatus[next] ?? "evaluations.view_history"),
+      title:
+        next === "SUPERVISOR_DRAFT"
           ? "New Evaluation Submitted"
-          : next === "PERSONNEL_PROCESSING"
-            ? "Evaluation Ready for Processing"
-            : next === "COMMITTEE_REVIEW"
-              ? "Evaluation Ready for Review"
-              : next === "PRESIDENT_APPROVAL"
-                ? "Evaluation Awaiting Approval"
-                : next === "RETURNED_FOR_CORRECTION"
-                  ? "Evaluation Returned"
-                  : next === "FINALIZED"
-                    ? "Performance Evaluation Finalized"
-                    : "Evaluation workflow updated",
-    body:
-      next === "SUPERVISOR_DRAFT"
-        ? "A new performance evaluation has been submitted to you for review and assessment."
-        : next === "REVIEWING_SUPERVISOR_REVIEW"
-          ? "A performance evaluation has been submitted to you for review and assessment."
-          : next === "PERSONNEL_PROCESSING"
-            ? "A completed performance evaluation is ready for Personnel processing."
-            : next === "COMMITTEE_REVIEW"
-              ? "A performance evaluation is ready for your Committee review and recommendation."
-              : next === "PRESIDENT_APPROVAL"
-                ? "A performance evaluation is ready for your review and final approval."
-                : next === "RETURNED_FOR_CORRECTION"
-                  ? "A performance evaluation has been returned to you for correction and resubmission."
-                  : next === "FINALIZED"
-                    ? "Your performance evaluation has been finalized and is now complete."
-                    : reason || `An evaluation entered ${next.replaceAll("_", " ").toLowerCase()}.`,
-    payload: { fromStatus: current.status, toStatus: next, reason, correctionStage },
-    dedupe_key: `${evaluationId}:${action}:${expectedVersion}`,
-  } as never);
+          : next === "REVIEWING_SUPERVISOR_REVIEW"
+            ? "New Evaluation Submitted"
+            : next === "PERSONNEL_PROCESSING"
+              ? "Evaluation Ready for Processing"
+              : next === "COMMITTEE_REVIEW"
+                ? "Evaluation Ready for Review"
+                : next === "PRESIDENT_APPROVAL"
+                  ? "Evaluation Awaiting Approval"
+                  : next === "RETURNED_FOR_CORRECTION"
+                    ? "Evaluation Returned"
+                    : next === "FINALIZED"
+                      ? "Performance Evaluation Finalized"
+                      : "Evaluation workflow updated",
+      body:
+        next === "SUPERVISOR_DRAFT"
+          ? "A new performance evaluation has been submitted to you for review and assessment."
+          : next === "REVIEWING_SUPERVISOR_REVIEW"
+            ? "A performance evaluation has been submitted to you for review and assessment."
+            : next === "PERSONNEL_PROCESSING"
+              ? "A completed performance evaluation is ready for Personnel processing."
+              : next === "COMMITTEE_REVIEW"
+                ? "A performance evaluation is ready for your Committee review and recommendation."
+                : next === "PRESIDENT_APPROVAL"
+                  ? "A performance evaluation is ready for your review and final approval."
+                  : next === "RETURNED_FOR_CORRECTION"
+                    ? "A performance evaluation has been returned to you for correction and resubmission."
+                    : next === "FINALIZED"
+                      ? "Your performance evaluation has been finalized and is now complete."
+                      : reason || `An evaluation entered ${next.replaceAll("_", " ").toLowerCase()}.`,
+      payload: { fromStatus: current.status, toStatus: next, reason, correctionStage },
+      dedupe_key: `${evaluationId}:${action}:${expectedVersion}`,
+    } as never);
   if (next === "FINALIZED") {
     try {
       const finalizationStamp = new Date().toISOString();
@@ -599,6 +601,9 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       nextStatus,
       context.userId,
       "REVIEWING_SUPERVISOR_SUBMITTED",
+      "",
+      null,
+      data.submit && evaluation?.status !== "SUPERVISOR_SUBMITTED",
     );
 
     if (data.submit && nextStatus === "REVIEWING_SUPERVISOR_REVIEW") {
@@ -614,6 +619,9 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
           "PERSONNEL_PROCESSING",
           context.userId,
           "REVIEWING_SUPERVISOR_SUBMITTED",
+          "",
+          null,
+          true,
         );
     }
     const { error: stageError } = await admin.from("reviewing_supervisor_reviews").upsert(
@@ -680,6 +688,9 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       data.submit ? "COMMITTEE_REVIEW" : "PERSONNEL_PROCESSING",
       context.userId,
       "PERSONNEL_SUBMITTED",
+      "",
+      null,
+      data.submit,
     );
     const { error: stageError } = await admin.from("personnel_processing").upsert(
       {
@@ -735,6 +746,9 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       data.submit ? "PRESIDENT_APPROVAL" : "COMMITTEE_REVIEW",
       context.userId,
       "COMMITTEE_SUBMITTED",
+      "",
+      null,
+      data.submit,
     );
     const { error: stageError } = await admin.from("committee_reviews").upsert(
       {

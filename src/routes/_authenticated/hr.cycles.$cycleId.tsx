@@ -98,8 +98,8 @@ function CycleDetailPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`${cycle.name} Â· ${cycle.year}`}
-        description={`${formatDateTime(cycle.starts_at)} â†’ ${formatDateTime(cycle.ends_at)}`}
+        title={`${cycle.name}  -  ${cycle.year}`}
+        description={`${formatDateTime(cycle.starts_at)} to ${formatDateTime(cycle.ends_at)}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <CycleStatusBadge status={cycle.status} />

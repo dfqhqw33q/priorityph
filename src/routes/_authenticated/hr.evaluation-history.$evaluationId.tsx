@@ -57,7 +57,7 @@ function HistoryDetailPage() {
     <div className="space-y-6">
       <PageHeader
         title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year}) Â· ${detail.employee_number_snapshot}`}
+        description={`${detail.cycle_name} (${detail.cycle_year})  -  ${detail.employee_number_snapshot}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <EvaluationStatusBadge status={detail.status} />
@@ -92,7 +92,7 @@ function HistoryDetailPage() {
         <Info label="Self-assessment submitted" value={formatDateTime(detail.employee_submitted_at)} />
         <Info label="Supervisor review submitted" value={formatDateTime(detail.supervisor_submitted_at)} />
         <Info label="Finalized" value={formatDateTime(detail.finalized_at)} />
-        <Info label="Final rating" value={score?.finalRatingLabel ?? "â€”"} />
+        <Info label="Final rating" value={score?.finalRatingLabel ?? "-"} />
       </div>
 
       <Card className="border border-border bg-card shadow-sm">
@@ -105,7 +105,7 @@ function HistoryDetailPage() {
           <Info label="Job title" value={detail.job_title_snapshot} />
           <Info label="Division / department" value={detail.division_snapshot} />
           <Info label="Section / unit" value={detail.section_snapshot} />
-          <Info label="Supervisor" value={detail.supervisor_name ?? "â€”"} />
+          <Info label="Supervisor" value={detail.supervisor_name ?? "-"} />
         </CardContent>
       </Card>
 
@@ -114,10 +114,10 @@ function HistoryDetailPage() {
           <CardTitle className="text-base font-bold">Scores</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 text-sm sm:grid-cols-3">
-          <Info label="Employee self-rating average" value={String(score?.employeeAverage ?? "â€”")} />
-          <Info label="Supervisor rating average" value={String(score?.supervisorAverage ?? "â€”")} />
-          <Info label="Final score" value={String(score?.finalScore ?? "â€”")} />
-          <Info label="Scoring version" value={score?.ruleVersion ? String(score.ruleVersion) : "â€”"} />
+          <Info label="Employee self-rating average" value={String(score?.employeeAverage ?? "-")} />
+          <Info label="Supervisor rating average" value={String(score?.supervisorAverage ?? "-")} />
+          <Info label="Final score" value={String(score?.finalScore ?? "-")} />
+          <Info label="Scoring version" value={score?.ruleVersion ? String(score.ruleVersion) : "-"} />
         </CardContent>
       </Card>
 
@@ -132,11 +132,11 @@ function HistoryDetailPage() {
             events.map((event) => (
               <div key={event.id} className="border-b border-border pb-3 text-sm last:border-0 last:pb-0">
                 <p className="font-semibold text-foreground">
-                  {humanizeToken(event.event_type)} Â· {event.actorName}
+                  {humanizeToken(event.event_type)}  -  {event.actorName}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDateTime(event.occurred_at)}
-                  {event.reason ? ` Â· ${event.reason}` : ""}
+                  {event.reason ? `  -  ${event.reason}` : ""}
                 </p>
               </div>
             ))
@@ -155,11 +155,11 @@ function HistoryDetailPage() {
             auditTrail.map((event) => (
               <div key={event.id} className="border-b border-border pb-3 text-sm last:border-0 last:pb-0">
                 <p className="font-semibold text-foreground">
-                  {humanizeToken(event.action)} Â· {event.module}
+                  {humanizeToken(event.action)}  -  {event.module}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDateTime(event.occurred_at)}
-                  {event.reason ? ` Â· ${event.reason}` : ""}
+                  {event.reason ? `  -  ${event.reason}` : ""}
                 </p>
               </div>
             ))
@@ -169,7 +169,7 @@ function HistoryDetailPage() {
 
       <div>
         <Link className="text-sm font-medium text-primary hover:underline" to="/hr/evaluation-history">
-          â† Back to evaluation history
+          Back to evaluation history
         </Link>
       </div>
     </div>
@@ -180,7 +180,7 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 font-medium text-foreground">{value || "â€”"}</p>
+      <p className="mt-1 font-medium text-foreground">{value || "-"}</p>
     </div>
   );
 }

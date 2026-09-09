@@ -127,16 +127,16 @@ function SuccessionPage() {
                     </span>
                   </td>
                   <td className="max-w-xs whitespace-pre-wrap px-4 py-3">
-                    {profile.developmentPotential || "â€”"}
+                    {profile.developmentPotential || "-"}
                   </td>
                   <td className="max-w-xs whitespace-pre-wrap px-4 py-3">
-                    {profile.advancementOutlook || "â€”"}
+                    {profile.advancementOutlook || "-"}
                   </td>
-                  <td className="px-4 py-3">{profile.careerInterest || "â€”"}</td>
-                  <td className="px-4 py-3">{profile.transferInterest || "â€”"}</td>
-                  <td className="px-4 py-3">{profile.desiredJob || "â€”"}</td>
-                  <td className="px-4 py-3">{profile.desiredLocation || "â€”"}</td>
-                  <td className="px-4 py-3">{profile.qualification || "â€”"}</td>
+                  <td className="px-4 py-3">{profile.careerInterest || "-"}</td>
+                  <td className="px-4 py-3">{profile.transferInterest || "-"}</td>
+                  <td className="px-4 py-3">{profile.desiredJob || "-"}</td>
+                  <td className="px-4 py-3">{profile.desiredLocation || "-"}</td>
+                  <td className="px-4 py-3">{profile.qualification || "-"}</td>
                   <td className="px-4 py-3">
                     <Link
                       className="text-primary hover:underline"
@@ -149,7 +149,7 @@ function SuccessionPage() {
                     </Link>
                   </td>
                   <td className="max-w-xs whitespace-pre-wrap px-4 py-3 text-muted-foreground">
-                    {profile.notes || "â€”"}
+                    {profile.notes || "-"}
                   </td>
                   <td className="px-4 py-3">
                     <Button variant="outline" size="sm" onClick={() => setEditing(profile)}>

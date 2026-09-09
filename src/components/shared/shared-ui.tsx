@@ -14,7 +14,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EVALUATION_STATUS_LABELS, type EvaluationStatus, type CycleStatus } from "@/lib/domain";
+import {
+  EVALUATION_STATUS_LABELS,
+  humanizeToken,
+  type EvaluationStatus,
+  type CycleStatus,
+} from "@/lib/domain";
 import { cn } from "@/lib/utils";
 
 export function PageHeader({
@@ -154,7 +159,7 @@ const EVAL_VARIANTS: Record<EvaluationStatus, string> = {
 export function EvaluationStatusBadge({ status }: { status: EvaluationStatus }) {
   return (
     <Badge variant="outline" className={cn("px-2.5 py-0.5 text-xs", EVAL_VARIANTS[status])}>
-      {EVALUATION_STATUS_LABELS[status]}
+      {EVALUATION_STATUS_LABELS[status] ?? humanizeToken(status)}
     </Badge>
   );
 }

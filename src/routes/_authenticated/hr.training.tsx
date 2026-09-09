@@ -24,6 +24,7 @@ import {
   type TrainingRecord,
 } from "@/features/training-management/training.functions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { humanizeToken } from "@/lib/domain";
 
 const statuses = ["Required", "Approved", "Completed"] as const;
 type FormState = {
@@ -202,12 +203,12 @@ function TrainingRecommendations({
                       </span>
                     </td>
                     <td className="px-4 py-3">{item.trainingTitle}</td>
-                    <td className="px-4 py-3">{item.relatedCompetency || "â€”"}</td>
+                    <td className="px-4 py-3">{item.relatedCompetency || "-"}</td>
                     <td className="px-4 py-3">{item.source}</td>
                     <td className="max-w-xs whitespace-pre-wrap px-4 py-3">
                       {item.recommendation}
                     </td>
-                    <td className="px-4 py-3">{item.status}</td>
+                    <td className="px-4 py-3">{humanizeToken(item.status)}</td>
                     <td className="px-4 py-3">
                       <Link
                         className="text-primary hover:underline"
@@ -286,7 +287,7 @@ function TrainingRecords({
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {item.trainingDate ? formatDateTime(item.trainingDate) : "Not scheduled"}
                     </td>
-                    <td className="px-4 py-3">{item.status}</td>
+                    <td className="px-4 py-3">{humanizeToken(item.status)}</td>
                     <td className="px-4 py-3">{item.source}</td>
                     <td className="max-w-xs whitespace-pre-wrap px-4 py-3">
                       {item.committeeRecommendation || "Not specified"}
@@ -401,7 +402,7 @@ function RecordDialog({
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Employee: {record?.employeeName ?? "â€”"} ({record?.employeeNumber ?? "â€”"})
+            Employee: {record?.employeeName ?? "-"} ({record?.employeeNumber ?? "-"})
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="training-title">Training Title</Label>

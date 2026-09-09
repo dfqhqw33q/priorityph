@@ -39,7 +39,7 @@ function CompetencyProfilePage() {
     <div className="space-y-6">
       <PageHeader
         title={employee.full_name}
-        description={`${employee.job_title || "Employee"} Â· ${employee.employee_number}`}
+        description={`${employee.job_title || "Employee"}  -  ${employee.employee_number}`}
         actions={
           <Link className="text-sm font-medium text-primary hover:underline" to="/hr/competency">
             Back to employees
@@ -50,7 +50,7 @@ function CompetencyProfilePage() {
         <Summary label="Finalized cycles" value={history.length} />
         <Summary label="Strengths" value={strengths.length} />
         <Summary label="Development areas" value={development.length} />
-        <Summary label="Latest source" value={latest?.cycleYear || "â€”"} />
+        <Summary label="Latest source" value={latest?.cycleYear || "-"} />
       </div>
       {!latest ? (
         <EmptyState
@@ -68,17 +68,17 @@ function CompetencyProfilePage() {
               <Info label="Section" value={employee.section} />
               <Info
                 label="Strengths"
-                value={strengths.map((factor) => factor.title).join(", ") || "â€”"}
+                value={strengths.map((factor) => factor.title).join(", ") || "-"}
               />
               <Info
                 label="Possible development areas"
-                value={development.map((factor) => factor.title).join(", ") || "â€”"}
+                value={development.map((factor) => factor.title).join(", ") || "-"}
               />
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Competency Profile (Aâ€“J Factors)</CardTitle>
+              <CardTitle className="text-base">Competency Profile (A-J Factors)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -108,10 +108,10 @@ function CompetencyProfilePage() {
                           </span>
                           <span className="font-medium">{factor.title}</span>
                         </td>
-                        <td className="px-3 py-3 tabular-nums">{factor.employee ?? "â€”"}</td>
-                        <td className="px-3 py-3 tabular-nums">{factor.supervisor ?? "â€”"}</td>
+                        <td className="px-3 py-3 tabular-nums">{factor.employee ?? "-"}</td>
+                        <td className="px-3 py-3 tabular-nums">{factor.supervisor ?? "-"}</td>
                         <td className="px-3 py-3 tabular-nums">
-                          {factor.reviewingSupervisor ?? "â€”"}
+                          {factor.reviewingSupervisor ?? "-"}
                         </td>
                         <td className="px-3 py-3">
                           <Badge variant="outline">{factor.analysis}</Badge>
@@ -141,7 +141,7 @@ function CompetencyProfilePage() {
               />
               <Info
                 label="Source"
-                value={`${latest.sourceLabel} Â· finalized ${formatDateTime(latest.finalizedAt)}`}
+                value={`${latest.sourceLabel}  -  finalized ${formatDateTime(latest.finalizedAt)}`}
               />
               <Link
                 className="font-medium text-primary hover:underline"
@@ -165,7 +165,7 @@ function CompetencyProfilePage() {
                   >
                     <div>
                       <p className="font-semibold">
-                        {period.cycleYear} Â· {period.sourceLabel}
+                        {period.cycleYear}  -  {period.sourceLabel}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {period.factors.length} factors from finalized evaluation
@@ -205,7 +205,7 @@ function Info({ label, value }: { label: string; value: string | null | undefine
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 whitespace-pre-wrap font-medium">{value || "â€”"}</p>
+      <p className="mt-1 whitespace-pre-wrap font-medium">{value || "-"}</p>
     </div>
   );
 }

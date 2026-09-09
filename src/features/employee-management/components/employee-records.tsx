@@ -270,7 +270,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
                   <TableCell className="text-sm text-muted-foreground">{row.job_title}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {row.division}
-                    {row.section ? ` Â· ${row.section}` : ""}
+                    {row.section ? `  -  ${row.section}` : ""}
                   </TableCell>
                   <TableCell>
                     <Badge variant={row.employment_status === "ACTIVE" ? "secondary" : "outline"}>
@@ -322,7 +322,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
           <DialogHeader className="border-b border-border px-6 py-5 pr-12">
             <DialogTitle>{detailQuery.data?.employee.full_name ?? "Employee File"}</DialogTitle>
             <DialogDescription>
-              Digital 201 File Â· Employee records and evaluation history
+              Digital 201 File  -  Employee records and evaluation history
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5 px-6 pb-6">
@@ -442,7 +442,7 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 font-medium text-foreground">{value || "â€”"}</p>
+      <p className="mt-1 font-medium text-foreground">{value || "-"}</p>
     </div>
   );
 }
@@ -475,16 +475,16 @@ function EmployeeFileContent({
         <div>
           <p className="text-lg font-semibold">{employee?.full_name ?? "Employee"}</p>
           <p className="text-sm text-muted-foreground">
-            Employee no. {employee?.employee_number ?? "â€”"}
+            Employee no. {employee?.employee_number ?? "-"}
           </p>
           <p className="mt-1 text-sm text-foreground">
-            {employee?.job_title ?? "â€”"} Â· {employee?.division ?? "â€”"}
-            {employee?.section ? ` Â· ${employee.section}` : ""}
+            {employee?.job_title ?? "-"}  -  {employee?.division ?? "-"}
+            {employee?.section ? `  -  ${employee.section}` : ""}
           </p>
         </div>
         <div className="text-left text-sm sm:text-right">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Employment status</p>
-          <p className="mt-1 font-medium">{employee?.employment_status ?? "â€”"}</p>
+          <p className="mt-1 font-medium">{employee?.employment_status ?? "-"}</p>
         </div>
       </div>
 
@@ -517,7 +517,7 @@ function EmployeeFileContent({
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <EvaluationStatusBadge status={item.status as EvaluationStatus} />
                   <span>{item.jobTitle}</span>
-                  <span>Â·</span>
+                  <span> - </span>
                   <span>{item.division}</span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -714,18 +714,18 @@ function ComparisonResults({
     <div ref={contentRef} className="space-y-5 bg-background p-1">
       <h3 className="text-lg font-semibold">Performance Evaluation Comparison</h3>
       <EvaluationInformationTable selected={selected} comparison={comparison} />
-      <h3 className="text-lg font-semibold">Aâ€“J Performance Comparison</h3>
+      <h3 className="text-lg font-semibold">A-J Performance Comparison</h3>
       <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-muted/50">
             <tr>
               <th className="px-3 py-2">Criterion</th>
-              <th className="px-3 py-2">{comparison?.cycleYear ?? "â€”"} Self</th>
-              <th className="px-3 py-2">{comparison?.cycleYear ?? "â€”"} Supervisor / Rater</th>
-              <th className="px-3 py-2">{comparison?.cycleYear ?? "â€”"} Reviewing Supervisor</th>
-              <th className="px-3 py-2">{selected?.cycleYear ?? "â€”"} Self</th>
-              <th className="px-3 py-2">{selected?.cycleYear ?? "â€”"} Supervisor / Rater</th>
-              <th className="px-3 py-2">{selected?.cycleYear ?? "â€”"} Reviewing Supervisor</th>
+              <th className="px-3 py-2">{comparison?.cycleYear ?? "-"} Self</th>
+              <th className="px-3 py-2">{comparison?.cycleYear ?? "-"} Supervisor / Rater</th>
+              <th className="px-3 py-2">{comparison?.cycleYear ?? "-"} Reviewing Supervisor</th>
+              <th className="px-3 py-2">{selected?.cycleYear ?? "-"} Self</th>
+              <th className="px-3 py-2">{selected?.cycleYear ?? "-"} Supervisor / Rater</th>
+              <th className="px-3 py-2">{selected?.cycleYear ?? "-"} Reviewing Supervisor</th>
               <th className="px-3 py-2">Trend</th>
             </tr>
           </thead>
@@ -764,10 +764,10 @@ function ComparisonResults({
                     {difference === null
                       ? "N/A"
                       : difference > 0
-                        ? `â†‘ Improved (+${difference})`
+                        ? `Improved (+${difference})`
                         : difference < 0
-                          ? `â†“ Decreased (${difference})`
-                          : "â†’ No Change"}
+                          ? `Decreased (${difference})`
+                          : "No change"}
                   </td>
                 </tr>
               );
@@ -875,8 +875,8 @@ function EvaluationInformationTable({
         <thead className="bg-muted/50">
           <tr>
             <th className="px-3 py-2">Evaluation Information</th>
-            <th className="px-3 py-2">{comparison?.cycleYear ?? "â€”"} Evaluation</th>
-            <th className="px-3 py-2">{selected?.cycleYear ?? "â€”"} Evaluation</th>
+            <th className="px-3 py-2">{comparison?.cycleYear ?? "-"} Evaluation</th>
+            <th className="px-3 py-2">{selected?.cycleYear ?? "-"} Evaluation</th>
           </tr>
         </thead>
         <tbody>
@@ -951,14 +951,14 @@ function PeriodSummary({
         <div className="flex items-center justify-between gap-2">
           <EvaluationStatusBadge status={evaluation.status as EvaluationStatus} />
           <span className="text-xs text-muted-foreground">
-            {evaluation.jobTitle} Â· {evaluation.division}
+            {evaluation.jobTitle}  -  {evaluation.division}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Info label="Self average" value={formatScore(evaluation.scores?.employeeAverage)} />
           <Info label="Rater average" value={formatScore(evaluation.scores?.supervisorAverage)} />
           <Info label="Final score" value={formatScore(evaluation.scores?.finalScore)} />
-          <Info label="Final rating" value={evaluation.scores?.finalRatingLabel ?? "â€”"} />
+          <Info label="Final rating" value={evaluation.scores?.finalRatingLabel ?? "-"} />
         </div>
         {evaluation.status === "FINALIZED" && onOpenDocument ? (
           <Button
@@ -990,10 +990,10 @@ function ratingSummary(evaluation: HistoryEvaluation | null, criterionId: string
   const self = ratingFor(evaluation, criterionId, "EMPLOYEE");
   const supervisor = ratingFor(evaluation, criterionId, "SUPERVISOR");
   const reviewing = ratingFor(evaluation, criterionId, "REVIEWING_SUPERVISOR");
-  return `Self ${self ?? "â€”"} Â· Rater ${supervisor ?? "â€”"} Â· Review ${reviewing ?? "â€”"}`;
+  return `Self ${self ?? "-"}  -  Rater ${supervisor ?? "-"}  -  Review ${reviewing ?? "-"}`;
 }
 
 function formatScore(value: number | null | undefined) {
-  return value === null || value === undefined ? "â€”" : Number(value).toFixed(2);
+  return value === null || value === undefined ? "-" : Number(value).toFixed(2);
 }
 

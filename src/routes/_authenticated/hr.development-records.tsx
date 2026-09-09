@@ -24,6 +24,7 @@ import {
   type DevelopmentRecord,
 } from "@/features/learning-management/development.functions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { humanizeToken } from "@/lib/domain";
 
 const activities = [
   "Coaching",
@@ -186,15 +187,15 @@ function DevelopmentRecordsPage() {
                           : "View evaluation"}
                       </Link>
                     ) : (
-                      "â€”"
+                      "-"
                     )}
                   </td>
-                  <td className="px-4 py-3">{record.status}</td>
+                  <td className="px-4 py-3">{humanizeToken(record.status)}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     {formatDateTime(record.recordDate)}
                   </td>
                   <td className="max-w-xs whitespace-pre-wrap px-4 py-3 text-xs text-muted-foreground">
-                    {record.notes || "â€”"}
+                    {record.notes || "-"}
                   </td>
                   <td className="px-4 py-3">
                     <Button variant="outline" size="sm" onClick={() => setEditing(record)}>
@@ -313,7 +314,7 @@ function RecordDialog({
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Employee: {record?.employeeName ?? "â€”"} ({record?.employeeNumber ?? "â€”"})
+            Employee: {record?.employeeName ?? "-"} ({record?.employeeNumber ?? "-"})
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="development-need">Development Need</Label>

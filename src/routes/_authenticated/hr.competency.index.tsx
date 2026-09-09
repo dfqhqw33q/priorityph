@@ -83,10 +83,10 @@ function CompetencyIndexPage() {
                     </Link>
                     <p className="text-xs text-muted-foreground">{employee.employee_number}</p>
                   </td>
-                  <td className="px-4 py-3">{employee.job_title || "â€”"}</td>
-                  <td className="px-4 py-3">{employee.division || "â€”"}</td>
+                  <td className="px-4 py-3">{employee.job_title || "-"}</td>
+                  <td className="px-4 py-3">{employee.division || "-"}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {employee.employment_status || "â€”"}
+                    {employee.employment_status || "-"}
                   </td>
                 </tr>
               ))}

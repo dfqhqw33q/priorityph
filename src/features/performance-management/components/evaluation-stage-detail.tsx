@@ -53,7 +53,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-medium text-foreground">{value || "â€”"}</p>
+      <p className="mt-0.5 font-medium text-foreground">{value || "-"}</p>
     </div>
   );
 }
@@ -434,6 +434,10 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                 : "Evaluation approved and finalized.";
       toast.success(message);
       await queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] });
+      await queryClient.invalidateQueries({ queryKey: ["phase2-queue"] });
+      if (stage === "RATER") {
+        await queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] });
+      }
       navigate({
         to:
           stage === "RATER"
@@ -477,7 +481,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
     <div className="space-y-6">
       <PageHeader
         title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year}) Â· Employee no. ${detail.employee_number_snapshot}`}
+        description={`${detail.cycle_name} (${detail.cycle_year})  -  Employee no. ${detail.employee_number_snapshot}`}
         actions={<EvaluationStatusBadge status={detail.status} />}
       />
       <Card>
@@ -496,9 +500,9 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
         <CardHeader>
           <CardTitle className="text-base">
             {stage === "RATER"
-              ? "Step 2 â€” Conclusions and comments"
+              ? "Step 2 - Conclusions and comments"
               : stage === "REVIEWING_SUPERVISOR"
-                ? "Step 3 â€” Review"
+                ? "Step 3 - Review"
                 : stage === "PERSONNEL"
                   ? "Complete evaluation file (for review)"
                   : stage === "COMMITTEE"
@@ -510,7 +514,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
           {stage === "REVIEWING_SUPERVISOR" ? (
             <>
               <div>
-                <h3 className="mb-3 text-sm font-semibold">STEP 1 â€” Performance Evaluation</h3>
+                <h3 className="mb-3 text-sm font-semibold">STEP 1 - Performance Evaluation</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={ratings}
@@ -533,7 +537,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                 />
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">STEP 2 â€” Conclusions and comments (read-only)</h3>
+                <h3 className="font-semibold">STEP 2 - Conclusions and comments (read-only)</h3>
                 {[
                   ["Overall rating explanation", "supervisor_step2_overall_explanation"],
                   ["Principal Strengths", "supervisor_step2_strengths"],
@@ -552,7 +556,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   <div key={key}>
                     <p className="text-xs font-semibold text-muted-foreground">{label}</p>
                     <p className="whitespace-pre-wrap text-sm">
-                      {String((detail as Record<string, unknown>)[key] ?? "â€”")}
+                      {String((detail as Record<string, unknown>)[key] ?? "-")}
                     </p>
                   </div>
                 ))}
@@ -579,7 +583,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
           {["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(stage) ? (
             <>
               <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">STEP 1 â€” Performance Evaluation (read-only)</h3>
+                <h3 className="font-semibold">STEP 1 - Performance Evaluation (read-only)</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={Object.fromEntries(
@@ -609,7 +613,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
                 <h3 className="font-semibold">
-                  STEP 2 â€” Supervisor conclusions and comments (read-only)
+                  STEP 2 - Supervisor conclusions and comments (read-only)
                 </h3>
                 {[
                   ["Overall rating explanation", "supervisor_step2_overall_explanation"],
@@ -629,13 +633,13 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   <div key={key}>
                     <p className="text-xs font-semibold text-muted-foreground">{label}</p>
                     <p className="whitespace-pre-wrap text-sm">
-                      {String((detail as Record<string, unknown>)[key] ?? "â€”")}
+                      {String((detail as Record<string, unknown>)[key] ?? "-")}
                     </p>
                   </div>
                 ))}
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">STEP 3 â€” Reviewing Supervisor review (read-only)</h3>
+                <h3 className="font-semibold">STEP 3 - Reviewing Supervisor review (read-only)</h3>
                 {(() => {
                   const accStages = (
                     detail as Record<string, unknown> & {
@@ -649,7 +653,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                       <div>
                         <p className="text-xs font-semibold text-muted-foreground">Comments</p>
                         <p className="whitespace-pre-wrap text-sm">
-                          {String(revSupReview["comments"] ?? "â€”")}
+                          {String(revSupReview["comments"] ?? "-")}
                         </p>
                       </div>
                       <div>
@@ -657,7 +661,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                           Recommendations
                         </p>
                         <p className="whitespace-pre-wrap text-sm">
-                          {String(revSupReview["recommendations"] ?? "â€”")}
+                          {String(revSupReview["recommendations"] ?? "-")}
                         </p>
                       </div>
                     </>
@@ -685,46 +689,46 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                           <p className="text-xs font-semibold text-muted-foreground">
                             Present Salary
                           </p>
-                          <p>{String(personnel["present_salary"] ?? "â€”")}</p>
+                          <p>{String(personnel["present_salary"] ?? "-")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Last Increase Date
                           </p>
-                          <p>{String(personnel["last_increase_date"] ?? "â€”")}</p>
+                          <p>{String(personnel["last_increase_date"] ?? "-")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Last Increase Amount
                           </p>
-                          <p>{String(personnel["last_increase_amount"] ?? "â€”")}</p>
+                          <p>{String(personnel["last_increase_amount"] ?? "-")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Total Points
                           </p>
-                          <p>{String(personnel["total_points"] ?? "â€”")}</p>
+                          <p>{String(personnel["total_points"] ?? "-")}</p>
                         </div>
                         <div className="sm:col-span-2">
                           <p className="text-xs font-semibold text-muted-foreground">
                             Nature of Last Increase
                           </p>
                           <p className="whitespace-pre-wrap">
-                            {String(personnel["last_increase_nature"] ?? "â€”")}
+                            {String(personnel["last_increase_nature"] ?? "-")}
                           </p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Adjective Rating
                           </p>
-                          <p>{String(personnel["adjective_rating"] ?? "â€”")}</p>
+                          <p>{String(personnel["adjective_rating"] ?? "-")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Recommended Increase / Bonus
                           </p>
                           <p className="whitespace-pre-wrap">
-                            {String(personnel["recommended_increase_bonus"] ?? "â€”")}
+                            {String(personnel["recommended_increase_bonus"] ?? "-")}
                           </p>
                         </div>
                       </div>
@@ -748,14 +752,14 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                           <p className="text-xs font-semibold text-muted-foreground">
                             Final Action
                           </p>
-                          <p>{String(committee["final_action"] ?? "â€”")}</p>
+                          <p>{String(committee["final_action"] ?? "-")}</p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground">
                             Action Details
                           </p>
                           <p className="whitespace-pre-wrap">
-                            {String(committee["action_details"] ?? "â€”")}
+                            {String(committee["action_details"] ?? "-")}
                           </p>
                         </div>
                         <div>
@@ -763,7 +767,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                             Committee Recommendation
                           </p>
                           <p className="whitespace-pre-wrap">
-                            {String(committee["recommendation"] ?? "â€”")}
+                            {String(committee["recommendation"] ?? "-")}
                           </p>
                         </div>
                       </div>
@@ -863,7 +867,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
             </>
           ) : stage === "PERSONNEL" ? (
             <>
-              <h3 className="text-sm font-semibold">Personnel Office section â€” editable</h3>
+              <h3 className="text-sm font-semibold">Personnel Office section - editable</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label>Present salary</Label>
@@ -898,13 +902,13 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   label="Total points (calculated)"
                   value={
                     detail.score?.finalScore === null || detail.score?.finalScore === undefined
-                      ? "â€”"
+                      ? "-"
                       : String(detail.score.finalScore)
                   }
                 />
                 <Field
                   label="Adjective rating (calculated)"
-                  value={detail.score?.finalRatingLabel ?? "â€”"}
+                  value={detail.score?.finalRatingLabel ?? "-"}
                 />
               </div>
               {field("lastIncreaseNature", "Nature of last increase", false)}
@@ -912,7 +916,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
             </>
           ) : stage === "COMMITTEE" ? (
             <>
-              <h3 className="text-sm font-semibold">Committee recommendation â€” editable</h3>
+              <h3 className="text-sm font-semibold">Committee recommendation - editable</h3>
               <div>
                 <Label>Final action *</Label>
                 <select
@@ -940,7 +944,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
             </>
           ) : (
             <>
-              <h3 className="text-sm font-semibold">President final approval â€” editable</h3>
+              <h3 className="text-sm font-semibold">President final approval - editable</h3>
               <div>
                 <Label>Decision *</Label>
                 <select
