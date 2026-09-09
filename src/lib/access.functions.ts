@@ -66,43 +66,49 @@ export const recordLoginEvent = createServerFn({ method: "POST" })
     const meta = getRequestMeta();
     const roles = await getActorRoles(context.userId);
 
-    if (data.event === "LOGIN") {
-      await admin
-        .from("internal_users")
-        .update({ last_login_at: new Date().toISOString() })
-        .eq("id", context.userId);
-    }
-    if (data.event === "PASSWORD_CHANGED") {
-      await admin
-        .from("internal_users")
-        .update({ must_change_password: false })
-        .eq("id", context.userId);
-      await admin.from("password_reset_events").insert({
+    const writes: Promise<unknown>[] = [
+      admin.from("login_events").insert({
         user_id: context.userId,
-        event_type: "PASSWORD_CHANGED",
+        event_type: data.event,
+        result: "SUCCESS",
         ip_address: meta.ip,
         user_agent: meta.userAgent,
-      });
+      }),
+      writeAudit(
+        {
+          actorUserId: context.userId,
+          actorRole: roles.join(","),
+          action: data.event,
+          module: "Authentication",
+          entityType: "internal_user",
+          entityId: context.userId,
+        },
+        meta,
+      ),
+    ];
+    if (data.event === "LOGIN") {
+      writes.push(
+        admin
+          .from("internal_users")
+          .update({ last_login_at: new Date().toISOString() })
+          .eq("id", context.userId),
+      );
     }
-
-    await admin.from("login_events").insert({
-      user_id: context.userId,
-      event_type: data.event,
-      result: "SUCCESS",
-      ip_address: meta.ip,
-      user_agent: meta.userAgent,
-    });
-    await writeAudit(
-      {
-        actorUserId: context.userId,
-        actorRole: roles.join(","),
-        action: data.event,
-        module: "Authentication",
-        entityType: "internal_user",
-        entityId: context.userId,
-      },
-      meta,
-    );
+    if (data.event === "PASSWORD_CHANGED") {
+      writes.push(
+        admin
+          .from("internal_users")
+          .update({ must_change_password: false })
+          .eq("id", context.userId),
+        admin.from("password_reset_events").insert({
+          user_id: context.userId,
+          event_type: "PASSWORD_CHANGED",
+          ip_address: meta.ip,
+          user_agent: meta.userAgent,
+        }),
+      );
+    }
+    await Promise.all(writes);
     return { ok: true };
   });
 

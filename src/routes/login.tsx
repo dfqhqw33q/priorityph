@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
@@ -35,6 +36,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 function LoginPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [pending, setPending] = useState(false);
   const [setupNeeded, setSetupNeeded] = useState(false);
   const checkBootstrap = useServerFn(needsBootstrap);
@@ -78,7 +80,8 @@ function LoginPage() {
         return;
       }
 
-      await logEvent({ data: { event: "LOGIN" } }).catch(() => undefined);
+      queryClient.setQueryData(["access", access.userId], access);
+      void logEvent({ data: { event: "LOGIN" } }).catch(() => undefined);
       if (access.mustChangePassword) {
         navigate({ to: "/account/password" });
         return;

@@ -354,10 +354,12 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
           .eq("evaluation_id", data.evaluationId),
       ]);
 
-      await createFinalEvaluationDocument(data.evaluationId, context.userId);
-      await processFinalizedEvaluationSupportModules(data.evaluationId);
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
-      await queueEmployeeFinalizedStep1Email(data.evaluationId);
+      await Promise.all([
+        createFinalEvaluationDocument(data.evaluationId, context.userId),
+        processFinalizedEvaluationSupportModules(data.evaluationId),
+        queueEmployeeFinalizedStep1Email(data.evaluationId),
+      ]);
 
       await admin.from("evaluation_events").insert({
         evaluation_id: data.evaluationId,

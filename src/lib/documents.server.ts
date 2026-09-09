@@ -868,11 +868,9 @@ export async function generateEvaluationData(
 
     console.log(`[generateEvaluationData] Criteria: ${criteriaResult.data?.length || 0}, Ratings: ${ratingsResult.data?.length || 0}, Signatures: ${stageSignatureResult.data?.length || 0}, Employee: ${!!employeeRecordResult?.data}`);
 
-    const { data: step3Result } = (await admin.from("reviewing_supervisor_reviews").select("reviewer_user_id").eq("evaluation_id", evaluationId).maybeSingle()) as any;
-
     const userIds = [
       evaluation.supervisor_user_id,
-      step3Result?.reviewer_user_id,
+      reviewingReviewResult.data?.reviewer_user_id,
       personnelResult.data?.personnel_user_id,
       committeeResult.data?.committee_user_id,
       evaluation.president_user_id,
@@ -914,7 +912,9 @@ export async function generateEvaluationData(
 
     const userLookup = new Map((userListResult ?? []).map((user: any) => [user.id, { full_name: user.full_name, job_title: user.job_title ?? null }]));
     const raterUser = evaluation.supervisor_user_id ? userLookup.get(evaluation.supervisor_user_id) ?? null : null;
-    const reviewingSupervisorUser = step3Result?.reviewer_user_id ? userLookup.get(step3Result.reviewer_user_id) ?? null : null;
+    const reviewingSupervisorUser = reviewingReviewResult.data?.reviewer_user_id
+      ? userLookup.get(reviewingReviewResult.data.reviewer_user_id) ?? null
+      : null;
     const employeeName = employeeRecordResult?.data?.full_name ?? evaluation.full_name_snapshot ?? "—";
     const employeeJobTitle = employeeRecordResult?.data?.job_title ?? evaluation.job_title_snapshot ?? "Ratee / Employee";
     const raterName = raterUser?.full_name ?? "—";

@@ -234,6 +234,7 @@ export const listEvaluationStageQueue = createServerFn({ method: "GET" })
       listEvaluations(["RETURNED_FOR_CORRECTION"], { ...filters, correctionStage }),
     ]);
     const rows = [...current, ...returned];
+    if (rows.length === 0) return [];
 
     const stageTable = {
       REVIEWING_SUPERVISOR: "reviewing_supervisor_reviews",
@@ -315,7 +316,7 @@ async function transition(
   if (error) throw validationError(error.message);
   if (!updatedEvaluation)
     throw validationError("This evaluation changed in another session. Reload and try again.");
-  await admin.from("evaluation_events").insert({
+  const eventWrite = admin.from("evaluation_events").insert({
     evaluation_id: evaluationId,
     event_type: action,
     from_status: current.status,
@@ -323,8 +324,8 @@ async function transition(
     actor_user_id: actorUserId,
     reason: reason || null,
   });
-  if (createNotification)
-    await admin.from("notification_events").insert({
+  const notificationWrite = createNotification
+    ? admin.from("notification_events").insert({
       evaluation_id: evaluationId,
       event_type: action,
       audience_permission:
@@ -366,15 +367,12 @@ async function transition(
                       : reason || `An evaluation entered ${next.replaceAll("_", " ").toLowerCase()}.`,
       payload: { fromStatus: current.status, toStatus: next, reason, correctionStage },
       dedupe_key: `${evaluationId}:${action}:${expectedVersion}`,
-    } as never);
+        } as never)
+    : Promise.resolve({ error: null });
+  await Promise.all([eventWrite, notificationWrite]);
   if (next === "FINALIZED") {
     try {
       const finalizationStamp = new Date().toISOString();
-      await createFinalEvaluationDocument(evaluationId, actorUserId, {
-        statusOverride: "FINALIZED",
-        finalizedAt: finalizationStamp,
-        finalizationReason: reason,
-      });
       const { ensureDevelopmentRecordsForEvaluation } = await import("@/features/learning-management/development.functions");
       const {
         ensureTrainingRecommendationsForEvaluation,
@@ -384,6 +382,11 @@ async function transition(
       const { ensureRecognitionCandidatesForEvaluation } = await import("@/features/social-recognition/recognition.functions");
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
       await Promise.all([
+        createFinalEvaluationDocument(evaluationId, actorUserId, {
+          statusOverride: "FINALIZED",
+          finalizedAt: finalizationStamp,
+          finalizationReason: reason,
+        }),
         ensureDevelopmentRecordsForEvaluation(evaluationId),
         ensureTrainingRecommendationsForEvaluation(evaluationId),
         ensureTrainingRequirementForCommitteeDecision(evaluationId),

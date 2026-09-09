@@ -30,7 +30,7 @@ export function NotificationCenter() {
   const fetchNotifications = useServerFn(listMyNotifications);
   const markRead = useServerFn(markNotificationRead);
   const markAllRead = useServerFn(markAllNotificationsRead);
-  const seenIds = useRef(new Set<string>());
+  const seenEventIds = useRef(new Set<string>());
   const initialized = useRef(false);
   const [open, setOpen] = useState(false);
   const query = useQuery({
@@ -40,7 +40,10 @@ export function NotificationCenter() {
     retry: false,
     staleTime: 30_000,
   });
-  const notifications = query.data ?? [];
+  const notifications = (query.data ?? []).filter(
+    (notification, index, all) =>
+      all.findIndex((item) => item.eventId === notification.eventId) === index,
+  );
   const unreadCount = notifications.filter((notification) => !notification.readAt).length;
 
   useEffect(() => {
@@ -62,17 +65,22 @@ export function NotificationCenter() {
           const notification = incoming[0];
           if (!notification) return;
           queryClient.setQueryData<AppNotification[]>(["my-notifications"], (current = []) => {
-            const merged = [notification, ...current.filter((item) => item.id !== notification.id)];
+            const merged = [
+              notification,
+              ...current.filter(
+                (item) => item.id !== notification.id && item.eventId !== notification.eventId,
+              ),
+            ];
             return merged.slice(0, 50);
           });
-          if (initialized.current && !seenIds.current.has(notification.id)) {
+          if (initialized.current && !seenEventIds.current.has(notification.eventId)) {
             toast.success(notification.title, {
               description: notification.message,
               duration: 6000,
               className: "min-w-[320px]",
             });
           }
-          seenIds.current.add(notification.id);
+          seenEventIds.current.add(notification.eventId);
           initialized.current = true;
         },
       )
@@ -84,7 +92,7 @@ export function NotificationCenter() {
 
   useEffect(() => {
     if (!query.data) return;
-    query.data.forEach((notification) => seenIds.current.add(notification.id));
+    query.data.forEach((notification) => seenEventIds.current.add(notification.eventId));
     initialized.current = true;
   }, [query.data]);
 

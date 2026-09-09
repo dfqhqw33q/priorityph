@@ -566,26 +566,26 @@ export async function loadPresidentStep(evaluationId: string, step: 2 | 3) {
     .maybeSingle();
   if (!template) return null;
 
-  const { data: items } = await admin
-    .from("president_step_items")
-    .select("id, position, code, label, help_text, input_type, options, is_required")
-    .eq("template_id", template.id)
-    .order("position");
-
-  const { data: responses } = await admin
-    .from("president_responses")
-    .select("item_id, value_text, is_locked")
-    .eq("evaluation_id", evaluationId)
-    .eq("step", step);
+  const [{ data: items }, { data: responses }, { data: evaluation }] = await Promise.all([
+    admin
+      .from("president_step_items")
+      .select("id, position, code, label, help_text, input_type, options, is_required")
+      .eq("template_id", template.id)
+      .order("position"),
+    admin
+      .from("president_responses")
+      .select("item_id, value_text, is_locked")
+      .eq("evaluation_id", evaluationId)
+      .eq("step", step),
+    admin
+      .from("evaluations")
+      .select("president_step2_submitted_at, president_step3_submitted_at")
+      .eq("id", evaluationId)
+      .maybeSingle(),
+  ]);
 
   const answers: Record<string, string> = {};
   for (const response of responses ?? []) answers[response.item_id] = response.value_text;
-
-  const { data: evaluation } = await admin
-    .from("evaluations")
-    .select("president_step2_submitted_at, president_step3_submitted_at")
-    .eq("id", evaluationId)
-    .maybeSingle();
 
   const submittedAt =
     step === 2
@@ -649,16 +649,7 @@ export async function savePresidentStep(
     }
   }
 
-  const { data: existing } = await admin
-    .from("president_responses")
-    .select("id, item_id, is_locked")
-    .eq("evaluation_id", evaluationId)
-    .eq("step", step);
-  const existingByItem = new Map((existing ?? []).map((row) => [row.item_id, row]));
-
   const payload = current.items.map((item) => {
-    const row = existingByItem.get(item.id);
-    if (row?.is_locked) throw validationError("Locked President responses cannot be changed");
     return {
       evaluation_id: evaluationId,
       item_id: item.id,
