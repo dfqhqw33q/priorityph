@@ -63,7 +63,9 @@ function ReadOnlyField({ label, value, className = "" }: { label: string; value:
   return (
     <div className={className}>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-foreground">{String(value ?? "-") || "-"}</p>
+      <p className="mt-1 max-w-4xl whitespace-pre-wrap pr-4 text-sm leading-6 text-foreground lg:pr-10">
+        {String(value ?? "-") || "-"}
+      </p>
     </div>
   );
 }
@@ -596,7 +598,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   }
                 />
               </div>
-              <div className="mx-auto w-full max-w-6xl rounded-md bg-muted/20 p-4 sm:p-5 lg:p-6">
+              <div className="rounded-md bg-muted/20 p-4">
                 <ReadOnlyGroup title="STEP 2 - Conclusions and comments (read-only)">
                   <div className="space-y-4">
                     <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
@@ -675,7 +677,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   onChange={() => {}}
                 />
               </div>
-              <div className="mx-auto w-full max-w-6xl rounded-md bg-muted/20 p-4 sm:p-5 lg:p-6">
+              <div className="rounded-md bg-muted/20 p-4">
                 <ReadOnlyGroup title="STEP 2 - Supervisor conclusions and comments (read-only)">
                   <div className="space-y-4">
                     <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
