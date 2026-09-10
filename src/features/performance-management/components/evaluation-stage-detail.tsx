@@ -458,7 +458,13 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
         },
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, submit) => {
+      if (!submit) {
+        toast.success("Draft saved");
+        await queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] });
+        await queryClient.invalidateQueries({ queryKey: ["phase2-queue"] });
+        return;
+      }
       const message =
         stage === "RATER"
           ? "Evaluation submitted for Reviewing Supervisor review."
@@ -590,7 +596,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   }
                 />
               </div>
-              <div className="rounded-md bg-muted/20 p-4">
+              <div className="mx-auto w-full max-w-6xl rounded-md bg-muted/20 p-4 sm:p-5 lg:p-6">
                 <ReadOnlyGroup title="STEP 2 - Conclusions and comments (read-only)">
                   <div className="space-y-4">
                     <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
@@ -669,7 +675,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   onChange={() => {}}
                 />
               </div>
-              <div className="rounded-md bg-muted/20 p-4">
+              <div className="mx-auto w-full max-w-6xl rounded-md bg-muted/20 p-4 sm:p-5 lg:p-6">
                 <ReadOnlyGroup title="STEP 2 - Supervisor conclusions and comments (read-only)">
                   <div className="space-y-4">
                     <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
