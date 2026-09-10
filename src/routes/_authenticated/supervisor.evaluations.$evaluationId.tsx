@@ -585,19 +585,19 @@ function SupervisorReviewPage() {
         <CardHeader>
           <CardTitle className="text-base">Employee information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className="text-sm">
+          <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-7">
             <Field label="Employee number" value={detail.employee_number_snapshot} />
             <Field label="Full name" value={detail.full_name_snapshot} />
             <Field label="Job title" value={detail.job_title_snapshot} />
             <Field label="Division / department" value={detail.division_snapshot} />
             <Field label="Section / unit" value={detail.section_snapshot} />
             <Field label="Evaluation cycle" value={`${detail.cycle_name} (${detail.cycle_year})`} />
+            <Field
+              label="Self-assessment submitted"
+              value={formatDateTime(detail.employee_submitted_at)}
+            />
           </div>
-          <Field
-            label="Self-assessment submitted"
-            value={formatDateTime(detail.employee_submitted_at)}
-          />
         </CardContent>
       </Card>
 
@@ -879,7 +879,7 @@ function SupervisorReviewPage() {
             <input
               id="step2-date"
               type="text"
-              className="h-10 rounded-md border border-input bg-muted/40 px-3 text-muted-foreground"
+              className="h-8 w-auto min-w-0 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:outline-none"
               value={step2["date"] || currentDate}
               readOnly
               aria-readonly="true"

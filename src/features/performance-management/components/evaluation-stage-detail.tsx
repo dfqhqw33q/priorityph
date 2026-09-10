@@ -525,7 +525,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
         <CardHeader>
           <CardTitle className="text-base">Employee information</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className="grid gap-x-5 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-6">
           <Field label="Employee number" value={detail.employee_number_snapshot} />
           <Field label="Full name" value={detail.full_name_snapshot} />
           <Field label="Job title" value={detail.job_title_snapshot} />
