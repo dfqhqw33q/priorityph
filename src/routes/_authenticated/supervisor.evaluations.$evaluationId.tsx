@@ -662,7 +662,7 @@ function SupervisorReviewPage() {
         <CardContent className="space-y-5">
           {aiUnavailable ? <p className="text-sm text-muted-foreground">{aiUnavailable}</p> : null}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold tracking-tight">Performance conclusions</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-tight">PERFORMANCE CONCLUSIONS</h3>
             <RaterAiField
             label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents."
             field="overallExplanation"
@@ -730,7 +730,7 @@ function SupervisorReviewPage() {
             />
           </section>
           <section className="space-y-4 border-t border-border/60 pt-4">
-            <h3 className="text-sm font-semibold tracking-tight">Development and career</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-tight">DEVELOPMENT AND CAREER</h3>
             <div className="grid gap-5 lg:grid-cols-2">
               <Step2Choice
                 label="3. The employee's development potential on present job is:"
@@ -798,7 +798,7 @@ function SupervisorReviewPage() {
           />
           </section>
           <section className="space-y-4 border-t border-border/60 pt-4">
-            <h3 className="text-sm font-semibold tracking-tight">Job / Transfer</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-tight">JOB / TRANSFER</h3>
           <Step2Choice
             label="6. Has the employee expressed any interest in assuming another job or transferring to another company / division / department / section?"
             field="transferInterest"
@@ -811,7 +811,7 @@ function SupervisorReviewPage() {
             compactOptions
           />
           {step2.transferInterest === "YES" ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <Step2Input
                 label="What job?"
                 field="transferJob"
@@ -842,9 +842,9 @@ function SupervisorReviewPage() {
             </div>
           ) : null}
           </section>
-          <div className="grid gap-6 border-t border-border/60 pt-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(20rem,1fr)]">
+          <div className="grid gap-6 border-t border-border/60 pt-4 lg:grid-cols-2">
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold tracking-tight">Other comments</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-tight">OTHER COMMENTS</h3>
               <RaterAiField
             label="7. Other comments and recommendations"
             field="otherComments"
@@ -862,7 +862,7 @@ function SupervisorReviewPage() {
               />
             </section>
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold tracking-tight">Signature</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-tight">SIGNATURE</h3>
               <div className="space-y-1.5">
             <Label htmlFor="rater-signature">Signature of Rater</Label>
             <SignatureField
