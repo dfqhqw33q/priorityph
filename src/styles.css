@@ -281,6 +281,29 @@
   }
 }
 
+@keyframes text-shimmer {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -50% 0;
+  }
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    105deg,
+    currentColor 35%,
+    var(--text-shimmer-color) 50%,
+    currentColor 65%
+  );
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: text-shimmer 1.8s ease-in-out infinite;
+}
+
 @media (max-width: 549px) {
   .responsive-table-mobile {
     display: inline;

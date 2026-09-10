@@ -91,39 +91,51 @@ export function EvaluationRatingCards({
   errorCriterionIds?: string[];
 }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {criteria.map((criterion) => {
         const selected = values[criterion.id] ?? null;
         const invalid = errorCriterionIds.includes(criterion.id);
         return (
-          <fieldset key={criterion.id} className={cn("rounded-xl border border-border bg-card p-4 shadow-sm", invalid && "border-destructive")}>
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
+          <fieldset key={criterion.id} className={cn("rounded-lg border border-border bg-card p-3", invalid && "border-destructive")}>
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,auto)] lg:items-start">
+              <div className="min-w-0">
                 <legend className="text-sm font-semibold text-foreground">{criterion.letter}. {criterion.title}</legend>
-                <p className="mt-1 text-xs text-muted-foreground">{criterion.description}</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{criterion.description}</p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {employeeValues ? <span className="rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground">Employee: {employeeValues[criterion.id] ?? "—"}</span> : null}
-                {supervisorValues ? <span className="rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground">Supervisor: {supervisorValues[criterion.id] ?? "—"}</span> : null}
-                {reviewingValues ? <span className="rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground">Reviewing Supervisor: {reviewingValues[criterion.id] ?? "—"}</span> : null}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3">
+                {employeeValues ? <RatingValue label="Employee Rating" value={employeeValues[criterion.id]} /> : null}
+                {supervisorValues ? <RatingValue label="Supervisor Rating" value={supervisorValues[criterion.id]} /> : null}
+                {reviewingValues ? <RatingValue label="Reviewing Supervisor" value={reviewingValues[criterion.id]} /> : null}
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-5 gap-2">
-              {RATING_SCALE.map((scale) => {
-                const active = !readOnly && selected === scale.value;
-                return (
-                  <label key={scale.value} className={cn("flex cursor-pointer flex-col items-center gap-1 rounded-lg border px-1 py-2.5 text-center text-[11px] font-medium transition-all", active ? "border-primary bg-primary text-primary-foreground font-bold shadow-sm ring-1 ring-primary" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-accent-foreground", readOnly && "cursor-default opacity-80")}>
-                    <input type="radio" className="sr-only" name={`supervisor-${criterion.id}`} value={scale.value} checked={active} disabled={readOnly} onChange={() => onChange?.(criterion.id, scale.value)} />
-                    <span className="text-sm font-bold">{scale.value}</span>
-                    <span className="leading-tight">{scale.label}</span>
-                  </label>
-                );
-              })}
-            </div>
+            {!readOnly ? (
+              <div className="mt-3 grid grid-cols-5 gap-1.5 sm:max-w-xl">
+                {RATING_SCALE.map((scale) => {
+                  const active = selected === scale.value;
+                  return (
+                    <label key={scale.value} className={cn("flex min-h-9 cursor-pointer items-center justify-center gap-1 rounded-md border px-1 text-center text-xs font-medium transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1", active ? "border-primary bg-primary text-primary-foreground font-bold" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-accent-foreground")}>
+                      <input type="radio" className="sr-only" name={`supervisor-${criterion.id}`} value={scale.value} checked={active} onChange={() => onChange?.(criterion.id, scale.value)} />
+                      <span className="font-bold">{scale.value}</span>
+                      <span className="hidden md:inline">{scale.label}</span>
+                      <span className="sr-only">{scale.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : null}
             {invalid ? <p className="mt-2 text-xs font-medium text-destructive">Select a rating from 1 to 5.</p> : null}
           </fieldset>
         );
       })}
+    </div>
+  );
+}
+
+function RatingValue({ label, value }: { label: string; value: number | null }) {
+  return (
+    <div>
+      <span className="block text-muted-foreground">{label}</span>
+      <span className="font-semibold tabular-nums text-foreground">{value ?? "—"}</span>
     </div>
   );
 }

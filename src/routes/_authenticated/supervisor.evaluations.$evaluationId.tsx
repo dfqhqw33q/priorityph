@@ -31,6 +31,7 @@ import { getEvaluation } from "@/lib/evaluations.functions";
 import { saveRaterStep2 } from "@/lib/evaluation-workflow.functions";
 import { recordRaterAiAction, suggestRaterFields } from "@/lib/ai.functions";
 import { SignatureField } from "@/features/performance-management/components/signature-field";
+import { TextShimmer } from "@/components/loading-ui/text-shimmer";
 import { userErrorMessage } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$evaluationId")({
@@ -205,26 +206,28 @@ function Step2Input(props: Step2Props) {
   );
 }
 
-function Step2Choice({ field, label, options, ...props }: Step2Props & { options: string[] }) {
+function Step2Choice({ field, label, options, compactOptions = false, ...props }: Step2Props & { options: string[]; compactOptions?: boolean }) {
   return (
     <fieldset className="space-y-2">
       <legend className="text-sm font-medium">{label}</legend>
-      {options.map((option) => (
-        <label key={option} className="flex items-start gap-2 text-sm">
-          <input
-            type="radio"
-            name={`step2-${field}`}
-            value={option}
-            checked={props.step2[field] === option}
-            disabled={!props.editable || !props.canEdit}
-            onChange={() => {
-              props.setStep2((current) => ({ ...current, [field]: option }));
-              props.setDirty(true);
-            }}
-          />
-          <span>{option}</span>
-        </label>
-      ))}
+      <div className={compactOptions ? "grid grid-cols-1 gap-2 lg:grid-cols-2" : "space-y-2"}>
+        {options.map((option) => (
+          <label key={option} className="flex items-start gap-2 text-sm">
+            <input
+              type="radio"
+              name={`step2-${field}`}
+              value={option}
+              checked={props.step2[field] === option}
+              disabled={!props.editable || !props.canEdit}
+              onChange={() => {
+                props.setStep2((current) => ({ ...current, [field]: option }));
+                props.setDirty(true);
+              }}
+            />
+            <span>{option}</span>
+          </label>
+        ))}
+      </div>
     </fieldset>
   );
 }
@@ -327,6 +330,7 @@ function SupervisorReviewPage() {
   }, [dirty]);
 
   const editable = detail?.status === "SUBMITTED" || detail?.status === "DRAFT";
+  const currentDate = new Date().toISOString().slice(0, 10);
 
   const ratingPayload = () =>
     Object.entries(ratings)
@@ -586,6 +590,7 @@ function SupervisorReviewPage() {
           <Field label="Job title" value={detail.job_title_snapshot} />
           <Field label="Division / department" value={detail.division_snapshot} />
           <Field label="Section / unit" value={detail.section_snapshot} />
+          <Field label="Evaluation cycle" value={`${detail.cycle_name} (${detail.cycle_year})`} />
           <Field
             label="Self-assessment submitted"
             value={formatDateTime(detail.employee_submitted_at)}
@@ -634,39 +639,29 @@ function SupervisorReviewPage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">CONCLUSIONS AND COMMENTS</CardTitle>
-          <CardDescription>(CONFIDENTIAL: NOT TO BE SHOWN TO RATEE)</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-base">STEP TWO: Conclusions and Comments</CardTitle>
+            <CardDescription>(CONFIDENTIAL: NOT TO BE SHOWN TO RATEE)</CardDescription>
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={aiBusy || !editable || !can("evaluations.step2")}
+              onClick={generateSuggestions}
+            >
+              {aiBusy ? <TextShimmer>Generating...</TextShimmer> : "AI Suggestions"}
+            </Button>
+            <span className="text-xs text-muted-foreground">Advisory suggestions from A-J ratings.</span>
+          </div>
         </CardHeader>
         <CardContent className="space-y-5">
-          <h3 className="font-semibold">STEP TWO: Develop conclusion and comments</h3>
-          <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="font-semibold text-primary">Competency analysis assistance</p>
-                <p className="text-xs text-muted-foreground">
-                  Generate coordinated suggestions for the development and comments fields from the
-                  recorded A-J ratings.
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={aiBusy || !editable || !can("evaluations.step2")}
-                onClick={generateSuggestions}
-              >
-                {aiBusy
-                  ? "Analyzing Evaluation..."
-                  : Object.keys(aiSuggestions).length
-                    ? "Regenerate AI Suggestions"
-                    : "Generate AI Suggestions"}
-              </Button>
-            </div>
-            {aiUnavailable ? (
-              <p className="mt-2 text-sm text-muted-foreground">{aiUnavailable}</p>
-            ) : null}
-          </div>
-          <RaterAiField
+          {aiUnavailable ? <p className="text-sm text-muted-foreground">{aiUnavailable}</p> : null}
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold tracking-tight">Performance conclusions</h3>
+            <RaterAiField
             label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents."
             field="overallExplanation"
             step2={step2}
@@ -680,11 +675,11 @@ function SupervisorReviewPage() {
             onToggleEdit={() => toggleSuggestionEdit("overallExplanation")}
             onUse={() => applySuggestion("overallExplanation")}
             onDiscard={() => discardSuggestion("overallExplanation")}
-          />
-          <p className="font-semibold">
-            2. Summarize the principal strengths and weakness of the employee.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
+            />
+            <p className="font-semibold">
+              2. Summarize the principal strengths and weakness of the employee.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
             <RaterAiField
               label="Principal Strengths"
               field="strengths"
@@ -715,8 +710,8 @@ function SupervisorReviewPage() {
               onUse={() => applySuggestion("weaknesses")}
               onDiscard={() => discardSuggestion("weaknesses")}
             />
-          </div>
-          <RaterAiField
+            </div>
+            <RaterAiField
             label="To be more effective on present job the employee should:"
             field="effectiveness"
             step2={step2}
@@ -730,7 +725,10 @@ function SupervisorReviewPage() {
             onToggleEdit={() => toggleSuggestionEdit("effectiveness")}
             onUse={() => applySuggestion("effectiveness")}
             onDiscard={() => discardSuggestion("effectiveness")}
-          />
+            />
+          </section>
+          <section className="space-y-4 border-t border-border/60 pt-4">
+            <h3 className="text-sm font-semibold tracking-tight">Development and career</h3>
           <Step2Choice
             label="3. The employee's development potential on present job is:"
             field="developmentPotential"
@@ -746,6 +744,7 @@ function SupervisorReviewPage() {
             editable={editable}
             canEdit={can("evaluations.step2")}
             setDirty={setDirty}
+            compactOptions
           />
           <RecommendationPanel
             label="Development Potential"
@@ -769,6 +768,7 @@ function SupervisorReviewPage() {
             editable={editable}
             canEdit={can("evaluations.step2")}
             setDirty={setDirty}
+            compactOptions
           />
           <RecommendationPanel
             label="Advancement Outlook"
@@ -792,6 +792,9 @@ function SupervisorReviewPage() {
             onUse={() => applySuggestion("growthSuggestions")}
             onDiscard={() => discardSuggestion("growthSuggestions")}
           />
+          </section>
+          <section className="space-y-4 border-t border-border/60 pt-4">
+            <h3 className="text-sm font-semibold tracking-tight">Job / Transfer</h3>
           <Step2Choice
             label="6. Has the employee expressed any interest in assuming another job or transferring to another company / division / department / section?"
             field="transferInterest"
@@ -803,7 +806,7 @@ function SupervisorReviewPage() {
             setDirty={setDirty}
           />
           {step2.transferInterest === "YES" ? (
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Step2Input
                 label="What job?"
                 field="transferJob"
@@ -833,6 +836,9 @@ function SupervisorReviewPage() {
               />
             </div>
           ) : null}
+          </section>
+          <section className="space-y-4 border-t border-border/60 pt-4">
+            <h3 className="text-sm font-semibold tracking-tight">Other comments</h3>
           <RaterAiField
             label="7. Other comments and recommendations"
             field="otherComments"
@@ -848,8 +854,10 @@ function SupervisorReviewPage() {
             onUse={() => applySuggestion("otherComments")}
             onDiscard={() => discardSuggestion("otherComments")}
           />
-
-          <div className="space-y-1.5 sm:col-span-2">
+          </section>
+          <section className="space-y-4 border-t border-border/60 pt-4">
+            <h3 className="text-sm font-semibold tracking-tight">Signature</h3>
+          <div className="space-y-1.5">
             <Label htmlFor="rater-signature">Signature of Rater</Label>
             <SignatureField
               {...(signature ? { value: signature } : {})}
@@ -861,19 +869,17 @@ function SupervisorReviewPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="step2-date">Date</Label>
+            <Label htmlFor="step2-date">Rater Signature Date</Label>
             <input
               id="step2-date"
-              type="date"
-              className="h-10 rounded-md border border-input bg-background px-3"
-              value={step2["date"]}
-              disabled={!editable || !can("evaluations.step2")}
-              onChange={(event) => {
-                setStep2((current) => ({ ...current, date: event.target.value }));
-                setDirty(true);
-              }}
+              type="text"
+              className="h-10 rounded-md border border-input bg-muted/40 px-3 text-muted-foreground"
+              value={step2["date"] || currentDate}
+              readOnly
+              aria-readonly="true"
             />
           </div>
+          </section>
         </CardContent>
       </Card>
 

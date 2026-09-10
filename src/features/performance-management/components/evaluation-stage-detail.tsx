@@ -32,6 +32,7 @@ import { EvaluationRatingCards, ratingFor } from "@/features/performance-managem
 import { SignatureField, type SignatureValue } from "@/features/performance-management/components/signature-field";
 import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
 import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader } from "@/components/shared/shared-ui";
+import { TextShimmer } from "@/components/loading-ui/text-shimmer";
 import {
   getEvaluationStage,
   approveEvaluation,
@@ -55,6 +56,32 @@ function Field({ label, value }: { label: string; value: string }) {
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-0.5 font-medium text-foreground">{value || "-"}</p>
     </div>
+  );
+}
+
+function ReadOnlyField({ label, value, className = "" }: { label: string; value: unknown; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-foreground">{String(value ?? "-") || "-"}</p>
+    </div>
+  );
+}
+
+function ReadOnlyGroup({
+  title,
+  children,
+  className = "",
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`space-y-3 ${className}`}>
+      <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
+      {children}
+    </section>
   );
 }
 
@@ -504,10 +531,11 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
           <Field label="Job title" value={detail.job_title_snapshot} />
           <Field label="Division / department" value={detail.division_snapshot} />
           <Field label="Section / unit" value={detail.section_snapshot} />
+          <Field label="Evaluation cycle" value={`${detail.cycle_name} (${detail.cycle_year})`} />
         </CardContent>
       </Card>
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
           <CardTitle className="text-base">
             {stage === "RATER"
               ? "Step 2 - Conclusions and comments"
@@ -519,6 +547,22 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                     ? "Complete evaluation file (for review)"
                     : "Complete evaluation file (for review)"}
           </CardTitle>
+          {stage === "REVIEWING_SUPERVISOR" ? (
+            <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={reviewAiBusy || !editable}
+                onClick={generateReviewSuggestions}
+              >
+                {reviewAiBusy ? <TextShimmer>Generating...</TextShimmer> : "AI Suggestions"}
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Advisory suggestions from A-J ratings.
+              </span>
+            </div>
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-6">
           {stage === "REVIEWING_SUPERVISOR" ? (
@@ -546,33 +590,33 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   }
                 />
               </div>
-              <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">STEP 2 - Conclusions and comments (read-only)</h3>
-                {[
-                  ["Overall rating explanation", "supervisor_step2_overall_explanation"],
-                  ["Principal Strengths", "supervisor_step2_strengths"],
-                  ["Principal Weakness", "supervisor_step2_weaknesses"],
-                  ["Present-job effectiveness", "supervisor_step2_effectiveness"],
-                  ["Development Potential", "supervisor_step2_development_potential"],
-                  ["Advancement Outlook", "supervisor_step2_advancement_outlook"],
-                  ["Growth and development suggestions", "supervisor_step2_growth_suggestions"],
-                  ["Job / Transfer Interest", "supervisor_step2_transfer_interest"],
-                  ["What Job?", "supervisor_step2_transfer_job"],
-                  ["Where?", "supervisor_step2_transfer_where"],
-                  ["Is Qualified?", "supervisor_step2_transfer_qualified"],
-                  ["Other Comments and Recommendations", "supervisor_step2_other_comments"],
-                  ["Rater Signature Date", "supervisor_step2_date"],
-                ].map(([label, key]) => (
-                  <div key={key}>
-                    <p className="text-xs font-semibold text-muted-foreground">{label}</p>
-                    <p className="whitespace-pre-wrap text-sm">
-                      {String((detail as Record<string, unknown>)[key] ?? "-")}
-                    </p>
+              <div className="rounded-md bg-muted/20 p-4">
+                <ReadOnlyGroup title="STEP 2 - Conclusions and comments (read-only)">
+                  <div className="space-y-4">
+                    <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <ReadOnlyField label="Principal Strengths" value={(detail as Record<string, unknown>)["supervisor_step2_strengths"]} />
+                      <ReadOnlyField label="Principal Weakness" value={(detail as Record<string, unknown>)["supervisor_step2_weaknesses"]} />
+                    </div>
+                    <ReadOnlyField label="Present-job effectiveness" value={(detail as Record<string, unknown>)["supervisor_step2_effectiveness"]} />
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <ReadOnlyField label="Development Potential" value={(detail as Record<string, unknown>)["supervisor_step2_development_potential"]} />
+                      <ReadOnlyField label="Advancement Outlook" value={(detail as Record<string, unknown>)["supervisor_step2_advancement_outlook"]} />
+                    </div>
+                    <ReadOnlyField label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      <ReadOnlyField label="Job / Transfer Interest" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]} />
+                      <ReadOnlyField label="What Job?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_job"]} />
+                      <ReadOnlyField label="Where?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_where"]} />
+                      <ReadOnlyField label="Is Qualified?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_qualified"]} />
+                    </div>
+                    <ReadOnlyField label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
+                    <ReadOnlyField label="Rater Signature Date" value={(detail as Record<string, unknown>)["supervisor_step2_date"]} />
                   </div>
-                ))}
+                </ReadOnlyGroup>
                 {(detail as Record<string, unknown>)["rater_signature"] ? (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground">Rater Signature</p>
+                  <div className="mt-4 border-t border-border/60 pt-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Rater Signature</p>
                     <img
                       src={String(
                         (
@@ -621,32 +665,30 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   onChange={() => {}}
                 />
               </div>
-              <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">
-                  STEP 2 - Supervisor conclusions and comments (read-only)
-                </h3>
-                {[
-                  ["Overall rating explanation", "supervisor_step2_overall_explanation"],
-                  ["Principal Strengths", "supervisor_step2_strengths"],
-                  ["Principal Weakness", "supervisor_step2_weaknesses"],
-                  ["Present-job effectiveness", "supervisor_step2_effectiveness"],
-                  ["Development Potential", "supervisor_step2_development_potential"],
-                  ["Advancement Outlook", "supervisor_step2_advancement_outlook"],
-                  ["Growth and development suggestions", "supervisor_step2_growth_suggestions"],
-                  ["Job / Transfer Interest", "supervisor_step2_transfer_interest"],
-                  ["What Job?", "supervisor_step2_transfer_job"],
-                  ["Where?", "supervisor_step2_transfer_where"],
-                  ["Is Qualified?", "supervisor_step2_transfer_qualified"],
-                  ["Other Comments and Recommendations", "supervisor_step2_other_comments"],
-                  ["Rater Signature Date", "supervisor_step2_date"],
-                ].map(([label, key]) => (
-                  <div key={key}>
-                    <p className="text-xs font-semibold text-muted-foreground">{label}</p>
-                    <p className="whitespace-pre-wrap text-sm">
-                      {String((detail as Record<string, unknown>)[key] ?? "-")}
-                    </p>
+              <div className="rounded-md bg-muted/20 p-4">
+                <ReadOnlyGroup title="STEP 2 - Supervisor conclusions and comments (read-only)">
+                  <div className="space-y-4">
+                    <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <ReadOnlyField label="Principal Strengths" value={(detail as Record<string, unknown>)["supervisor_step2_strengths"]} />
+                      <ReadOnlyField label="Principal Weakness" value={(detail as Record<string, unknown>)["supervisor_step2_weaknesses"]} />
+                    </div>
+                    <ReadOnlyField label="Present-job effectiveness" value={(detail as Record<string, unknown>)["supervisor_step2_effectiveness"]} />
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <ReadOnlyField label="Development Potential" value={(detail as Record<string, unknown>)["supervisor_step2_development_potential"]} />
+                      <ReadOnlyField label="Advancement Outlook" value={(detail as Record<string, unknown>)["supervisor_step2_advancement_outlook"]} />
+                    </div>
+                    <ReadOnlyField label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      <ReadOnlyField label="Job / Transfer Interest" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]} />
+                      <ReadOnlyField label="What Job?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_job"]} />
+                      <ReadOnlyField label="Where?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_where"]} />
+                      <ReadOnlyField label="Is Qualified?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_qualified"]} />
+                    </div>
+                    <ReadOnlyField label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
+                    <ReadOnlyField label="Rater Signature Date" value={(detail as Record<string, unknown>)["supervisor_step2_date"]} />
                   </div>
-                ))}
+                </ReadOnlyGroup>
               </div>
               <div className="space-y-2 rounded-md border border-border p-4">
                 <h3 className="font-semibold">STEP 3 - Reviewing Supervisor review (read-only)</h3>
@@ -804,32 +846,9 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
             </>
           ) : stage === "REVIEWING_SUPERVISOR" ? (
             <>
-              <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-primary">Review analysis assistance</p>
-                    <p className="text-xs text-muted-foreground">
-                      Generate coordinated suggestions for the Reviewing Supervisor's editable
-                      review fields.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={reviewAiBusy || !editable}
-                    onClick={generateReviewSuggestions}
-                  >
-                    {reviewAiBusy
-                      ? "Analyzing Evaluation..."
-                      : Object.keys(reviewAiSuggestions).length
-                        ? "Regenerate AI Suggestions"
-                        : "Generate AI Suggestions"}
-                  </Button>
-                </div>
-                {reviewAiUnavailable ? (
-                  <p className="mt-2 text-sm text-muted-foreground">{reviewAiUnavailable}</p>
-                ) : null}
-              </div>
+              {reviewAiUnavailable ? (
+                <p className="text-sm text-muted-foreground">{reviewAiUnavailable}</p>
+              ) : null}
               <ReviewAiField
                 label="Comments"
                 field="comments"
@@ -864,14 +883,14 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                 onDiscard={() => discardReviewSuggestion("recommendations")}
               />
               <div className="space-y-1.5">
-                <Label htmlFor="phase2-date">Date *</Label>
+                <Label htmlFor="phase2-date">Signature Date *</Label>
                 <Input
                   id="phase2-date"
-                  type="date"
+                  type="text"
                   value={values.date ?? workflowDate()}
-                  onChange={(event) => update("date", event.target.value)}
                   disabled={!editable}
                   readOnly
+                  aria-readonly="true"
                 />
               </div>
             </>
@@ -993,11 +1012,25 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
               ) : null}
             </>
           )}
-          <SignatureField
-            {...(signature ? { value: signature } : {})}
-            disabled={!editable}
-            onChange={setSignature}
-          />
+          {stage === "REVIEWING_SUPERVISOR" ? (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">Signature</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Signature Image
+              </p>
+              <SignatureField
+                {...(signature ? { value: signature } : {})}
+                disabled={!editable}
+                onChange={setSignature}
+              />
+            </div>
+          ) : (
+            <SignatureField
+              {...(signature ? { value: signature } : {})}
+              disabled={!editable}
+              onChange={setSignature}
+            />
+          )}
           {stage === "PRESIDENT" ? (
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={openDocument}>
