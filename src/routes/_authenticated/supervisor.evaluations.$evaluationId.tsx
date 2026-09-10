@@ -212,13 +212,14 @@ function Step2Choice({ field, label, options, compactOptions = false, ...props }
         }
       >
         {options.map((option) => (
-          <label key={option} className="flex items-start gap-2 text-sm">
+          <label key={option} className="flex items-start gap-2 text-sm leading-5">
             <input
               type="radio"
               name={`step2-${field}`}
               value={option}
               checked={props.step2[field] === option}
               disabled={!props.editable || !props.canEdit}
+              className="mt-1 shrink-0"
               onChange={() => {
                 props.setStep2((current) => ({ ...current, [field]: option }));
                 props.setDirty(true);
@@ -677,7 +678,7 @@ function SupervisorReviewPage() {
             onUse={() => applySuggestion("overallExplanation")}
             onDiscard={() => discardSuggestion("overallExplanation")}
             />
-            <p className="font-semibold">
+            <p className="text-sm font-medium">
               2. Summarize the principal strengths and weakness of the employee.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -764,20 +765,22 @@ function SupervisorReviewPage() {
                 setDirty={setDirty}
               />
             </div>
-          <RecommendationPanel
-            label="Development Potential"
-            recommendation={aiRecommendations.developmentPotential}
-            editable={editable && can("evaluations.step2")}
-            onApply={() => applyRecommendation("developmentPotential")}
-            onDismiss={() => discardRecommendation("developmentPotential")}
-          />
-          <RecommendationPanel
-            label="Advancement Outlook"
-            recommendation={aiRecommendations.advancementOutlook}
-            editable={editable && can("evaluations.step2")}
-            onApply={() => applyRecommendation("advancementOutlook")}
-            onDismiss={() => discardRecommendation("advancementOutlook")}
-          />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <RecommendationPanel
+              label="Development Potential"
+              recommendation={aiRecommendations.developmentPotential}
+              editable={editable && can("evaluations.step2")}
+              onApply={() => applyRecommendation("developmentPotential")}
+              onDismiss={() => discardRecommendation("developmentPotential")}
+            />
+            <RecommendationPanel
+              label="Advancement Outlook"
+              recommendation={aiRecommendations.advancementOutlook}
+              editable={editable && can("evaluations.step2")}
+              onApply={() => applyRecommendation("advancementOutlook")}
+              onDismiss={() => discardRecommendation("advancementOutlook")}
+            />
+          </div>
           <RaterAiField
             label="5. Suggest ways to accelerate employee's growth and development."
             field="growthSuggestions"
@@ -864,6 +867,7 @@ function SupervisorReviewPage() {
             <Label htmlFor="rater-signature">Signature of Rater</Label>
             <SignatureField
               {...(signature ? { value: signature } : {})}
+              compact
               disabled={!editable}
               onChange={(value) => {
                 setSignature(value);

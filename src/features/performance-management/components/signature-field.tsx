@@ -5,9 +5,9 @@ import { Label } from "@/components/ui/label";
 
 export type SignatureValue = { method: "DRAWN" | "UPLOAD"; data: string };
 
-type Props = { value?: SignatureValue; disabled?: boolean; onChange: (value: SignatureValue | undefined) => void };
+type Props = { value?: SignatureValue; disabled?: boolean; compact?: boolean; onChange: (value: SignatureValue | undefined) => void };
 
-export function SignatureField({ value, disabled = false, onChange }: Props) {
+export function SignatureField({ value, disabled = false, compact = false, onChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawing, setDrawing] = useState(false);
 
@@ -78,11 +78,11 @@ export function SignatureField({ value, disabled = false, onChange }: Props) {
     <div className="space-y-3 rounded-md border border-border p-3">
       <Label>Electronic signature *</Label>
       {value?.method === "UPLOAD" ? (
-        <div className="flex h-32 w-full items-center justify-center rounded border border-dashed border-border bg-white p-2">
+        <div className={`flex ${compact ? "h-24" : "h-32"} w-full items-center justify-center rounded border border-dashed border-border bg-white p-2`}>
           <img src={value.data} alt="Uploaded electronic signature" className="max-h-full max-w-full object-contain" />
         </div>
       ) : (
-        <canvas ref={canvasRef} width={640} height={180} aria-label="Draw your signature" className="h-32 w-full touch-none rounded border border-dashed border-border bg-white" onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerLeave={end} />
+        <canvas ref={canvasRef} width={640} height={180} aria-label="Draw your signature" className={`${compact ? "h-24" : "h-32"} w-full touch-none rounded border border-dashed border-border bg-white`} onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerLeave={end} />
       )}
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" variant="outline" size="sm" onClick={clear} disabled={disabled}>Clear</Button>

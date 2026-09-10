@@ -111,7 +111,7 @@ export function EvaluationRatingCards({
                 {RATING_SCALE.map((scale) => {
                   const active = selected === scale.value;
                   return (
-                    <label key={scale.value} className={cn("flex min-h-9 cursor-pointer items-center justify-center gap-1 rounded-md border px-1 text-center text-xs font-medium transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1", active ? "border-primary bg-primary text-primary-foreground font-bold" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-accent-foreground")}>
+                    <label key={scale.value} className={cn("flex min-h-9 cursor-pointer items-center justify-center gap-1 rounded-md border px-1 text-center text-xs font-medium transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-ring", active ? "border-primary bg-primary text-primary-foreground font-bold" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-accent-foreground")}>
                       <input type="radio" className="sr-only" name={`supervisor-${criterion.id}`} value={scale.value} checked={active} onChange={() => onChange?.(criterion.id, scale.value)} />
                       <span className="font-bold">{scale.value}</span>
                       <span className="hidden md:inline">{scale.label}</span>
@@ -131,10 +131,9 @@ export function EvaluationRatingCards({
 
 function RatingValue({ label, value }: { label: string; value: number | null }) {
   return (
-    <div>
-      <span className="block text-muted-foreground">{label}</span>
-      <span className="font-semibold tabular-nums text-foreground">{value ?? "—"}</span>
-    </div>
+    <span className="whitespace-nowrap text-muted-foreground">
+      {label}: <strong className="font-semibold tabular-nums text-foreground">{value ?? "—"}</strong>
+    </span>
   );
 }
 
