@@ -293,14 +293,15 @@
 .text-shimmer {
   background: linear-gradient(
     105deg,
-    currentColor 35%,
-    var(--text-shimmer-color) 50%,
-    currentColor 65%
+    var(--text-shimmer-base) 35%,
+    var(--text-shimmer-highlight) 50%,
+    var(--text-shimmer-base) 65%
   );
   background-size: 220% 100%;
   background-clip: text;
   -webkit-background-clip: text;
-  color: transparent;
+  color: var(--text-shimmer-base);
+  -webkit-text-fill-color: transparent;
   animation: text-shimmer 1.8s ease-in-out infinite;
 }
 

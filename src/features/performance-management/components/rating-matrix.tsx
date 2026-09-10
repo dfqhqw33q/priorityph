@@ -91,7 +91,7 @@ export function EvaluationRatingCards({
   errorCriterionIds?: string[];
 }) {
   return (
-    <div className="space-y-3">
+    <div className="grid gap-3 lg:grid-cols-2">
       {criteria.map((criterion) => {
         const selected = values[criterion.id] ?? null;
         const invalid = errorCriterionIds.includes(criterion.id);

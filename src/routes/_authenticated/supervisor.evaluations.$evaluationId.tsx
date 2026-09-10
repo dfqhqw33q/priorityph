@@ -79,7 +79,7 @@ function Step2Textarea({ field, label, step2, setStep2, editable, canEdit, setDi
       <Label htmlFor={`step2-${field}`}>{label}</Label>
       <Textarea
         id={`step2-${field}`}
-        rows={3}
+        rows={field === "growthSuggestions" ? 2 : 3}
         value={step2[field] ?? ""}
         disabled={!editable || !canEdit}
         onChange={(event) => {
@@ -142,9 +142,7 @@ function RaterAiField(props: Step2Props) {
             </div>
           </>
         ) : (
-          <p className="mt-1 text-xs text-muted-foreground">
-            Advisory only. It will not change the official field until you choose Use suggestion.
-          </p>
+          <span className="sr-only">No suggestion available.</span>
         )}
       </div>
     </div>
@@ -210,7 +208,15 @@ function Step2Choice({ field, label, options, compactOptions = false, ...props }
   return (
     <fieldset className="space-y-2">
       <legend className="text-sm font-medium">{label}</legend>
-      <div className={compactOptions ? "grid grid-cols-1 gap-2 lg:grid-cols-2" : "space-y-2"}>
+      <div
+        className={
+          compactOptions
+            ? field === "transferInterest"
+              ? "grid grid-cols-1 gap-2 sm:grid-cols-3"
+              : "grid grid-cols-1 gap-2 lg:grid-cols-2"
+            : "space-y-2"
+        }
+      >
         {options.map((option) => (
           <label key={option} className="flex items-start gap-2 text-sm">
             <input
@@ -584,13 +590,15 @@ function SupervisorReviewPage() {
         <CardHeader>
           <CardTitle className="text-base">Employee information</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          <Field label="Employee number" value={detail.employee_number_snapshot} />
-          <Field label="Full name" value={detail.full_name_snapshot} />
-          <Field label="Job title" value={detail.job_title_snapshot} />
-          <Field label="Division / department" value={detail.division_snapshot} />
-          <Field label="Section / unit" value={detail.section_snapshot} />
-          <Field label="Evaluation cycle" value={`${detail.cycle_name} (${detail.cycle_year})`} />
+        <CardContent className="space-y-3 text-sm">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Field label="Employee number" value={detail.employee_number_snapshot} />
+            <Field label="Full name" value={detail.full_name_snapshot} />
+            <Field label="Job title" value={detail.job_title_snapshot} />
+            <Field label="Division / department" value={detail.division_snapshot} />
+            <Field label="Section / unit" value={detail.section_snapshot} />
+            <Field label="Evaluation cycle" value={`${detail.cycle_name} (${detail.cycle_year})`} />
+          </div>
           <Field
             label="Self-assessment submitted"
             value={formatDateTime(detail.employee_submitted_at)}
@@ -654,7 +662,6 @@ function SupervisorReviewPage() {
             >
               {aiBusy ? <TextShimmer>Generating...</TextShimmer> : "AI Suggestions"}
             </Button>
-            <span className="text-xs text-muted-foreground">Advisory suggestions from A-J ratings.</span>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -804,6 +811,7 @@ function SupervisorReviewPage() {
             editable={editable}
             canEdit={can("evaluations.step2")}
             setDirty={setDirty}
+            compactOptions
           />
           {step2.transferInterest === "YES" ? (
             <div className="grid gap-4 sm:grid-cols-2">

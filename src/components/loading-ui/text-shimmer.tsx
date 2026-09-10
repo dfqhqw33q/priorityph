@@ -9,8 +9,8 @@ type TextShimmerProps = HTMLAttributes<HTMLSpanElement> & {
 
 export function TextShimmer({
   className,
-  baseColor = "var(--color-primary-foreground)",
-  shimmerColor = "var(--color-primary-foreground)",
+  baseColor = "var(--color-foreground)",
+  shimmerColor = "var(--color-primary)",
   style,
   children,
   ...props
@@ -21,8 +21,8 @@ export function TextShimmer({
       style={
         {
           ...style,
-          color: baseColor,
-          "--text-shimmer-color": shimmerColor,
+          "--text-shimmer-base": baseColor,
+          "--text-shimmer-highlight": shimmerColor,
         } as React.CSSProperties
       }
       {...props}
