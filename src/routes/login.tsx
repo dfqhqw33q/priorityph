@@ -107,7 +107,7 @@ function LoginPage() {
         <Card className="border border-border bg-card shadow-lg">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
-            <CardDescription>Sign in to manage performance evaluations and employee records.</CardDescription>
+            <CardDescription>Use your work email and password.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>

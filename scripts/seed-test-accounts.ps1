@@ -4,8 +4,11 @@ $projectRef = if ($env:SUPABASE_PROJECT_REF) { $env:SUPABASE_PROJECT_REF } else 
 $supabaseUrl = "https://$projectRef.supabase.co"
 $password = if ($env:PHASE2_TEST_PASSWORD) { $env:PHASE2_TEST_PASSWORD } else { 'Phase2Test!2026' }
 
-$keyJson = (& npx.cmd supabase projects api-keys --project-ref $projectRef --reveal --output json | Out-String)
-$serviceKey = (($keyJson | ConvertFrom-Json) | Where-Object { $_.name -eq 'service_role' }).api_key
+$serviceKey = $env:SUPABASE_SERVICE_ROLE_KEY
+if ([string]::IsNullOrWhiteSpace($serviceKey)) {
+  $keyJson = (& npx.cmd supabase projects api-keys --project-ref $projectRef --reveal --output json | Out-String)
+  $serviceKey = (($keyJson | ConvertFrom-Json) | Where-Object { $_.name -eq 'service_role' }).api_key
+}
 if ([string]::IsNullOrWhiteSpace($serviceKey)) { throw 'Could not obtain the Supabase service-role key.' }
 
 $headers = @{ apikey = $serviceKey; Authorization = "Bearer $serviceKey" }
