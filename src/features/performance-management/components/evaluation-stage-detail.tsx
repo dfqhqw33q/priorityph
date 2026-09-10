@@ -594,21 +594,25 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                 <ReadOnlyGroup title="STEP 2 - Conclusions and comments (read-only)">
                   <div className="space-y-4">
                     <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
-                    <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid items-start gap-4 lg:grid-cols-2">
                       <ReadOnlyField label="Principal Strengths" value={(detail as Record<string, unknown>)["supervisor_step2_strengths"]} />
                       <ReadOnlyField label="Principal Weakness" value={(detail as Record<string, unknown>)["supervisor_step2_weaknesses"]} />
                     </div>
                     <ReadOnlyField label="Present-job effectiveness" value={(detail as Record<string, unknown>)["supervisor_step2_effectiveness"]} />
-                    <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid items-start gap-4 lg:grid-cols-2">
                       <ReadOnlyField label="Development Potential" value={(detail as Record<string, unknown>)["supervisor_step2_development_potential"]} />
                       <ReadOnlyField label="Advancement Outlook" value={(detail as Record<string, unknown>)["supervisor_step2_advancement_outlook"]} />
                     </div>
                     <ReadOnlyField label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
-                    <div className="grid gap-4 lg:grid-cols-3">
+                    <div className="grid items-start gap-4 lg:grid-cols-4">
                       <ReadOnlyField label="Job / Transfer Interest" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]} />
-                      <ReadOnlyField label="What Job?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_job"]} />
-                      <ReadOnlyField label="Where?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_where"]} />
-                      <ReadOnlyField label="Is Qualified?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_qualified"]} />
+                      {String((detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ?? "") === "YES" ? (
+                        <>
+                          <ReadOnlyField label="What Job?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_job"]} />
+                          <ReadOnlyField label="Where?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_where"]} />
+                          <ReadOnlyField label="Is Qualified?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_qualified"]} />
+                        </>
+                      ) : null}
                     </div>
                     <ReadOnlyField label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
                     <ReadOnlyField label="Rater Signature Date" value={(detail as Record<string, unknown>)["supervisor_step2_date"]} />
@@ -669,21 +673,25 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                 <ReadOnlyGroup title="STEP 2 - Supervisor conclusions and comments (read-only)">
                   <div className="space-y-4">
                     <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
-                    <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid items-start gap-4 lg:grid-cols-2">
                       <ReadOnlyField label="Principal Strengths" value={(detail as Record<string, unknown>)["supervisor_step2_strengths"]} />
                       <ReadOnlyField label="Principal Weakness" value={(detail as Record<string, unknown>)["supervisor_step2_weaknesses"]} />
                     </div>
                     <ReadOnlyField label="Present-job effectiveness" value={(detail as Record<string, unknown>)["supervisor_step2_effectiveness"]} />
-                    <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid items-start gap-4 lg:grid-cols-2">
                       <ReadOnlyField label="Development Potential" value={(detail as Record<string, unknown>)["supervisor_step2_development_potential"]} />
                       <ReadOnlyField label="Advancement Outlook" value={(detail as Record<string, unknown>)["supervisor_step2_advancement_outlook"]} />
                     </div>
                     <ReadOnlyField label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
-                    <div className="grid gap-4 lg:grid-cols-3">
+                    <div className="grid items-start gap-4 lg:grid-cols-4">
                       <ReadOnlyField label="Job / Transfer Interest" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]} />
-                      <ReadOnlyField label="What Job?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_job"]} />
-                      <ReadOnlyField label="Where?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_where"]} />
-                      <ReadOnlyField label="Is Qualified?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_qualified"]} />
+                      {String((detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ?? "") === "YES" ? (
+                        <>
+                          <ReadOnlyField label="What Job?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_job"]} />
+                          <ReadOnlyField label="Where?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_where"]} />
+                          <ReadOnlyField label="Is Qualified?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_qualified"]} />
+                        </>
+                      ) : null}
                     </div>
                     <ReadOnlyField label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
                     <ReadOnlyField label="Rater Signature Date" value={(detail as Record<string, unknown>)["supervisor_step2_date"]} />
@@ -839,49 +847,55 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
           />
           {stage === "RATER" ? (
             <>
-              {field("strengths", "Strengths")} {field("weaknesses", "Weaknesses")}{" "}
-              {field("development", "Development")} {field("advancement", "Advancement")}{" "}
-              {field("careerTransfer", "Career / transfer")}{" "}
-              {field("recommendations", "Other recommendations")}
+              <div className="grid gap-4 lg:grid-cols-2">
+                {field("strengths", "Strengths")}
+                {field("weaknesses", "Weaknesses")}
+                {field("development", "Development")}
+                {field("advancement", "Advancement")}
+                {field("careerTransfer", "Career / transfer")}
+                {field("recommendations", "Other recommendations")}
+              </div>
             </>
           ) : stage === "REVIEWING_SUPERVISOR" ? (
             <>
               {reviewAiUnavailable ? (
                 <p className="text-sm text-muted-foreground">{reviewAiUnavailable}</p>
               ) : null}
-              <ReviewAiField
-                label="Comments"
-                field="comments"
-                value={values.comments ?? ""}
-                suggestion={reviewAiSuggestions.comments}
-                editing={Boolean(reviewAiEditing.comments)}
-                editable={editable}
-                onChange={(value) => update("comments", value)}
-                onSuggestionChange={(value) => editReviewSuggestion("comments", value)}
-                onToggleEdit={() =>
-                  setReviewAiEditing((current) => ({ ...current, comments: !current.comments }))
-                }
-                onUse={() => applyReviewSuggestion("comments")}
-                onDiscard={() => discardReviewSuggestion("comments")}
-              />
-              <ReviewAiField
-                label="Recommendations"
-                field="recommendations"
-                value={values.recommendations ?? ""}
-                suggestion={reviewAiSuggestions.recommendations}
-                editing={Boolean(reviewAiEditing.recommendations)}
-                editable={editable}
-                onChange={(value) => update("recommendations", value)}
-                onSuggestionChange={(value) => editReviewSuggestion("recommendations", value)}
-                onToggleEdit={() =>
-                  setReviewAiEditing((current) => ({
-                    ...current,
-                    recommendations: !current.recommendations,
-                  }))
-                }
-                onUse={() => applyReviewSuggestion("recommendations")}
-                onDiscard={() => discardReviewSuggestion("recommendations")}
-              />
+              <div className="grid gap-4 lg:grid-cols-2">
+                <ReviewAiField
+                  label="Comments"
+                  field="comments"
+                  value={values.comments ?? ""}
+                  suggestion={reviewAiSuggestions.comments}
+                  editing={Boolean(reviewAiEditing.comments)}
+                  editable={editable}
+                  onChange={(value) => update("comments", value)}
+                  onSuggestionChange={(value) => editReviewSuggestion("comments", value)}
+                  onToggleEdit={() =>
+                    setReviewAiEditing((current) => ({ ...current, comments: !current.comments }))
+                  }
+                  onUse={() => applyReviewSuggestion("comments")}
+                  onDiscard={() => discardReviewSuggestion("comments")}
+                />
+                <ReviewAiField
+                  label="Recommendations"
+                  field="recommendations"
+                  value={values.recommendations ?? ""}
+                  suggestion={reviewAiSuggestions.recommendations}
+                  editing={Boolean(reviewAiEditing.recommendations)}
+                  editable={editable}
+                  onChange={(value) => update("recommendations", value)}
+                  onSuggestionChange={(value) => editReviewSuggestion("recommendations", value)}
+                  onToggleEdit={() =>
+                    setReviewAiEditing((current) => ({
+                      ...current,
+                      recommendations: !current.recommendations,
+                    }))
+                  }
+                  onUse={() => applyReviewSuggestion("recommendations")}
+                  onDiscard={() => discardReviewSuggestion("recommendations")}
+                />
+              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="phase2-date">Signature Date *</Label>
                 <Input
@@ -940,8 +954,10 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   value={detail.score?.finalRatingLabel ?? "-"}
                 />
               </div>
-              {field("lastIncreaseNature", "Nature of last increase", false)}
-              {field("recommendedIncreaseBonus", "Recommended increase / bonus")}
+              <div className="grid gap-4 lg:grid-cols-2">
+                {field("lastIncreaseNature", "Nature of last increase", false)}
+                {field("recommendedIncreaseBonus", "Recommended increase / bonus")}
+              </div>
             </>
           ) : stage === "COMMITTEE" ? (
             <>
@@ -968,8 +984,10 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   ))}
                 </select>
               </div>
-              {field("actionDetails", "Action details", false)}
-              {field("recommendations", "Committee recommendation")}
+              <div className="grid gap-4 lg:grid-cols-2">
+                {field("actionDetails", "Action details", false)}
+                {field("recommendations", "Committee recommendation")}
+              </div>
             </>
           ) : (
             <>
