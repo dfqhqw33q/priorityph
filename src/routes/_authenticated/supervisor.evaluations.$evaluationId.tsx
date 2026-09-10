@@ -842,8 +842,8 @@ function SupervisorReviewPage() {
             </div>
           ) : null}
           </section>
-          <div className="grid gap-6 border-t border-border/60 pt-4 lg:grid-cols-2">
-            <section className="space-y-4">
+          <div className="grid items-start gap-6 border-t border-border/60 pt-4 lg:grid-cols-2">
+            <section className="min-w-0 space-y-4">
               <h3 className="text-sm font-semibold uppercase tracking-tight">OTHER COMMENTS</h3>
               <RaterAiField
             label="7. Other comments and recommendations"
@@ -861,10 +861,9 @@ function SupervisorReviewPage() {
             onDiscard={() => discardSuggestion("otherComments")}
               />
             </section>
-            <section className="space-y-4">
+            <section className="min-w-0 space-y-4">
               <h3 className="text-sm font-semibold uppercase tracking-tight">SIGNATURE</h3>
               <div className="space-y-1.5">
-            <Label htmlFor="rater-signature">Signature of Rater</Label>
             <SignatureField
               {...(signature ? { value: signature } : {})}
               compact
@@ -876,7 +875,7 @@ function SupervisorReviewPage() {
             />
               </div>
               <div className="space-y-1.5">
-            <Label htmlFor="step2-date">Rater Signature Date</Label>
+            <Label htmlFor="step2-date">Date</Label>
             <input
               id="step2-date"
               type="text"
