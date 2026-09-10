@@ -109,7 +109,7 @@ function RecognitionPage() {
     <div className="space-y-6">
       <PageHeader
         title="Social Recognition"
-        description="Review recognition candidates from finalized performance evaluations."
+        description="Review employee recognition candidates and record decisions."
         actions={<Button onClick={() => setOtherOpen(true)}>Other recognition</Button>}
       />
       <Card>

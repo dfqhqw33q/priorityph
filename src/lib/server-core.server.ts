@@ -247,29 +247,27 @@ export async function cycleCountsForCycles(cycleIds: string[]) {
     if (!current) continue;
     if (
       [
-        "EMPLOYEE_SUBMITTED",
-        "SUPERVISOR_DRAFT",
-        "SUPERVISOR_SUBMITTED",
-        "REVIEWING_SUPERVISOR_REVIEW",
-        "PERSONNEL_PROCESSING",
-        "COMMITTEE_REVIEW",
-        "PRESIDENT_APPROVAL",
+        "SUBMITTED",
+        "DRAFT",
+        "FOR_REVIEW",
+        "FOR_PROCESSING",
+        "FOR_APPROVAL",
+        "RETURNED",
         "FINALIZED",
       ].includes(row.status)
     )
       current.step1_count += 1;
     if (
       [
-        "SUPERVISOR_SUBMITTED",
-        "REVIEWING_SUPERVISOR_REVIEW",
-        "PERSONNEL_PROCESSING",
-        "COMMITTEE_REVIEW",
-        "PRESIDENT_APPROVAL",
+        "FOR_REVIEW",
+        "FOR_PROCESSING",
+        "FOR_APPROVAL",
+        "RETURNED",
         "FINALIZED",
       ].includes(row.status)
     )
       current.supervisor_count += 1;
-    if (["PRESIDENT_APPROVAL", "FINALIZED"].includes(row.status)) current.president_count += 1;
+    if (["FOR_APPROVAL", "FINALIZED"].includes(row.status)) current.president_count += 1;
   }
   return counts;
 }
@@ -528,8 +526,8 @@ export async function dashboardStats(userId: string) {
         .from("employees")
         .select("id", { count: "exact", head: true })
         .then((r) => r.count ?? 0),
-      evaluationCount(["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"]),
-      evaluationCount(["SUPERVISOR_SUBMITTED", "PRESIDENT_APPROVAL"]),
+      evaluationCount(["SUBMITTED", "DRAFT"]),
+      evaluationCount(["FOR_APPROVAL"]),
       evaluationCount(["FINALIZED"]),
     ]);
   return { roles, activeCycles, employees, awaitingSupervisor, awaitingPresident, finalized };
@@ -680,19 +678,17 @@ async function countEvaluations(statuses: string[]) {
 export async function supervisorStats() {
   const [totalStep1, pending, drafts, submitted, withPresident] = await Promise.all([
     countEvaluations([
-      "EMPLOYEE_SUBMITTED",
-      "SUPERVISOR_DRAFT",
-      "SUPERVISOR_SUBMITTED",
-      "REVIEWING_SUPERVISOR_REVIEW",
-      "PERSONNEL_PROCESSING",
-      "COMMITTEE_REVIEW",
-      "PRESIDENT_APPROVAL",
+      "SUBMITTED",
+      "DRAFT",
+      "FOR_REVIEW",
+      "FOR_PROCESSING",
+      "FOR_APPROVAL",
       "FINALIZED",
     ]),
-    countEvaluations(["EMPLOYEE_SUBMITTED"]),
-    countEvaluations(["SUPERVISOR_DRAFT"]),
-    countEvaluations(["SUPERVISOR_SUBMITTED"]),
-    countEvaluations(["REVIEWING_SUPERVISOR_REVIEW", "PERSONNEL_PROCESSING", "COMMITTEE_REVIEW", "PRESIDENT_APPROVAL", "FINALIZED"]),
+    countEvaluations(["SUBMITTED"]),
+    countEvaluations(["DRAFT"]),
+    countEvaluations(["FOR_REVIEW"]),
+    countEvaluations(["FOR_PROCESSING", "FOR_APPROVAL", "FINALIZED"]),
   ]);
   return { totalStep1, pending, drafts, submitted, withPresident };
 }
@@ -700,8 +696,8 @@ export async function supervisorStats() {
 export async function presidentStats() {
   const admin = await getAdmin();
   const [awaiting, inReview, submitted, finalized] = await Promise.all([
-    countEvaluations(["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW", "PERSONNEL_PROCESSING", "COMMITTEE_REVIEW"]),
-    countEvaluations(["PRESIDENT_APPROVAL"]),
+    countEvaluations(["FOR_REVIEW", "FOR_PROCESSING"]),
+    countEvaluations(["FOR_APPROVAL"]),
     countEvaluations(["FINALIZED"]),
     countEvaluations(["FINALIZED"]),
   ]);

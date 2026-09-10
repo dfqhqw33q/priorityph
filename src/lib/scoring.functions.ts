@@ -445,7 +445,7 @@ export const returnForCorrection = createServerFn({ method: "POST" })
     const { error } = await admin
       .from("evaluations")
       .update({
-        status: "RETURNED_FOR_CORRECTION",
+        status: "RETURNED",
         is_finalized: false,
         correction_reason: data.reason,
       })
@@ -454,16 +454,16 @@ export const returnForCorrection = createServerFn({ method: "POST" })
 
     await admin.from("evaluation_events").insert({
       evaluation_id: data.evaluationId,
-      event_type: "RETURNED_FOR_CORRECTION",
+      event_type: "RETURNED",
       from_status: evaluation.status,
-      to_status: "RETURNED_FOR_CORRECTION",
+      to_status: "RETURNED",
       actor_user_id: context.userId,
       reason: data.reason,
     });
 
     await emitNotification({
       evaluationId: data.evaluationId,
-      eventType: "EVALUATION_RETURNED_FOR_CORRECTION",
+      eventType: "EVALUATION_RETURNED",
       audiencePermission: "evaluations.view_step1",
       title: "Evaluation Returned",
       body: "A performance evaluation has been returned for further review and correction.",
@@ -473,13 +473,13 @@ export const returnForCorrection = createServerFn({ method: "POST" })
     await writeAudit({
       actorUserId: context.userId,
       actorRole: roles[0] ?? null,
-      action: "EVALUATION_RETURNED_FOR_CORRECTION",
+      action: "EVALUATION_RETURNED",
       module: "Evaluations",
       entityType: "evaluation",
       entityId: data.evaluationId,
       evaluationId: data.evaluationId,
       previousValue: { status: evaluation.status, isFinalized: evaluation.is_finalized },
-      newValue: { status: "RETURNED_FOR_CORRECTION" },
+      newValue: { status: "RETURNED" },
       reason: data.reason,
     });
 

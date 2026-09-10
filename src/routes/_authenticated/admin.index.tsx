@@ -41,7 +41,7 @@ function AdminOverview() {
     <div className="space-y-6">
       <PageHeader
         title="Administration"
-        description="Manage internal users, roles and permissions, employee records and the audit trail."
+        description="Oversee users, access, employee records, and system activity."
         actions={
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">

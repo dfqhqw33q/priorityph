@@ -75,7 +75,7 @@ export function EmployeeProfileManagementPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Employee profile management" description="Create and maintain verified employee master profiles. Only System Administrators can manage these records." />
+      <PageHeader title="Employee profile management" description="Create and maintain employee profiles used for evaluation records." />
       <Card>
         <CardHeader><CardTitle className="text-base">{editingId ? "Edit employee profile" : "Add employee profile"}</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

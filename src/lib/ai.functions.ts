@@ -151,7 +151,7 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       throw validationError("This evaluation changed in another session. Reload and try again.");
     if (detail.supervisor_user_id && detail.supervisor_user_id !== context.userId)
       throw validationError("This evaluation is assigned to another supervisor.");
-    if (!["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"].includes(detail.status))
+    if (!["SUBMITTED", "DRAFT"].includes(detail.status))
       throw validationError("This evaluation is not available for Rater Step 2.");
     const admin = await getAdmin();
     const { data: priorAction } = await admin
@@ -403,7 +403,7 @@ export const recordRaterAiAction = createServerFn({ method: "POST" })
       !detail ||
       detail.is_finalized ||
       detail.version !== data.version ||
-      !["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"].includes(detail.status)
+      !["SUBMITTED", "DRAFT"].includes(detail.status)
     )
       throw validationError("This evaluation is not available for Rater Step 2.");
     if (detail.supervisor_user_id && detail.supervisor_user_id !== context.userId)
@@ -451,7 +451,7 @@ export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" 
     if (!detail) throw validationError("Evaluation not found");
     if (detail.is_finalized || detail.version !== data.version)
       throw validationError("This evaluation changed or is no longer editable.");
-    if (!["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW"].includes(detail.status))
+    if (!["FOR_REVIEW"].includes(detail.status))
       throw validationError("This evaluation is not available for Reviewing Supervisor review.");
     const admin = await getAdmin();
     const { data: review } = await admin

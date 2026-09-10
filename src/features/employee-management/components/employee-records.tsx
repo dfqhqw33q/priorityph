@@ -225,7 +225,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
     <div className="space-y-6">
       <PageHeader
         title="Employee records"
-        description="Employee records are created automatically the first time an employee submits a self-assessment."
+        description="Review employee records, evaluation history, and performance details."
       />
 
       <div className="max-w-sm space-y-1.5">

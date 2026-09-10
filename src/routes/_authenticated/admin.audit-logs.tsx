@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/admin/audit-logs")({
       { title: "Audit logs | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Read-only audit trail of every sensitive action, filterable by actor, module, action and date.",
+        content: "Review important system activity by user, area, action, or date.",
       },
       { property: "og:title", content: "Audit logs" },
       { property: "og:description", content: "Immutable record of sensitive system actions." },
@@ -142,7 +142,7 @@ function AuditLogsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Audit logs"
-        description="A permanent record of important actions. Entries cannot be edited or deleted."
+        description="Review important system activity and investigate changes when needed."
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

@@ -326,7 +326,7 @@ function SupervisorReviewPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [dirty]);
 
-  const editable = detail?.status === "EMPLOYEE_SUBMITTED" || detail?.status === "SUPERVISOR_DRAFT";
+  const editable = detail?.status === "SUBMITTED" || detail?.status === "DRAFT";
 
   const ratingPayload = () =>
     Object.entries(ratings)
@@ -572,7 +572,7 @@ function SupervisorReviewPage() {
     <div className="space-y-6">
       <PageHeader
         title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year})  -  Employee no. ${detail.employee_number_snapshot}`}
+        description={`${detail.cycle_name} (${detail.cycle_year}) - Employee no. ${detail.employee_number_snapshot}`}
         actions={<EvaluationStatusBadge status={detail.status} />}
       />
 
@@ -597,7 +597,7 @@ function SupervisorReviewPage() {
         <CardHeader>
           <CardTitle className="text-base">Performance factors</CardTitle>
           <CardDescription>
-            The employee column is read-only. Rate each factor from 1 (poor) to 5 (excellent).
+            Employee ratings are shown for reference. Rate each factor from 1 (poor) to 5 (excellent).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

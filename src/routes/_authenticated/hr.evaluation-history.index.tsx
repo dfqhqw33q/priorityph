@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/hr/evaluation-history/")({
         content: "Search permanent evaluation records, outcomes and workflow progress in one place.",
       },
       { property: "og:title", content: "Evaluation history" },
-      { property: "og:description", content: "Read-only evaluation records with reporting summaries." },
+      { property: "og:description", content: "Completed evaluations, scores, and performance trends." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -57,7 +57,7 @@ function HistoryPage() {
     <div className="space-y-6">
       <PageHeader
         title="Evaluation history"
-        description="Completed evaluation records and summary figures."
+        description="Review completed evaluations, scores, and performance trends."
       />
 
       {query.data ? (

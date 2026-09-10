@@ -449,8 +449,3 @@ USING (
   OR public.has_permission(auth.uid(), 'committee.review')
   OR public.has_permission(auth.uid(), 'president.approve')
 );
-
-UPDATE public.evaluations
-SET status = 'REVIEWING_SUPERVISOR_REVIEW'
-WHERE status = 'SUPERVISOR_SUBMITTED';
-

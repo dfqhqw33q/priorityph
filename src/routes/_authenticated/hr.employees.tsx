@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/hr/employees")({
       { title: "Digital 201 files | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Authorized employee Digital 201 Files and evaluation history.",
+        content: "Review employee records and evaluation history.",
       },
     ],
   }),

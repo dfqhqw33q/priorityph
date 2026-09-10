@@ -42,7 +42,7 @@ function PresidentDashboard() {
     <div className="space-y-6">
       <PageHeader
         title="President dashboard"
-        description="Review evaluations sent by supervisors, then complete Step 2 and Step 3."
+        description="Review completed evaluations and make final approval decisions."
         actions={
           <Button asChild>
             <Link to="/president/evaluations">Open evaluations to review</Link>

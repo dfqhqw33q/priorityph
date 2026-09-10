@@ -9,17 +9,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   CREATE TYPE public.evaluation_status AS ENUM (
-    'EMPLOYEE_SUBMITTED',
-    'SUPERVISOR_DRAFT',
-    'SUPERVISOR_SUBMITTED',
-    'PRESIDENT_SUBMITTED',
-    'REVIEWING_SUPERVISOR_REVIEW',
-    'PERSONNEL_PROCESSING',
-    'COMMITTEE_REVIEW',
-    'PRESIDENT_APPROVAL',
-    'READY_FOR_FINALIZATION',
-    'RETURNED_FOR_CORRECTION',
-    'RESUBMITTED',
+    'DRAFT',
+    'SUBMITTED',
+    'FOR_REVIEW',
+    'FOR_PROCESSING',
+    'FOR_APPROVAL',
+    'RETURNED',
     'FINALIZED'
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
@@ -142,7 +137,7 @@ CREATE TABLE IF NOT EXISTS public.evaluations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   cycle_id uuid NOT NULL REFERENCES public.evaluation_cycles(id) ON DELETE RESTRICT,
   employee_id uuid NOT NULL REFERENCES public.employees(id) ON DELETE RESTRICT,
-  status public.evaluation_status NOT NULL DEFAULT 'EMPLOYEE_SUBMITTED',
+  status public.evaluation_status NOT NULL DEFAULT 'SUBMITTED',
   employee_number_snapshot text NOT NULL,
   full_name_snapshot text NOT NULL,
   job_title_snapshot text NOT NULL,

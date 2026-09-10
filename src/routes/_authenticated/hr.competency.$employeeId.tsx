@@ -39,7 +39,7 @@ function CompetencyProfilePage() {
     <div className="space-y-6">
       <PageHeader
         title={employee.full_name}
-        description={`${employee.job_title || "Employee"}  -  ${employee.employee_number}`}
+        description={`${employee.job_title || "Employee"} - Employee no. ${employee.employee_number}`}
         actions={
           <Link className="text-sm font-medium text-primary hover:underline" to="/hr/competency">
             Back to employees
@@ -55,7 +55,7 @@ function CompetencyProfilePage() {
       {!latest ? (
         <EmptyState
           title="No finalized evaluation yet"
-          description="Competency information appears after the President finalizes an evaluation."
+          description="No competency information is available for this employee yet."
         />
       ) : (
         <>

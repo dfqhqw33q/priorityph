@@ -163,13 +163,25 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
   const [reviewAiUnavailable, setReviewAiUnavailable] = useState("");
   const workflowDate = () => new Date().toISOString().slice(0, 10);
   const editableStatuses = {
-    RATER: ["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT"],
-    REVIEWING_SUPERVISOR: ["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW"],
-    PERSONNEL: ["PERSONNEL_PROCESSING"],
-    COMMITTEE: ["COMMITTEE_REVIEW"],
-    PRESIDENT: ["PRESIDENT_APPROVAL"],
+    RATER: ["SUBMITTED", "DRAFT"],
+    REVIEWING_SUPERVISOR: ["FOR_REVIEW"],
+    PERSONNEL: ["FOR_PROCESSING"],
+    COMMITTEE: ["FOR_REVIEW"],
+    PRESIDENT: ["FOR_APPROVAL"],
   }[stage];
   const targetStatus =
+    stage === "RATER"
+      ? "DRAFT"
+      : stage === "REVIEWING_SUPERVISOR"
+        ? "FOR_REVIEW"
+        : stage === "PERSONNEL"
+          ? "FOR_PROCESSING"
+          : stage === "COMMITTEE"
+            ? "FOR_REVIEW"
+            : "FOR_APPROVAL";
+  const correctionTarget = (detail as (typeof detail & { correction_stage?: string }) | undefined)
+    ?.correction_stage;
+  const correctionStageForView =
     stage === "RATER"
       ? "SUPERVISOR_DRAFT"
       : stage === "REVIEWING_SUPERVISOR"
@@ -179,11 +191,9 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
           : stage === "COMMITTEE"
             ? "COMMITTEE_REVIEW"
             : "PRESIDENT_APPROVAL";
-  const correctionTarget = (detail as (typeof detail & { correction_stage?: string }) | undefined)
-    ?.correction_stage;
   const editable =
     editableStatuses.includes(detail?.status ?? "") ||
-    (detail?.status === "RETURNED_FOR_CORRECTION" && correctionTarget === targetStatus);
+    (detail?.status === "RETURNED" && correctionTarget === correctionStageForView);
   useEffect(() => {
     if (!detail) return;
     const record = (detail as typeof detail & { stageRecord?: Record<string, unknown> })
@@ -681,7 +691,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   )?.accumulatedStages as Record<string, unknown> | undefined;
                   const personnel = accStages?.personnelProcessing as
                     Record<string, unknown> | undefined;
-                  return personnel && detail.status !== "PERSONNEL_PROCESSING" ? (
+                  return personnel && detail.status !== "FOR_PROCESSING" ? (
                     <div className="space-y-2 rounded-md border border-border p-4">
                       <h3 className="font-semibold">Personnel Office processing (read-only)</h3>
                       <div className="grid gap-4 sm:grid-cols-2 text-sm">
@@ -744,7 +754,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                   )?.accumulatedStages as Record<string, unknown> | undefined;
                   const committee = accStages?.committeeReview as
                     Record<string, unknown> | undefined;
-                  return committee && detail.status !== "COMMITTEE_REVIEW" ? (
+                  return committee && detail.status !== "FOR_REVIEW" ? (
                     <div className="space-y-2 rounded-md border border-border p-4">
                       <h3 className="font-semibold">Committee recommendation (read-only)</h3>
                       <div className="space-y-2 text-sm">

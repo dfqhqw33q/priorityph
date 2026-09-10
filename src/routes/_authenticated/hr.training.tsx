@@ -82,7 +82,7 @@ function TrainingPage() {
     <div className="space-y-6">
       <PageHeader
         title="Training Management"
-        description="Track third-party training recommendations and official requirements."
+        description="Review training recommendations and record required learning."
       />
       <Card>
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-5">
@@ -168,7 +168,7 @@ function TrainingRecommendations({
         {recommendations.length === 0 ? (
           <EmptyState
             title="No training recommendations"
-            description="Recommendations appear after finalized evaluations contain relevant training information."
+            description="No training recommendations have been recorded yet."
           />
         ) : (
           <div className="overflow-x-auto">

@@ -29,12 +29,12 @@ function SupervisorQueuePage() {
     <div className="space-y-6">
       <PageHeader
         title="Supervisor review queue"
-        description="No assignment filtering: all eligible employee submissions are listed here."
+        description="Review submitted self-assessments and complete your ratings."
       />
       <EvaluationQueue
         queryKey="supervisor-queue"
         fetcher={fetchQueue}
-        statuses={["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT", "RETURNED_FOR_CORRECTION"]}
+        statuses={["SUBMITTED", "DRAFT", "RETURNED"]}
         detailPath="/supervisor/evaluations/$evaluationId"
         emptyTitle="No employee submissions to review"
       />

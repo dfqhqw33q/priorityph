@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/admin/employees")({
         content: "Permanent employee records maintained by the System Administrator.",
       },
       { property: "og:title", content: "Employee records" },
-      { property: "og:description", content: "Read-only permanent employee registry." },
+      { property: "og:description", content: "Employee records and evaluation history." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

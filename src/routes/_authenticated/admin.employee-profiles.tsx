@@ -6,7 +6,10 @@ export const Route = createFileRoute("/_authenticated/admin/employee-profiles")(
   head: () => ({
     meta: [
       { title: "Employee profile management | Priority Handling Logistics, Inc." },
-      { name: "description", content: "Create and maintain verified employee master profiles." },
+      {
+        name: "description",
+        content: "Manage employee profiles used for evaluation records. Access is limited to System Administrators.",
+      },
     ],
   }),
   component: EmployeeProfileManagementPage,

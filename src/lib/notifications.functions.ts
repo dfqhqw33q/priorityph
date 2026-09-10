@@ -33,7 +33,7 @@ function messageFor(eventType: string): string {
       "A performance evaluation has been submitted to you for review and assessment.",
     PRESIDENT_RETURNED:
       "A performance evaluation has been returned for further review and correction.",
-    RETURNED_FOR_CORRECTION:
+    EVALUATION_RETURNED:
       "A performance evaluation has been returned to you for correction and resubmission.",
     EVALUATION_FINALIZED: "Your performance evaluation has been finalized and is now complete.",
     EVALUATION_FINALIZED_FOR_EMPLOYEE:
@@ -62,7 +62,7 @@ function titleFor(eventType: string): string | null {
     COMMITTEE_SUBMITTED: "Evaluation Awaiting Approval",
     SUPERVISOR_SUBMITTED_TO_PRESIDENT: "New Evaluation Submitted",
     PRESIDENT_RETURNED: "Evaluation Returned",
-    RETURNED_FOR_CORRECTION: "Evaluation Returned",
+    EVALUATION_RETURNED: "Evaluation Returned",
     EVALUATION_FINALIZED: "Performance Evaluation Finalized",
     EVALUATION_FINALIZED_FOR_EMPLOYEE: "Performance Evaluation Finalized",
     DEVELOPMENT_RECORD_CREATED: "Development Record Created",

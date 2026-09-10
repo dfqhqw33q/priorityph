@@ -57,7 +57,7 @@ function HistoryDetailPage() {
     <div className="space-y-6">
       <PageHeader
         title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year})  -  ${detail.employee_number_snapshot}`}
+        description={`${detail.cycle_name} (${detail.cycle_year}) - Employee no. ${detail.employee_number_snapshot}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <EvaluationStatusBadge status={detail.status} />

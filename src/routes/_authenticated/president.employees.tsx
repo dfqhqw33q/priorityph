@@ -8,10 +8,10 @@ export const Route = createFileRoute("/_authenticated/president/employees")({
       { title: "Employee records | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "HR view of permanent employee records and their evaluation history.",
+        content: "Review employee records and completed evaluations.",
       },
       { property: "og:title", content: "Employee records — HR" },
-      { property: "og:description", content: "Permanent employee registry maintained by HR / Personnel." },
+      { property: "og:description", content: "Employee records and completed evaluations." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

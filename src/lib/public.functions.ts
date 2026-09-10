@@ -580,7 +580,7 @@ export const submitStep1 = createServerFn({ method: "POST" })
       .insert({
         cycle_id: cycle.id,
         employee_id: employeeId,
-        status: "EMPLOYEE_SUBMITTED",
+        status: "SUBMITTED",
         employee_number_snapshot: data.employeeNumber,
         full_name_snapshot: employee.full_name,
         job_title_snapshot: employee.job_title,
@@ -662,7 +662,7 @@ export const submitStep1 = createServerFn({ method: "POST" })
     await admin.from("evaluation_events").insert({
       evaluation_id: evaluation.id,
       event_type: "STEP1_SUBMITTED",
-      to_status: "EMPLOYEE_SUBMITTED",
+      to_status: "SUBMITTED",
     });
     await admin.from("notification_events").insert({
       evaluation_id: evaluation.id,

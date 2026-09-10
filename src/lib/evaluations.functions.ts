@@ -6,12 +6,12 @@ import { supervisorDraftSchema, queueFiltersSchema } from "./schemas";
 import type { EvaluationDetail, EvaluationListItem } from "./domain";
 
 const SUPERVISOR_QUEUE_STATUSES = [
-  "EMPLOYEE_SUBMITTED",
-  "SUPERVISOR_DRAFT",
-  "RETURNED_FOR_CORRECTION",
+  "SUBMITTED",
+  "DRAFT",
+  "RETURNED",
 ];
 
-const PRESIDENT_QUEUE_STATUSES = ["PRESIDENT_APPROVAL"];
+const PRESIDENT_QUEUE_STATUSES = ["FOR_APPROVAL"];
 
 /**
  * Supervisor queue. Every authorised Supervisor sees every eligible Step 1
@@ -33,10 +33,10 @@ export const listSupervisorQueue = createServerFn({ method: "GET" })
     });
     const [current, returned] = await Promise.all([
       listEvaluations(
-        SUPERVISOR_QUEUE_STATUSES.filter((status) => status !== "RETURNED_FOR_CORRECTION"),
+        SUPERVISOR_QUEUE_STATUSES.filter((status) => status !== "RETURNED"),
         data,
       ),
-      listEvaluations(["RETURNED_FOR_CORRECTION"], {
+      listEvaluations(["RETURNED"], {
         ...data,
         correctionStage: "SUPERVISOR_DRAFT",
       }),
@@ -128,14 +128,14 @@ export const saveSupervisorDraft = createServerFn({ method: "POST" })
     await requirePermission(context.userId, "evaluations.rate_supervisor", "Supervisor Review");
     const admin = await getAdmin();
     const evaluation = await assertVersion(data.evaluationId, data.version);
-    if (evaluation.status !== "EMPLOYEE_SUBMITTED" && evaluation.status !== "SUPERVISOR_DRAFT")
+    if (evaluation.status !== "SUBMITTED" && evaluation.status !== "DRAFT")
       throw validationError("This evaluation can no longer be edited");
 
     await upsertSupervisorRatings(data.evaluationId, data.ratings, context.userId, false);
     const { error } = await admin
       .from("evaluations")
       .update({
-        status: "SUPERVISOR_DRAFT",
+        status: "DRAFT",
         supervisor_remarks: data.remarks,
         supervisor_user_id: context.userId,
       })

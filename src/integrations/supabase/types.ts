@@ -1930,14 +1930,12 @@ export type Database = {
       cycle_status: "DRAFT" | "ACTIVE" | "CLOSED" | "DISABLED";
       employment_status: "ACTIVE" | "INACTIVE";
       evaluation_status:
-        | "EMPLOYEE_SUBMITTED"
-        | "SUPERVISOR_DRAFT"
-        | "SUPERVISOR_SUBMITTED"
-        | "REVIEWING_SUPERVISOR_REVIEW"
-        | "PERSONNEL_PROCESSING"
-        | "COMMITTEE_REVIEW"
-        | "PRESIDENT_APPROVAL"
-        | "RETURNED_FOR_CORRECTION"
+        | "DRAFT"
+        | "SUBMITTED"
+        | "FOR_REVIEW"
+        | "FOR_PROCESSING"
+        | "FOR_APPROVAL"
+        | "RETURNED"
         | "FINALIZED";
       evaluator_type: "EMPLOYEE" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "PRESIDENT";
       scoring_rule_status: "DRAFT" | "ACTIVE" | "RETIRED";
@@ -2078,14 +2076,12 @@ export const Constants = {
       cycle_status: ["DRAFT", "ACTIVE", "CLOSED", "DISABLED"],
       employment_status: ["ACTIVE", "INACTIVE"],
       evaluation_status: [
-        "EMPLOYEE_SUBMITTED",
-        "SUPERVISOR_DRAFT",
-        "SUPERVISOR_SUBMITTED",
-        "REVIEWING_SUPERVISOR_REVIEW",
-        "PERSONNEL_PROCESSING",
-        "COMMITTEE_REVIEW",
-        "PRESIDENT_APPROVAL",
-        "RETURNED_FOR_CORRECTION",
+        "DRAFT",
+        "SUBMITTED",
+        "FOR_REVIEW",
+        "FOR_PROCESSING",
+        "FOR_APPROVAL",
+        "RETURNED",
         "FINALIZED",
       ],
       evaluator_type: ["EMPLOYEE", "SUPERVISOR", "REVIEWING_SUPERVISOR", "PRESIDENT"],

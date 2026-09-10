@@ -52,13 +52,13 @@ function ChangePasswordPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Account settings" description="Manage your preferences and security." />
+      <PageHeader title="Account settings" description="Update your password and keep your account secure." />
 
       <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Change password</CardTitle>
-            <CardDescription>Keep your account secure with a strong password (at least 10 characters).</CardDescription>
+            <CardDescription>Use at least 10 characters and avoid common passwords.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>

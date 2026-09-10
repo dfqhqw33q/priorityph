@@ -11,25 +11,12 @@ import {
 import type { EvaluationStatus } from "./domain";
 
 const transitions: Partial<Record<EvaluationStatus, EvaluationStatus[]>> = {
-  EMPLOYEE_SUBMITTED: ["SUPERVISOR_DRAFT", "SUPERVISOR_SUBMITTED"],
-  SUPERVISOR_DRAFT: ["SUPERVISOR_DRAFT", "SUPERVISOR_SUBMITTED"],
-  SUPERVISOR_SUBMITTED: ["REVIEWING_SUPERVISOR_REVIEW"],
-  REVIEWING_SUPERVISOR_REVIEW: ["PERSONNEL_PROCESSING"],
-  PERSONNEL_PROCESSING: ["COMMITTEE_REVIEW"],
-  COMMITTEE_REVIEW: ["PRESIDENT_APPROVAL"],
-  PRESIDENT_APPROVAL: ["FINALIZED", "RETURNED_FOR_CORRECTION"],
-  RETURNED_FOR_CORRECTION: [
-    "SUPERVISOR_DRAFT",
-    "REVIEWING_SUPERVISOR_REVIEW",
-    "PERSONNEL_PROCESSING",
-    "COMMITTEE_REVIEW",
-  ],
-  RESUBMITTED: [
-    "SUPERVISOR_DRAFT",
-    "REVIEWING_SUPERVISOR_REVIEW",
-    "PERSONNEL_PROCESSING",
-    "COMMITTEE_REVIEW",
-  ],
+  SUBMITTED: ["DRAFT", "FOR_REVIEW"],
+  DRAFT: ["DRAFT", "FOR_REVIEW"],
+  FOR_REVIEW: ["FOR_REVIEW", "FOR_PROCESSING", "FOR_APPROVAL"],
+  FOR_PROCESSING: ["FOR_PROCESSING", "FOR_REVIEW"],
+  FOR_APPROVAL: ["FINALIZED", "RETURNED"],
+  RETURNED: ["DRAFT", "FOR_REVIEW", "FOR_PROCESSING"],
 };
 
 export const getEvaluationStage = createServerFn({ method: "GET" })
@@ -59,30 +46,39 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
     const score = await computeScore(data.evaluationId);
     const admin = await getAdmin();
     const allowedStatus = {
-      RATER: ["EMPLOYEE_SUBMITTED", "SUPERVISOR_DRAFT", "RETURNED_FOR_CORRECTION"],
-      REVIEWING_SUPERVISOR: [
-        "SUPERVISOR_SUBMITTED",
-        "REVIEWING_SUPERVISOR_REVIEW",
-        "RETURNED_FOR_CORRECTION",
-      ],
-      PERSONNEL: ["PERSONNEL_PROCESSING", "RETURNED_FOR_CORRECTION"],
-      COMMITTEE: ["COMMITTEE_REVIEW", "RETURNED_FOR_CORRECTION"],
-      PRESIDENT: ["PRESIDENT_APPROVAL", "RETURNED_FOR_CORRECTION"],
+      RATER: ["SUBMITTED", "DRAFT", "RETURNED"],
+      REVIEWING_SUPERVISOR: ["FOR_REVIEW", "RETURNED"],
+      PERSONNEL: ["FOR_PROCESSING", "RETURNED"],
+      COMMITTEE: ["FOR_REVIEW", "RETURNED"],
+      PRESIDENT: ["FOR_APPROVAL", "RETURNED"],
     }[data.stage];
     const targetStatus =
       data.stage === "RATER"
-        ? "SUPERVISOR_DRAFT"
+        ? "DRAFT"
         : data.stage === "REVIEWING_SUPERVISOR"
-          ? "REVIEWING_SUPERVISOR_REVIEW"
+          ? "FOR_REVIEW"
           : data.stage === "PERSONNEL"
-            ? "PERSONNEL_PROCESSING"
+            ? "FOR_PROCESSING"
             : data.stage === "COMMITTEE"
-              ? "COMMITTEE_REVIEW"
-              : "PRESIDENT_APPROVAL";
+              ? "FOR_REVIEW"
+              : "FOR_APPROVAL";
+    let stageReady = true;
     if (
-      (!allowedStatus.includes(detail.status) ||
-        (detail.status === "RETURNED_FOR_CORRECTION" &&
-          detail.correction_stage !== targetStatus))
+      detail.status === "FOR_REVIEW" &&
+      (data.stage === "REVIEWING_SUPERVISOR" || data.stage === "COMMITTEE")
+    ) {
+      const { data: personnelRecord } = await admin
+        .from("personnel_processing")
+        .select("submitted_at")
+        .eq("evaluation_id", data.evaluationId)
+        .maybeSingle();
+      stageReady =
+        data.stage === "COMMITTEE" ? Boolean(personnelRecord?.submitted_at) : !personnelRecord?.submitted_at;
+    }
+    if (
+      (!allowedStatus.includes(detail.status) || !stageReady ||
+        (detail.status === "RETURNED" &&
+          detail.correction_stage !== ({ RATER: "SUPERVISOR_DRAFT", REVIEWING_SUPERVISOR: "REVIEWING_SUPERVISOR_REVIEW", PERSONNEL: "PERSONNEL_PROCESSING", COMMITTEE: "COMMITTEE_REVIEW", PRESIDENT: "PRESIDENT_APPROVAL" } as Record<string, string>)[data.stage]))
     ) {
       throw (await import("./server-core.server")).validationError(
         "This evaluation is not assigned to this workflow stage",
@@ -209,13 +205,10 @@ export const listEvaluationStageQueue = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, listEvaluations } = await import("./server-core.server");
     const config = {
-      REVIEWING_SUPERVISOR: {
-        permission: "evaluations.review_step3" as const,
-        statuses: ["SUPERVISOR_SUBMITTED", "REVIEWING_SUPERVISOR_REVIEW"],
-      },
-      PERSONNEL: { permission: "personnel.process" as const, statuses: ["PERSONNEL_PROCESSING"] },
-      COMMITTEE: { permission: "committee.review" as const, statuses: ["COMMITTEE_REVIEW"] },
-      PRESIDENT: { permission: "president.approve" as const, statuses: ["PRESIDENT_APPROVAL"] },
+      REVIEWING_SUPERVISOR: { permission: "evaluations.review_step3" as const, statuses: ["FOR_REVIEW"] },
+      PERSONNEL: { permission: "personnel.process" as const, statuses: ["FOR_PROCESSING"] },
+      COMMITTEE: { permission: "committee.review" as const, statuses: ["FOR_REVIEW"] },
+      PRESIDENT: { permission: "president.approve" as const, statuses: ["FOR_APPROVAL"] },
     }[data.stage];
     await requirePermission(context.userId, config.permission, `${data.stage} Review`);
     const filters = { search: "", year: null, division: "", section: "", status: null };
@@ -230,11 +223,31 @@ export const listEvaluationStageQueue = createServerFn({ method: "GET" })
               ? "PRESIDENT_APPROVAL"
               : undefined;
     const [current, returned] = await Promise.all([
-      listEvaluations(config.statuses, filters),
-      listEvaluations(["RETURNED_FOR_CORRECTION"], { ...filters, correctionStage }),
+      listEvaluations(config.statuses, { ...filters, correctionStage: undefined }),
+      listEvaluations(["RETURNED"], { ...filters, correctionStage }),
     ]);
-    const rows = [...current, ...returned];
+    let rows = [...current, ...returned];
     if (rows.length === 0) return [];
+
+    if (data.stage === "REVIEWING_SUPERVISOR" || data.stage === "COMMITTEE") {
+      const admin = await getAdmin();
+      const { data: personnelRows } = await admin
+        .from("personnel_processing")
+        .select("evaluation_id,submitted_at")
+        .in("evaluation_id", rows.map((row) => row.id));
+      const processed = new Set(
+        (personnelRows ?? [])
+          .filter((row) => row.submitted_at)
+          .map((row) => row.evaluation_id),
+      );
+      rows = rows.filter((row) =>
+        row.status === "RETURNED"
+          ? true
+          : data.stage === "COMMITTEE"
+            ? processed.has(row.id)
+            : !processed.has(row.id),
+      );
+    }
 
     const stageTable = {
       REVIEWING_SUPERVISOR: "reviewing_supervisor_reviews",
@@ -264,12 +277,11 @@ export const listEvaluationStageQueue = createServerFn({ method: "GET" })
   });
 
 const notificationPermissionByStatus: Partial<Record<EvaluationStatus, string>> = {
-  SUPERVISOR_DRAFT: "evaluations.step2",
-  REVIEWING_SUPERVISOR_REVIEW: "evaluations.review_step3",
-  PERSONNEL_PROCESSING: "personnel.process",
-  COMMITTEE_REVIEW: "committee.review",
-  PRESIDENT_APPROVAL: "president.approve",
-  RETURNED_FOR_CORRECTION: "evaluations.correct",
+  DRAFT: "evaluations.step2",
+  FOR_REVIEW: "evaluations.review_step3",
+  FOR_PROCESSING: "personnel.process",
+  FOR_APPROVAL: "president.approve",
+  RETURNED: "evaluations.correct",
   FINALIZED: "evaluations.view_history",
 };
 
@@ -302,8 +314,8 @@ async function transition(
     .update({
       status: next,
       version: expectedVersion + 1,
-      correction_reason: next === "RETURNED_FOR_CORRECTION" ? reason : undefined,
-      correction_stage: next === "RETURNED_FOR_CORRECTION" ? correctionStage : null,
+      correction_reason: next === "RETURNED" ? reason : undefined,
+      correction_stage: next === "RETURNED" ? correctionStage : null,
       is_finalized: next === "FINALIZED" ? true : undefined,
       finalized_by: next === "FINALIZED" ? actorUserId : undefined,
       finalized_at: next === "FINALIZED" ? new Date().toISOString() : undefined,
@@ -329,38 +341,34 @@ async function transition(
       evaluation_id: evaluationId,
       event_type: action,
       audience_permission:
-        next === "RETURNED_FOR_CORRECTION" && correctionStage
-          ? (notificationPermissionByStatus[correctionStage as EvaluationStatus] ??
+        next === "RETURNED" && correctionStage
+          ? (notificationPermissionByStatus[correctionStage === "SUPERVISOR_DRAFT" ? "DRAFT" : correctionStage === "PERSONNEL_PROCESSING" ? "FOR_PROCESSING" : "FOR_REVIEW"] ??
             "evaluations.view_history")
           : (notificationPermissionByStatus[next] ?? "evaluations.view_history"),
       title:
-        next === "SUPERVISOR_DRAFT"
+        next === "DRAFT"
           ? "New Evaluation Submitted"
-          : next === "REVIEWING_SUPERVISOR_REVIEW"
+          : next === "FOR_REVIEW"
             ? "New Evaluation Submitted"
-            : next === "PERSONNEL_PROCESSING"
+            : next === "FOR_PROCESSING"
               ? "Evaluation Ready for Processing"
-              : next === "COMMITTEE_REVIEW"
+              : next === "FOR_APPROVAL"
                 ? "Evaluation Ready for Review"
-                : next === "PRESIDENT_APPROVAL"
-                  ? "Evaluation Awaiting Approval"
-                  : next === "RETURNED_FOR_CORRECTION"
+                : next === "RETURNED"
                     ? "Evaluation Returned"
                     : next === "FINALIZED"
                       ? "Performance Evaluation Finalized"
                       : "Evaluation workflow updated",
       body:
-        next === "SUPERVISOR_DRAFT"
+        next === "DRAFT"
           ? "A new performance evaluation has been submitted to you for review and assessment."
-          : next === "REVIEWING_SUPERVISOR_REVIEW"
+          : next === "FOR_REVIEW"
             ? "A performance evaluation has been submitted to you for review and assessment."
-            : next === "PERSONNEL_PROCESSING"
+            : next === "FOR_PROCESSING"
               ? "A completed performance evaluation is ready for Personnel processing."
-              : next === "COMMITTEE_REVIEW"
+              : next === "FOR_APPROVAL"
                 ? "A performance evaluation is ready for your Committee review and recommendation."
-                : next === "PRESIDENT_APPROVAL"
-                  ? "A performance evaluation is ready for your review and final approval."
-                  : next === "RETURNED_FOR_CORRECTION"
+                : next === "RETURNED"
                     ? "A performance evaluation has been returned to you for correction and resubmission."
                     : next === "FINALIZED"
                       ? "Your performance evaluation has been finalized and is now complete."
@@ -469,15 +477,15 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
     if (evaluation.supervisor_user_id && evaluation.supervisor_user_id !== context.userId)
       throw validationError("This evaluation is assigned to another supervisor");
     if (
-      evaluation.status !== "EMPLOYEE_SUBMITTED" &&
-      evaluation.status !== "SUPERVISOR_DRAFT" &&
+      evaluation.status !== "SUBMITTED" &&
+      evaluation.status !== "DRAFT" &&
       !(
-        evaluation.status === "RETURNED_FOR_CORRECTION" &&
+        evaluation.status === "RETURNED" &&
         evaluation.correction_stage === "SUPERVISOR_DRAFT"
       )
     )
       throw validationError("This evaluation is not available for Rater Step 2");
-    const nextStatus = data.submit ? "SUPERVISOR_SUBMITTED" : "SUPERVISOR_DRAFT";
+    const nextStatus = data.submit ? "FOR_REVIEW" : "DRAFT";
     if (!(transitions[evaluation.status as EvaluationStatus] ?? []).includes(nextStatus))
       throw validationError(
         `Invalid workflow transition from ${evaluation.status} to ${nextStatus}`,
@@ -555,7 +563,7 @@ export const enterReviewingSupervisorStage = createServerFn({ method: "POST" })
     return transition(
       data.evaluationId,
       data.version,
-      "REVIEWING_SUPERVISOR_REVIEW",
+      "FOR_REVIEW",
       context.userId,
       "REVIEWING_SUPERVISOR_REVIEW_STARTED",
     );
@@ -577,7 +585,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       .eq("id", data.evaluationId)
       .maybeSingle();
     if (
-      evaluation?.status === "RETURNED_FOR_CORRECTION" &&
+      evaluation?.status === "RETURNED" &&
       evaluation.correction_stage !== "REVIEWING_SUPERVISOR_REVIEW"
     )
       throw validationError("This evaluation is assigned to another correction stage");
@@ -592,11 +600,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
     const submissionDate = data.submit ? data.date || workflowDate : data.date || "";
 
     let nextStatus: EvaluationStatus;
-    if (evaluation?.status === "SUPERVISOR_SUBMITTED") {
-      nextStatus = data.submit ? "REVIEWING_SUPERVISOR_REVIEW" : "REVIEWING_SUPERVISOR_REVIEW";
-    } else {
-      nextStatus = data.submit ? "PERSONNEL_PROCESSING" : "REVIEWING_SUPERVISOR_REVIEW";
-    }
+    nextStatus = data.submit ? "FOR_PROCESSING" : "FOR_REVIEW";
 
     const result = await transition(
       data.evaluationId,
@@ -606,27 +610,8 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       "REVIEWING_SUPERVISOR_SUBMITTED",
       "",
       null,
-      data.submit && evaluation?.status !== "SUPERVISOR_SUBMITTED",
+      data.submit,
     );
-
-    if (data.submit && nextStatus === "REVIEWING_SUPERVISOR_REVIEW") {
-      const { data: updated } = await admin
-        .from("evaluations")
-        .select("status,version")
-        .eq("id", data.evaluationId)
-        .maybeSingle();
-      if (updated?.version)
-        await transition(
-          data.evaluationId,
-          updated.version,
-          "PERSONNEL_PROCESSING",
-          context.userId,
-          "REVIEWING_SUPERVISOR_SUBMITTED",
-          "",
-          null,
-          true,
-        );
-    }
     const { error: stageError } = await admin.from("reviewing_supervisor_reviews").upsert(
       {
         evaluation_id: data.evaluationId,
@@ -677,7 +662,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       .eq("id", data.evaluationId)
       .maybeSingle();
     if (
-      evaluation?.status === "RETURNED_FOR_CORRECTION" &&
+      evaluation?.status === "RETURNED" &&
       evaluation.correction_stage !== "PERSONNEL_PROCESSING"
     )
       throw validationError("This evaluation is assigned to another correction stage");
@@ -688,7 +673,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
     const result = await transition(
       data.evaluationId,
       data.version,
-      data.submit ? "COMMITTEE_REVIEW" : "PERSONNEL_PROCESSING",
+      data.submit ? "FOR_REVIEW" : "FOR_PROCESSING",
       context.userId,
       "PERSONNEL_SUBMITTED",
       "",
@@ -739,14 +724,14 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       .eq("id", data.evaluationId)
       .maybeSingle();
     if (
-      evaluation?.status === "RETURNED_FOR_CORRECTION" &&
+      evaluation?.status === "RETURNED" &&
       evaluation.correction_stage !== "COMMITTEE_REVIEW"
     )
       throw validationError("This evaluation is assigned to another correction stage");
     const result = await transition(
       data.evaluationId,
       data.version,
-      data.submit ? "PRESIDENT_APPROVAL" : "COMMITTEE_REVIEW",
+      data.submit ? "FOR_APPROVAL" : "FOR_REVIEW",
       context.userId,
       "COMMITTEE_SUBMITTED",
       "",
@@ -794,7 +779,7 @@ export const approveEvaluation = createServerFn({ method: "POST" })
       .select("status")
       .eq("id", data.evaluationId)
       .maybeSingle();
-    if (data.approve && evaluation?.status !== "PRESIDENT_APPROVAL")
+    if (data.approve && evaluation?.status !== "FOR_APPROVAL")
       throw validationError("Committee review must be completed before President approval");
     if (data.approve)
       await saveStageSignature(
@@ -809,7 +794,7 @@ export const approveEvaluation = createServerFn({ method: "POST" })
     return transition(
       data.evaluationId,
       data.version,
-      data.approve ? "FINALIZED" : "RETURNED_FOR_CORRECTION",
+      data.approve ? "FINALIZED" : "RETURNED",
       context.userId,
       data.approve ? "PRESIDENT_APPROVED" : "PRESIDENT_RETURNED",
       data.reason,
@@ -843,14 +828,20 @@ export const resubmitForCorrection = createServerFn({ method: "POST" })
       .eq("id", data.evaluationId)
       .maybeSingle();
     if (
-      evaluation?.status !== "RETURNED_FOR_CORRECTION" ||
+      evaluation?.status !== "RETURNED" ||
       evaluation.correction_stage !== data.stage
     )
       throw validationError("This evaluation is not waiting for the selected re-review stage");
+    const nextStatus: EvaluationStatus =
+      data.stage === "SUPERVISOR_DRAFT"
+        ? "DRAFT"
+        : data.stage === "PERSONNEL_PROCESSING"
+          ? "FOR_PROCESSING"
+          : "FOR_REVIEW";
     return transition(
       data.evaluationId,
       data.version,
-      data.stage,
+      nextStatus,
       context.userId,
       "EVALUATION_RESUBMITTED",
     );

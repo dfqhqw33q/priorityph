@@ -25,7 +25,18 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
   const detailPath = stage === "REVIEWING_SUPERVISOR" ? "/reviewing-supervisor/evaluations/$evaluationId" : stage === "PERSONNEL" ? "/personnel/evaluations/$evaluationId" : stage === "COMMITTEE" ? "/committee/evaluations/$evaluationId" : "/president/approvals/$evaluationId";
   return (
     <div className="space-y-6">
-      <PageHeader title={titles[stage]} description="Evaluations available for the current workflow stage." />
+      <PageHeader
+        title={titles[stage]}
+        description={
+          stage === "REVIEWING_SUPERVISOR"
+            ? "Complete the division-level review for submitted evaluations."
+            : stage === "PERSONNEL"
+              ? "Complete the personnel details before committee review."
+              : stage === "COMMITTEE"
+                ? "Review evaluations and recommend the appropriate action."
+                : "Review evaluations and make the final approval decision."
+        }
+      />
       {query.isLoading ? <LoadingBlock rows={5} /> : query.isError ? (
         <EmptyState
           title="Queue unavailable"

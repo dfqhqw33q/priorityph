@@ -251,7 +251,7 @@ function AdminUsersPage() {
     <div className="space-y-6">
       <PageHeader
         title="User accounts"
-        description="Accounts for Administrators, HR, Supervisors and the President. Employees do not sign in."
+        description="Manage system accounts, roles, and access for authorized users."
         actions={
           can("users.manage") ? <Button onClick={() => setCreateOpen(true)}>Create user</Button> : null
         }

@@ -299,7 +299,7 @@ function PublicEvaluationPage() {
         <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-bold">Sign in to continue</CardTitle>
-            <CardDescription>Use your company Google account to verify your identity and continue with your performance evaluation.</CardDescription>
+            <CardDescription>Sign in with your company Google account to continue.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {googleReady ? (
@@ -342,7 +342,7 @@ function PublicEvaluationPage() {
         <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-bold">Your details</CardTitle>
-            <CardDescription>Employee number, first name, and last name are required for verification.</CardDescription>
+            <CardDescription>Enter your employee number and name to verify your record.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {fields.map((field) => (
@@ -376,7 +376,7 @@ function PublicEvaluationPage() {
         <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-bold">Performance factors</CardTitle>
-            <CardDescription>Select one rating per factor: 1 (Poor) to 5 (Excellent).</CardDescription>
+            <CardDescription>Select one rating for each factor, from Poor to Excellent.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {cycle.criteria.map((criterion) => (
@@ -421,7 +421,7 @@ function PublicEvaluationPage() {
         </Card>
 
         <Card className="border border-border bg-card shadow-sm">
-          <CardHeader><CardTitle className="text-base font-bold">E-signature</CardTitle><CardDescription>Provide your signature before submitting this assessment.</CardDescription></CardHeader>
+          <CardHeader><CardTitle className="text-base font-bold">E-signature</CardTitle><CardDescription>Add your signature before submitting the assessment.</CardDescription></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex gap-2"><Button type="button" variant={signatureMethod === "DRAWN" ? "default" : "outline"} onClick={() => { setSignatureMethod("DRAWN"); setSignatureData(""); }}>Draw signature</Button><Button type="button" variant={signatureMethod === "UPLOAD" ? "default" : "outline"} onClick={() => { setSignatureMethod("UPLOAD"); setSignatureData(""); }}>Upload image</Button></div>
             {signatureMethod === "DRAWN" ? <><canvas ref={canvasRef} width={720} height={180} className="h-36 w-full touch-none rounded-md border border-input bg-white" onPointerDown={(event) => { drawingRef.current = true; const context = event.currentTarget.getContext("2d"); const rect = event.currentTarget.getBoundingClientRect(); context?.beginPath(); context?.moveTo((event.clientX - rect.left) * (event.currentTarget.width / rect.width), (event.clientY - rect.top) * (event.currentTarget.height / rect.height)); event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={drawSignature} onPointerUp={(event) => { drawingRef.current = false; event.currentTarget.releasePointerCapture(event.pointerId); }} /><Button type="button" variant="ghost" onClick={clearSignature}>Clear signature</Button></> : <><Input type="file" accept="image/png,image/jpeg" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 500_000) { setErrors((previous) => ({ ...previous, signature: "Signature image must be 500 KB or smaller" })); return; } const reader = new FileReader(); reader.onload = () => setSignatureData(String(reader.result)); reader.readAsDataURL(file); }} />{signatureData ? <div className="flex h-36 w-full items-center justify-center rounded-md border border-input bg-white p-2"><img src={signatureData} alt="Uploaded electronic signature" className="max-h-full max-w-full object-contain" /></div> : null}</>}

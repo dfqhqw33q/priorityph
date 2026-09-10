@@ -9,6 +9,7 @@ import type { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BouncingDots } from "@/components/loading-ui/bouncing-dots";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,7 +107,7 @@ function LoginPage() {
         <Card className="border border-border bg-card shadow-lg">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
-            <CardDescription>Use your work email and password.</CardDescription>
+            <CardDescription>Sign in to manage performance evaluations and employee records.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
@@ -130,7 +131,7 @@ function LoginPage() {
                 ) : null}
               </div>
               <Button type="submit" className="w-full" disabled={pending}>
-                {pending ? "Signing in…" : "Sign in"}
+                {pending ? <BouncingDots className="w-16" /> : "Sign in"}
               </Button>
             </form>
 

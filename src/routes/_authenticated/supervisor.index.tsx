@@ -42,7 +42,7 @@ function SupervisorDashboard() {
     <div className="space-y-6">
       <PageHeader
         title="Supervisor dashboard"
-        description="All submitted employee self-assessments are available to every supervisor."
+        description="Rate employee self-assessments and send completed reviews to the next stage."
         actions={
           <Button asChild>
             <Link to="/supervisor/evaluations">Open evaluations to review</Link>

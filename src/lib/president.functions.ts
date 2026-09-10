@@ -113,7 +113,7 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
     try {
       const admin = await getAdmin();
       const evaluation = await assertVersion(data.evaluationId, data.version);
-      if (evaluation.status !== "PRESIDENT_APPROVAL")
+      if (evaluation.status !== "FOR_APPROVAL")
         throw validationError("This evaluation is not available for President review yet");
       if (evaluation.status === "FINALIZED")
         throw validationError("The President assessment has already been submitted");
@@ -137,7 +137,7 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
       );
 
       const patch: {
-        status?: "PRESIDENT_APPROVAL" | "FINALIZED";
+        status?: "FOR_APPROVAL" | "FINALIZED";
         president_user_id: string;
         president_step2_submitted_at?: string;
         president_step3_submitted_at?: string;
@@ -147,7 +147,7 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
       if (data.submit && data.step === 2) patch.president_step2_submitted_at = now;
       if (data.submit && data.step === 3) {
         patch.president_step3_submitted_at = now;
-        patch.status = "PRESIDENT_APPROVAL";
+        patch.status = "FOR_APPROVAL";
       }
 
       const { error } = await admin

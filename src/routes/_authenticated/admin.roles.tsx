@@ -108,7 +108,7 @@ function AdminRolesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Roles & permissions"
-        description="Choose what each role is allowed to do. Administrator and President access stay separate."
+        description="Set the access granted to each role across the system."
       />
 
       <Tabs value={role} onValueChange={(value) => setRole(value as AppRole)}>

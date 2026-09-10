@@ -364,7 +364,7 @@ export async function checkFinalizationEligibility(evaluationId: string): Promis
   if (!evaluation.supervisor_submitted_at) blockers.push("The supervisor has not submitted ratings.");
   if (!evaluation.president_step2_submitted_at) blockers.push("President Step 2 is not complete.");
   if (!evaluation.president_step3_submitted_at) blockers.push("President Step 3 is not complete.");
-  if (evaluation.status === "RETURNED_FOR_CORRECTION")
+  if (evaluation.status === "RETURNED")
     blockers.push("An unresolved correction request is open.");
 
   let score: ScoreResult | null = null;

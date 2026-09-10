@@ -89,7 +89,7 @@ function DevelopmentRecordsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Development Records"
-        description="Track learning and development needs from finalized performance evaluations."
+        description="Record development needs and follow-up activities for employees."
       />
       <Card>
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -135,7 +135,7 @@ function DevelopmentRecordsPage() {
       ) : records.length === 0 ? (
         <EmptyState
           title="No development records"
-          description="Records will appear when finalized evaluations contain relevant development information."
+          description="No development needs have been recorded yet."
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
