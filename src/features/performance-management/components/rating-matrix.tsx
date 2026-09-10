@@ -97,16 +97,14 @@ export function EvaluationRatingCards({
         const invalid = errorCriterionIds.includes(criterion.id);
         return (
           <fieldset key={criterion.id} className={cn("rounded-lg border border-border bg-card p-3", invalid && "border-destructive")}>
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,auto)] lg:items-start">
-              <div className="min-w-0">
-                <legend className="text-sm font-semibold text-foreground">{criterion.letter}. {criterion.title}</legend>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">{criterion.description}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3">
-                {employeeValues ? <RatingValue label="Employee Rating" value={employeeValues[criterion.id]} /> : null}
-                {supervisorValues ? <RatingValue label="Supervisor Rating" value={supervisorValues[criterion.id]} /> : null}
-                {reviewingValues ? <RatingValue label="Reviewing Supervisor" value={reviewingValues[criterion.id]} /> : null}
-              </div>
+            <div className="min-w-0">
+              <legend className="text-sm font-semibold text-foreground">{criterion.letter}. {criterion.title}</legend>
+              <p className="mt-1 max-w-none text-xs leading-5 text-muted-foreground">{criterion.description}</p>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3">
+              {employeeValues ? <RatingValue label="Employee Rating" value={employeeValues[criterion.id]} /> : null}
+              {supervisorValues ? <RatingValue label="Supervisor Rating" value={supervisorValues[criterion.id]} /> : null}
+              {reviewingValues ? <RatingValue label="Reviewing Supervisor" value={reviewingValues[criterion.id]} /> : null}
             </div>
             {!readOnly ? (
               <div className="mt-3 grid grid-cols-5 gap-1.5 sm:max-w-xl">

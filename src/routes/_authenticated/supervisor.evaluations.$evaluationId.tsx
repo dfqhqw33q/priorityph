@@ -95,16 +95,12 @@ function RaterAiField(props: Step2Props) {
   return (
     <div className="space-y-2">
       <Step2Textarea {...props} />
-      <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            AI suggestion
-          </p>
-        </div>
-        {props.aiUnavailable ? (
-          <p className="mt-2 text-xs text-muted-foreground">{props.aiUnavailable}</p>
-        ) : props.ai ? (
+      {props.aiUnavailable ? (
+        <p className="text-xs text-muted-foreground">{props.aiUnavailable}</p>
+      ) : props.ai ? (
+        <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3">
           <>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">AI suggestion</p>
             <Textarea
               className="mt-2 bg-background"
               rows={3}
@@ -141,10 +137,8 @@ function RaterAiField(props: Step2Props) {
               </Button>
             </div>
           </>
-        ) : (
-          <span className="sr-only">No suggestion available.</span>
-        )}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -736,46 +730,46 @@ function SupervisorReviewPage() {
           </section>
           <section className="space-y-4 border-t border-border/60 pt-4">
             <h3 className="text-sm font-semibold tracking-tight">Development and career</h3>
-          <Step2Choice
-            label="3. The employee's development potential on present job is:"
-            field="developmentPotential"
-            options={[
-              "Very marked growth expected on present job",
-              "Considerable improvement expected on present job",
-              "Only moderate improvement ahead on present job",
-              "Likely to maintain present performance level on present job",
-              "Likely to become less effective on present job",
-            ]}
-            step2={step2}
-            setStep2={setStep2}
-            editable={editable}
-            canEdit={can("evaluations.step2")}
-            setDirty={setDirty}
-            compactOptions
-          />
+            <div className="grid gap-5 lg:grid-cols-2">
+              <Step2Choice
+                label="3. The employee's development potential on present job is:"
+                field="developmentPotential"
+                options={[
+                  "Very marked growth expected on present job",
+                  "Considerable improvement expected on present job",
+                  "Only moderate improvement ahead on present job",
+                  "Likely to maintain present performance level on present job",
+                  "Likely to become less effective on present job",
+                ]}
+                step2={step2}
+                setStep2={setStep2}
+                editable={editable}
+                canEdit={can("evaluations.step2")}
+                setDirty={setDirty}
+              />
+              <Step2Choice
+                label="4. The employee's advancement outlook is:"
+                field="advancementOutlook"
+                options={[
+                  "Promising. Should be able to advance to jobs several levels beyond his present one.",
+                  "Fairly promising. Should be able to advance to a job in the next higher level.",
+                  "Present job or jobs within the same grade level represent his advancement.",
+                  "Employee has difficulty in advancing to his job ceiling.",
+                  "Employee should be transferred. Not suited to this job; would fit better in some other job.",
+                ]}
+                step2={step2}
+                setStep2={setStep2}
+                editable={editable}
+                canEdit={can("evaluations.step2")}
+                setDirty={setDirty}
+              />
+            </div>
           <RecommendationPanel
             label="Development Potential"
             recommendation={aiRecommendations.developmentPotential}
             editable={editable && can("evaluations.step2")}
             onApply={() => applyRecommendation("developmentPotential")}
             onDismiss={() => discardRecommendation("developmentPotential")}
-          />
-          <Step2Choice
-            label="4. The employee's advancement outlook is:"
-            field="advancementOutlook"
-            options={[
-              "Promising. Should be able to advance to jobs several levels beyond his present one.",
-              "Fairly promising. Should be able to advance to a job in the next higher level.",
-              "Present job or jobs within the same grade level represent his advancement.",
-              "Employee has difficulty in advancing to his job ceiling.",
-              "Employee should be transferred. Not suited to this job; would fit better in some other job.",
-            ]}
-            step2={step2}
-            setStep2={setStep2}
-            editable={editable}
-            canEdit={can("evaluations.step2")}
-            setDirty={setDirty}
-            compactOptions
           />
           <RecommendationPanel
             label="Advancement Outlook"
@@ -845,9 +839,10 @@ function SupervisorReviewPage() {
             </div>
           ) : null}
           </section>
-          <section className="space-y-4 border-t border-border/60 pt-4">
-            <h3 className="text-sm font-semibold tracking-tight">Other comments</h3>
-          <RaterAiField
+          <div className="grid gap-6 border-t border-border/60 pt-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(20rem,1fr)]">
+            <section className="space-y-4">
+              <h3 className="text-sm font-semibold tracking-tight">Other comments</h3>
+              <RaterAiField
             label="7. Other comments and recommendations"
             field="otherComments"
             step2={step2}
@@ -861,11 +856,11 @@ function SupervisorReviewPage() {
             onToggleEdit={() => toggleSuggestionEdit("otherComments")}
             onUse={() => applySuggestion("otherComments")}
             onDiscard={() => discardSuggestion("otherComments")}
-          />
-          </section>
-          <section className="space-y-4 border-t border-border/60 pt-4">
-            <h3 className="text-sm font-semibold tracking-tight">Signature</h3>
-          <div className="space-y-1.5">
+              />
+            </section>
+            <section className="space-y-4">
+              <h3 className="text-sm font-semibold tracking-tight">Signature</h3>
+              <div className="space-y-1.5">
             <Label htmlFor="rater-signature">Signature of Rater</Label>
             <SignatureField
               {...(signature ? { value: signature } : {})}
@@ -875,8 +870,8 @@ function SupervisorReviewPage() {
                 setDirty(true);
               }}
             />
-          </div>
-          <div className="space-y-1.5">
+              </div>
+              <div className="space-y-1.5">
             <Label htmlFor="step2-date">Rater Signature Date</Label>
             <input
               id="step2-date"
@@ -886,8 +881,9 @@ function SupervisorReviewPage() {
               readOnly
               aria-readonly="true"
             />
+              </div>
+            </section>
           </div>
-          </section>
         </CardContent>
       </Card>
 
