@@ -534,6 +534,7 @@ function SupervisorReviewPage() {
           ratings: ratingPayload(),
           remarks,
           ...step2,
+          date: step2.date || currentDate,
           submit: true,
           signature,
         },
