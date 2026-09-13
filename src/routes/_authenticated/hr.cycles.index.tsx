@@ -109,7 +109,7 @@ function CyclesPage() {
       ) : rows.length === 0 ? (
         <EmptyState title="No cycles yet" description="Create an annual cycle to get started." />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto border border-border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

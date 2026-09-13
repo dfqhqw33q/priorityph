@@ -153,10 +153,10 @@ function DevelopmentRecordsPage() {
           description="No development needs have been recorded yet."
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="overflow-hidden border border-border bg-card shadow-sm">
           <table className="w-full text-left text-sm" aria-label="Development records grouped by employee">
             <caption className="sr-only">Development records grouped by employee</caption>
-            <thead className="hidden border-b border-primary/30 bg-primary text-primary-foreground sm:table-header-group">
+            <thead className="hidden border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground sm:table-header-group">
               <tr>
                 {[
                   "Employee",

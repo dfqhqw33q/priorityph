@@ -121,10 +121,10 @@ function HistoryPage() {
       ) : rows.length === 0 ? (
         <EmptyState title="No evaluation history" description="Evaluations appear here once they are completed." />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto border border-border bg-card shadow-sm">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Evaluation history</caption>
-            <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
+            <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
               <tr>
                 {["Employee", "Cycle", "Status", "Employee average", "Supervisor average", "Final score", "Finalized"].map(
                   (heading) => (

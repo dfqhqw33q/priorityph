@@ -173,7 +173,7 @@ function TrainingRecommendations({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
+              <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
                 <tr>
                   {[
                     "Employee",
@@ -250,7 +250,7 @@ function TrainingRecords({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px] text-left text-sm">
-              <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
+              <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
                 <tr>
                   {[
                     "Employee",

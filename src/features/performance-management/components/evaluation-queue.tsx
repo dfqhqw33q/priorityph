@@ -198,7 +198,7 @@ export function EvaluationQueue({
         <EmptyState title={emptyTitle} description="Try changing the filters, or check back later." />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+          <div className="overflow-x-auto border border-border bg-card shadow-sm">
             <Table>
               <caption className="sr-only">Employee evaluations available for review</caption>
               <TableHeader>

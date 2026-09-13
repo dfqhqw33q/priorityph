@@ -218,7 +218,7 @@ function AuditLogsPage() {
         <EmptyState title="No activity matches these filters" description="Try changing the filters above." />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+          <div className="overflow-x-auto border border-border bg-card shadow-sm">
             <Table>
               <caption className="sr-only">Record of important actions</caption>
               <TableHeader>

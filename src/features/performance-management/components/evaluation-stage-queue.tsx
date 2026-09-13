@@ -48,10 +48,10 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
           description="New evaluations appear after the preceding stage is submitted."
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto border border-border bg-card shadow-sm">
           <table className="w-full min-w-[680px] text-left text-sm">
             <caption className="sr-only">{titles[stage]}</caption>
-            <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
+            <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
               <tr>
                 <th className="px-4 py-3 font-semibold">Employee</th>
                 <th className="px-4 py-3 font-semibold">Employee number</th>

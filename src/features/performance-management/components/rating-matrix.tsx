@@ -164,13 +164,13 @@ export function RadioRatingMatrix({
   errorCriterionIds?: string[];
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+    <div className="overflow-x-auto border border-border bg-card shadow-sm">
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">
           Performance evaluation factors A to J, rated from 1 (poor) to 5 (excellent)
         </caption>
         <thead>
-          <tr className="border-b border-primary/30 bg-primary text-left text-primary-foreground">
+          <tr className="border-b border-primary/30 bg-primary text-left text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
             <th scope="col" className="p-3.5 font-semibold">
               Performance evaluation factor
             </th>
@@ -192,7 +192,7 @@ export function RadioRatingMatrix({
             {RATING_SCALE.map((scale) => (
               <th key={scale.value} scope="col" className="p-2 text-center">
                 <span className="block font-bold">{scale.value}</span>
-                <span className="block text-[10px] font-medium text-primary-foreground/80">
+                <span className="block text-[10px] font-medium text-primary-foreground/80 dark:text-muted-foreground">
                   {scale.label}
                 </span>
               </th>

@@ -55,10 +55,10 @@ function CompetencyIndexPage() {
           description="Only existing employee records are shown here."
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto border border-border bg-card shadow-sm">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Employees with competency profiles</caption>
-            <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
+            <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
               <tr>
                 {["Employee", "Position", "Division", "Status"].map((heading) => (
                   <th key={heading} className="px-4 py-3 font-semibold">
