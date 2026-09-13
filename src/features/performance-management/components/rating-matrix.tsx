@@ -170,35 +170,35 @@ export function RadioRatingMatrix({
           Performance evaluation factors A to J, rated from 1 (poor) to 5 (excellent)
         </caption>
         <thead>
-          <tr className="border-b border-border bg-muted/60 text-left">
-            <th scope="col" className="p-3.5 font-semibold text-foreground">
+          <tr className="border-b border-primary/30 bg-primary text-left text-primary-foreground">
+            <th scope="col" className="p-3.5 font-semibold">
               Performance evaluation factor
             </th>
             {employeeValues ? (
-              <th scope="col" className="p-3.5 text-center font-semibold text-foreground whitespace-nowrap">
+              <th scope="col" className="p-3.5 text-center font-semibold whitespace-nowrap">
                 Employee
               </th>
             ) : null}
             {supervisorValues ? (
-              <th scope="col" className="p-3.5 text-center font-semibold text-foreground whitespace-nowrap">
+              <th scope="col" className="p-3.5 text-center font-semibold whitespace-nowrap">
                 Supervisor
               </th>
             ) : null}
             {reviewingValues ? (
-              <th scope="col" className="p-3.5 text-center font-semibold text-foreground whitespace-nowrap">
+              <th scope="col" className="p-3.5 text-center font-semibold whitespace-nowrap">
                 Reviewing Supervisor
               </th>
             ) : null}
             {RATING_SCALE.map((scale) => (
-              <th key={scale.value} scope="col" className="p-2 text-center text-foreground">
+              <th key={scale.value} scope="col" className="p-2 text-center">
                 <span className="block font-bold">{scale.value}</span>
-                <span className="block text-[10px] font-medium text-muted-foreground">
+                <span className="block text-[10px] font-medium text-primary-foreground/80">
                   {scale.label}
                 </span>
               </th>
             ))}
             {finalScore !== undefined ? (
-              <th scope="col" className="p-3.5 text-center font-semibold text-foreground whitespace-nowrap">
+              <th scope="col" className="p-3.5 text-center font-semibold whitespace-nowrap">
                 Final Score
               </th>
             ) : null}

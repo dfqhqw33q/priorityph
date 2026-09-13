@@ -124,11 +124,11 @@ function HistoryPage() {
         <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Evaluation history</caption>
-            <thead className="border-b border-border bg-muted/60">
+            <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
               <tr>
                 {["Employee", "Cycle", "Status", "Employee average", "Supervisor average", "Final score", "Finalized"].map(
                   (heading) => (
-                    <th key={heading} className="px-4 py-3.5 font-semibold text-foreground">
+                    <th key={heading} className="px-4 py-3.5 font-semibold">
                       {heading}
                     </th>
                   ),

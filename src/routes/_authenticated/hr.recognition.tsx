@@ -200,7 +200,7 @@ function Candidates({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[950px] text-left text-sm">
-              <thead className="border-b border-border bg-muted/60">
+              <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
                 <tr>
                   {["Employee", "Type", "Reason", "Source Evaluation", "Status", "Actions"].map(
                     (heading) => (
@@ -276,7 +276,7 @@ function History({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="border-b border-border bg-muted/60">
+              <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
                 <tr>
                   {[
                     "Employee",

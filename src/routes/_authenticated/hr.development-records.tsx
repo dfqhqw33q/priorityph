@@ -153,41 +153,55 @@ function DevelopmentRecordsPage() {
           description="No development needs have been recorded yet."
         />
       ) : (
-        <div className="space-y-4" aria-label="Development records grouped by employee">
-          {recordsByEmployee.map((group) => (
-            <Card key={group.employeeId}>
-              <CardContent className="space-y-4 pt-6">
-                <div className="border-b border-border pb-4">
-                  <h2 className="text-base font-semibold">{group.employeeName}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Employee no. {group.employeeNumber}
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold">Development Records</h3>
-                  {group.records.map((record) => (
-                    <article
-                      key={record.id}
-                      className="rounded-lg border border-border bg-muted/20 p-4"
-                    >
-                      <div className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-6">
-                        <RecordField
-                          label="Development Need"
-                          value={record.developmentNeed}
-                          className="sm:col-span-2 xl:col-span-2"
-                        />
-                        <RecordField label="Activity" value={record.developmentActivity} />
-                        <RecordField label="Status" value={humanizeToken(record.status)} />
-                        <RecordField label="Date" value={formatDateTime(record.recordDate)} />
-                        <div className="flex items-end sm:justify-end">
-                          <Button variant="outline" size="sm" onClick={() => setEditing(record)}>
-                            Edit
-                          </Button>
-                        </div>
-                        <div className="sm:col-span-2 xl:col-span-3">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Source Evaluation
-                          </p>
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <table className="w-full text-left text-sm" aria-label="Development records grouped by employee">
+            <caption className="sr-only">Development records grouped by employee</caption>
+            <thead className="hidden border-b border-primary/30 bg-primary text-primary-foreground sm:table-header-group">
+              <tr>
+                {[
+                  "Employee",
+                  "Development Needs",
+                  "Activities",
+                  "Source Evaluation",
+                  "Status",
+                  "Date",
+                  "Notes",
+                  "Actions",
+                ].map((heading) => (
+                  <th key={heading} className="px-4 py-3 font-semibold">
+                    {heading}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="block sm:table-row-group">
+              {recordsByEmployee.map((group) => (
+                <tr
+                  key={group.employeeId}
+                  className="block border-b border-border p-4 last:border-0 sm:table-row sm:p-0"
+                >
+                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">
+                      Employee
+                    </span>
+                    <span className="font-semibold">{group.employeeName}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      Employee No. {group.employeeNumber}
+                    </span>
+                  </td>
+                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
+                    <MobileCellLabel label="Development Needs" />
+                    <RecordList records={group.records} render={(record) => record.developmentNeed} />
+                  </td>
+                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
+                    <MobileCellLabel label="Activities" />
+                    <RecordList records={group.records} render={(record) => record.developmentActivity} />
+                  </td>
+                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
+                    <MobileCellLabel label="Source Evaluation" />
+                    <ul className="space-y-1">
+                      {group.records.map((record) => (
+                        <li key={record.id}>
                           {record.sourceEvaluationId ? (
                             <Link
                               className="text-primary hover:underline"
@@ -199,21 +213,44 @@ function DevelopmentRecordsPage() {
                                 : "View evaluation"}
                             </Link>
                           ) : (
-                            <p className="mt-1">-</p>
+                            "-"
                           )}
-                        </div>
-                        <RecordField
-                          label="Notes"
-                          value={record.notes}
-                          className="whitespace-pre-wrap sm:col-span-2 xl:col-span-3"
-                        />
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
+                    <MobileCellLabel label="Status" />
+                    <RecordList records={group.records} render={(record) => humanizeToken(record.status)} />
+                  </td>
+                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
+                    <MobileCellLabel label="Date" />
+                    <RecordList records={group.records} render={(record) => formatDateTime(record.recordDate)} />
+                  </td>
+                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
+                    <MobileCellLabel label="Notes" />
+                    <RecordList records={group.records} render={(record) => record.notes || "-"} />
+                  </td>
+                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
+                    <MobileCellLabel label="Actions" />
+                    <div className="space-y-1">
+                      {group.records.map((record) => (
+                        <Button
+                          key={record.id}
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto"
+                          onClick={() => setEditing(record)}
+                        >
+                          Edit
+                        </Button>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
       <RecordDialog
@@ -234,20 +271,30 @@ function DevelopmentRecordsPage() {
   );
 }
 
-function RecordField({
-  label,
-  value,
-  className = "",
+function MobileCellLabel({ label }: { label: string }) {
+  return (
+    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">
+      {label}
+    </span>
+  );
+}
+
+function RecordList({
+  records,
+  render,
 }: {
-  label: string;
-  value: string;
-  className?: string;
+  records: DevelopmentRecord[];
+  render: (record: DevelopmentRecord) => string;
 }) {
   return (
-    <div className={className}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 break-words">{value || "-"}</p>
-    </div>
+    <ol className="space-y-1">
+      {records.map((record) => (
+        <li key={record.id} className="break-words">
+          <span className="mr-1 text-muted-foreground">{records.length > 1 ? `${records.indexOf(record) + 1}.` : ""}</span>
+          {render(record)}
+        </li>
+      ))}
+    </ol>
   );
 }
 

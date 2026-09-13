@@ -717,7 +717,7 @@ function ComparisonResults({
       <h3 className="text-lg font-semibold">A-J Performance Comparison</h3>
       <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="bg-muted/50">
+          <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
             <tr>
               <th className="px-3 py-2">Criterion</th>
               <th className="px-3 py-2">{comparison?.cycleYear ?? "-"} Self</th>
@@ -872,7 +872,7 @@ function EvaluationInformationTable({
   return (
     <div className="overflow-x-auto rounded-md border border-border">
       <table className="w-full min-w-[680px] text-left text-sm">
-        <thead className="bg-muted/50">
+        <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
           <tr>
             <th className="px-3 py-2">Evaluation Information</th>
             <th className="px-3 py-2">{comparison?.cycleYear ?? "-"} Evaluation</th>

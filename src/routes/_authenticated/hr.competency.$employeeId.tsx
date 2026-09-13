@@ -83,7 +83,7 @@ function CompetencyProfilePage() {
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="border-b border-border bg-muted/60">
+                  <thead className="border-b border-primary/30 bg-primary text-primary-foreground">
                     <tr>
                       {[
                         "Factor",
