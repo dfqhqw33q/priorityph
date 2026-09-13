@@ -23,13 +23,45 @@ export type SuccessionProfile = {
   desiredLocation: string;
   qualification: string;
   notes: string;
+  committeeDecision: {
+    finalAction: "PROMOTE" | "TRANSFER";
+    actionDetails: string;
+    recommendation: string;
+    sourceEvaluationId: string;
+    sourceCycleName: string | null;
+    sourceCycleYear: number | null;
+    status: "FINALIZED";
+  } | null;
 };
 
 function mapProfile(row: Record<string, unknown>): SuccessionProfile {
   const employee = row["employees"] as { full_name?: string; employee_number?: string } | null;
   const evaluation = row["evaluations"] as {
+    id?: string;
+    is_finalized?: boolean;
+    status?: string;
     evaluation_cycles?: { name?: string; year?: number } | null;
   } | null;
+  const committee = row["committeeDecision"] as {
+    final_action?: string;
+    action_details?: string;
+    recommendation?: string;
+  } | null;
+  const committeeDecision =
+    evaluation?.is_finalized &&
+    evaluation.status === "FINALIZED" &&
+    committee &&
+    (committee.final_action === "PROMOTE" || committee.final_action === "TRANSFER")
+      ? {
+          finalAction: committee.final_action,
+          actionDetails: String(committee.action_details ?? ""),
+          recommendation: String(committee.recommendation ?? ""),
+          sourceEvaluationId: String(row["source_evaluation_id"]),
+          sourceCycleName: evaluation.evaluation_cycles?.name ?? null,
+          sourceCycleYear: evaluation.evaluation_cycles?.year ?? null,
+          status: "FINALIZED" as const,
+        }
+      : null;
   return {
     id: String(row["id"]),
     employeeId: String(row["employee_id"]),
@@ -46,6 +78,7 @@ function mapProfile(row: Record<string, unknown>): SuccessionProfile {
     desiredLocation: String(row["desired_location"] ?? ""),
     qualification: String(row["qualification"] ?? ""),
     notes: String(row["notes"] ?? ""),
+    committeeDecision,
   };
 }
 
@@ -66,7 +99,7 @@ export const listSuccessionProfiles = createServerFn({ method: "GET" })
     let query = admin
       .from("succession_profiles")
       .select(
-        "id, employee_id, source_evaluation_id, development_potential, advancement_outlook, career_interest, transfer_interest, desired_job, desired_location, qualification, notes, updated_at, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, development_potential, advancement_outlook, career_interest, transfer_interest, desired_job, desired_location, qualification, notes, updated_at, employees!inner(full_name, employee_number), evaluations!inner(id, is_finalized, status, evaluation_cycles(name, year))",
       )
       .order("updated_at", { ascending: false });
     if (data.search.trim()) {
@@ -79,7 +112,25 @@ export const listSuccessionProfiles = createServerFn({ method: "GET" })
       query = query.ilike("transfer_interest", `%${data.transferInterest.trim()}%`);
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
-    return (rows ?? []).map((row) => mapProfile(row as unknown as Record<string, unknown>));
+    const sourceEvaluationIds = (rows ?? []).map((row) => row.source_evaluation_id);
+    const { data: committeeRows, error: committeeError } = sourceEvaluationIds.length
+      ? await admin
+          .from("committee_reviews")
+          .select("evaluation_id, final_action, action_details, recommendation")
+          .in("evaluation_id", sourceEvaluationIds)
+      : { data: [], error: null };
+    if (committeeError) throw new Error(committeeError.message);
+    const committeeByEvaluation = new Map(
+      (committeeRows ?? [])
+        .filter((row) => row.final_action === "PROMOTE" || row.final_action === "TRANSFER")
+        .map((row) => [row.evaluation_id, row]),
+    );
+    return (rows ?? []).map((row) =>
+      mapProfile({
+        ...(row as unknown as Record<string, unknown>),
+        committeeDecision: committeeByEvaluation.get(row.source_evaluation_id) ?? null,
+      }),
+    );
   });
 
 export const updateSuccessionProfile = createServerFn({ method: "POST" })

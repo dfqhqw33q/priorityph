@@ -99,6 +99,19 @@ const reviewingActionSchema = requestSchema.extend({
   actionId: z.string().uuid(),
   edited: z.boolean().default(false),
 });
+const committeeTrainingSuggestionSchema = requestSchema.extend({
+  currentValues: z.object({
+    actionDetails: z.string().max(2000),
+    recommendation: z.string().max(4000),
+  }),
+  actionId: z.string().uuid(),
+  regenerate: z.boolean().default(false),
+});
+const committeeTrainingActionSchema = requestSchema.extend({
+  action: z.enum(["ACCEPTED", "DISMISSED"]),
+  actionId: z.string().uuid(),
+  edited: z.boolean().default(false),
+});
 
 export type EvaluationAiAnalysis = {
   performanceSummary: string;
@@ -648,6 +661,177 @@ export const recordReviewingSupervisorAiAction = createServerFn({ method: "POST"
       { ip: null, userAgent: null, correlationId: data.actionId },
     );
     return { ok: true, duplicate: false };
+  });
+
+export type CommitteeTrainingRecommendation = {
+  recommendedTraining: string | null;
+  relatedCompetency: string | null;
+  rationale: string | null;
+  trainingFocus: string | null;
+  details: string | null;
+  provider: "openrouter" | "development-mock";
+  generatedAt: string;
+};
+
+export const suggestCommitteeTrainingRecommendation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => committeeTrainingSuggestionSchema.parse(input))
+  .handler(async ({ data, context }): Promise<CommitteeTrainingRecommendation> => {
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      loadEvaluationDetail,
+    } = await import("./server-core.server");
+    await requirePermission(context.userId, "committee.review", "Committee Review");
+    const detail = await loadEvaluationDetail(data.evaluationId);
+    if (!detail) throw validationError("Evaluation not found");
+    if (detail.is_finalized || detail.version !== data.version)
+      throw validationError("This evaluation changed or is no longer editable.");
+    if (!["FOR_REVIEW", "RETURNED"].includes(detail.status))
+      throw validationError("This evaluation is not available for Committee review.");
+    const admin = await getAdmin();
+    const { data: committee } = await admin
+      .from("committee_reviews")
+      .select("committee_user_id")
+      .eq("evaluation_id", data.evaluationId)
+      .maybeSingle();
+    if (committee?.committee_user_id && committee.committee_user_id !== context.userId)
+      throw validationError("This evaluation is assigned to another Committee user.");
+
+    const factors = detail.criteria.map((criterion) => ({
+      letter: criterion.letter,
+      title: criterion.title,
+      description: criterion.description,
+      employeeRating:
+        detail.ratings.find(
+          (rating) => rating.criterion_id === criterion.id && rating.evaluator_type === "EMPLOYEE",
+        )?.rating ?? null,
+      supervisorRating:
+        detail.ratings.find(
+          (rating) => rating.criterion_id === criterion.id && rating.evaluator_type === "SUPERVISOR",
+        )?.rating ?? null,
+      reviewingSupervisorRating:
+        detail.ratings.find(
+          (rating) =>
+            rating.criterion_id === criterion.id && rating.evaluator_type === "REVIEWING_SUPERVISOR",
+        )?.rating ?? null,
+    }));
+    const source = detail as typeof detail & Record<string, string | null>;
+    const evaluationContext = {
+      employee: {
+        jobTitle: detail.job_title_snapshot,
+        division: detail.division_snapshot,
+        section: detail.section_snapshot,
+      },
+      cycle: `${detail.cycle_name} (${detail.cycle_year})`,
+      factors,
+      step2: {
+        strengths: source["supervisor_step2_strengths"] ?? "",
+        weaknesses: source["supervisor_step2_weaknesses"] ?? "",
+        effectiveness: source["supervisor_step2_effectiveness"] ?? "",
+        developmentPotential: source["supervisor_step2_development_potential"] ?? "",
+        growthSuggestions: source["supervisor_step2_growth_suggestions"] ?? "",
+        otherComments: source["supervisor_step2_other_comments"] ?? "",
+      },
+      currentCommitteeFields: data.currentValues,
+    };
+    const { generateAiText, AiUnavailableError, stripJsonFence, getAiProviderName } =
+      await import("./ai-provider.server");
+    const prompt = [
+      "You are an advisory assistant helping the Performance Evaluation Committee consider training.",
+      "Return JSON with exactly these nullable string keys: recommendedTraining, relatedCompetency, rationale, trainingFocus, details.",
+      "Use only the actual evaluation evidence below. Do not invent employee facts, providers, certifications, courses, or competency gaps.",
+      "Do not assume every low rating requires training. Recommend training only when the evidence supports a practical development need; otherwise recommendedTraining may be null.",
+      "relatedCompetency must be null unless one existing factor title is a reliable match for the supported development need; when used, copy that factor title exactly.",
+      "The recommendation is advisory only. Do not select Final Action, approve training, schedule training, assign a provider, enroll the employee, or change any rating.",
+      "Keep recommendedTraining suitable for Committee Action Details, and keep rationale suitable for the separate Committee Recommendation field. Do not repeat the same sentence in both.",
+      "Use null for any field not supported by the evidence. Return only valid JSON without markdown.",
+      `Evaluation context: ${JSON.stringify(evaluationContext)}`,
+    ].join("\n");
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(stripJsonFence(await generateAiText(prompt, { json: true }))) as Record<
+        string,
+        unknown
+      >;
+    } catch (error) {
+      throw validationError(
+        error instanceof AiUnavailableError
+          ? error.message
+          : "AI training recommendation is unavailable. You can complete the Committee fields manually.",
+      );
+    }
+    const nullableText = (key: string, max: number) => {
+      const value = parsed[key];
+      if (value !== null && typeof value !== "string") throw new Error("Invalid recommendation");
+      return typeof value === "string" && value.trim() ? value.trim().slice(0, max) : null;
+    };
+    let recommendation: Omit<CommitteeTrainingRecommendation, "provider" | "generatedAt">;
+    try {
+      recommendation = {
+        recommendedTraining: nullableText("recommendedTraining", 2000),
+        relatedCompetency: nullableText("relatedCompetency", 500),
+        rationale: nullableText("rationale", 4000),
+        trainingFocus: nullableText("trainingFocus", 2000),
+        details: nullableText("details", 4000),
+      };
+      if (
+        recommendation.relatedCompetency &&
+        !detail.criteria.some((criterion) => criterion.title === recommendation.relatedCompetency)
+      )
+        throw new Error("Unknown competency");
+    } catch {
+      throw validationError("AI returned invalid training recommendation data.");
+    }
+    const generatedAt = new Date().toISOString();
+    await writeAudit(
+      {
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
+        action: data.regenerate
+          ? "AI_COMMITTEE_TRAINING_RECOMMENDATION_REGENERATED"
+          : "AI_COMMITTEE_TRAINING_RECOMMENDATION_GENERATED",
+        module: "Committee Review",
+        entityType: "evaluation",
+        entityId: data.evaluationId,
+        evaluationId: data.evaluationId,
+        newValue: { fields: Object.keys(recommendation), generatedAt },
+      },
+      { ip: null, userAgent: null, correlationId: data.actionId },
+    );
+    return {
+      ...recommendation,
+      provider: getAiProviderName() === "openrouter" ? "openrouter" : "development-mock",
+      generatedAt,
+    };
+  });
+
+export const recordCommitteeTrainingRecommendationAction = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => committeeTrainingActionSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { requirePermission, writeAudit, getActorRoles } = await import("./server-core.server");
+    await requirePermission(context.userId, "committee.review", "Committee Review");
+    await writeAudit(
+      {
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
+        action:
+          data.action === "ACCEPTED"
+            ? "AI_COMMITTEE_TRAINING_RECOMMENDATION_ACCEPTED"
+            : "AI_COMMITTEE_TRAINING_RECOMMENDATION_DISMISSED",
+        module: "Committee Review",
+        entityType: "evaluation",
+        entityId: data.evaluationId,
+        evaluationId: data.evaluationId,
+        newValue: { edited: data.edited },
+      },
+      { ip: null, userAgent: null, correlationId: data.actionId },
+    );
+    return { ok: true };
   });
 
 export const generateEvaluationAiAnalysis = createServerFn({ method: "POST" })

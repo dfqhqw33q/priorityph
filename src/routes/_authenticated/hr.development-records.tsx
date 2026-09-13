@@ -84,6 +84,21 @@ function DevelopmentRecordsPage() {
     },
   });
   const records = recordsQuery.data ?? [];
+  const recordsByEmployee = Array.from(
+    records.reduce((groups, record) => {
+      const existing = groups.get(record.employeeId);
+      if (existing) {
+        existing.records.push(record);
+      } else {
+        groups.set(record.employeeId, {
+          employeeName: record.employeeName,
+          employeeNumber: record.employeeNumber,
+          records: [record],
+        });
+      }
+      return groups;
+    }, new Map<string, { employeeName: string; employeeNumber: string; records: DevelopmentRecord[] }>()),
+  ).map(([employeeId, group]) => ({ employeeId, ...group }));
 
   return (
     <div className="space-y-6">
@@ -138,74 +153,67 @@ function DevelopmentRecordsPage() {
           description="No development needs have been recorded yet."
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <caption className="sr-only">Development records</caption>
-            <thead className="border-b border-border bg-muted/60">
-              <tr>
-                {[
-                  "Employee",
-                  "Development Need",
-                  "Activity",
-                  "Source Evaluation",
-                  "Status",
-                  "Date",
-                  "Notes",
-                  "Actions",
-                ].map((heading) => (
-                  <th key={heading} className="px-4 py-3 font-semibold">
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {records.map((record) => (
-                <tr
-                  key={record.id}
-                  className="border-b border-border last:border-0 hover:bg-muted/30"
-                >
-                  <td className="px-4 py-3">
-                    <span className="font-semibold">{record.employeeName}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {record.employeeNumber}
-                    </span>
-                  </td>
-                  <td className="max-w-xs whitespace-pre-wrap px-4 py-3">
-                    {record.developmentNeed}
-                  </td>
-                  <td className="px-4 py-3">{record.developmentActivity}</td>
-                  <td className="px-4 py-3">
-                    {record.sourceEvaluationId ? (
-                      <Link
-                        className="text-primary hover:underline"
-                        to="/hr/evaluation-history/$evaluationId"
-                        params={{ evaluationId: record.sourceEvaluationId }}
-                      >
-                        {record.sourceCycleName
-                          ? `Performance Evaluation ${record.sourceCycleYear}`
-                          : "View evaluation"}
-                      </Link>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  <td className="px-4 py-3">{humanizeToken(record.status)}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {formatDateTime(record.recordDate)}
-                  </td>
-                  <td className="max-w-xs whitespace-pre-wrap px-4 py-3 text-xs text-muted-foreground">
-                    {record.notes || "-"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Button variant="outline" size="sm" onClick={() => setEditing(record)}>
-                      Edit
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-4" aria-label="Development records grouped by employee">
+          {recordsByEmployee.map((group) => (
+            <Card key={group.employeeId}>
+              <CardContent className="space-y-4 pt-6">
+                <div className="border-b border-border pb-4">
+                  <h2 className="text-base font-semibold">{group.employeeName}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Employee no. {group.employeeNumber}
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold">Development Records</h3>
+                  {group.records.map((record) => (
+                    <article
+                      key={record.id}
+                      className="rounded-lg border border-border bg-muted/20 p-4"
+                    >
+                      <div className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-6">
+                        <RecordField
+                          label="Development Need"
+                          value={record.developmentNeed}
+                          className="sm:col-span-2 xl:col-span-2"
+                        />
+                        <RecordField label="Activity" value={record.developmentActivity} />
+                        <RecordField label="Status" value={humanizeToken(record.status)} />
+                        <RecordField label="Date" value={formatDateTime(record.recordDate)} />
+                        <div className="flex items-end sm:justify-end">
+                          <Button variant="outline" size="sm" onClick={() => setEditing(record)}>
+                            Edit
+                          </Button>
+                        </div>
+                        <div className="sm:col-span-2 xl:col-span-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Source Evaluation
+                          </p>
+                          {record.sourceEvaluationId ? (
+                            <Link
+                              className="text-primary hover:underline"
+                              to="/hr/evaluation-history/$evaluationId"
+                              params={{ evaluationId: record.sourceEvaluationId }}
+                            >
+                              {record.sourceCycleName
+                                ? `Performance Evaluation ${record.sourceCycleYear}`
+                                : "View evaluation"}
+                            </Link>
+                          ) : (
+                            <p className="mt-1">-</p>
+                          )}
+                        </div>
+                        <RecordField
+                          label="Notes"
+                          value={record.notes}
+                          className="whitespace-pre-wrap sm:col-span-2 xl:col-span-3"
+                        />
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
       <RecordDialog
@@ -222,6 +230,23 @@ function DevelopmentRecordsPage() {
           if (editing) mutation.mutate({ ...form, id: editing.id });
         }}
       />
+    </div>
+  );
+}
+
+function RecordField({
+  label,
+  value,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1 break-words">{value || "-"}</p>
     </div>
   );
 }

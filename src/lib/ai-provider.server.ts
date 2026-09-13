@@ -118,6 +118,12 @@ export async function generateAiText(
             "Targeted coaching, guided practice, and job-specific training may support further growth.",
           otherComments:
             "The employee's current performance supports focused development in the identified areas.",
+          recommendedTraining: "Targeted job-specific development in an identified performance area.",
+          relatedCompetency: null,
+          rationale:
+            "Focused development may strengthen the employee's capability in an area identified by the evaluation.",
+          trainingFocus: "Guided practice and applied skill development.",
+          details: "The Committee should review the evidence and decide whether formal training is required.",
         })
       : "The employee's recorded performance supports a concise, evidence-based evaluation statement.";
   throw new AiUnavailableError("AI assistance unavailable. You can complete this field manually.");

@@ -46,6 +46,9 @@ import { userErrorMessage } from "@/lib/validation";
 import {
   recordReviewingSupervisorAiAction,
   suggestReviewingSupervisorFields,
+  recordCommitteeTrainingRecommendationAction,
+  suggestCommitteeTrainingRecommendation,
+  type CommitteeTrainingRecommendation,
 } from "@/lib/ai.functions";
 
 type Stage = "RATER" | "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE" | "PRESIDENT";
@@ -63,7 +66,7 @@ function ReadOnlyField({ label, value, className = "" }: { label: string; value:
   return (
     <div className={className}>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 max-w-4xl whitespace-pre-wrap pr-4 text-sm leading-6 text-foreground lg:pr-10">
+      <p className="mt-1 w-full max-w-none break-words whitespace-pre-wrap pr-1 text-sm leading-6 text-foreground lg:pr-3">
         {String(value ?? "-") || "-"}
       </p>
     </div>
@@ -170,6 +173,8 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const getReviewingSuggestions = useServerFn(suggestReviewingSupervisorFields);
   const recordReviewingAction = useServerFn(recordReviewingSupervisorAiAction);
+  const getCommitteeTrainingRecommendation = useServerFn(suggestCommitteeTrainingRecommendation);
+  const recordCommitteeTrainingAction = useServerFn(recordCommitteeTrainingRecommendationAction);
   const query = useQuery({
     queryKey: ["phase2-evaluation", evaluationId],
     queryFn: () => fetch({ data: { evaluationId, stage } }),
@@ -190,6 +195,10 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
   const [reviewAiEditing, setReviewAiEditing] = useState<Record<string, boolean>>({});
   const [reviewAiBusy, setReviewAiBusy] = useState(false);
   const [reviewAiUnavailable, setReviewAiUnavailable] = useState("");
+  const [committeeTrainingRecommendation, setCommitteeTrainingRecommendation] =
+    useState<CommitteeTrainingRecommendation | null>(null);
+  const [committeeTrainingBusy, setCommitteeTrainingBusy] = useState(false);
+  const [committeeTrainingUnavailable, setCommitteeTrainingUnavailable] = useState("");
   const workflowDate = () => new Date().toISOString().slice(0, 10);
   const editableStatuses = {
     RATER: ["SUBMITTED", "DRAFT"],
@@ -327,6 +336,68 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
     } finally {
       setReviewAiBusy(false);
     }
+  }
+
+  async function generateCommitteeTrainingRecommendation() {
+    if (!detail || stage !== "COMMITTEE") return;
+    setCommitteeTrainingBusy(true);
+    setCommitteeTrainingUnavailable("");
+    try {
+      const result = await getCommitteeTrainingRecommendation({
+        data: {
+          evaluationId,
+          version: detail.version,
+          currentValues: {
+            actionDetails: values.actionDetails ?? "",
+            recommendation: values.recommendations ?? "",
+          },
+          actionId: crypto.randomUUID(),
+          regenerate: committeeTrainingRecommendation !== null,
+        },
+      });
+      setCommitteeTrainingRecommendation(result);
+    } catch (error) {
+      const message = userErrorMessage(
+        error,
+        "AI training recommendation unavailable. You can complete these fields manually.",
+      );
+      setCommitteeTrainingUnavailable(message);
+      toast.error(message);
+    } finally {
+      setCommitteeTrainingBusy(false);
+    }
+  }
+
+  function useCommitteeTrainingRecommendation() {
+    if (!committeeTrainingRecommendation || !detail) return;
+    if (committeeTrainingRecommendation.recommendedTraining)
+      update("actionDetails", committeeTrainingRecommendation.recommendedTraining);
+    if (committeeTrainingRecommendation.rationale)
+      update("recommendations", committeeTrainingRecommendation.rationale);
+    void recordCommitteeTrainingAction({
+      data: {
+        evaluationId,
+        version: detail.version,
+        action: "ACCEPTED",
+        actionId: crypto.randomUUID(),
+        edited: false,
+      },
+    }).catch(() => undefined);
+    setCommitteeTrainingRecommendation(null);
+  }
+
+  function discardCommitteeTrainingRecommendation() {
+    if (!detail) return;
+    void recordCommitteeTrainingAction({
+      data: {
+        evaluationId,
+        version: detail.version,
+        action: "DISMISSED",
+        actionId: crypto.randomUUID(),
+        edited: false,
+      },
+    }).catch(() => undefined);
+    setCommitteeTrainingRecommendation(null);
   }
 
   function applyReviewSuggestion(field: "comments" | "recommendations") {
@@ -611,7 +682,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                       <ReadOnlyField label="Development Potential" value={(detail as Record<string, unknown>)["supervisor_step2_development_potential"]} />
                       <ReadOnlyField label="Advancement Outlook" value={(detail as Record<string, unknown>)["supervisor_step2_advancement_outlook"]} />
                     </div>
-                    <ReadOnlyField label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
+                    <ReadOnlyField className="w-full" label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
                     <div className="grid items-start gap-4 lg:grid-cols-4">
                       <ReadOnlyField label="Job / Transfer Interest" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]} />
                       {String((detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ?? "") === "YES" ? (
@@ -622,7 +693,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                         </>
                       ) : null}
                     </div>
-                    <ReadOnlyField label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
+                    <ReadOnlyField className="w-full" label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
                     <ReadOnlyField label="Rater Signature Date" value={(detail as Record<string, unknown>)["supervisor_step2_date"]} />
                   </div>
                 </ReadOnlyGroup>
@@ -690,7 +761,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                       <ReadOnlyField label="Development Potential" value={(detail as Record<string, unknown>)["supervisor_step2_development_potential"]} />
                       <ReadOnlyField label="Advancement Outlook" value={(detail as Record<string, unknown>)["supervisor_step2_advancement_outlook"]} />
                     </div>
-                    <ReadOnlyField label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
+                    <ReadOnlyField className="w-full" label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
                     <div className="grid items-start gap-4 lg:grid-cols-4">
                       <ReadOnlyField label="Job / Transfer Interest" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]} />
                       {String((detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ?? "") === "YES" ? (
@@ -701,7 +772,7 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
                         </>
                       ) : null}
                     </div>
-                    <ReadOnlyField label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
+                    <ReadOnlyField className="w-full" label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
                     <ReadOnlyField label="Rater Signature Date" value={(detail as Record<string, unknown>)["supervisor_step2_date"]} />
                   </div>
                 </ReadOnlyGroup>
@@ -969,6 +1040,86 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
             </>
           ) : stage === "COMMITTEE" ? (
             <>
+              <div className="space-y-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">AI Training Recommendation</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Advisory input only. The Committee decides the official action.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={committeeTrainingBusy || !editable}
+                    onClick={generateCommitteeTrainingRecommendation}
+                  >
+                    {committeeTrainingBusy ? (
+                      <TextShimmer>Generating...</TextShimmer>
+                    ) : committeeTrainingRecommendation ? (
+                      "Regenerate"
+                    ) : (
+                      "Generate recommendation"
+                    )}
+                  </Button>
+                </div>
+                {committeeTrainingUnavailable ? (
+                  <p className="text-sm text-muted-foreground">{committeeTrainingUnavailable}</p>
+                ) : null}
+                {committeeTrainingRecommendation ? (
+                  <div className="space-y-3 rounded-md border bg-background p-3 text-sm">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                      AI-generated advisory recommendation
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <ReadOnlyField
+                        label="Recommended Training"
+                        value={committeeTrainingRecommendation.recommendedTraining}
+                      />
+                      <ReadOnlyField
+                        label="Related Competency"
+                        value={committeeTrainingRecommendation.relatedCompetency}
+                      />
+                      <ReadOnlyField
+                        label="Reason / Rationale"
+                        value={committeeTrainingRecommendation.rationale}
+                      />
+                      <ReadOnlyField
+                        label="Suggested Training Focus"
+                        value={committeeTrainingRecommendation.trainingFocus}
+                      />
+                    </div>
+                    <ReadOnlyField
+                      label="Recommendation Details"
+                      value={committeeTrainingRecommendation.details}
+                    />
+                    {committeeTrainingRecommendation.provider === "development-mock" ? (
+                      <p className="text-xs text-amber-700">
+                        Development mock output. This is not real AI analysis.
+                      </p>
+                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={!editable}
+                        onClick={useCommitteeTrainingRecommendation}
+                      >
+                        Use in Committee fields
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={discardCommitteeTrainingRecommendation}
+                      >
+                        Discard
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
               <h3 className="text-sm font-semibold">Committee recommendation - editable</h3>
               <div>
                 <Label>Final action *</Label>

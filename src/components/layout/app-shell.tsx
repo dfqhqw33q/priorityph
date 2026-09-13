@@ -64,7 +64,7 @@ type NavItem = {
   roles?: AppRole[];
 };
 
-type NavCategory = NavItem & { children: NavItem[] };
+type NavCategory = NavItem & { children: NavItem[]; direct?: boolean };
 
 const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permission }> = [
   { prefix: "/admin/users", roles: ["ADMINISTRATOR"], permission: "users.view" },
@@ -151,6 +151,7 @@ const NAV: Array<{
       {
         label: "Learning Management",
         icon: GraduationCap,
+        direct: true,
         children: [
           {
             to: "/hr/development-records",
@@ -160,25 +161,29 @@ const NAV: Array<{
         ],
       },
       {
-        label: "Training",
+        label: "Training Management",
         icon: BriefcaseBusiness,
+        direct: true,
         children: [
           { to: "/hr/training", label: "Training Management", permission: "training.view" },
         ],
       },
       {
-        label: "Career",
+        label: "Succession Planning",
         icon: Handshake,
+        direct: true,
         children: [{ to: "/hr/succession", label: "Succession", permission: "succession.view" }],
       },
       {
-        label: "Recognition",
+        label: "Social Recognition",
         icon: Medal,
+        direct: true,
         children: [{ to: "/hr/recognition", label: "Recognition", permission: "recognition.view" }],
       },
       {
         label: "Processing",
         icon: ClipboardList,
+        direct: true,
         children: [{ to: "/personnel", label: "For Review", permission: "personnel.process" }],
       },
     ],
@@ -349,6 +354,20 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         </SidebarMenuItem>
       ))}
       {categories.map((category) => {
+        if (category.direct && category.children.length === 1) {
+          const child = category.children[0];
+          return (
+            <SidebarMenuItem key={category.label}>
+              {renderItem(
+                { ...child, label: category.label, icon: category.icon },
+                Boolean(
+                  child.to &&
+                    (pathname === child.to || pathname.startsWith(`${child.to}/`)),
+                ),
+              )}
+            </SidebarMenuItem>
+          );
+        }
         const activeChild = category.children.some(
           (child) => child.to && (pathname === child.to || pathname.startsWith(`${child.to}/`)),
         );
