@@ -538,7 +538,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             <div className="ml-auto flex items-center gap-3">
               <NotificationCenter />
-              <ThemeToggle />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -562,6 +561,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                         "No role assigned"}
                     </p>
                   </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5">
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">Appearance</p>
+                    <ThemeToggle className="w-full justify-center" />
+                  </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="gap-2">
                     <LogOut className="size-4" />
