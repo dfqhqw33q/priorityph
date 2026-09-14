@@ -1,11 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  getAdmin,
-  validationError,
-  requirePermissionAny,
-} from "./server-core.server";
+import { getAdmin, validationError, requirePermissionAny } from "./server-core.server";
 
 const internalUserSignatureSchema = z.object({
   evaluationId: z.string().uuid(),

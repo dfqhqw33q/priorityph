@@ -120,10 +120,7 @@ export function EvaluationRatingCards({
             </div>
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3">
               {employeeValues ? (
-                <RatingValue
-                  label="Employee Rating"
-                  value={employeeValues[criterion.id] ?? null}
-                />
+                <RatingValue label="Employee Rating" value={employeeValues[criterion.id] ?? null} />
               ) : null}
               {supervisorValues ? (
                 <RatingValue

@@ -243,10 +243,7 @@ export const listEvaluationStageQueue = createServerFn({ method: "GET" })
               : undefined;
     const [current, returned] = await Promise.all([
       listEvaluations(config.statuses, filters),
-      listEvaluations(
-        ["RETURNED"],
-        correctionStage ? { ...filters, correctionStage } : filters,
-      ),
+      listEvaluations(["RETURNED"], correctionStage ? { ...filters, correctionStage } : filters),
     ]);
     let rows = [...current, ...returned];
     if (rows.length === 0) return [];
