@@ -53,7 +53,7 @@ function mapProfile(row: Record<string, unknown>): SuccessionProfile {
     committee &&
     (committee.final_action === "PROMOTE" || committee.final_action === "TRANSFER")
       ? {
-          finalAction: committee.final_action,
+          finalAction: committee.final_action as "PROMOTE" | "TRANSFER",
           actionDetails: String(committee.action_details ?? ""),
           recommendation: String(committee.recommendation ?? ""),
           sourceEvaluationId: String(row["source_evaluation_id"]),

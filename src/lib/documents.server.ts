@@ -617,6 +617,46 @@ async function convertSignatureToDataUrl(
   return undefined;
 }
 
+type EvaluationDocumentRow = {
+  id: string;
+  version: number;
+  employee_id: string;
+  employee_number_snapshot: string;
+  full_name_snapshot: string;
+  job_title_snapshot: string;
+  division_snapshot: string;
+  section_snapshot: string;
+  is_finalized: boolean;
+  employee_submitted_at: string | null;
+  supervisor_user_id: string | null;
+  president_user_id: string | null;
+  finalized_by: string | null;
+  supervisor_submitted_at: string | null;
+  supervisor_remarks: string;
+  supervisor_step2_overall_explanation: string;
+  supervisor_step2_strengths: string;
+  supervisor_step2_weaknesses: string;
+  supervisor_step2_effectiveness: string;
+  supervisor_step2_development_potential: string;
+  supervisor_step2_advancement_outlook: string;
+  supervisor_step2_growth_suggestions: string;
+  supervisor_step2_transfer_interest: string;
+  supervisor_step2_transfer_job: string;
+  supervisor_step2_transfer_where: string;
+  supervisor_step2_transfer_qualified: string;
+  supervisor_step2_other_comments: string;
+  supervisor_step2_date: string | null;
+  cycle_id: string;
+  finalized_at: string | null;
+  evaluation_cycles: {
+    name: string;
+    year: number;
+    starts_at: string;
+    ends_at: string;
+    template_id: string;
+  };
+};
+
 type EvaluationDocumentData = Parameters<typeof generateEvaluationHTML>[0];
 
 export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): string {
@@ -986,7 +1026,10 @@ export async function generateEvaluationData(
         "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, is_finalized, employee_submitted_at, supervisor_user_id, president_user_id, finalized_by, supervisor_submitted_at, supervisor_remarks, supervisor_step2_overall_explanation, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
       )
       .eq("id", evaluationId)
-      .maybeSingle()) as never;
+      .maybeSingle()) as unknown as {
+      data: EvaluationDocumentRow | null;
+      error: { message: string } | null;
+    };
 
     console.log(
       `[generateEvaluationData] Main query - evaluation found: ${!!evaluation}, error: ${evalError?.message}`,
@@ -1052,7 +1095,7 @@ export async function generateEvaluationData(
         .select("method, storage_path, signature_data, content_type")
         .eq("evaluation_id", evaluationId),
       admin
-        .from("internal_user_signatures" as never)
+        .from("internal_user_signatures")
         .select("user_id, stage, method, storage_path, signature_data, content_type")
         .eq("evaluation_id", evaluationId),
       admin
@@ -1088,7 +1131,7 @@ export async function generateEvaluationData(
     ].filter((id): id is string => Boolean(id));
     const { data: userListResult } = userIds.length
       ? await admin.from("internal_users").select("id, full_name, job_title").in("id", userIds)
-      : ({ data: [] } as never);
+      : { data: [] as Array<{ id: string; full_name: string; job_title: string | null }> };
 
     const ratingMap = new Map<string, Record<string, number | undefined>>();
     for (const row of ratingsResult.data ?? []) {
@@ -1263,11 +1306,19 @@ export async function generateEvaluationData(
       (stageSignatureResult.data ?? []).find((s) => s.stage === "REVIEWING_SUPERVISOR_STEP3")
         ?.signed_at ??
       null;
-    const personnelDate = personnelStage?.signed_at ?? personnelResult.data?.submitted_at ?? null;
-    const committeeDate = committeeStage?.signed_at ?? committeeResult.data?.submitted_at ?? null;
+    const personnelDate =
+      (personnelStage as { signed_at?: string } | undefined)?.signed_at ??
+      personnelResult.data?.submitted_at ??
+      null;
+    const committeeDate =
+      (committeeStage as { signed_at?: string } | undefined)?.signed_at ??
+      committeeResult.data?.submitted_at ??
+      null;
     const approvedDate = options.presidentSignatureData
       ? new Date().toISOString()
-      : (presidentStage?.signed_at ?? evaluation.finalized_at ?? null);
+      : ((presidentStage as { signed_at?: string } | undefined)?.signed_at ??
+        evaluation.finalized_at ??
+        null);
 
     return {
       companyName: "PRIORITY HANDLING LOGISTICS, INC.",

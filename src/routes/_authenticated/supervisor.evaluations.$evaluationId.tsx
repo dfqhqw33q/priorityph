@@ -58,7 +58,22 @@ export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$ev
   component: SupervisorReviewPage,
 });
 
-type Step2State = Record<string, string>;
+type Step2State = {
+  [key: string]: string | undefined;
+  overallExplanation?: string;
+  strengths?: string;
+  weaknesses?: string;
+  effectiveness?: string;
+  developmentPotential?: string;
+  advancementOutlook?: string;
+  growthSuggestions?: string;
+  transferInterest?: string;
+  transferJob?: string;
+  transferWhere?: string;
+  transferQualified?: string;
+  otherComments?: string;
+  date?: string;
+};
 type Step2Props = {
   field: string;
   label: string;
@@ -67,7 +82,7 @@ type Step2Props = {
   editable: boolean;
   canEdit: boolean;
   setDirty: (dirty: boolean) => void;
-  ai?: { suggestion: string; provider: "openrouter" | "development-mock" };
+  ai?: { suggestion: string; provider: "openrouter" | "development-mock" } | undefined;
   onEdit?: (value: string) => void;
   editing?: boolean;
   onToggleEdit?: () => void;
@@ -362,18 +377,18 @@ function SupervisorReviewPage() {
             .filter(([, rating]) => typeof rating === "number")
             .map(([criterionId, rating]) => ({ criterionId, rating: rating as number })),
           currentValues: {
-            overallExplanation: step2.overallExplanation ?? "",
-            strengths: step2.strengths ?? "",
-            weaknesses: step2.weaknesses ?? "",
-            effectiveness: step2.effectiveness ?? "",
-            developmentPotential: step2.developmentPotential ?? "",
-            advancementOutlook: step2.advancementOutlook ?? "",
-            growthSuggestions: step2.growthSuggestions ?? "",
-            transferInterest: step2.transferInterest ?? "",
-            transferJob: step2.transferJob ?? "",
-            transferWhere: step2.transferWhere ?? "",
-            transferQualified: step2.transferQualified ?? "",
-            otherComments: step2.otherComments ?? "",
+            overallExplanation: step2["overallExplanation"] ?? "",
+            strengths: step2["strengths"] ?? "",
+            weaknesses: step2["weaknesses"] ?? "",
+            effectiveness: step2["effectiveness"] ?? "",
+            developmentPotential: step2["developmentPotential"] ?? "",
+            advancementOutlook: step2["advancementOutlook"] ?? "",
+            growthSuggestions: step2["growthSuggestions"] ?? "",
+            transferInterest: step2["transferInterest"] ?? "",
+            transferJob: step2["transferJob"] ?? "",
+            transferWhere: step2["transferWhere"] ?? "",
+            transferQualified: step2["transferQualified"] ?? "",
+            otherComments: step2["otherComments"] ?? "",
           },
           actionId: crypto.randomUUID(),
           regenerate: Object.keys(aiSuggestions).length > 0,
@@ -445,7 +460,10 @@ function SupervisorReviewPage() {
   function editSuggestion(field: string, value: string) {
     setAiSuggestions((current) => ({
       ...current,
-      [field]: { ...current[field], suggestion: value },
+      [field]: {
+        ...(current[field] ?? { suggestion: "", provider: "development-mock" as const }),
+        suggestion: value,
+      },
     }));
   }
 
@@ -545,7 +563,7 @@ function SupervisorReviewPage() {
           ratings: ratingPayload(),
           remarks,
           ...step2,
-          date: step2.date || currentDate,
+          date: step2["date"] || currentDate,
           submit: true,
           signature,
         },
@@ -686,9 +704,9 @@ function SupervisorReviewPage() {
               editable={editable}
               canEdit={can("evaluations.step2")}
               setDirty={setDirty}
-              ai={aiSuggestions.overallExplanation}
+              ai={aiSuggestions["overallExplanation"]}
               onEdit={(value) => editSuggestion("overallExplanation", value)}
-              editing={Boolean(aiEditing.overallExplanation)}
+              editing={Boolean(aiEditing["overallExplanation"])}
               onToggleEdit={() => toggleSuggestionEdit("overallExplanation")}
               onUse={() => applySuggestion("overallExplanation")}
               onDiscard={() => discardSuggestion("overallExplanation")}
@@ -705,9 +723,9 @@ function SupervisorReviewPage() {
                 editable={editable}
                 canEdit={can("evaluations.step2")}
                 setDirty={setDirty}
-                ai={aiSuggestions.strengths}
+                ai={aiSuggestions["strengths"]}
                 onEdit={(value) => editSuggestion("strengths", value)}
-                editing={Boolean(aiEditing.strengths)}
+                editing={Boolean(aiEditing["strengths"])}
                 onToggleEdit={() => toggleSuggestionEdit("strengths")}
                 onUse={() => applySuggestion("strengths")}
                 onDiscard={() => discardSuggestion("strengths")}
@@ -720,9 +738,9 @@ function SupervisorReviewPage() {
                 editable={editable}
                 canEdit={can("evaluations.step2")}
                 setDirty={setDirty}
-                ai={aiSuggestions.weaknesses}
+                ai={aiSuggestions["weaknesses"]}
                 onEdit={(value) => editSuggestion("weaknesses", value)}
-                editing={Boolean(aiEditing.weaknesses)}
+                editing={Boolean(aiEditing["weaknesses"])}
                 onToggleEdit={() => toggleSuggestionEdit("weaknesses")}
                 onUse={() => applySuggestion("weaknesses")}
                 onDiscard={() => discardSuggestion("weaknesses")}
@@ -736,9 +754,9 @@ function SupervisorReviewPage() {
               editable={editable}
               canEdit={can("evaluations.step2")}
               setDirty={setDirty}
-              ai={aiSuggestions.effectiveness}
+              ai={aiSuggestions["effectiveness"]}
               onEdit={(value) => editSuggestion("effectiveness", value)}
-              editing={Boolean(aiEditing.effectiveness)}
+              editing={Boolean(aiEditing["effectiveness"])}
               onToggleEdit={() => toggleSuggestionEdit("effectiveness")}
               onUse={() => applySuggestion("effectiveness")}
               onDiscard={() => discardSuggestion("effectiveness")}
@@ -806,9 +824,9 @@ function SupervisorReviewPage() {
               editable={editable}
               canEdit={can("evaluations.step2")}
               setDirty={setDirty}
-              ai={aiSuggestions.growthSuggestions}
+              ai={aiSuggestions["growthSuggestions"]}
               onEdit={(value) => editSuggestion("growthSuggestions", value)}
-              editing={Boolean(aiEditing.growthSuggestions)}
+              editing={Boolean(aiEditing["growthSuggestions"])}
               onToggleEdit={() => toggleSuggestionEdit("growthSuggestions")}
               onUse={() => applySuggestion("growthSuggestions")}
               onDiscard={() => discardSuggestion("growthSuggestions")}
@@ -827,7 +845,7 @@ function SupervisorReviewPage() {
               setDirty={setDirty}
               compactOptions
             />
-            {step2.transferInterest === "YES" ? (
+            {step2["transferInterest"] === "YES" ? (
               <div className="grid gap-4 sm:grid-cols-3">
                 <Step2Input
                   label="What job?"
@@ -870,9 +888,9 @@ function SupervisorReviewPage() {
                 editable={editable}
                 canEdit={can("evaluations.step2")}
                 setDirty={setDirty}
-                ai={aiSuggestions.otherComments}
+                ai={aiSuggestions["otherComments"]}
                 onEdit={(value) => editSuggestion("otherComments", value)}
-                editing={Boolean(aiEditing.otherComments)}
+                editing={Boolean(aiEditing["otherComments"])}
                 onToggleEdit={() => toggleSuggestionEdit("otherComments")}
                 onUse={() => applySuggestion("otherComments")}
                 onDiscard={() => discardSuggestion("otherComments")}

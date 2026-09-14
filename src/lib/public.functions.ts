@@ -28,7 +28,7 @@ async function upsertAccessSession(
     last_verified_at: new Date().toISOString(),
   } as never;
 
-  await admin.from("public_evaluation_access_sessions" as never).upsert(payload, {
+  await admin.from("public_evaluation_access_sessions").upsert(payload, {
     onConflict: "cycle_id, employee_id",
   });
 }
@@ -47,7 +47,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   if (!evaluation) return { status: "SKIPPED" as const };
 
   const { data: accessRows } = await admin
-    .from("public_evaluation_access_sessions" as never)
+    .from("public_evaluation_access_sessions")
     .select("email")
     .eq("employee_id", evaluation.employee_id)
     .order("last_verified_at", { ascending: false })
@@ -60,7 +60,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   if (!accessEmail) {
     const idempotencyKey = `step1-finalized:${evaluationId}`;
     await admin
-      .from("employee_email_deliveries" as never)
+      .from("employee_email_deliveries")
       .upsert(
         {
           evaluation_id: evaluation.id,
@@ -79,7 +79,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
 
   const idempotencyKey = `step1-finalized:${evaluationId}`;
   const { data: existing } = await admin
-    .from("employee_email_deliveries" as never)
+    .from("employee_email_deliveries")
     .select("mail_status, id")
     .eq("idempotency_key", idempotencyKey)
     .maybeSingle();
@@ -88,7 +88,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
     return { status: existing.mail_status === "SENT" ? ("QUEUED" as const) : ("SKIPPED" as const) };
 
   const { data: delivery, error: insertError } = await admin
-    .from("employee_email_deliveries" as never)
+    .from("employee_email_deliveries")
     .upsert(
       {
         evaluation_id: evaluation.id,
@@ -110,7 +110,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
 
   if (!apiKey || !fromAddress || !fromAddress.includes("@")) {
     await admin
-      .from("employee_email_deliveries" as never)
+      .from("employee_email_deliveries")
       .update({
         mail_status: "FAILED",
         provider_message: "BREVO_API_KEY or EMAIL_FROM is not configured.",
@@ -160,21 +160,21 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
     if (!response.ok) {
       const message = await response.text();
       await admin
-        .from("employee_email_deliveries" as never)
+        .from("employee_email_deliveries")
         .update({ mail_status: "FAILED", provider_message: message.slice(0, 500) })
         .eq("id", delivery.id);
       return { status: "FAILED" as const };
     }
 
     await admin
-      .from("employee_email_deliveries" as never)
+      .from("employee_email_deliveries")
       .update({ mail_status: "SENT", sent_at: new Date().toISOString() })
       .eq("id", delivery.id);
     return { status: "QUEUED" as const };
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown email delivery error";
     await admin
-      .from("employee_email_deliveries" as never)
+      .from("employee_email_deliveries")
       .update({ mail_status: "FAILED", provider_message: detail.slice(0, 500) })
       .eq("id", delivery.id);
     return { status: "FAILED" as const };
@@ -195,7 +195,7 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
   if (!evaluation) return { status: "SKIPPED" as const };
 
   const { data: accessRows } = await admin
-    .from("public_evaluation_access_sessions" as never)
+    .from("public_evaluation_access_sessions")
     .select("email")
     .eq("employee_id", evaluation.employee_id)
     .order("last_verified_at", { ascending: false })
@@ -208,7 +208,7 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
   if (!accessEmail) {
     const idempotencyKey = `evaluation-finalized:${evaluationId}`;
     await admin
-      .from("employee_email_deliveries" as never)
+      .from("employee_email_deliveries")
       .upsert(
         {
           evaluation_id: evaluation.id,
@@ -227,7 +227,7 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
 
   const idempotencyKey = `evaluation-finalized:${evaluationId}`;
   const { data: existing } = await admin
-    .from("employee_email_deliveries" as never)
+    .from("employee_email_deliveries")
     .select("mail_status, id")
     .eq("idempotency_key", idempotencyKey)
     .maybeSingle();
@@ -236,7 +236,7 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
     return { status: existing.mail_status === "SENT" ? ("QUEUED" as const) : ("SKIPPED" as const) };
 
   const { data: delivery, error: insertError } = await admin
-    .from("employee_email_deliveries" as never)
+    .from("employee_email_deliveries")
     .upsert(
       {
         evaluation_id: evaluation.id,
@@ -258,7 +258,7 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
 
   if (!apiKey || !fromAddress || !fromAddress.includes("@")) {
     await admin
-      .from("employee_email_deliveries" as never)
+      .from("employee_email_deliveries")
       .update({
         mail_status: "FAILED",
         provider_message: "BREVO_API_KEY or EMAIL_FROM is not configured.",
@@ -315,21 +315,21 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
     if (!response.ok) {
       const message = await response.text();
       await admin
-        .from("employee_email_deliveries" as never)
+        .from("employee_email_deliveries")
         .update({ mail_status: "FAILED", provider_message: message.slice(0, 500) })
         .eq("id", delivery.id);
       return { status: "FAILED" as const };
     }
 
     await admin
-      .from("employee_email_deliveries" as never)
+      .from("employee_email_deliveries")
       .update({ mail_status: "SENT", sent_at: new Date().toISOString() })
       .eq("id", delivery.id);
     return { status: "QUEUED" as const };
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown email delivery error";
     await admin
-      .from("employee_email_deliveries" as never)
+      .from("employee_email_deliveries")
       .update({ mail_status: "FAILED", provider_message: detail.slice(0, 500) })
       .eq("id", delivery.id);
     return { status: "FAILED" as const };
@@ -455,7 +455,7 @@ export const verifyEmployeeProfile = createServerFn({ method: "POST" })
         cycleId: cycle.id,
         employeeId: employee.id,
         email: data.googleEmail,
-        googleUserId: data.googleUserId,
+        ...(data.googleUserId ? { googleUserId: data.googleUserId } : {}),
       });
     }
 
@@ -538,7 +538,7 @@ export const submitStep1 = createServerFn({ method: "POST" })
         cycleId: cycle.id,
         employeeId,
         email: data.googleEmail,
-        googleUserId: data.googleUserId,
+        ...(data.googleUserId ? { googleUserId: data.googleUserId } : {}),
       });
     }
 

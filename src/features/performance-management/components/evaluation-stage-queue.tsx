@@ -12,6 +12,13 @@ import {
 import type { EvaluationStatus } from "@/lib/domain";
 
 type Stage = "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE" | "PRESIDENT";
+type QueueRow = {
+  id: string;
+  full_name_snapshot: string;
+  employee_number_snapshot: string;
+  cycle_year: number;
+  status: string;
+};
 const titles: Record<Stage, string> = {
   REVIEWING_SUPERVISOR: "Reviewing Supervisor queue",
   PERSONNEL: "Personnel processing queue",
@@ -76,7 +83,7 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
               </tr>
             </thead>
             <tbody>
-              {(query.data ?? []).map((row) => (
+              {((query.data ?? []) as QueueRow[]).map((row) => (
                 <tr key={row.id} className="border-b last:border-0">
                   <td className="px-4 py-3 font-medium">{row.full_name_snapshot}</td>
                   <td className="px-4 py-3 tabular-nums">{row.employee_number_snapshot}</td>

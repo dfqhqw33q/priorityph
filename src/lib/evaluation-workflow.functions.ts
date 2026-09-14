@@ -19,6 +19,8 @@ const transitions: Partial<Record<EvaluationStatus, EvaluationStatus[]>> = {
   RETURNED: ["DRAFT", "FOR_REVIEW", "FOR_PROCESSING"],
 };
 
+type SerializableRecord = Record<string, string | number | boolean | null>;
+
 export const getEvaluationStage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -100,15 +102,17 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
       REVIEWING_SUPERVISOR: "reviewing_supervisor_reviews",
       PERSONNEL: "personnel_processing",
       COMMITTEE: "committee_reviews",
-    }[data.stage as "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE"];
-    let { data: stageRecord } = stageTable
+    } as const;
+    const stageTableName = stageTable[data.stage as keyof typeof stageTable];
+    const stageResult = stageTableName
       ? await admin
-          .from(stageTable)
+          .from(stageTableName)
           .select("*")
           .eq("evaluation_id", data.evaluationId)
           .maybeSingle()
       : { data: null };
-    if (stageTable && !stageRecord) {
+    let stageRecord = stageResult.data as unknown as SerializableRecord | null;
+    if (stageTableName && !stageRecord) {
       const claim = {
         REVIEWING_SUPERVISOR: {
           evaluation_id: data.evaluationId,
@@ -127,15 +131,15 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
           status: "DRAFT",
         },
       }[data.stage as "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE"];
-      const { error } = await admin.from(stageTable).insert(claim as never);
+      const { error } = await admin.from(stageTableName).insert(claim as never);
       if (error && error.code !== "23505")
         throw (await import("./server-core.server")).validationError(error.message);
       const claimed = await admin
-        .from(stageTable)
+        .from(stageTableName)
         .select("*")
         .eq("evaluation_id", data.evaluationId)
         .maybeSingle();
-      stageRecord = claimed.data;
+      stageRecord = claimed.data as unknown as SerializableRecord | null;
     }
     const ownerField = {
       REVIEWING_SUPERVISOR: "reviewer_user_id",
@@ -173,7 +177,7 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
         stageSignature = { ...stageSignature, signature_data: signed?.signedUrl ?? null };
       }
     }
-    let accumulatedStages: Record<string, unknown> = {};
+    let accumulatedStages: Record<string, SerializableRecord | null> = {};
     if (["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(data.stage)) {
       const [reviewingSup, personnel, committee] = await Promise.all([
         admin
@@ -193,9 +197,9 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
           .maybeSingle(),
       ]);
       accumulatedStages = {
-        reviewingSupervisorReview: reviewingSup.data ?? null,
-        personnelProcessing: personnel.data ?? null,
-        committeeReview: committee.data ?? null,
+        reviewingSupervisorReview: reviewingSup.data as SerializableRecord | null,
+        personnelProcessing: personnel.data as SerializableRecord | null,
+        committeeReview: committee.data as SerializableRecord | null,
       };
     }
     return {
@@ -238,8 +242,11 @@ export const listEvaluationStageQueue = createServerFn({ method: "GET" })
               ? "PRESIDENT_APPROVAL"
               : undefined;
     const [current, returned] = await Promise.all([
-      listEvaluations(config.statuses, { ...filters, correctionStage: undefined }),
-      listEvaluations(["RETURNED"], { ...filters, correctionStage }),
+      listEvaluations(config.statuses, filters),
+      listEvaluations(
+        ["RETURNED"],
+        correctionStage ? { ...filters, correctionStage } : filters,
+      ),
     ]);
     let rows = [...current, ...returned];
     if (rows.length === 0) return [];
@@ -269,25 +276,30 @@ export const listEvaluationStageQueue = createServerFn({ method: "GET" })
       REVIEWING_SUPERVISOR: "reviewing_supervisor_reviews",
       PERSONNEL: "personnel_processing",
       COMMITTEE: "committee_reviews",
-    }[data.stage as "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE"];
+    } as const;
+    const stageTableName = stageTable[data.stage as keyof typeof stageTable];
     const ownerField = {
       REVIEWING_SUPERVISOR: "reviewer_user_id",
       PERSONNEL: "personnel_user_id",
       COMMITTEE: "committee_user_id",
-    }[data.stage as "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE"];
+    } as const;
+    const ownerFieldName = ownerField[data.stage as keyof typeof ownerField];
 
-    if (!stageTable || !ownerField) return rows;
+    if (!stageTableName || !ownerFieldName) return rows;
 
     const admin = await getAdmin();
     const { data: assignments } = await admin
-      .from(stageTable)
-      .select(`evaluation_id,${ownerField}`)
+      .from(stageTableName)
+      .select("*")
       .in(
         "evaluation_id",
         rows.map((row) => row.id),
       );
     const assigned = new Map(
-      (assignments ?? []).map((assignment) => [assignment.evaluation_id, assignment[ownerField]]),
+      ((assignments ?? []) as Array<Record<string, unknown>>).map((assignment) => [
+        String(assignment["evaluation_id"]),
+        assignment[ownerFieldName],
+      ]),
     );
     return rows.filter((row) => !assigned.get(row.id) || assigned.get(row.id) === context.userId);
   });
@@ -460,11 +472,14 @@ async function saveStageSignature(
   if (signature.method === "UPLOAD") {
     const match = signature.data.match(/^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/);
     if (!match) throw validationError("Signature upload must be a PNG or JPEG image");
-    const bytes = Uint8Array.from(atob(match[2]), (character) => character.charCodeAt(0));
+    const contentType = match[1];
+    const encoded = match[2];
+    if (!contentType || !encoded) throw validationError("Invalid signature image data");
+    const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
     storagePath = `evaluations/${evaluationId}/signatures/${stage.toLowerCase()}.png`;
     const { error } = await admin.storage
       .from("employee-files")
-      .upload(storagePath, bytes, { contentType: match[1], upsert: true });
+      .upload(storagePath, bytes, { contentType, upsert: true });
     if (error) throw validationError("Could not store the stage signature");
     signatureData = null;
   }
@@ -716,7 +731,8 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       { onConflict: "evaluation_id" },
     );
     if (stageError) throw validationError(stageError.message);
-    if (data.submit)
+    if (data.submit) {
+      if (!data.signature) throw validationError("A signature is required before submitting");
       await saveStageSignature(
         data.evaluationId,
         "PERSONNEL",
@@ -724,6 +740,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
         context.userId,
         data.version,
       );
+    }
     return result;
   });
 
@@ -767,7 +784,8 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       { onConflict: "evaluation_id" },
     );
     if (stageError) throw validationError(stageError.message);
-    if (data.submit)
+    if (data.submit) {
+      if (!data.signature) throw validationError("A signature is required before submitting");
       await saveStageSignature(
         data.evaluationId,
         "COMMITTEE",
@@ -775,6 +793,7 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
         context.userId,
         data.version,
       );
+    }
     return result;
   });
 

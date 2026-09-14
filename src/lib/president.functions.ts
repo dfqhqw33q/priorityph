@@ -125,8 +125,6 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
       const evaluation = await assertVersion(data.evaluationId, data.version);
       if (evaluation.status !== "FOR_APPROVAL")
         throw validationError("This evaluation is not available for President review yet");
-      if (evaluation.status === "FINALIZED")
-        throw validationError("The President assessment has already been submitted");
 
       if (data.step === 3) {
         const { data: row } = await admin

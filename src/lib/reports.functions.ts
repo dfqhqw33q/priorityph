@@ -438,7 +438,7 @@ export const getDigital201File = createServerFn({ method: "POST" })
         ? admin
             .from("evaluation_scores")
             .select(
-              "evaluation_id, employee_average, supervisor_average, reviewing_supervisor_average, final_score, final_rating_label, calculation_status",
+              "evaluation_id, employee_average, supervisor_average, final_score, final_rating_label, calculation_status",
             )
             .in("evaluation_id", evaluationIds)
         : Promise.resolve({ data: [] }),
@@ -539,7 +539,7 @@ export const getDigital201File = createServerFn({ method: "POST" })
           ? {
               employeeAverage: score.employee_average,
               supervisorAverage: score.supervisor_average,
-              reviewingSupervisorAverage: score.reviewing_supervisor_average,
+              reviewingSupervisorAverage: null,
               finalScore: score.final_score,
               finalRatingLabel: score.final_rating_label,
               calculationStatus: score.calculation_status,

@@ -19,6 +19,7 @@ import {
   type AppRole,
   type Permission,
 } from "@/lib/domain";
+import { userErrorMessage } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/admin/roles")({
   head: () => ({

@@ -120,13 +120,22 @@ export function EvaluationRatingCards({
             </div>
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3">
               {employeeValues ? (
-                <RatingValue label="Employee Rating" value={employeeValues[criterion.id]} />
+                <RatingValue
+                  label="Employee Rating"
+                  value={employeeValues[criterion.id] ?? null}
+                />
               ) : null}
               {supervisorValues ? (
-                <RatingValue label="Supervisor Rating" value={supervisorValues[criterion.id]} />
+                <RatingValue
+                  label="Supervisor Rating"
+                  value={supervisorValues[criterion.id] ?? null}
+                />
               ) : null}
               {reviewingValues ? (
-                <RatingValue label="Reviewing Supervisor" value={reviewingValues[criterion.id]} />
+                <RatingValue
+                  label="Reviewing Supervisor"
+                  value={reviewingValues[criterion.id] ?? null}
+                />
               ) : null}
             </div>
             {!readOnly ? (
@@ -202,6 +211,7 @@ export function RadioRatingMatrix({
   readOnly?: boolean;
   employeeValues?: Record<string, number | null>;
   supervisorValues?: Record<string, number | null>;
+  reviewingValues?: Record<string, number | null>;
   finalScore?: number | null;
   name: string;
   errorCriterionIds?: string[];

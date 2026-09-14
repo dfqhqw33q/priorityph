@@ -61,8 +61,32 @@ import {
   suggestCommitteeTrainingRecommendation,
   type CommitteeTrainingRecommendation,
 } from "@/lib/ai.functions";
+import type { EvaluationDetail } from "@/lib/domain";
 
 type Stage = "RATER" | "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE" | "PRESIDENT";
+type ReviewSuggestion = { suggestion: string; provider: "openrouter" | "development-mock" };
+type ReviewAiSuggestions = {
+  comments?: ReviewSuggestion;
+  recommendations?: ReviewSuggestion;
+};
+type ReviewAiEditing = {
+  comments?: boolean;
+  recommendations?: boolean;
+};
+
+type StageDetail = EvaluationDetail & {
+  correction_stage?: string;
+  stageRecord?: Record<string, unknown> | null;
+  stageSignature?: {
+    method: "DRAWN" | "UPLOAD" | "TYPED";
+    signature_data: string | null;
+  } | null;
+  accumulatedStages?: Record<string, unknown>;
+  score?: {
+    finalScore: number | null;
+    finalRatingLabel: string | null;
+  } | null;
+};
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -125,7 +149,7 @@ function ReviewAiField({
   label: string;
   field: string;
   value: string;
-  suggestion?: { suggestion: string; provider: "openrouter" | "development-mock" };
+  suggestion?: ReviewSuggestion | undefined;
   editing: boolean;
   editable: boolean;
   onChange: (value: string) => void;
@@ -205,7 +229,7 @@ export function EvaluationStageDetail({
     queryFn: () => fetch({ data: { evaluationId, stage } }),
     retry: false,
   });
-  const detail = query.data;
+  const detail = query.data as StageDetail | null | undefined;
   const [values, setValues] = useState<EvaluationStageValues>({});
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
   const [signature, setSignature] = useState<SignatureValue | undefined>();
@@ -214,10 +238,8 @@ export function EvaluationStageDetail({
   const [correctionStage, setCorrectionStage] = useState("SUPERVISOR_DRAFT");
   const [documentHtml, setDocumentHtml] = useState<string | null>(null);
   const [documentOpen, setDocumentOpen] = useState(false);
-  const [reviewAiSuggestions, setReviewAiSuggestions] = useState<
-    Record<string, { suggestion: string; provider: "openrouter" | "development-mock" }>
-  >({});
-  const [reviewAiEditing, setReviewAiEditing] = useState<Record<string, boolean>>({});
+  const [reviewAiSuggestions, setReviewAiSuggestions] = useState<ReviewAiSuggestions>({});
+  const [reviewAiEditing, setReviewAiEditing] = useState<ReviewAiEditing>({});
   const [reviewAiBusy, setReviewAiBusy] = useState(false);
   const [reviewAiUnavailable, setReviewAiUnavailable] = useState("");
   const [committeeTrainingRecommendation, setCommitteeTrainingRecommendation] =
@@ -467,7 +489,10 @@ export function EvaluationStageDetail({
   function editReviewSuggestion(field: "comments" | "recommendations", value: string) {
     setReviewAiSuggestions((current) => ({
       ...current,
-      [field]: { ...current[field], suggestion: value },
+      [field]: {
+        ...(current[field] ?? { suggestion: "", provider: "development-mock" as const }),
+        suggestion: value,
+      },
     }));
   }
   async function openDocument() {
@@ -944,7 +969,7 @@ export function EvaluationStageDetail({
                       accumulatedStages?: Record<string, unknown>;
                     }
                   )?.accumulatedStages as Record<string, unknown> | undefined;
-                  const revSupReview = accStages?.reviewingSupervisorReview as
+                  const revSupReview = accStages?.["reviewingSupervisorReview"] as
                     Record<string, unknown> | undefined;
                   return revSupReview ? (
                     <>
@@ -977,7 +1002,7 @@ export function EvaluationStageDetail({
                       accumulatedStages?: Record<string, unknown>;
                     }
                   )?.accumulatedStages as Record<string, unknown> | undefined;
-                  const personnel = accStages?.personnelProcessing as
+                  const personnel = accStages?.["personnelProcessing"] as
                     Record<string, unknown> | undefined;
                   return personnel && detail.status !== "FOR_PROCESSING" ? (
                     <div className="space-y-2 rounded-md border border-border p-4">
@@ -1040,7 +1065,7 @@ export function EvaluationStageDetail({
                       accumulatedStages?: Record<string, unknown>;
                     }
                   )?.accumulatedStages as Record<string, unknown> | undefined;
-                  const committee = accStages?.committeeReview as
+                  const committee = accStages?.["committeeReview"] as
                     Record<string, unknown> | undefined;
                   return committee && detail.status !== "FOR_REVIEW" ? (
                     <div className="space-y-2 rounded-md border border-border p-4">
@@ -1105,12 +1130,15 @@ export function EvaluationStageDetail({
                   field="comments"
                   value={values.comments ?? ""}
                   suggestion={reviewAiSuggestions.comments}
-                  editing={Boolean(reviewAiEditing.comments)}
+                  editing={Boolean(reviewAiEditing["comments"])}
                   editable={editable}
                   onChange={(value) => update("comments", value)}
                   onSuggestionChange={(value) => editReviewSuggestion("comments", value)}
                   onToggleEdit={() =>
-                    setReviewAiEditing((current) => ({ ...current, comments: !current.comments }))
+                    setReviewAiEditing((current) => ({
+                      ...current,
+                      comments: !current["comments"],
+                    }))
                   }
                   onUse={() => applyReviewSuggestion("comments")}
                   onDiscard={() => discardReviewSuggestion("comments")}
@@ -1120,14 +1148,14 @@ export function EvaluationStageDetail({
                   field="recommendations"
                   value={values.recommendations ?? ""}
                   suggestion={reviewAiSuggestions.recommendations}
-                  editing={Boolean(reviewAiEditing.recommendations)}
+                  editing={Boolean(reviewAiEditing["recommendations"])}
                   editable={editable}
                   onChange={(value) => update("recommendations", value)}
                   onSuggestionChange={(value) => editReviewSuggestion("recommendations", value)}
                   onToggleEdit={() =>
                     setReviewAiEditing((current) => ({
                       ...current,
-                      recommendations: !current.recommendations,
+                      recommendations: !current["recommendations"],
                     }))
                   }
                   onUse={() => applyReviewSuggestion("recommendations")}

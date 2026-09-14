@@ -48,7 +48,7 @@ export function EmployeeProfileManagementPage() {
     return ((query.data ?? []) as unknown as EmployeeProfileRow[]).filter(
       (row) =>
         !term ||
-        `${row.employeeNumber} ${row.employee_number} ${row.firstName} ${row.first_name} ${row.fullName} ${row.full_name}`
+        `${row.employeeNumber} ${row.firstName} ${row.lastName} ${row.jobTitle}`
           .toLowerCase()
           .includes(term),
     );

@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   getAdmin,
   validationError,
-  requireSupabaseAuth,
   requirePermissionAny,
 } from "./server-core.server";
 
@@ -32,16 +32,13 @@ export type InternalUserSignatureInput = z.infer<typeof internalUserSignatureSch
  */
 export const submitInternalUserSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .middleware([
-    requirePermissionAny([
-      "evaluations.step2",
-      "evaluations.review_step3",
-      "president.step2",
-      "president.step3",
-    ]),
-  ])
   .inputValidator((input: unknown) => internalUserSignatureSchema.parse(input))
   .handler(async ({ data, context }) => {
+    await requirePermissionAny(
+      context.userId,
+      ["evaluations.step2", "evaluations.review_step3", "president.step2", "president.step3"],
+      "Internal User Signatures",
+    );
     const admin = await getAdmin();
     const userId = context.userId;
 
@@ -116,15 +113,17 @@ export const submitInternalUserSignature = createServerFn({ method: "POST" })
  */
 export const getInternalUserSignature = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .middleware([
-    requirePermissionAny([
-      "evaluations.view_history",
-      "evaluations.rate_supervisor",
-      "evaluations.submit_president",
-      "president.view",
-    ]),
-  ])
   .handler(async ({ context }) => {
+    await requirePermissionAny(
+      context.userId,
+      [
+        "evaluations.view_history",
+        "evaluations.rate_supervisor",
+        "evaluations.submit_president",
+        "president.view",
+      ],
+      "Internal User Signatures",
+    );
     const admin = await getAdmin();
 
     return { success: true };

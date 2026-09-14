@@ -316,6 +316,9 @@ export const listAuditLogs = createServerFn({ method: "GET" })
       .object({
         search: z.string().max(120).default(""),
         limit: z.number().int().min(1).max(500).default(200),
+        page: z.number().int().min(0).default(0),
+        pageSize: z.number().int().min(1).max(100).default(25),
+        sortDir: z.enum(["asc", "desc"]).default("desc"),
       })
       .parse(input),
   )
@@ -478,7 +481,7 @@ export const listAuditEvents = createServerFn({ method: "GET" })
       .from("audit_logs")
       .select("*")
       .order("occurred_at", { ascending: false })
-      .limit(data.limit);
+      .range(data.page * data.pageSize, data.page * data.pageSize + data.pageSize - 1);
 
     const clean = (value: string) => value.trim().replace(/[%,()]/g, "");
     if (clean(data.search)) {
@@ -496,7 +499,7 @@ export const listAuditEvents = createServerFn({ method: "GET" })
     if (clean(data.entityType)) query = query.eq("entity_type", data.entityType.trim());
     if (clean(data.result)) query = query.eq("result", data.result.trim());
 
-    const { data: rows } = await query;
+    const { data: rows, count } = await query;
     const actorIds = Array.from(
       new Set((rows ?? []).map((row) => row.actor_user_id).filter(Boolean) as string[]),
     );

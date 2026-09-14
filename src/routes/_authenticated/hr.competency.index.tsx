@@ -21,7 +21,7 @@ function CompetencyIndexPage() {
     retry: false,
   });
   const employees = (query.data ?? []).filter((employee) =>
-    `${employee.full_name} ${employee.employee_number} ${employee.department ?? employee.division ?? ""}`
+    `${employee.full_name} ${employee.employee_number} ${employee.division ?? ""}`
       .toLowerCase()
       .includes(search.toLowerCase()),
   );

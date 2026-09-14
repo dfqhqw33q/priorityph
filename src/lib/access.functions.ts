@@ -70,13 +70,13 @@ export const recordLoginEvent = createServerFn({ method: "POST" })
     const roles = await getActorRoles(context.userId);
 
     const writes: Promise<unknown>[] = [
-      admin.from("login_events").insert({
+      Promise.resolve(admin.from("login_events").insert({
         user_id: context.userId,
         event_type: data.event,
         result: "SUCCESS",
         ip_address: meta.ip,
         user_agent: meta.userAgent,
-      }),
+      })),
       writeAudit(
         {
           actorUserId: context.userId,
@@ -91,24 +91,24 @@ export const recordLoginEvent = createServerFn({ method: "POST" })
     ];
     if (data.event === "LOGIN") {
       writes.push(
-        admin
+        Promise.resolve(admin
           .from("internal_users")
           .update({ last_login_at: new Date().toISOString() })
-          .eq("id", context.userId),
+          .eq("id", context.userId)),
       );
     }
     if (data.event === "PASSWORD_CHANGED") {
       writes.push(
-        admin
+        Promise.resolve(admin
           .from("internal_users")
           .update({ must_change_password: false })
-          .eq("id", context.userId),
-        admin.from("password_reset_events").insert({
+          .eq("id", context.userId)),
+        Promise.resolve(admin.from("password_reset_events").insert({
           user_id: context.userId,
           event_type: "PASSWORD_CHANGED",
           ip_address: meta.ip,
           user_agent: meta.userAgent,
-        }),
+        })),
       );
     }
     await Promise.all(writes);

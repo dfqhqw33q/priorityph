@@ -59,7 +59,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 type NavItem = {
   to?: string;
   label: string;
-  icon?: typeof Gauge;
+  icon?: typeof Gauge | undefined;
   permission?: Permission;
   roles?: AppRole[];
 };
@@ -356,10 +356,16 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
       {categories.map((category) => {
         if (category.direct && category.children.length === 1) {
           const child = category.children[0];
+          if (!child) return null;
+          const { icon: childIcon, ...childWithoutIcon } = child;
           return (
             <SidebarMenuItem key={category.label}>
               {renderItem(
-                { ...child, label: category.label, icon: category.icon },
+                {
+                  ...childWithoutIcon,
+                  label: category.label,
+                  ...((category.icon ?? childIcon) ? { icon: category.icon ?? childIcon } : {}),
+                },
                 Boolean(child.to && (pathname === child.to || pathname.startsWith(`${child.to}/`))),
               )}
             </SidebarMenuItem>

@@ -2,7 +2,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
-import type { AppRole, EvaluationDetail, Permission } from "./domain";
+import type { AppRole, EvaluationDetail, EvaluationListItem, Permission } from "./domain";
 
 export type AdminClient = SupabaseClient<Database>;
 
@@ -301,7 +301,10 @@ export type EvaluationQueueFilters = {
  * Lists evaluations for the Supervisor/President queues. Deliberately unfiltered by
  * employee assignment: every authorised reviewer sees every eligible submission.
  */
-export async function listEvaluations(statuses: string[], filters: EvaluationQueueFilters = {}) {
+export async function listEvaluations(
+  statuses: string[],
+  filters: EvaluationQueueFilters = {},
+): Promise<EvaluationListItem[]> {
   const admin = await getAdmin();
   const effective =
     filters.status && statuses.includes(filters.status) ? [filters.status] : statuses;
@@ -333,7 +336,7 @@ export async function listEvaluations(statuses: string[], filters: EvaluationQue
       cycle_name: cycle?.name ?? "",
       cycle_year: cycle?.year ?? 0,
     };
-  }) as never;
+  }) as EvaluationListItem[];
 }
 
 /** Distinct division/section/year values, used to populate queue filters. */

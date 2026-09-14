@@ -52,7 +52,8 @@ function parseRawIssueArray(raw: string): string[] {
   } catch {
     // Fall back to regex parsing for serialized Zod payloads.
     const matches = [...trimmed.matchAll(/"message"\s*:\s*"((?:\\.|[^"\\])*)"/g)]
-      .map((match) => match[1].replace(/\\"/g, '"').replace(/\\n/g, " ").trim())
+      .map((match) => match[1] ?? "")
+      .map((message) => message.replace(/\\"/g, '"').replace(/\\n/g, " ").trim())
       .filter(Boolean);
     return matches;
   }
@@ -78,7 +79,7 @@ export function formatValidationSummary(
 ): string {
   const messages = formatZodIssues(issues ?? []);
   if (messages.length === 0) return fallback;
-  if (messages.length === 1) return messages[0];
+  if (messages.length === 1) return messages[0] ?? fallback;
   return `${fallback}\n\n• ${messages.map((message) => message.trim()).join("\n• ")}`;
 }
 

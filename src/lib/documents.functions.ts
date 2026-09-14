@@ -169,10 +169,12 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
 
       console.log(`[getEvaluationSheetHtml] Evaluation found, generating data...`);
 
-      const evaluationData = await generateEvaluationData(data.evaluationId, {
-        presidentSignatureData: data.presidentSignatureData,
-        presidentName: presidentName,
-      });
+      const evaluationData = await generateEvaluationData(
+        data.evaluationId,
+        data.presidentSignatureData
+          ? { presidentSignatureData: data.presidentSignatureData, presidentName }
+          : { presidentName },
+      );
       console.log(`[getEvaluationSheetHtml] Evaluation data generated`);
 
       const html = generateEvaluationHTML(evaluationData);

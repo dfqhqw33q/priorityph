@@ -60,7 +60,7 @@ export function NotificationCenter() {
         },
         async (payload) => {
           const incoming = await fetchNotifications({
-            data: { limit: 1, notificationId: String(payload.new.id) },
+            data: { limit: 1, notificationId: String(payload.new["id"]) },
           });
           const notification = incoming[0];
           if (!notification) return;

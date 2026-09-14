@@ -580,8 +580,8 @@ function PublicEvaluationPage() {
                     ) : null}
                   </>
                 )}
-                {errors.signature ? (
-                  <p className="text-xs text-destructive">{errors.signature}</p>
+                {errors["signature"] ? (
+                  <p className="text-xs text-destructive">{errors["signature"]}</p>
                 ) : null}
                 {!signatureData ? (
                   <p className="text-xs text-muted-foreground">A signature is required.</p>

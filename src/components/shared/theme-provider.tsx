@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type Theme = "light" | "dark";
+export type Theme = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
 type ThemeContextType = {
@@ -52,8 +52,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    setResolvedTheme(theme);
-    applyTheme(theme);
+    const resolved =
+      theme === "system"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        : theme;
+    setResolvedTheme(resolved);
+    applyTheme(resolved);
   }, [theme]);
 
   function setTheme(nextTheme: Theme) {

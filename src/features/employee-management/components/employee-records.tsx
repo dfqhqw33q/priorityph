@@ -73,6 +73,8 @@ type HistoryEvaluation = {
   reviewingSupervisorDate: string | null;
   evaluationDate: string | null;
   finalizedAt: string | null;
+  fullName: string;
+  employeeNumber: string;
   jobTitle: string;
   division: string;
   section: string;
