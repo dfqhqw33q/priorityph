@@ -4,7 +4,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17";
+    PostgrestVersion: "14.5";
   };
   graphql_public: {
     Tables: {
@@ -33,318 +33,6 @@ export type Database = {
   };
   public: {
     Tables: {
-      user_notifications: {
-        Row: {
-          created_at: string;
-          id: string;
-          notification_event_id: string;
-          read_at: string | null;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          notification_event_id: string;
-          read_at?: string | null;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          notification_event_id?: string;
-          read_at?: string | null;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
-      recognition_candidates: {
-        Row: {
-          created_at: string;
-          employee_id: string;
-          id: string;
-          recognition_type: string;
-          reason: string;
-          review_notes: string;
-          reviewed_at: string | null;
-          reviewed_by: string | null;
-          source_evaluation_id: string;
-          source_key: string;
-          status: string;
-          updated_at: string;
-        };
-        Insert: {
-          created_at?: string;
-          employee_id: string;
-          id?: string;
-          recognition_type: string;
-          reason: string;
-          review_notes?: string;
-          reviewed_at?: string | null;
-          reviewed_by?: string | null;
-          source_evaluation_id: string;
-          source_key: string;
-          status?: string;
-          updated_at?: string;
-        };
-        Update: {
-          created_at?: string;
-          employee_id?: string;
-          id?: string;
-          recognition_type?: string;
-          reason?: string;
-          review_notes?: string;
-          reviewed_at?: string | null;
-          reviewed_by?: string | null;
-          source_evaluation_id?: string;
-          source_key?: string;
-          status?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      recognition_records: {
-        Row: {
-          approved_at: string;
-          approved_by: string;
-          candidate_id: string;
-          certificate_generated_at: string | null;
-          created_at: string;
-          employee_id: string;
-          id: string;
-          reason: string;
-          recognition_date: string;
-          recognition_type: string;
-          source_evaluation_id: string;
-          status: string;
-          updated_at: string;
-        };
-        Insert: {
-          approved_at?: string;
-          approved_by: string;
-          candidate_id: string;
-          certificate_generated_at?: string | null;
-          created_at?: string;
-          employee_id: string;
-          id?: string;
-          reason: string;
-          recognition_date?: string;
-          recognition_type: string;
-          source_evaluation_id: string;
-          status?: string;
-          updated_at?: string;
-        };
-        Update: {
-          approved_at?: string;
-          approved_by?: string;
-          candidate_id?: string;
-          certificate_generated_at?: string | null;
-          created_at?: string;
-          employee_id?: string;
-          id?: string;
-          reason?: string;
-          recognition_date?: string;
-          recognition_type?: string;
-          source_evaluation_id?: string;
-          status?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      succession_profiles: {
-        Row: {
-          advancement_outlook: string;
-          career_interest: string;
-          created_at: string;
-          desired_job: string;
-          desired_location: string;
-          development_potential: string;
-          employee_id: string;
-          id: string;
-          notes: string;
-          qualification: string;
-          source_evaluation_id: string;
-          transfer_interest: string;
-          updated_at: string;
-        };
-        Insert: {
-          advancement_outlook?: string;
-          career_interest?: string;
-          created_at?: string;
-          desired_job?: string;
-          desired_location?: string;
-          development_potential?: string;
-          employee_id: string;
-          id?: string;
-          notes?: string;
-          qualification?: string;
-          source_evaluation_id: string;
-          transfer_interest?: string;
-          updated_at?: string;
-        };
-        Update: {
-          advancement_outlook?: string;
-          career_interest?: string;
-          created_at?: string;
-          desired_job?: string;
-          desired_location?: string;
-          development_potential?: string;
-          employee_id?: string;
-          id?: string;
-          notes?: string;
-          qualification?: string;
-          source_evaluation_id?: string;
-          transfer_interest?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      training_recommendations: {
-        Row: {
-          created_at: string;
-          employee_id: string;
-          id: string;
-          recommendation: string;
-          related_competency: string;
-          source: string;
-          source_evaluation_id: string;
-          source_key: string;
-          status: string;
-          training_title: string;
-          updated_at: string;
-        };
-        Insert: {
-          created_at?: string;
-          employee_id: string;
-          id?: string;
-          recommendation: string;
-          related_competency?: string;
-          source: string;
-          source_evaluation_id: string;
-          source_key: string;
-          status?: string;
-          training_title: string;
-          updated_at?: string;
-        };
-        Update: {
-          created_at?: string;
-          employee_id?: string;
-          id?: string;
-          recommendation?: string;
-          related_competency?: string;
-          source?: string;
-          source_evaluation_id?: string;
-          source_key?: string;
-          status?: string;
-          training_title?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      training_records: {
-        Row: {
-          created_at: string;
-          employee_id: string;
-          id: string;
-          notes: string;
-          provider: string;
-          related_competency: string;
-          source_evaluation_id: string;
-          source_key: string;
-          status: string;
-          training_date: string | null;
-          training_title: string;
-          updated_at: string;
-        };
-        Insert: {
-          created_at?: string;
-          employee_id: string;
-          id?: string;
-          notes?: string;
-          provider?: string;
-          related_competency?: string;
-          source_evaluation_id: string;
-          source_key: string;
-          status?: string;
-          training_date?: string | null;
-          training_title: string;
-          updated_at?: string;
-        };
-        Update: {
-          created_at?: string;
-          employee_id?: string;
-          id?: string;
-          notes?: string;
-          provider?: string;
-          related_competency?: string;
-          source_evaluation_id?: string;
-          source_key?: string;
-          status?: string;
-          training_date?: string | null;
-          training_title?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      development_records: {
-        Row: {
-          created_at: string;
-          development_activity: string;
-          development_need: string;
-          employee_id: string;
-          id: string;
-          is_system_generated: boolean;
-          notes: string;
-          record_date: string;
-          source_evaluation_id: string | null;
-          source_key: string;
-          status: string;
-          updated_at: string;
-        };
-        Insert: {
-          created_at?: string;
-          development_activity: string;
-          development_need: string;
-          employee_id: string;
-          id?: string;
-          is_system_generated?: boolean;
-          notes?: string;
-          record_date?: string;
-          source_evaluation_id?: string | null;
-          source_key?: string;
-          status?: string;
-          updated_at?: string;
-        };
-        Update: {
-          created_at?: string;
-          development_activity?: string;
-          development_need?: string;
-          employee_id?: string;
-          id?: string;
-          is_system_generated?: boolean;
-          notes?: string;
-          record_date?: string;
-          source_evaluation_id?: string | null;
-          source_key?: string;
-          status?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "development_records_employee_id_fkey";
-            columns: ["employee_id"];
-            isOneToOne: false;
-            referencedRelation: "employees";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "development_records_source_evaluation_id_fkey";
-            columns: ["source_evaluation_id"];
-            isOneToOne: false;
-            referencedRelation: "evaluations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       audit_logs: {
         Row: {
           action: string;
@@ -462,6 +150,66 @@ export type Database = {
           },
         ];
       };
+      development_records: {
+        Row: {
+          created_at: string;
+          development_activity: string;
+          development_need: string;
+          employee_id: string;
+          id: string;
+          is_system_generated: boolean;
+          notes: string;
+          record_date: string;
+          source_evaluation_id: string | null;
+          source_key: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          development_activity: string;
+          development_need: string;
+          employee_id: string;
+          id?: string;
+          is_system_generated?: boolean;
+          notes?: string;
+          record_date?: string;
+          source_evaluation_id?: string | null;
+          source_key?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          development_activity?: string;
+          development_need?: string;
+          employee_id?: string;
+          id?: string;
+          is_system_generated?: boolean;
+          notes?: string;
+          record_date?: string;
+          source_evaluation_id?: string | null;
+          source_key?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "development_records_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "development_records_source_evaluation_id_fkey";
+            columns: ["source_evaluation_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       employee_documents: {
         Row: {
           category: string;
@@ -519,6 +267,63 @@ export type Database = {
           },
           {
             foreignKeyName: "employee_documents_evaluation_id_fkey";
+            columns: ["evaluation_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      employee_email_deliveries: {
+        Row: {
+          created_at: string;
+          document_type: string;
+          employee_id: string | null;
+          evaluation_id: string | null;
+          id: string;
+          idempotency_key: string;
+          mail_status: string;
+          provider_message: string | null;
+          recipient_email: string;
+          sent_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          document_type?: string;
+          employee_id?: string | null;
+          evaluation_id?: string | null;
+          id?: string;
+          idempotency_key: string;
+          mail_status?: string;
+          provider_message?: string | null;
+          recipient_email: string;
+          sent_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          document_type?: string;
+          employee_id?: string | null;
+          evaluation_id?: string | null;
+          id?: string;
+          idempotency_key?: string;
+          mail_status?: string;
+          provider_message?: string | null;
+          recipient_email?: string;
+          sent_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "employee_email_deliveries_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "employee_email_deliveries_evaluation_id_fkey";
             columns: ["evaluation_id"];
             isOneToOne: false;
             referencedRelation: "evaluations";
@@ -1029,11 +834,22 @@ export type Database = {
           status: Database["public"]["Enums"]["evaluation_status"];
           supervisor_remarks: string;
           supervisor_step2_advancement: string;
+          supervisor_step2_advancement_outlook: string;
           supervisor_step2_career_transfer: string;
+          supervisor_step2_date: string | null;
           supervisor_step2_development: string;
+          supervisor_step2_development_potential: string;
+          supervisor_step2_effectiveness: string;
+          supervisor_step2_growth_suggestions: string;
+          supervisor_step2_other_comments: string;
+          supervisor_step2_overall_explanation: string;
           supervisor_step2_recommendations: string;
           supervisor_step2_strengths: string;
           supervisor_step2_submitted_at: string | null;
+          supervisor_step2_transfer_interest: string;
+          supervisor_step2_transfer_job: string;
+          supervisor_step2_transfer_qualified: string;
+          supervisor_step2_transfer_where: string;
           supervisor_step2_weaknesses: string;
           supervisor_submitted_at: string | null;
           supervisor_user_id: string | null;
@@ -1067,11 +883,22 @@ export type Database = {
           status?: Database["public"]["Enums"]["evaluation_status"];
           supervisor_remarks?: string;
           supervisor_step2_advancement?: string;
+          supervisor_step2_advancement_outlook?: string;
           supervisor_step2_career_transfer?: string;
+          supervisor_step2_date?: string | null;
           supervisor_step2_development?: string;
+          supervisor_step2_development_potential?: string;
+          supervisor_step2_effectiveness?: string;
+          supervisor_step2_growth_suggestions?: string;
+          supervisor_step2_other_comments?: string;
+          supervisor_step2_overall_explanation?: string;
           supervisor_step2_recommendations?: string;
           supervisor_step2_strengths?: string;
           supervisor_step2_submitted_at?: string | null;
+          supervisor_step2_transfer_interest?: string;
+          supervisor_step2_transfer_job?: string;
+          supervisor_step2_transfer_qualified?: string;
+          supervisor_step2_transfer_where?: string;
           supervisor_step2_weaknesses?: string;
           supervisor_submitted_at?: string | null;
           supervisor_user_id?: string | null;
@@ -1105,11 +932,22 @@ export type Database = {
           status?: Database["public"]["Enums"]["evaluation_status"];
           supervisor_remarks?: string;
           supervisor_step2_advancement?: string;
+          supervisor_step2_advancement_outlook?: string;
           supervisor_step2_career_transfer?: string;
+          supervisor_step2_date?: string | null;
           supervisor_step2_development?: string;
+          supervisor_step2_development_potential?: string;
+          supervisor_step2_effectiveness?: string;
+          supervisor_step2_growth_suggestions?: string;
+          supervisor_step2_other_comments?: string;
+          supervisor_step2_overall_explanation?: string;
           supervisor_step2_recommendations?: string;
           supervisor_step2_strengths?: string;
           supervisor_step2_submitted_at?: string | null;
+          supervisor_step2_transfer_interest?: string;
+          supervisor_step2_transfer_job?: string;
+          supervisor_step2_transfer_qualified?: string;
+          supervisor_step2_transfer_where?: string;
           supervisor_step2_weaknesses?: string;
           supervisor_submitted_at?: string | null;
           supervisor_user_id?: string | null;
@@ -1148,6 +986,69 @@ export type Database = {
           {
             foreignKeyName: "evaluations_supervisor_user_id_fkey";
             columns: ["supervisor_user_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      internal_user_signatures: {
+        Row: {
+          content_type: string | null;
+          created_at: string;
+          evaluation_id: string;
+          file_size: number | null;
+          id: string;
+          method: string;
+          signature_data: string | null;
+          signed_at: string;
+          source_version: number;
+          stage: string;
+          storage_path: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          content_type?: string | null;
+          created_at?: string;
+          evaluation_id: string;
+          file_size?: number | null;
+          id?: string;
+          method: string;
+          signature_data?: string | null;
+          signed_at?: string;
+          source_version?: number;
+          stage: string;
+          storage_path?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          content_type?: string | null;
+          created_at?: string;
+          evaluation_id?: string;
+          file_size?: number | null;
+          id?: string;
+          method?: string;
+          signature_data?: string | null;
+          signed_at?: string;
+          source_version?: number;
+          stage?: string;
+          storage_path?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "internal_user_signatures_evaluation_id_fkey";
+            columns: ["evaluation_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "internal_user_signatures_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "internal_users";
             referencedColumns: ["id"];
@@ -1541,6 +1442,60 @@ export type Database = {
         };
         Relationships: [];
       };
+      public_evaluation_access_sessions: {
+        Row: {
+          auth_provider: string;
+          auth_user_id: string | null;
+          created_at: string;
+          cycle_id: string;
+          email: string;
+          employee_id: string;
+          id: string;
+          last_verified_at: string;
+          session_status: string;
+          updated_at: string;
+        };
+        Insert: {
+          auth_provider?: string;
+          auth_user_id?: string | null;
+          created_at?: string;
+          cycle_id: string;
+          email: string;
+          employee_id: string;
+          id?: string;
+          last_verified_at?: string;
+          session_status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          auth_provider?: string;
+          auth_user_id?: string | null;
+          created_at?: string;
+          cycle_id?: string;
+          email?: string;
+          employee_id?: string;
+          id?: string;
+          last_verified_at?: string;
+          session_status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "public_evaluation_access_sessions_cycle_id_fkey";
+            columns: ["cycle_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluation_cycles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "public_evaluation_access_sessions_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       public_submission_attempts: {
         Row: {
           attempt_type: string;
@@ -1595,6 +1550,150 @@ export type Database = {
           },
         ];
       };
+      recognition_candidates: {
+        Row: {
+          created_at: string;
+          employee_id: string;
+          id: string;
+          reason: string;
+          recognition_type: string;
+          review_notes: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          source_evaluation_id: string;
+          source_key: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          employee_id: string;
+          id?: string;
+          reason: string;
+          recognition_type: string;
+          review_notes?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          source_evaluation_id: string;
+          source_key: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          employee_id?: string;
+          id?: string;
+          reason?: string;
+          recognition_type?: string;
+          review_notes?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          source_evaluation_id?: string;
+          source_key?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "recognition_candidates_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recognition_candidates_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recognition_candidates_source_evaluation_id_fkey";
+            columns: ["source_evaluation_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      recognition_records: {
+        Row: {
+          approved_at: string;
+          approved_by: string;
+          candidate_id: string;
+          certificate_generated_at: string | null;
+          created_at: string;
+          employee_id: string;
+          id: string;
+          reason: string;
+          recognition_date: string;
+          recognition_type: string;
+          source_evaluation_id: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          approved_at?: string;
+          approved_by: string;
+          candidate_id: string;
+          certificate_generated_at?: string | null;
+          created_at?: string;
+          employee_id: string;
+          id?: string;
+          reason: string;
+          recognition_date?: string;
+          recognition_type: string;
+          source_evaluation_id: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          approved_at?: string;
+          approved_by?: string;
+          candidate_id?: string;
+          certificate_generated_at?: string | null;
+          created_at?: string;
+          employee_id?: string;
+          id?: string;
+          reason?: string;
+          recognition_date?: string;
+          recognition_type?: string;
+          source_evaluation_id?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "recognition_records_approved_by_fkey";
+            columns: ["approved_by"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recognition_records_candidate_id_fkey";
+            columns: ["candidate_id"];
+            isOneToOne: true;
+            referencedRelation: "recognition_candidates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recognition_records_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recognition_records_source_evaluation_id_fkey";
+            columns: ["source_evaluation_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       reviewing_supervisor_reviews: {
         Row: {
           comments: string;
@@ -1603,6 +1702,7 @@ export type Database = {
           id: string;
           recommendations: string;
           reviewer_user_id: string;
+          reviewing_supervisor_date: string | null;
           status: string;
           submitted_at: string | null;
           updated_at: string;
@@ -1615,6 +1715,7 @@ export type Database = {
           id?: string;
           recommendations?: string;
           reviewer_user_id: string;
+          reviewing_supervisor_date?: string | null;
           status?: string;
           submitted_at?: string | null;
           updated_at?: string;
@@ -1627,6 +1728,7 @@ export type Database = {
           id?: string;
           recommendations?: string;
           reviewer_user_id?: string;
+          reviewing_supervisor_date?: string | null;
           status?: string;
           submitted_at?: string | null;
           updated_at?: string;
@@ -1868,6 +1970,228 @@ export type Database = {
           },
         ];
       };
+      succession_profiles: {
+        Row: {
+          advancement_outlook: string;
+          career_interest: string;
+          created_at: string;
+          desired_job: string;
+          desired_location: string;
+          development_potential: string;
+          employee_id: string;
+          id: string;
+          notes: string;
+          qualification: string;
+          source_evaluation_id: string;
+          transfer_interest: string;
+          updated_at: string;
+        };
+        Insert: {
+          advancement_outlook?: string;
+          career_interest?: string;
+          created_at?: string;
+          desired_job?: string;
+          desired_location?: string;
+          development_potential?: string;
+          employee_id: string;
+          id?: string;
+          notes?: string;
+          qualification?: string;
+          source_evaluation_id: string;
+          transfer_interest?: string;
+          updated_at?: string;
+        };
+        Update: {
+          advancement_outlook?: string;
+          career_interest?: string;
+          created_at?: string;
+          desired_job?: string;
+          desired_location?: string;
+          development_potential?: string;
+          employee_id?: string;
+          id?: string;
+          notes?: string;
+          qualification?: string;
+          source_evaluation_id?: string;
+          transfer_interest?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "succession_profiles_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: true;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "succession_profiles_source_evaluation_id_fkey";
+            columns: ["source_evaluation_id"];
+            isOneToOne: true;
+            referencedRelation: "evaluations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      training_recommendations: {
+        Row: {
+          created_at: string;
+          employee_id: string;
+          id: string;
+          recommendation: string;
+          related_competency: string;
+          source: string;
+          source_evaluation_id: string;
+          source_key: string;
+          status: string;
+          training_title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          employee_id: string;
+          id?: string;
+          recommendation: string;
+          related_competency?: string;
+          source: string;
+          source_evaluation_id: string;
+          source_key: string;
+          status?: string;
+          training_title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          employee_id?: string;
+          id?: string;
+          recommendation?: string;
+          related_competency?: string;
+          source?: string;
+          source_evaluation_id?: string;
+          source_key?: string;
+          status?: string;
+          training_title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "training_recommendations_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_recommendations_source_evaluation_id_fkey";
+            columns: ["source_evaluation_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      training_records: {
+        Row: {
+          committee_recommendation: string;
+          created_at: string;
+          employee_id: string;
+          id: string;
+          notes: string;
+          provider: string;
+          related_competency: string;
+          source_evaluation_id: string;
+          source_key: string;
+          status: string;
+          training_date: string | null;
+          training_title: string;
+          updated_at: string;
+        };
+        Insert: {
+          committee_recommendation?: string;
+          created_at?: string;
+          employee_id: string;
+          id?: string;
+          notes?: string;
+          provider?: string;
+          related_competency?: string;
+          source_evaluation_id: string;
+          source_key: string;
+          status?: string;
+          training_date?: string | null;
+          training_title: string;
+          updated_at?: string;
+        };
+        Update: {
+          committee_recommendation?: string;
+          created_at?: string;
+          employee_id?: string;
+          id?: string;
+          notes?: string;
+          provider?: string;
+          related_competency?: string;
+          source_evaluation_id?: string;
+          source_key?: string;
+          status?: string;
+          training_date?: string | null;
+          training_title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "training_records_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_records_source_evaluation_id_fkey";
+            columns: ["source_evaluation_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_notifications: {
+        Row: {
+          created_at: string;
+          id: string;
+          notification_event_id: string;
+          read_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          notification_event_id: string;
+          read_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          notification_event_id?: string;
+          read_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_notification_event_id_fkey";
+            columns: ["notification_event_id"];
+            isOneToOne: false;
+            referencedRelation: "notification_events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_notifications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_roles: {
         Row: {
           created_at: string;
@@ -1910,6 +2234,14 @@ export type Database = {
     };
     Functions: {
       count_active_administrators: { Args: never; Returns: number };
+      get_evaluation_score_summary: {
+        Args: never;
+        Returns: {
+          final_rating_label: string;
+          score_count: number;
+          score_total: number;
+        }[];
+      };
       has_permission: {
         Args: { _permission: string; _user_id: string };
         Returns: boolean;
