@@ -28,10 +28,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EvaluationRatingCards, ratingFor } from "@/features/performance-management/components/rating-matrix";
-import { SignatureField, type SignatureValue } from "@/features/performance-management/components/signature-field";
+import {
+  EvaluationRatingCards,
+  ratingFor,
+} from "@/features/performance-management/components/rating-matrix";
+import {
+  SignatureField,
+  type SignatureValue,
+} from "@/features/performance-management/components/signature-field";
 import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
-import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  EvaluationStatusBadge,
+  LoadingBlock,
+  PageHeader,
+} from "@/components/shared/shared-ui";
 import { TextShimmer } from "@/components/loading-ui/text-shimmer";
 import {
   getEvaluationStage,
@@ -62,7 +73,15 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ReadOnlyField({ label, value, className = "" }: { label: string; value: unknown; className?: string }) {
+function ReadOnlyField({
+  label,
+  value,
+  className = "",
+}: {
+  label: string;
+  value: unknown;
+  className?: string;
+}) {
   return (
     <div className={className}>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
@@ -166,7 +185,13 @@ function ReviewAiField({
   );
 }
 
-export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; evaluationId: string }) {
+export function EvaluationStageDetail({
+  stage,
+  evaluationId,
+}: {
+  stage: Stage;
+  evaluationId: string;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetch = useServerFn(getEvaluationStage);
@@ -672,34 +697,102 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
               <div className="rounded-md bg-muted/20 p-4">
                 <ReadOnlyGroup title="STEP 2 - Conclusions and comments (read-only)">
                   <div className="space-y-4">
-                    <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
+                    <ReadOnlyField
+                      label="Overall rating explanation"
+                      value={
+                        (detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]
+                      }
+                    />
                     <div className="grid items-start gap-4 lg:grid-cols-2">
-                      <ReadOnlyField label="Principal Strengths" value={(detail as Record<string, unknown>)["supervisor_step2_strengths"]} />
-                      <ReadOnlyField label="Principal Weakness" value={(detail as Record<string, unknown>)["supervisor_step2_weaknesses"]} />
+                      <ReadOnlyField
+                        label="Principal Strengths"
+                        value={(detail as Record<string, unknown>)["supervisor_step2_strengths"]}
+                      />
+                      <ReadOnlyField
+                        label="Principal Weakness"
+                        value={(detail as Record<string, unknown>)["supervisor_step2_weaknesses"]}
+                      />
                     </div>
-                    <ReadOnlyField label="Present-job effectiveness" value={(detail as Record<string, unknown>)["supervisor_step2_effectiveness"]} />
+                    <ReadOnlyField
+                      label="Present-job effectiveness"
+                      value={(detail as Record<string, unknown>)["supervisor_step2_effectiveness"]}
+                    />
                     <div className="grid items-start gap-4 lg:grid-cols-2">
-                      <ReadOnlyField label="Development Potential" value={(detail as Record<string, unknown>)["supervisor_step2_development_potential"]} />
-                      <ReadOnlyField label="Advancement Outlook" value={(detail as Record<string, unknown>)["supervisor_step2_advancement_outlook"]} />
+                      <ReadOnlyField
+                        label="Development Potential"
+                        value={
+                          (detail as Record<string, unknown>)[
+                            "supervisor_step2_development_potential"
+                          ]
+                        }
+                      />
+                      <ReadOnlyField
+                        label="Advancement Outlook"
+                        value={
+                          (detail as Record<string, unknown>)[
+                            "supervisor_step2_advancement_outlook"
+                          ]
+                        }
+                      />
                     </div>
-                    <ReadOnlyField className="w-full" label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
+                    <ReadOnlyField
+                      className="w-full"
+                      label="Growth and development suggestions"
+                      value={
+                        (detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]
+                      }
+                    />
                     <div className="grid items-start gap-4 lg:grid-cols-4">
-                      <ReadOnlyField label="Job / Transfer Interest" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]} />
-                      {String((detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ?? "") === "YES" ? (
+                      <ReadOnlyField
+                        label="Job / Transfer Interest"
+                        value={
+                          (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]
+                        }
+                      />
+                      {String(
+                        (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ??
+                          "",
+                      ) === "YES" ? (
                         <>
-                          <ReadOnlyField label="What Job?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_job"]} />
-                          <ReadOnlyField label="Where?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_where"]} />
-                          <ReadOnlyField label="Is Qualified?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_qualified"]} />
+                          <ReadOnlyField
+                            label="What Job?"
+                            value={
+                              (detail as Record<string, unknown>)["supervisor_step2_transfer_job"]
+                            }
+                          />
+                          <ReadOnlyField
+                            label="Where?"
+                            value={
+                              (detail as Record<string, unknown>)["supervisor_step2_transfer_where"]
+                            }
+                          />
+                          <ReadOnlyField
+                            label="Is Qualified?"
+                            value={
+                              (detail as Record<string, unknown>)[
+                                "supervisor_step2_transfer_qualified"
+                              ]
+                            }
+                          />
                         </>
                       ) : null}
                     </div>
-                    <ReadOnlyField className="w-full" label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
-                    <ReadOnlyField label="Rater Signature Date" value={(detail as Record<string, unknown>)["supervisor_step2_date"]} />
+                    <ReadOnlyField
+                      className="w-full"
+                      label="Other Comments and Recommendations"
+                      value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]}
+                    />
+                    <ReadOnlyField
+                      label="Rater Signature Date"
+                      value={(detail as Record<string, unknown>)["supervisor_step2_date"]}
+                    />
                   </div>
                 </ReadOnlyGroup>
                 {(detail as Record<string, unknown>)["rater_signature"] ? (
                   <div className="mt-4 border-t border-border/60 pt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Rater Signature</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Rater Signature
+                    </p>
                     <img
                       src={String(
                         (
@@ -751,29 +844,95 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
               <div className="rounded-md bg-muted/20 p-4">
                 <ReadOnlyGroup title="STEP 2 - Supervisor conclusions and comments (read-only)">
                   <div className="space-y-4">
-                    <ReadOnlyField label="Overall rating explanation" value={(detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]} />
+                    <ReadOnlyField
+                      label="Overall rating explanation"
+                      value={
+                        (detail as Record<string, unknown>)["supervisor_step2_overall_explanation"]
+                      }
+                    />
                     <div className="grid items-start gap-4 lg:grid-cols-2">
-                      <ReadOnlyField label="Principal Strengths" value={(detail as Record<string, unknown>)["supervisor_step2_strengths"]} />
-                      <ReadOnlyField label="Principal Weakness" value={(detail as Record<string, unknown>)["supervisor_step2_weaknesses"]} />
+                      <ReadOnlyField
+                        label="Principal Strengths"
+                        value={(detail as Record<string, unknown>)["supervisor_step2_strengths"]}
+                      />
+                      <ReadOnlyField
+                        label="Principal Weakness"
+                        value={(detail as Record<string, unknown>)["supervisor_step2_weaknesses"]}
+                      />
                     </div>
-                    <ReadOnlyField label="Present-job effectiveness" value={(detail as Record<string, unknown>)["supervisor_step2_effectiveness"]} />
+                    <ReadOnlyField
+                      label="Present-job effectiveness"
+                      value={(detail as Record<string, unknown>)["supervisor_step2_effectiveness"]}
+                    />
                     <div className="grid items-start gap-4 lg:grid-cols-2">
-                      <ReadOnlyField label="Development Potential" value={(detail as Record<string, unknown>)["supervisor_step2_development_potential"]} />
-                      <ReadOnlyField label="Advancement Outlook" value={(detail as Record<string, unknown>)["supervisor_step2_advancement_outlook"]} />
+                      <ReadOnlyField
+                        label="Development Potential"
+                        value={
+                          (detail as Record<string, unknown>)[
+                            "supervisor_step2_development_potential"
+                          ]
+                        }
+                      />
+                      <ReadOnlyField
+                        label="Advancement Outlook"
+                        value={
+                          (detail as Record<string, unknown>)[
+                            "supervisor_step2_advancement_outlook"
+                          ]
+                        }
+                      />
                     </div>
-                    <ReadOnlyField className="w-full" label="Growth and development suggestions" value={(detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]} />
+                    <ReadOnlyField
+                      className="w-full"
+                      label="Growth and development suggestions"
+                      value={
+                        (detail as Record<string, unknown>)["supervisor_step2_growth_suggestions"]
+                      }
+                    />
                     <div className="grid items-start gap-4 lg:grid-cols-4">
-                      <ReadOnlyField label="Job / Transfer Interest" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]} />
-                      {String((detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ?? "") === "YES" ? (
+                      <ReadOnlyField
+                        label="Job / Transfer Interest"
+                        value={
+                          (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]
+                        }
+                      />
+                      {String(
+                        (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ??
+                          "",
+                      ) === "YES" ? (
                         <>
-                          <ReadOnlyField label="What Job?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_job"]} />
-                          <ReadOnlyField label="Where?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_where"]} />
-                          <ReadOnlyField label="Is Qualified?" value={(detail as Record<string, unknown>)["supervisor_step2_transfer_qualified"]} />
+                          <ReadOnlyField
+                            label="What Job?"
+                            value={
+                              (detail as Record<string, unknown>)["supervisor_step2_transfer_job"]
+                            }
+                          />
+                          <ReadOnlyField
+                            label="Where?"
+                            value={
+                              (detail as Record<string, unknown>)["supervisor_step2_transfer_where"]
+                            }
+                          />
+                          <ReadOnlyField
+                            label="Is Qualified?"
+                            value={
+                              (detail as Record<string, unknown>)[
+                                "supervisor_step2_transfer_qualified"
+                              ]
+                            }
+                          />
                         </>
                       ) : null}
                     </div>
-                    <ReadOnlyField className="w-full" label="Other Comments and Recommendations" value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]} />
-                    <ReadOnlyField label="Rater Signature Date" value={(detail as Record<string, unknown>)["supervisor_step2_date"]} />
+                    <ReadOnlyField
+                      className="w-full"
+                      label="Other Comments and Recommendations"
+                      value={(detail as Record<string, unknown>)["supervisor_step2_other_comments"]}
+                    />
+                    <ReadOnlyField
+                      label="Rater Signature Date"
+                      value={(detail as Record<string, unknown>)["supervisor_step2_date"]}
+                    />
                   </div>
                 </ReadOnlyGroup>
               </div>
@@ -1260,4 +1419,3 @@ export function EvaluationStageDetail({ stage, evaluationId }: { stage: Stage; e
     </div>
   );
 }
-

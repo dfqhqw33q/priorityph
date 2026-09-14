@@ -12,7 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, LoadingBlock, PageHeader, ReasonDialog } from "@/components/shared/shared-ui";
 import { useAccess } from "@/hooks/use-access";
 import { listRoleMatrix, listUsers, setRolePermissions } from "@/lib/admin.functions";
-import { APP_ROLES, ROLE_LABELS, permissionLabel, type AppRole, type Permission } from "@/lib/domain";
+import {
+  APP_ROLES,
+  ROLE_LABELS,
+  permissionLabel,
+  type AppRole,
+  type Permission,
+} from "@/lib/domain";
 
 export const Route = createFileRoute("/_authenticated/admin/roles")({
   head: () => ({
@@ -20,10 +26,14 @@ export const Route = createFileRoute("/_authenticated/admin/roles")({
       { title: "Roles & permissions | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Review and adjust the permissions granted to each role, with reasons recorded in the audit trail.",
+        content:
+          "Review and adjust the permissions granted to each role, with reasons recorded in the audit trail.",
       },
       { property: "og:title", content: "Roles and permissions" },
-      { property: "og:description", content: "Permission matrix for Administrator, President, HR and Supervisor." },
+      {
+        property: "og:description",
+        content: "Permission matrix for Administrator, President, HR and Supervisor.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -102,7 +112,9 @@ function AdminRolesPage() {
   const granted = grantedByRole.get(role) ?? [];
   const changed =
     draft.length !== granted.length || draft.some((permission) => !granted.includes(permission));
-  const roleUsers = ((usersQuery.data ?? []) as UserRow[]).filter((user) => user.roles.includes(role));
+  const roleUsers = ((usersQuery.data ?? []) as UserRow[]).filter((user) =>
+    user.roles.includes(role),
+  );
 
   return (
     <div className="space-y-6">
@@ -125,8 +137,8 @@ function AdminRolesPage() {
             <CardHeader>
               <CardTitle className="text-base">{ROLE_LABELS[role]} permissions</CardTitle>
               <CardDescription>
-                {draft.length} of {(matrixQuery.data?.permissions ?? []).length} permissions granted.
-                Changes require a reason and are audited.
+                {draft.length} of {(matrixQuery.data?.permissions ?? []).length} permissions
+                granted. Changes require a reason and are audited.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -149,7 +161,9 @@ function AdminRolesPage() {
                           }
                         />
                         <span>
-                          <span className="text-xs font-semibold">{permissionLabel(permission.code)}</span>
+                          <span className="text-xs font-semibold">
+                            {permissionLabel(permission.code)}
+                          </span>
                           <span className="block text-xs text-muted-foreground">
                             {permission.description}
                           </span>
@@ -222,4 +236,3 @@ function AdminRolesPage() {
     </div>
   );
 }
-

@@ -262,11 +262,17 @@ export const recalculateScore = createServerFn({ method: "POST" })
     return { ok: true as const, score: await loadScore(data.evaluationId) };
   });
 
-export async function processFinalizedEvaluationSupportModules(evaluationId: string): Promise<void> {
-  const { ensureDevelopmentRecordsForEvaluation } = await import("@/features/learning-management/development.functions");
-  const { ensureTrainingRecommendationsForEvaluation } = await import("@/features/training-management/training.functions");
-  const { ensureSuccessionProfileForEvaluation } = await import("@/features/succession-planning/succession.functions");
-  const { ensureRecognitionCandidatesForEvaluation } = await import("@/features/social-recognition/recognition.functions");
+export async function processFinalizedEvaluationSupportModules(
+  evaluationId: string,
+): Promise<void> {
+  const { ensureDevelopmentRecordsForEvaluation } =
+    await import("@/features/learning-management/development.functions");
+  const { ensureTrainingRecommendationsForEvaluation } =
+    await import("@/features/training-management/training.functions");
+  const { ensureSuccessionProfileForEvaluation } =
+    await import("@/features/succession-planning/succession.functions");
+  const { ensureRecognitionCandidatesForEvaluation } =
+    await import("@/features/social-recognition/recognition.functions");
 
   await ensureDevelopmentRecordsForEvaluation(evaluationId);
   await ensureTrainingRecommendationsForEvaluation(evaluationId);
@@ -337,7 +343,10 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
         .eq("version", data.version)
         .select("id")
         .maybeSingle();
-      if (error || !finalizedEvaluation) throw validationError("This evaluation changed while you were working. Reload and try again.");
+      if (error || !finalizedEvaluation)
+        throw validationError(
+          "This evaluation changed while you were working. Reload and try again.",
+        );
 
       await Promise.all([
         admin

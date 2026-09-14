@@ -19,7 +19,10 @@ export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
       { title: "Choose a new password — Priority Handling Logistics, Inc." },
-      { name: "description", content: "Set a new password for your internal evaluation system account." },
+      {
+        name: "description",
+        content: "Set a new password for your internal evaluation system account.",
+      },
       { property: "og:title", content: "Choose a new password" },
       { property: "og:description", content: "Set a new password for your internal account." },
       { property: "og:type", content: "website" },
@@ -68,7 +71,12 @@ function ResetPasswordPage() {
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label htmlFor="password">New password</Label>
-              <Input id="password" type="password" autoComplete="new-password" {...form.register("password")} />
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                {...form.register("password")}
+              />
               {form.formState.errors.password ? (
                 <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
               ) : null}
@@ -82,7 +90,9 @@ function ResetPasswordPage() {
                 {...form.register("confirmPassword")}
               />
               {form.formState.errors.confirmPassword ? (
-                <p className="text-xs text-destructive">{form.formState.errors.confirmPassword.message}</p>
+                <p className="text-xs text-destructive">
+                  {form.formState.errors.confirmPassword.message}
+                </p>
               ) : null}
             </div>
             <Button type="submit" className="w-full" disabled={pending}>

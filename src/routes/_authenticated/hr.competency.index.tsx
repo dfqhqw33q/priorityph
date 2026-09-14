@@ -97,4 +97,3 @@ function CompetencyIndexPage() {
     </div>
   );
 }
-

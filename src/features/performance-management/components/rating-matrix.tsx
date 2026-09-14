@@ -1,8 +1,15 @@
 import { RATING_SCALE, type Criterion, type RatingRow } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 
-export function ratingFor(ratings: RatingRow[], criterionId: string, evaluator: RatingRow["evaluator_type"]) {
-  return ratings.find((row) => row.criterion_id === criterionId && row.evaluator_type === evaluator)?.rating ?? null;
+export function ratingFor(
+  ratings: RatingRow[],
+  criterionId: string,
+  evaluator: RatingRow["evaluator_type"],
+) {
+  return (
+    ratings.find((row) => row.criterion_id === criterionId && row.evaluator_type === evaluator)
+      ?.rating ?? null
+  );
 }
 
 export function RatingMatrix({
@@ -96,23 +103,54 @@ export function EvaluationRatingCards({
         const selected = values[criterion.id] ?? null;
         const invalid = errorCriterionIds.includes(criterion.id);
         return (
-          <fieldset key={criterion.id} className={cn("rounded-lg border border-border bg-card p-3", invalid && "border-destructive")}>
+          <fieldset
+            key={criterion.id}
+            className={cn(
+              "rounded-lg border border-border bg-card p-3",
+              invalid && "border-destructive",
+            )}
+          >
             <div className="min-w-0">
-              <legend className="text-sm font-semibold text-foreground">{criterion.letter}. {criterion.title}</legend>
-              <p className="mt-1 max-w-none text-xs leading-5 text-muted-foreground">{criterion.description}</p>
+              <legend className="text-sm font-semibold text-foreground">
+                {criterion.letter}. {criterion.title}
+              </legend>
+              <p className="mt-1 max-w-none text-xs leading-5 text-muted-foreground">
+                {criterion.description}
+              </p>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3">
-              {employeeValues ? <RatingValue label="Employee Rating" value={employeeValues[criterion.id]} /> : null}
-              {supervisorValues ? <RatingValue label="Supervisor Rating" value={supervisorValues[criterion.id]} /> : null}
-              {reviewingValues ? <RatingValue label="Reviewing Supervisor" value={reviewingValues[criterion.id]} /> : null}
+              {employeeValues ? (
+                <RatingValue label="Employee Rating" value={employeeValues[criterion.id]} />
+              ) : null}
+              {supervisorValues ? (
+                <RatingValue label="Supervisor Rating" value={supervisorValues[criterion.id]} />
+              ) : null}
+              {reviewingValues ? (
+                <RatingValue label="Reviewing Supervisor" value={reviewingValues[criterion.id]} />
+              ) : null}
             </div>
             {!readOnly ? (
               <div className="mt-3 grid grid-cols-5 gap-1.5 sm:max-w-none">
                 {RATING_SCALE.map((scale) => {
                   const active = selected === scale.value;
                   return (
-                    <label key={scale.value} className={cn("flex min-h-9 min-w-0 cursor-pointer items-center justify-center gap-1 rounded-md border px-1 text-center text-[11px] font-medium transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-ring", active ? "border-primary bg-primary text-primary-foreground font-bold" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-accent-foreground")}>
-                      <input type="radio" className="sr-only" name={`supervisor-${criterion.id}`} value={scale.value} checked={active} onChange={() => onChange?.(criterion.id, scale.value)} />
+                    <label
+                      key={scale.value}
+                      className={cn(
+                        "flex min-h-9 min-w-0 cursor-pointer items-center justify-center gap-1 rounded-md border px-1 text-center text-[11px] font-medium transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-ring",
+                        active
+                          ? "border-primary bg-primary text-primary-foreground font-bold"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-accent-foreground",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        className="sr-only"
+                        name={`supervisor-${criterion.id}`}
+                        value={scale.value}
+                        checked={active}
+                        onChange={() => onChange?.(criterion.id, scale.value)}
+                      />
                       <span className="font-bold">{scale.value}</span>
                       <span className="hidden whitespace-nowrap md:inline">{scale.label}</span>
                       <span className="sr-only">{scale.label}</span>
@@ -121,7 +159,11 @@ export function EvaluationRatingCards({
                 })}
               </div>
             ) : null}
-            {invalid ? <p className="mt-2 text-xs font-medium text-destructive">Select a rating from 1 to 5.</p> : null}
+            {invalid ? (
+              <p className="mt-2 text-xs font-medium text-destructive">
+                Select a rating from 1 to 5.
+              </p>
+            ) : null}
           </fieldset>
         );
       })}
@@ -132,7 +174,8 @@ export function EvaluationRatingCards({
 function RatingValue({ label, value }: { label: string; value: number | null }) {
   return (
     <span className="whitespace-nowrap text-muted-foreground">
-      {label}: <strong className="font-semibold tabular-nums text-foreground">{value ?? "—"}</strong>
+      {label}:{" "}
+      <strong className="font-semibold tabular-nums text-foreground">{value ?? "—"}</strong>
     </span>
   );
 }
@@ -258,7 +301,10 @@ export function RadioRatingMatrix({
                   </td>
                 ))}
                 {finalScore !== undefined && criterion === criteria[0] ? (
-                  <td rowSpan={criteria.length} className="p-3.5 text-center align-middle text-xl font-bold tabular-nums text-primary">
+                  <td
+                    rowSpan={criteria.length}
+                    className="p-3.5 text-center align-middle text-xl font-bold tabular-nums text-primary"
+                  >
                     {finalScore === null ? "—" : finalScore.toFixed(2)}
                   </td>
                 ) : null}

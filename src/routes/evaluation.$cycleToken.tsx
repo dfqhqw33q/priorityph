@@ -22,7 +22,10 @@ export const Route = createFileRoute("/evaluation/$cycleToken")({
       { title: "Employee self-assessment - Priority Handling Logistics, Inc." },
       { name: "description", content: "Complete your annual Step 1 performance self-assessment." },
       { property: "og:title", content: "Employee self-assessment" },
-      { property: "og:description", content: "Complete your annual Step 1 performance self-assessment." },
+      {
+        property: "og:description",
+        content: "Complete your annual Step 1 performance self-assessment.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
@@ -116,7 +119,10 @@ function PublicEvaluationPage() {
     context.lineWidth = 2;
     context.lineCap = "round";
     context.strokeStyle = "#080B3D";
-    context.lineTo((event.clientX - rect.left) * (canvas.width / rect.width), (event.clientY - rect.top) * (canvas.height / rect.height));
+    context.lineTo(
+      (event.clientX - rect.left) * (canvas.width / rect.width),
+      (event.clientY - rect.top) * (canvas.height / rect.height),
+    );
     context.stroke();
     setSignatureData(canvas.toDataURL("image/png"));
   }
@@ -132,7 +138,9 @@ function PublicEvaluationPage() {
       ["lastName", "Last name"],
     ].filter(([key]) => !identity[key as "employeeNumber" | "firstName" | "lastName"].trim());
     if (missing.length > 0) {
-      setVerificationMessage(`Enter ${missing.map(([, label]) => label).join(", ")} to verify your profile.`);
+      setVerificationMessage(
+        `Enter ${missing.map(([, label]) => label).join(", ")} to verify your profile.`,
+      );
       return;
     }
     const session = await supabase.auth.getSession();
@@ -155,12 +163,18 @@ function PublicEvaluationPage() {
         setVerified(true);
         setVerificationMessage("Profile verified. You may continue.");
       } else if (result.status === "DUPLICATE") {
-        setVerificationMessage("A submission for this employee already exists for this evaluation cycle.");
+        setVerificationMessage(
+          "A submission for this employee already exists for this evaluation cycle.",
+        );
       } else {
-        setVerificationMessage("Profile could not be verified. Please contact the System Administrator.");
+        setVerificationMessage(
+          "Profile could not be verified. Please contact the System Administrator.",
+        );
       }
     } catch {
-      setVerificationMessage("We could not verify those details. Check the required fields and try again.");
+      setVerificationMessage(
+        "We could not verify those details. Check the required fields and try again.",
+      );
     } finally {
       setVerifying(false);
     }
@@ -222,7 +236,8 @@ function PublicEvaluationPage() {
           if (!fieldErrors[key]) fieldErrors[key] = message;
         }
       }
-      if (missing.length > 0) fieldErrors["ratings"] = `Rate every factor (${missing.length} remaining)`;
+      if (missing.length > 0)
+        fieldErrors["ratings"] = `Rate every factor (${missing.length} remaining)`;
       setErrors(fieldErrors);
       toast.error(
         parsed.success || missing.length === 0
@@ -249,9 +264,17 @@ function PublicEvaluationPage() {
           })),
         },
       });
-      navigate({ to: "/evaluation-submitted", search: { duplicate: response.status === "DUPLICATE" } });
+      navigate({
+        to: "/evaluation-submitted",
+        search: { duplicate: response.status === "DUPLICATE" },
+      });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message.replace(/^VALIDATION:\s*/i, "").trim() || "Submission failed, please try again" : "Submission failed, please try again");
+      toast.error(
+        error instanceof Error
+          ? error.message.replace(/^VALIDATION:\s*/i, "").trim() ||
+              "Submission failed, please try again"
+          : "Submission failed, please try again",
+      );
     } finally {
       setPending(false);
     }
@@ -278,9 +301,11 @@ function PublicEvaluationPage() {
               className="h-8 w-auto max-w-44 object-contain"
             />
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{APP_NAME}</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                {APP_NAME}
+              </p>
               <h1 className="text-sm font-semibold text-foreground">
-                {cycle.name}  -  {cycle.year}
+                {cycle.name} - {cycle.year}
               </h1>
             </div>
           </div>
@@ -305,7 +330,16 @@ function PublicEvaluationPage() {
             {googleReady ? (
               <div className="flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
                 <span>{googleUserEmail || "Google account connected"}</span>
-                <Button type="button" variant="outline" size="sm" onClick={async () => { await supabase.auth.signOut(); setGoogleReady(false); setGoogleUserEmail(""); }}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    setGoogleReady(false);
+                    setGoogleUserEmail("");
+                  }}
+                >
                   Sign out
                 </Button>
               </div>
@@ -327,10 +361,22 @@ function PublicEvaluationPage() {
               >
                 <span className="flex h-5 w-5 items-center justify-center" aria-hidden="true">
                   <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.62l6.85-6.86C35.7 2.52 30.41 0 24 0 14.62 0 6.39 5.38 2.56 13.22l7.98 6.2C12.49 14.3 17.67 9.5 24 9.5Z" />
-                    <path fill="#4285F4" d="M46.5 24.5c0-1.65-.15-3.22-.42-4.74H24v9h12.73c-.55 2.96-2.23 5.48-4.76 7.18l7.73 6c4.51-4.15 7.3-10.29 7.3-18.44Z" />
-                    <path fill="#FBBC05" d="M32.97 36.9c-2.04 1.37-4.64 2.18-8.97 2.18-6.48 0-11.94-4.37-13.9-10.23l-8.14 6.3C4.75 42.83 13.26 48 24 48c7.31 0 13.46-2.42 17.95-6.6l-8.98-4.5Z" />
-                    <path fill="#34A853" d="M10.1 28.85A14.45 14.45 0 0 1 9.5 24c0-1.57.27-3.09.76-4.55L2.12 13.1A23.5 23.5 0 0 0 0 24c0 3.77.9 7.33 2.5 10.45l7.6-5.6Z" />
+                    <path
+                      fill="#EA4335"
+                      d="M24 9.5c3.54 0 6.73 1.22 9.24 3.62l6.85-6.86C35.7 2.52 30.41 0 24 0 14.62 0 6.39 5.38 2.56 13.22l7.98 6.2C12.49 14.3 17.67 9.5 24 9.5Z"
+                    />
+                    <path
+                      fill="#4285F4"
+                      d="M46.5 24.5c0-1.65-.15-3.22-.42-4.74H24v9h12.73c-.55 2.96-2.23 5.48-4.76 7.18l7.73 6c4.51-4.15 7.3-10.29 7.3-18.44Z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M32.97 36.9c-2.04 1.37-4.64 2.18-8.97 2.18-6.48 0-11.94-4.37-13.9-10.23l-8.14 6.3C4.75 42.83 13.26 48 24 48c7.31 0 13.46-2.42 17.95-6.6l-8.98-4.5Z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M10.1 28.85A14.45 14.45 0 0 1 9.5 24c0-1.57.27-3.09.76-4.55L2.12 13.1A23.5 23.5 0 0 0 0 24c0 3.77.9 7.33 2.5 10.45l7.6-5.6Z"
+                    />
                   </svg>
                 </span>
                 <span>Continue with Google</span>
@@ -342,7 +388,9 @@ function PublicEvaluationPage() {
         <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-bold">Your details</CardTitle>
-            <CardDescription>Enter your employee number and name to verify your record.</CardDescription>
+            <CardDescription>
+              Enter your employee number and name to verify your record.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {fields.map((field) => (
@@ -352,90 +400,212 @@ function PublicEvaluationPage() {
                   id={field.key}
                   value={identity[field.key]}
                   onChange={(event) =>
-                    setIdentity((prev) => ({ ...prev, [field.key]: event.target.value.toUpperCase() }))
+                    setIdentity((prev) => ({
+                      ...prev,
+                      [field.key]: event.target.value.toUpperCase(),
+                    }))
                   }
                 />
-                {errors[field.key] ? <p className="text-xs text-destructive">{errors[field.key]}</p> : null}
+                {errors[field.key] ? (
+                  <p className="text-xs text-destructive">{errors[field.key]}</p>
+                ) : null}
               </div>
             ))}
             <div className="space-y-2">
               <Label>Date</Label>
               <div className="rounded-md border border-input bg-muted px-3 py-2 text-sm text-foreground cursor-not-allowed opacity-75">
-                {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {new Date().toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </div>
               <p className="text-xs text-muted-foreground">Auto-populated with today's date</p>
             </div>
-            <Button type="button" variant="outline" onClick={verifyProfile} disabled={verifying || !googleReady}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={verifyProfile}
+              disabled={verifying || !googleReady}
+            >
               {verifying ? "Verifying..." : "Verify employee profile"}
             </Button>
-            {verificationMessage ? <p className={cn("text-sm", verified ? "text-emerald-600" : "text-destructive")}>{verificationMessage}</p> : null}
+            {verificationMessage ? (
+              <p className={cn("text-sm", verified ? "text-emerald-600" : "text-destructive")}>
+                {verificationMessage}
+              </p>
+            ) : null}
           </CardContent>
         </Card>
 
-        {verified ? <>
-        <Card className="border border-border bg-card shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base font-bold">Performance factors</CardTitle>
-            <CardDescription>Select one rating for each factor, from Poor to Excellent.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {cycle.criteria.map((criterion) => (
-              <fieldset key={criterion.id} className="space-y-3">
-                <legend className="text-sm font-semibold text-foreground">
-                  {criterion.letter}. {criterion.title}
-                </legend>
-                <p className="text-xs text-muted-foreground">{criterion.description}</p>
-                <div className="grid grid-cols-5 gap-2">
-                  {RATING_SCALE.map((scale) => {
-                    const selected = ratings[criterion.id] === scale.value;
-                    return (
-                      <label
-                        key={scale.value}
-                        className={cn(
-                          "flex cursor-pointer flex-col items-center gap-1 rounded-lg border px-1 py-2.5 text-center text-[11px] font-medium transition-all",
-                          selected
-                            ? "border-primary bg-primary text-primary-foreground font-bold shadow-sm ring-1 ring-primary"
-                            : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-accent-foreground",
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          className="sr-only"
-                          name={criterion.id}
-                          value={scale.value}
-                          checked={selected}
-                          onChange={() =>
-                            setRatings((prev) => ({ ...prev, [criterion.id]: scale.value }))
-                          }
-                        />
-                        <span className="text-sm font-bold">{scale.value}</span>
-                        <span className="leading-tight">{scale.label}</span>
-                      </label>
-                    );
-                  })}
+        {verified ? (
+          <>
+            <Card className="border border-border bg-card shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base font-bold">Performance factors</CardTitle>
+                <CardDescription>
+                  Select one rating for each factor, from Poor to Excellent.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {cycle.criteria.map((criterion) => (
+                  <fieldset key={criterion.id} className="space-y-3">
+                    <legend className="text-sm font-semibold text-foreground">
+                      {criterion.letter}. {criterion.title}
+                    </legend>
+                    <p className="text-xs text-muted-foreground">{criterion.description}</p>
+                    <div className="grid grid-cols-5 gap-2">
+                      {RATING_SCALE.map((scale) => {
+                        const selected = ratings[criterion.id] === scale.value;
+                        return (
+                          <label
+                            key={scale.value}
+                            className={cn(
+                              "flex cursor-pointer flex-col items-center gap-1 rounded-lg border px-1 py-2.5 text-center text-[11px] font-medium transition-all",
+                              selected
+                                ? "border-primary bg-primary text-primary-foreground font-bold shadow-sm ring-1 ring-primary"
+                                : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-accent-foreground",
+                            )}
+                          >
+                            <input
+                              type="radio"
+                              className="sr-only"
+                              name={criterion.id}
+                              value={scale.value}
+                              checked={selected}
+                              onChange={() =>
+                                setRatings((prev) => ({ ...prev, [criterion.id]: scale.value }))
+                              }
+                            />
+                            <span className="text-sm font-bold">{scale.value}</span>
+                            <span className="leading-tight">{scale.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+                ))}
+                {errors["ratings"] ? (
+                  <p className="text-xs text-destructive font-medium">{errors["ratings"]}</p>
+                ) : null}
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border bg-card shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base font-bold">E-signature</CardTitle>
+                <CardDescription>
+                  Add your signature before submitting the assessment.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={signatureMethod === "DRAWN" ? "default" : "outline"}
+                    onClick={() => {
+                      setSignatureMethod("DRAWN");
+                      setSignatureData("");
+                    }}
+                  >
+                    Draw signature
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={signatureMethod === "UPLOAD" ? "default" : "outline"}
+                    onClick={() => {
+                      setSignatureMethod("UPLOAD");
+                      setSignatureData("");
+                    }}
+                  >
+                    Upload image
+                  </Button>
                 </div>
-              </fieldset>
-            ))}
-            {errors["ratings"] ? <p className="text-xs text-destructive font-medium">{errors["ratings"]}</p> : null}
-          </CardContent>
-        </Card>
+                {signatureMethod === "DRAWN" ? (
+                  <>
+                    <canvas
+                      ref={canvasRef}
+                      width={720}
+                      height={180}
+                      className="h-36 w-full touch-none rounded-md border border-input bg-white"
+                      onPointerDown={(event) => {
+                        drawingRef.current = true;
+                        const context = event.currentTarget.getContext("2d");
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        context?.beginPath();
+                        context?.moveTo(
+                          (event.clientX - rect.left) * (event.currentTarget.width / rect.width),
+                          (event.clientY - rect.top) * (event.currentTarget.height / rect.height),
+                        );
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                      }}
+                      onPointerMove={drawSignature}
+                      onPointerUp={(event) => {
+                        drawingRef.current = false;
+                        event.currentTarget.releasePointerCapture(event.pointerId);
+                      }}
+                    />
+                    <Button type="button" variant="ghost" onClick={clearSignature}>
+                      Clear signature
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 500_000) {
+                          setErrors((previous) => ({
+                            ...previous,
+                            signature: "Signature image must be 500 KB or smaller",
+                          }));
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () => setSignatureData(String(reader.result));
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                    {signatureData ? (
+                      <div className="flex h-36 w-full items-center justify-center rounded-md border border-input bg-white p-2">
+                        <img
+                          src={signatureData}
+                          alt="Uploaded electronic signature"
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+                    ) : null}
+                  </>
+                )}
+                {errors.signature ? (
+                  <p className="text-xs text-destructive">{errors.signature}</p>
+                ) : null}
+                {!signatureData ? (
+                  <p className="text-xs text-muted-foreground">A signature is required.</p>
+                ) : null}
+              </CardContent>
+            </Card>
 
-        <Card className="border border-border bg-card shadow-sm">
-          <CardHeader><CardTitle className="text-base font-bold">E-signature</CardTitle><CardDescription>Add your signature before submitting the assessment.</CardDescription></CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex gap-2"><Button type="button" variant={signatureMethod === "DRAWN" ? "default" : "outline"} onClick={() => { setSignatureMethod("DRAWN"); setSignatureData(""); }}>Draw signature</Button><Button type="button" variant={signatureMethod === "UPLOAD" ? "default" : "outline"} onClick={() => { setSignatureMethod("UPLOAD"); setSignatureData(""); }}>Upload image</Button></div>
-            {signatureMethod === "DRAWN" ? <><canvas ref={canvasRef} width={720} height={180} className="h-36 w-full touch-none rounded-md border border-input bg-white" onPointerDown={(event) => { drawingRef.current = true; const context = event.currentTarget.getContext("2d"); const rect = event.currentTarget.getBoundingClientRect(); context?.beginPath(); context?.moveTo((event.clientX - rect.left) * (event.currentTarget.width / rect.width), (event.clientY - rect.top) * (event.currentTarget.height / rect.height)); event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={drawSignature} onPointerUp={(event) => { drawingRef.current = false; event.currentTarget.releasePointerCapture(event.pointerId); }} /><Button type="button" variant="ghost" onClick={clearSignature}>Clear signature</Button></> : <><Input type="file" accept="image/png,image/jpeg" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 500_000) { setErrors((previous) => ({ ...previous, signature: "Signature image must be 500 KB or smaller" })); return; } const reader = new FileReader(); reader.onload = () => setSignatureData(String(reader.result)); reader.readAsDataURL(file); }} />{signatureData ? <div className="flex h-36 w-full items-center justify-center rounded-md border border-input bg-white p-2"><img src={signatureData} alt="Uploaded electronic signature" className="max-h-full max-w-full object-contain" /></div> : null}</>}
-            {errors.signature ? <p className="text-xs text-destructive">{errors.signature}</p> : null}
-            {!signatureData ? <p className="text-xs text-muted-foreground">A signature is required.</p> : null}
-          </CardContent>
-        </Card>
-
-        <Button type="submit" className="w-full text-base font-semibold shadow-md py-6" size="lg" disabled={pending}>
-          {pending ? "Submitting..." : "Submit assessment"}
-        </Button>
-        </> : <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Verify your employee profile to begin the assessment.</CardContent></Card>}
+            <Button
+              type="submit"
+              className="w-full text-base font-semibold shadow-md py-6"
+              size="lg"
+              disabled={pending}
+            >
+              {pending ? "Submitting..." : "Submit assessment"}
+            </Button>
+          </>
+        ) : (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              Verify your employee profile to begin the assessment.
+            </CardContent>
+          </Card>
+        )}
       </form>
     </div>
   );
 }
-

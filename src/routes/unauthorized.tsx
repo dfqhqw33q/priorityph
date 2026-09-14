@@ -6,7 +6,10 @@ export const Route = createFileRoute("/unauthorized")({
   head: () => ({
     meta: [
       { title: "Access denied — Priority Handling Logistics, Inc." },
-      { name: "description", content: "You do not have permission to view this part of the system." },
+      {
+        name: "description",
+        content: "You do not have permission to view this part of the system.",
+      },
       { property: "og:title", content: "Access denied" },
       { property: "og:description", content: "You do not have permission to view this page." },
       { property: "og:type", content: "website" },
@@ -22,8 +25,8 @@ export const Route = createFileRoute("/unauthorized")({
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Access denied</h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Your account does not have permission for this area. Contact an administrator if you believe this is a
-          mistake.
+          Your account does not have permission for this area. Contact an administrator if you
+          believe this is a mistake.
         </p>
         <div className="mt-6">
           <Button asChild>

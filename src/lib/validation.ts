@@ -16,16 +16,16 @@ function extractIssuesFromUnknown(error: unknown): z.ZodIssue[] | null {
   if (error && typeof error === "object") {
     if ("issues" in error && Array.isArray((error as { issues?: unknown[] }).issues)) {
       const issues = (error as { issues?: unknown[] }).issues ?? [];
-      const parsed = issues.filter((issue): issue is z.ZodIssue =>
-        !!issue && typeof issue === "object" && "message" in issue,
+      const parsed = issues.filter(
+        (issue): issue is z.ZodIssue => !!issue && typeof issue === "object" && "message" in issue,
       );
       if (parsed.length > 0) return parsed;
     }
 
     if (error instanceof Error && error.name === "ZodError" && "issues" in error) {
       const issues = (error as Error & { issues?: unknown[] }).issues ?? [];
-      const parsed = issues.filter((issue): issue is z.ZodIssue =>
-        !!issue && typeof issue === "object" && "message" in issue,
+      const parsed = issues.filter(
+        (issue): issue is z.ZodIssue => !!issue && typeof issue === "object" && "message" in issue,
       );
       if (parsed.length > 0) return parsed;
     }
@@ -94,7 +94,11 @@ export function userErrorMessage(error: unknown, fallback = "Please try again.")
     const raw = error.message.replace(/^VALIDATION:\s*/i, "").trim();
     if (!raw) return fallback;
     const issueMessages = parseRawIssueArray(raw);
-    if (issueMessages.length > 0) return formatValidationSummary(issueMessages.map((message) => ({ message } as z.ZodIssue)), fallback);
+    if (issueMessages.length > 0)
+      return formatValidationSummary(
+        issueMessages.map((message) => ({ message }) as z.ZodIssue),
+        fallback,
+      );
     if (raw.startsWith("[") && raw.includes('"message"')) {
       return "Please complete all required fields before submitting.";
     }
@@ -105,7 +109,11 @@ export function userErrorMessage(error: unknown, fallback = "Please try again.")
     const normalized = error.replace(/^VALIDATION:\s*/i, "").trim();
     if (!normalized) return fallback;
     const issueMessages = parseRawIssueArray(normalized);
-    if (issueMessages.length > 0) return formatValidationSummary(issueMessages.map((message) => ({ message } as z.ZodIssue)), fallback);
+    if (issueMessages.length > 0)
+      return formatValidationSummary(
+        issueMessages.map((message) => ({ message }) as z.ZodIssue),
+        fallback,
+      );
     if (normalized.startsWith("[") && normalized.includes('"message"')) {
       return "Please complete all required fields before submitting.";
     }

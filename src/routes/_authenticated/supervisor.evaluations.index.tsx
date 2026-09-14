@@ -14,7 +14,10 @@ export const Route = createFileRoute("/_authenticated/supervisor/evaluations/")(
         content: "All employee Step 1 assessments available for supervisor rating and submission.",
       },
       { property: "og:title", content: "Supervisor review queue" },
-      { property: "og:description", content: "Search, filter and open employee Step 1 assessments." },
+      {
+        property: "og:description",
+        content: "Search, filter and open employee Step 1 assessments.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -41,4 +44,3 @@ function SupervisorQueuePage() {
     </div>
   );
 }
-

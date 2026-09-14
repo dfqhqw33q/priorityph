@@ -112,7 +112,8 @@ function SuccessionPage() {
                     <div>
                       <h3 className="font-semibold">Career &amp; Succession Profile</h3>
                       <p className="text-xs text-muted-foreground">
-                        Employee career interests and development information from the source evaluation.
+                        Employee career interests and development information from the source
+                        evaluation.
                       </p>
                     </div>
                     <div className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-4">
@@ -152,14 +153,17 @@ function SuccessionPage() {
                     <div>
                       <h3 className="font-semibold">Latest Committee Decision</h3>
                       <p className="text-xs text-muted-foreground">
-                        Finalized organizational action. This does not replace the employee&apos;s career preferences.
+                        Finalized organizational action. This does not replace the employee&apos;s
+                        career preferences.
                       </p>
                     </div>
                     {committeeDecision ? (
                       <div className="grid gap-4 text-sm sm:grid-cols-2">
                         <ProfileField
                           label="Final Action"
-                          value={committeeDecision.finalAction === "PROMOTE" ? "Promote" : "Transfer"}
+                          value={
+                            committeeDecision.finalAction === "PROMOTE" ? "Promote" : "Transfer"
+                          }
                         />
                         <ProfileField label="Status" value="Finalized" />
                         <ProfileField
@@ -293,4 +297,3 @@ function NotesDialog({
     </Dialog>
   );
 }
-

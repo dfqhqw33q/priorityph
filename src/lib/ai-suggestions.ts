@@ -31,11 +31,13 @@ export const AI_FIELD_MAPPINGS: Record<string, AiFieldMapping> = {
     factors: "WEAKNESSES",
   },
   S2_EFFECTIVENESS: {
-    purpose: "Suggest what the employee should do to be more effective, based on the lowest-rated factors.",
+    purpose:
+      "Suggest what the employee should do to be more effective, based on the lowest-rated factors.",
     factors: "WEAKNESSES",
   },
   S2_GROWTH_SUGGESTIONS: {
-    purpose: "Suggest ways to accelerate growth and development, based on the lowest-rated factors.",
+    purpose:
+      "Suggest ways to accelerate growth and development, based on the lowest-rated factors.",
     factors: "WEAKNESSES",
   },
   S2_OVERALL_EXPLANATION: {

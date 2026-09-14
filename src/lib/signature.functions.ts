@@ -1,10 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getAdmin, validationError, requireSupabaseAuth, requirePermissionAny } from "./server-core.server";
+import {
+  getAdmin,
+  validationError,
+  requireSupabaseAuth,
+  requirePermissionAny,
+} from "./server-core.server";
 
 const internalUserSignatureSchema = z.object({
   evaluationId: z.string().uuid(),
-  stage: z.enum(["RATER_STEP2", "REVIEWING_SUPERVISOR_STEP3", "HR_REVIEW", "COMMITTEE_REVIEW", "PRESIDENT_STEP2", "PRESIDENT_STEP3"]),
+  stage: z.enum([
+    "RATER_STEP2",
+    "REVIEWING_SUPERVISOR_STEP3",
+    "HR_REVIEW",
+    "COMMITTEE_REVIEW",
+    "PRESIDENT_STEP2",
+    "PRESIDENT_STEP3",
+  ]),
   signature: z.object({
     method: z.enum(["UPLOAD", "DRAWN"]),
     data: z.string().min(1),
@@ -51,7 +63,9 @@ export const submitInternalUserSignature = createServerFn({ method: "POST" })
     let inlineSignature: string | null = data.signature.data;
 
     if (data.signature.method === "UPLOAD") {
-      const match = data.signature.data.match(/^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/);
+      const match = data.signature.data.match(
+        /^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/,
+      );
       if (!match) throw validationError("Signature upload must be a PNG or JPEG image");
 
       const contentType = String(match[1]);
@@ -112,7 +126,6 @@ export const getInternalUserSignature = createServerFn({ method: "GET" })
   ])
   .handler(async ({ context }) => {
     const admin = await getAdmin();
-
 
     return { success: true };
   });

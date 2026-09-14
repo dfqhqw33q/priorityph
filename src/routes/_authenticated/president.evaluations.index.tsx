@@ -11,7 +11,10 @@ export const Route = createFileRoute("/_authenticated/president/evaluations/")({
         content: "Final approval queue for evaluations after the committee review stage.",
       },
       { property: "og:title", content: "President approval queue" },
-      { property: "og:description", content: "Evaluations awaiting the President's final approval." },
+      {
+        property: "og:description",
+        content: "Evaluations awaiting the President's final approval.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

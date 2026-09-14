@@ -30,10 +30,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import { listAuditEvents } from "@/lib/admin.functions";
 import { humanizeToken } from "@/lib/domain";
-
 
 export const Route = createFileRoute("/_authenticated/admin/audit-logs")({
   head: () => ({
@@ -127,7 +131,8 @@ function AuditLogsPage() {
   }, [query.data]);
 
   const actorName = (id: string | null) =>
-    (query.data?.actors ?? []).find((a) => a.id === id)?.full_name ?? (id ? "Unknown user" : "System");
+    (query.data?.actors ?? []).find((a) => a.id === id)?.full_name ??
+    (id ? "Unknown user" : "System");
 
   const pageCount = Math.max(1, Math.ceil((query.data?.totalCount ?? 0) / PAGE_SIZE));
   const current = Math.min(page, pageCount - 1);
@@ -160,7 +165,12 @@ function AuditLogsPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="audit-from">From</Label>
-          <Input id="audit-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <Input
+            id="audit-from"
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="audit-to">To</Label>
@@ -215,7 +225,10 @@ function AuditLogsPage() {
       {query.isLoading ? (
         <LoadingBlock rows={6} />
       ) : rows.length === 0 ? (
-        <EmptyState title="No activity matches these filters" description="Try changing the filters above." />
+        <EmptyState
+          title="No activity matches these filters"
+          description="Try changing the filters above."
+        />
       ) : (
         <>
           <div className="overflow-x-auto border border-border bg-card shadow-sm">
@@ -230,7 +243,11 @@ function AuditLogsPage() {
                       onClick={() => setSortDir((prev) => (prev === "asc" ? "desc" : "asc"))}
                     >
                       When
-                      {sortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
+                      {sortDir === "asc" ? (
+                        <ArrowUp className="size-3" />
+                      ) : (
+                        <ArrowDown className="size-3" />
+                      )}
                     </button>
                   </TableHead>
                   <TableHead scope="col">User</TableHead>
@@ -252,10 +269,14 @@ function AuditLogsPage() {
                     <TableCell className="text-sm">
                       {actorName(row.actor_user_id)}
                       {row.actor_role ? (
-                        <span className="block text-xs text-muted-foreground">{row.actor_role}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {row.actor_role}
+                        </span>
                       ) : null}
                     </TableCell>
-                    <TableCell className="text-xs font-semibold">{humanizeToken(row.action)}</TableCell>
+                    <TableCell className="text-xs font-semibold">
+                      {humanizeToken(row.action)}
+                    </TableCell>
                     <TableCell className="text-sm">{row.module}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {row.entity_type ?? "-"}
@@ -278,7 +299,9 @@ function AuditLogsPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {query.data?.totalCount ? current * PAGE_SIZE + 1 : 0}-{Math.min(query.data?.totalCount ?? 0, (current + 1) * PAGE_SIZE)} of {query.data?.totalCount ?? 0}
+              Showing {query.data?.totalCount ? current * PAGE_SIZE + 1 : 0}-
+              {Math.min(query.data?.totalCount ?? 0, (current + 1) * PAGE_SIZE)} of{" "}
+              {query.data?.totalCount ?? 0}
             </p>
             <div className="flex gap-2">
               <Button
@@ -320,7 +343,9 @@ function AuditLogsPage() {
             <Detail label="Result" value={selected?.result ?? "-"} />
             <Detail label="Reason" value={selected?.reason ?? "-"} />
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Previous value</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Previous value
+              </p>
               <pre className="mt-1 overflow-x-auto rounded-md bg-muted p-2 text-xs">
                 {JSON.stringify(selected?.previous_value ?? null, null, 2)}
               </pre>
@@ -382,4 +407,3 @@ function FilterSelect({
     </div>
   );
 }
-

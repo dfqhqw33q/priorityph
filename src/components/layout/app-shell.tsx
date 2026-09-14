@@ -360,10 +360,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             <SidebarMenuItem key={category.label}>
               {renderItem(
                 { ...child, label: category.label, icon: category.icon },
-                Boolean(
-                  child.to &&
-                    (pathname === child.to || pathname.startsWith(`${child.to}/`)),
-                ),
+                Boolean(child.to && (pathname === child.to || pathname.startsWith(`${child.to}/`))),
               )}
             </SidebarMenuItem>
           );
@@ -501,8 +498,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   async function signOut() {
     try {
       await logEvent({ data: { event: "LOGOUT" } });
-    } catch {
-    }
+    } catch {}
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();

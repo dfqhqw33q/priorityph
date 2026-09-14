@@ -174,9 +174,23 @@ export const raterStep2Schema = z
         });
     }
     if (value.submit && !value.date.trim())
-      context.addIssue({ code: z.ZodIssueCode.custom, path: ["date"], message: "Date is required" });
-    if (value.submit && value.transferInterest === "YES" && !value.transferJob.trim() && !value.transferWhere.trim() && !value.transferQualified.trim())
-      context.addIssue({ code: z.ZodIssueCode.custom, path: ["transferJob"], message: "Complete the transfer details" });
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["date"],
+        message: "Date is required",
+      });
+    if (
+      value.submit &&
+      value.transferInterest === "YES" &&
+      !value.transferJob.trim() &&
+      !value.transferWhere.trim() &&
+      !value.transferQualified.trim()
+    )
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["transferJob"],
+        message: "Complete the transfer details",
+      });
   });
 
 export const reviewingSupervisorReviewSchema = z
@@ -197,7 +211,11 @@ export const reviewingSupervisorReviewSchema = z
   })
   .superRefine((value, context) => {
     if (value.submit && value.ratings.length !== 10)
-      context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratings"], message: "Rate all ten performance factors" });
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["ratings"],
+        message: "Rate all ten performance factors",
+      });
     if (value.submit && !value.comments.trim())
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -211,7 +229,11 @@ export const reviewingSupervisorReviewSchema = z
         message: "Recommendations are required",
       });
     if (value.submit && !value.date.trim())
-      context.addIssue({ code: z.ZodIssueCode.custom, path: ["date"], message: "Date is required" });
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["date"],
+        message: "Date is required",
+      });
   });
 
 export const personnelProcessingSchema = z
@@ -436,7 +458,6 @@ export const auditFiltersSchema = z.object({
   sortDir: z.enum(["asc", "desc"]).default("desc"),
 });
 export type AuditFiltersValues = z.infer<typeof auditFiltersSchema>;
-
 
 export const scoringBandSchema = z
   .object({

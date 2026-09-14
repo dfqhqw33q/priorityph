@@ -8,9 +8,8 @@ import type { PresidentStepData } from "./domain";
 export const getPresidentStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { requirePermission, presidentStats, recentActivity } = await import(
-      "./server-core.server"
-    );
+    const { requirePermission, presidentStats, recentActivity } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "president.view", "President Review");
     const [stats, activity] = await Promise.all([
       presidentStats(),
@@ -44,8 +43,15 @@ export const savePresidentRatings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => presidentRatingSaveSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError, assertVersion, upsertPresidentRatings } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      assertVersion,
+      upsertPresidentRatings,
+    } = await import("./server-core.server");
     const { computeScore, persistScore } = await import("./scoring.server");
     await requirePermission(context.userId, "president.view", "President Review");
     const evaluation = await assertVersion(data.evaluationId, data.version);
@@ -79,7 +85,11 @@ export const savePresidentRatings = createServerFn({ method: "POST" })
       entityType: "evaluation",
       entityId: data.evaluationId,
       evaluationId: data.evaluationId,
-      newValue: { finalScore: score.finalScore, finalRating: score.finalRatingLabel, status: score.status },
+      newValue: {
+        finalScore: score.finalScore,
+        finalRating: score.finalRatingLabel,
+        status: score.status,
+      },
     });
     return { ok: true };
   });

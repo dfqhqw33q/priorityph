@@ -207,11 +207,7 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
   if (!evaluation?.is_finalized) return;
 
   const candidates: Candidate[] = [];
-  const add = (
-    key: string,
-    need: string,
-    notes = "",
-  ) => {
+  const add = (key: string, need: string, notes = "") => {
     for (const [index, recommendation] of splitRecommendations(need).entries()) {
       if (!isActionableDevelopment(recommendation)) continue;
       candidates.push({
@@ -239,14 +235,9 @@ export async function ensureDevelopmentRecordsForEvaluation(evaluationId: string
     .eq("is_system_generated", true);
   const candidateKeys = new Set(candidates.map((candidate) => candidate.key));
   const staleIds = (existing ?? [])
-    .filter(
-      (record) =>
-        record.status === "Recommended" &&
-        !candidateKeys.has(record.source_key),
-    )
+    .filter((record) => record.status === "Recommended" && !candidateKeys.has(record.source_key))
     .map((record) => record.id);
-  if (staleIds.length > 0)
-    await admin.from("development_records").delete().in("id", staleIds);
+  if (staleIds.length > 0) await admin.from("development_records").delete().in("id", staleIds);
   if (candidates.length === 0) return;
   const existingByKey = new Map((existing ?? []).map((record) => [record.source_key, record]));
   const candidatesToSync = candidates.filter((candidate) => {

@@ -1,14 +1,23 @@
 // Server-only scoring engine and workflow helpers (Phase 8).
 // All calculation happens here; client-supplied scores are never trusted.
 import { getAdmin, validationError } from "./server-core.server";
-import { roundTo, type CalculationStatus, type NotificationEventType, type ScoringRule } from "./domain";
+import {
+  roundTo,
+  type CalculationStatus,
+  type NotificationEventType,
+  type ScoringRule,
+} from "./domain";
 
 export type LoadedRule = ScoringRule;
 
 /** Loads a scoring rule with its factor weights and final-rating bands. */
 export async function loadScoringRule(ruleId: string): Promise<LoadedRule | null> {
   const admin = await getAdmin();
-  const { data: rule } = await admin.from("scoring_rules").select("*").eq("id", ruleId).maybeSingle();
+  const { data: rule } = await admin
+    .from("scoring_rules")
+    .select("*")
+    .eq("id", ruleId)
+    .maybeSingle();
   if (!rule) return null;
   const [{ data: weights }, { data: bands }] = await Promise.all([
     admin.from("scoring_rule_factor_weights").select("criterion_id, weight").eq("rule_id", ruleId),
@@ -212,20 +221,23 @@ export async function computeScore(evaluationId: string): Promise<ScoreResult> {
 
   const employeeAverage = averageFor(rule, criterionList, ratingRows, "EMPLOYEE");
   const supervisorAverage = averageFor(rule, criterionList, ratingRows, "SUPERVISOR");
-  const reviewingSupervisorAverage = averageFor(rule, criterionList, ratingRows, "REVIEWING_SUPERVISOR");
+  const reviewingSupervisorAverage = averageFor(
+    rule,
+    criterionList,
+    ratingRows,
+    "REVIEWING_SUPERVISOR",
+  );
 
   if (employeeAverage === null || supervisorAverage === null || reviewingSupervisorAverage === null)
-    return invalid("Employee, Supervisor, and Reviewing Supervisor ratings must be complete for all factors.");
+    return invalid(
+      "Employee, Supervisor, and Reviewing Supervisor ratings must be complete for all factors.",
+    );
 
   const exactFinalScore = (employeeAverage + supervisorAverage + reviewingSupervisorAverage) / 3;
-  const finalScore = Math.min(
-    5,
-    Math.max(
-      1,
-      roundTo(exactFinalScore, rule.roundingDecimals),
-    ),
+  const finalScore = Math.min(5, Math.max(1, roundTo(exactFinalScore, rule.roundingDecimals)));
+  const band = rule.bands.find(
+    (item) => finalScore >= item.minScore && finalScore <= item.maxScore,
   );
-  const band = rule.bands.find((item) => finalScore >= item.minScore && finalScore <= item.maxScore);
 
   return {
     status: "CALCULATED",
@@ -262,7 +274,8 @@ export async function persistScore(
     .eq("evaluation_id", evaluationId)
     .maybeSingle();
 
-  if (existing?.is_locked) throw validationError("The calculated score is locked and cannot change");
+  if (existing?.is_locked)
+    throw validationError("The calculated score is locked and cannot change");
 
   const payload = {
     evaluation_id: evaluationId,
@@ -360,17 +373,19 @@ export async function checkFinalizationEligibility(evaluationId: string): Promis
 
   const blockers: string[] = [];
   if (evaluation.is_finalized) blockers.push("This evaluation is already finalized.");
-  if (!evaluation.employee_submitted_at) blockers.push("The employee Step 1 submission is missing.");
-  if (!evaluation.supervisor_submitted_at) blockers.push("The supervisor has not submitted ratings.");
+  if (!evaluation.employee_submitted_at)
+    blockers.push("The employee Step 1 submission is missing.");
+  if (!evaluation.supervisor_submitted_at)
+    blockers.push("The supervisor has not submitted ratings.");
   if (!evaluation.president_step2_submitted_at) blockers.push("President Step 2 is not complete.");
   if (!evaluation.president_step3_submitted_at) blockers.push("President Step 3 is not complete.");
-  if (evaluation.status === "RETURNED")
-    blockers.push("An unresolved correction request is open.");
+  if (evaluation.status === "RETURNED") blockers.push("An unresolved correction request is open.");
 
   let score: ScoreResult | null = null;
   if (blockers.length === 0) {
     score = await computeScore(evaluationId);
-    if (score.status !== "CALCULATED") blockers.push(score.notes || "Scores could not be calculated.");
+    if (score.status !== "CALCULATED")
+      blockers.push(score.notes || "Scores could not be calculated.");
     if (score.status === "CALCULATED" && !score.finalRatingLabel)
       blockers.push("No final rating band matches the calculated score.");
   }

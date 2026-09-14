@@ -23,14 +23,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EmptyState, EvaluationStatusBadge, LoadingBlock, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  EvaluationStatusBadge,
+  LoadingBlock,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import { listQueueFilterOptions } from "@/lib/evaluations.functions";
-import { EVALUATION_STATUS_LABELS, type EvaluationListItem, type EvaluationStatus } from "@/lib/domain";
+import {
+  EVALUATION_STATUS_LABELS,
+  type EvaluationListItem,
+  type EvaluationStatus,
+} from "@/lib/domain";
 
 const ALL = "__all__";
 const PAGE_SIZE = 20;
 
-type SortKey = "full_name_snapshot" | "employee_number_snapshot" | "employee_submitted_at" | "status";
+type SortKey =
+  "full_name_snapshot" | "employee_number_snapshot" | "employee_submitted_at" | "status";
 
 export function EvaluationQueue({
   queryKey,
@@ -129,7 +139,11 @@ export function EvaluationQueue({
     const message = query.error instanceof Error ? query.error.message : "Something went wrong";
     return (
       <EmptyState
-        title={message.includes("authorized") ? "You do not have access to this list" : "This list could not be loaded"}
+        title={
+          message.includes("authorized")
+            ? "You do not have access to this list"
+            : "This list could not be loaded"
+        }
         description={message}
       />
     );
@@ -157,7 +171,10 @@ export function EvaluationQueue({
             setYear(value);
             setPage(0);
           }}
-          options={(optionsQuery.data?.years ?? []).map((y) => ({ value: String(y), label: String(y) }))}
+          options={(optionsQuery.data?.years ?? []).map((y) => ({
+            value: String(y),
+            label: String(y),
+          }))}
           allLabel="All years"
         />
         <FilterSelect
@@ -195,7 +212,10 @@ export function EvaluationQueue({
       {query.isLoading ? (
         <LoadingBlock rows={5} />
       ) : rows.length === 0 ? (
-        <EmptyState title={emptyTitle} description="Try changing the filters, or check back later." />
+        <EmptyState
+          title={emptyTitle}
+          description="Try changing the filters, or check back later."
+        />
       ) : (
         <>
           <div className="overflow-x-auto border border-border bg-card shadow-sm">
@@ -229,7 +249,9 @@ export function EvaluationQueue({
                   <TableRow key={row.id}>
                     <TableCell className="font-medium">{row.full_name_snapshot}</TableCell>
                     <TableCell className="tabular-nums">{row.employee_number_snapshot}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{row.job_title_snapshot}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {row.job_title_snapshot}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {row.division_snapshot}
                       {row.section_snapshot ? `  -  ${row.section_snapshot}` : ""}
@@ -261,8 +283,8 @@ export function EvaluationQueue({
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {current * PAGE_SIZE + 1}-{Math.min(rows.length, (current + 1) * PAGE_SIZE)} of{" "}
-              {rows.length}
+              Showing {current * PAGE_SIZE + 1}-{Math.min(rows.length, (current + 1) * PAGE_SIZE)}{" "}
+              of {rows.length}
             </p>
             <div className="flex gap-2">
               <Button
@@ -321,4 +343,3 @@ function FilterSelect({
     </div>
   );
 }
-

@@ -20,7 +20,10 @@ export const Route = createFileRoute("/forgot-password")({
       { title: "Reset your password — Priority Handling Logistics, Inc." },
       { name: "description", content: "Request a password reset link for your internal account." },
       { property: "og:title", content: "Reset your password" },
-      { property: "og:description", content: "Request a password reset link for your internal account." },
+      {
+        property: "og:description",
+        content: "Request a password reset link for your internal account.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
@@ -35,7 +38,10 @@ function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [pending, setPending] = useState(false);
   const logRequest = useServerFn(recordAuthFailure);
-  const form = useForm<Values>({ resolver: zodResolver(forgotPasswordSchema), defaultValues: { email: "" } });
+  const form = useForm<Values>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
+  });
 
   async function onSubmit(values: Values) {
     setPending(true);
@@ -57,7 +63,7 @@ function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="mb-6 text-center flex flex-col items-center">
           <img
-              src="/logo.png"
+            src="/logo.png"
             alt="Priority Handling Logistics, Inc."
             className="h-10 w-auto max-w-56 object-contain mb-3"
           />
@@ -78,7 +84,9 @@ function ForgotPasswordPage() {
                   <Label htmlFor="email">Email</Label>
                   <Input id="email" type="email" {...form.register("email")} />
                   {form.formState.errors.email ? (
-                    <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.email.message}
+                    </p>
                   ) : null}
                 </div>
                 <Button type="submit" className="w-full" disabled={pending}>

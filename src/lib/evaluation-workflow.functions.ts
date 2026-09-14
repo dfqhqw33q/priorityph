@@ -73,12 +73,24 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
         .eq("evaluation_id", data.evaluationId)
         .maybeSingle();
       stageReady =
-        data.stage === "COMMITTEE" ? Boolean(personnelRecord?.submitted_at) : !personnelRecord?.submitted_at;
+        data.stage === "COMMITTEE"
+          ? Boolean(personnelRecord?.submitted_at)
+          : !personnelRecord?.submitted_at;
     }
     if (
-      (!allowedStatus.includes(detail.status) || !stageReady ||
-        (detail.status === "RETURNED" &&
-          detail.correction_stage !== ({ RATER: "SUPERVISOR_DRAFT", REVIEWING_SUPERVISOR: "REVIEWING_SUPERVISOR_REVIEW", PERSONNEL: "PERSONNEL_PROCESSING", COMMITTEE: "COMMITTEE_REVIEW", PRESIDENT: "PRESIDENT_APPROVAL" } as Record<string, string>)[data.stage]))
+      !allowedStatus.includes(detail.status) ||
+      !stageReady ||
+      (detail.status === "RETURNED" &&
+        detail.correction_stage !==
+          (
+            {
+              RATER: "SUPERVISOR_DRAFT",
+              REVIEWING_SUPERVISOR: "REVIEWING_SUPERVISOR_REVIEW",
+              PERSONNEL: "PERSONNEL_PROCESSING",
+              COMMITTEE: "COMMITTEE_REVIEW",
+              PRESIDENT: "PRESIDENT_APPROVAL",
+            } as Record<string, string>
+          )[data.stage])
     ) {
       throw (await import("./server-core.server")).validationError(
         "This evaluation is not assigned to this workflow stage",
@@ -205,7 +217,10 @@ export const listEvaluationStageQueue = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, listEvaluations } = await import("./server-core.server");
     const config = {
-      REVIEWING_SUPERVISOR: { permission: "evaluations.review_step3" as const, statuses: ["FOR_REVIEW"] },
+      REVIEWING_SUPERVISOR: {
+        permission: "evaluations.review_step3" as const,
+        statuses: ["FOR_REVIEW"],
+      },
       PERSONNEL: { permission: "personnel.process" as const, statuses: ["FOR_PROCESSING"] },
       COMMITTEE: { permission: "committee.review" as const, statuses: ["FOR_REVIEW"] },
       PRESIDENT: { permission: "president.approve" as const, statuses: ["FOR_APPROVAL"] },
@@ -234,11 +249,12 @@ export const listEvaluationStageQueue = createServerFn({ method: "GET" })
       const { data: personnelRows } = await admin
         .from("personnel_processing")
         .select("evaluation_id,submitted_at")
-        .in("evaluation_id", rows.map((row) => row.id));
+        .in(
+          "evaluation_id",
+          rows.map((row) => row.id),
+        );
       const processed = new Set(
-        (personnelRows ?? [])
-          .filter((row) => row.submitted_at)
-          .map((row) => row.evaluation_id),
+        (personnelRows ?? []).filter((row) => row.submitted_at).map((row) => row.evaluation_id),
       );
       rows = rows.filter((row) =>
         row.status === "RETURNED"
@@ -338,56 +354,65 @@ async function transition(
   });
   const notificationWrite = createNotification
     ? admin.from("notification_events").insert({
-      evaluation_id: evaluationId,
-      event_type: action,
-      audience_permission:
-        next === "RETURNED" && correctionStage
-          ? (notificationPermissionByStatus[correctionStage === "SUPERVISOR_DRAFT" ? "DRAFT" : correctionStage === "PERSONNEL_PROCESSING" ? "FOR_PROCESSING" : "FOR_REVIEW"] ??
-            "evaluations.view_history")
-          : (notificationPermissionByStatus[next] ?? "evaluations.view_history"),
-      title:
-        next === "DRAFT"
-          ? "New Evaluation Submitted"
-          : next === "FOR_REVIEW"
+        evaluation_id: evaluationId,
+        event_type: action,
+        audience_permission:
+          next === "RETURNED" && correctionStage
+            ? (notificationPermissionByStatus[
+                correctionStage === "SUPERVISOR_DRAFT"
+                  ? "DRAFT"
+                  : correctionStage === "PERSONNEL_PROCESSING"
+                    ? "FOR_PROCESSING"
+                    : "FOR_REVIEW"
+              ] ?? "evaluations.view_history")
+            : (notificationPermissionByStatus[next] ?? "evaluations.view_history"),
+        title:
+          next === "DRAFT"
             ? "New Evaluation Submitted"
-            : next === "FOR_PROCESSING"
-              ? "Evaluation Ready for Processing"
-              : next === "FOR_APPROVAL"
-                ? "Evaluation Ready for Review"
-                : next === "RETURNED"
+            : next === "FOR_REVIEW"
+              ? "New Evaluation Submitted"
+              : next === "FOR_PROCESSING"
+                ? "Evaluation Ready for Processing"
+                : next === "FOR_APPROVAL"
+                  ? "Evaluation Ready for Review"
+                  : next === "RETURNED"
                     ? "Evaluation Returned"
                     : next === "FINALIZED"
                       ? "Performance Evaluation Finalized"
                       : "Evaluation workflow updated",
-      body:
-        next === "DRAFT"
-          ? "A new performance evaluation has been submitted to you for review and assessment."
-          : next === "FOR_REVIEW"
-            ? "A performance evaluation has been submitted to you for review and assessment."
-            : next === "FOR_PROCESSING"
-              ? "A completed performance evaluation is ready for Personnel processing."
-              : next === "FOR_APPROVAL"
-                ? "A performance evaluation is ready for your Committee review and recommendation."
-                : next === "RETURNED"
+        body:
+          next === "DRAFT"
+            ? "A new performance evaluation has been submitted to you for review and assessment."
+            : next === "FOR_REVIEW"
+              ? "A performance evaluation has been submitted to you for review and assessment."
+              : next === "FOR_PROCESSING"
+                ? "A completed performance evaluation is ready for Personnel processing."
+                : next === "FOR_APPROVAL"
+                  ? "A performance evaluation is ready for your Committee review and recommendation."
+                  : next === "RETURNED"
                     ? "A performance evaluation has been returned to you for correction and resubmission."
                     : next === "FINALIZED"
                       ? "Your performance evaluation has been finalized and is now complete."
-                      : reason || `An evaluation entered ${next.replaceAll("_", " ").toLowerCase()}.`,
-      payload: { fromStatus: current.status, toStatus: next, reason, correctionStage },
-      dedupe_key: `${evaluationId}:${action}:${expectedVersion}`,
-        } as never)
+                      : reason ||
+                        `An evaluation entered ${next.replaceAll("_", " ").toLowerCase()}.`,
+        payload: { fromStatus: current.status, toStatus: next, reason, correctionStage },
+        dedupe_key: `${evaluationId}:${action}:${expectedVersion}`,
+      } as never)
     : Promise.resolve({ error: null });
   await Promise.all([eventWrite, notificationWrite]);
   if (next === "FINALIZED") {
     try {
       const finalizationStamp = new Date().toISOString();
-      const { ensureDevelopmentRecordsForEvaluation } = await import("@/features/learning-management/development.functions");
+      const { ensureDevelopmentRecordsForEvaluation } =
+        await import("@/features/learning-management/development.functions");
       const {
         ensureTrainingRecommendationsForEvaluation,
         ensureTrainingRequirementForCommitteeDecision,
       } = await import("@/features/training-management/training.functions");
-      const { ensureSuccessionProfileForEvaluation } = await import("@/features/succession-planning/succession.functions");
-      const { ensureRecognitionCandidatesForEvaluation } = await import("@/features/social-recognition/recognition.functions");
+      const { ensureSuccessionProfileForEvaluation } =
+        await import("@/features/succession-planning/succession.functions");
+      const { ensureRecognitionCandidatesForEvaluation } =
+        await import("@/features/social-recognition/recognition.functions");
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
       await Promise.all([
         createFinalEvaluationDocument(evaluationId, actorUserId, {
@@ -479,10 +504,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
     if (
       evaluation.status !== "SUBMITTED" &&
       evaluation.status !== "DRAFT" &&
-      !(
-        evaluation.status === "RETURNED" &&
-        evaluation.correction_stage === "SUPERVISOR_DRAFT"
-      )
+      !(evaluation.status === "RETURNED" && evaluation.correction_stage === "SUPERVISOR_DRAFT")
     )
       throw validationError("This evaluation is not available for Rater Step 2");
     const nextStatus = data.submit ? "FOR_REVIEW" : "DRAFT";
@@ -661,10 +683,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       .select("status,correction_stage")
       .eq("id", data.evaluationId)
       .maybeSingle();
-    if (
-      evaluation?.status === "RETURNED" &&
-      evaluation.correction_stage !== "PERSONNEL_PROCESSING"
-    )
+    if (evaluation?.status === "RETURNED" && evaluation.correction_stage !== "PERSONNEL_PROCESSING")
       throw validationError("This evaluation is assigned to another correction stage");
     const workflowDate = new Date().toISOString().slice(0, 10);
     const submissionDate = data.submit
@@ -723,10 +742,7 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       .select("status,correction_stage")
       .eq("id", data.evaluationId)
       .maybeSingle();
-    if (
-      evaluation?.status === "RETURNED" &&
-      evaluation.correction_stage !== "COMMITTEE_REVIEW"
-    )
+    if (evaluation?.status === "RETURNED" && evaluation.correction_stage !== "COMMITTEE_REVIEW")
       throw validationError("This evaluation is assigned to another correction stage");
     const result = await transition(
       data.evaluationId,
@@ -827,10 +843,7 @@ export const resubmitForCorrection = createServerFn({ method: "POST" })
       .select("status,correction_stage")
       .eq("id", data.evaluationId)
       .maybeSingle();
-    if (
-      evaluation?.status !== "RETURNED" ||
-      evaluation.correction_stage !== data.stage
-    )
+    if (evaluation?.status !== "RETURNED" || evaluation.correction_stage !== data.stage)
       throw validationError("This evaluation is not waiting for the selected re-review stage");
     const nextStatus: EvaluationStatus =
       data.stage === "SUPERVISOR_DRAFT"

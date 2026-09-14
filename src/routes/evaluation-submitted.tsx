@@ -8,9 +8,15 @@ export const Route = createFileRoute("/evaluation-submitted")({
   head: () => ({
     meta: [
       { title: "Assessment received — Priority Handling Logistics, Inc." },
-      { name: "description", content: "Your Step 1 performance self-assessment has been received." },
+      {
+        name: "description",
+        content: "Your Step 1 performance self-assessment has been received.",
+      },
       { property: "og:title", content: "Assessment received" },
-      { property: "og:description", content: "Your Step 1 performance self-assessment has been received." },
+      {
+        property: "og:description",
+        content: "Your Step 1 performance self-assessment has been received.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },

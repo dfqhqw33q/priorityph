@@ -4,9 +4,20 @@ import { useServerFn } from "@tanstack/react-start";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState, LoadingBlock, PageHeader, StatCard, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  StatCard,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import { getAdminStats } from "@/lib/admin.functions";
-import { EVALUATION_STATUS_LABELS, ROLE_LABELS, type AppRole, type EvaluationStatus } from "@/lib/domain";
+import {
+  EVALUATION_STATUS_LABELS,
+  ROLE_LABELS,
+  type AppRole,
+  type EvaluationStatus,
+} from "@/lib/domain";
 import { humanizeToken } from "@/lib/domain";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -18,7 +29,10 @@ export const Route = createFileRoute("/_authenticated/admin/")({
         content: "System-wide overview of internal users, roles, cycles and evaluation progress.",
       },
       { property: "og:title", content: "Administration overview" },
-      { property: "og:description", content: "Users, roles, cycles and audit activity at a glance." },
+      {
+        property: "og:description",
+        content: "Users, roles, cycles and audit activity at a glance.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -62,7 +76,11 @@ function AdminOverview() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="User accounts" value={stats?.totalUsers ?? 0} hint={`${stats?.activeUsers ?? 0} active`} />
+            <StatCard
+              label="User accounts"
+              value={stats?.totalUsers ?? 0}
+              hint={`${stats?.activeUsers ?? 0} active`}
+            />
             <StatCard label="Locked accounts" value={stats?.lockedUsers ?? 0} />
             <StatCard label="Active cycles" value={stats?.activeCycles ?? 0} />
             <StatCard label="Evaluations captured" value={stats?.totalEvaluations ?? 0} />
@@ -139,10 +157,10 @@ function AdminOverview() {
                     {(stats?.security ?? []).map((event) => (
                       <li key={event.id} className="flex flex-wrap justify-between gap-2 py-2">
                         <span>
-                          {event.email ?? "unknown"}  -  {humanizeToken(event.event_type)}
+                          {event.email ?? "unknown"} - {humanizeToken(event.event_type)}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {event.result}  -  {formatDateTime(event.occurred_at)}
+                          {event.result} - {formatDateTime(event.occurred_at)}
                         </span>
                       </li>
                     ))}
@@ -156,4 +174,3 @@ function AdminOverview() {
     </div>
   );
 }
-

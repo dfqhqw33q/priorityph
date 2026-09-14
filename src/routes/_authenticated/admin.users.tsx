@@ -43,7 +43,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EmptyState, LoadingBlock, PageHeader, ReasonDialog, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  ReasonDialog,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import { useAccess } from "@/hooks/use-access";
 import {
   applyUserAccessAction,
@@ -66,7 +72,10 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
           "Create and manage internal Administrator, President, HR and Supervisor accounts, roles and account security.",
       },
       { property: "og:title", content: "Internal user management" },
-      { property: "og:description", content: "Manage internal accounts, roles and account security." },
+      {
+        property: "og:description",
+        content: "Manage internal accounts, roles and account security.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -154,7 +163,10 @@ function AdminUsersPage() {
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
     let list = ((usersQuery.data ?? []) as UserRow[]).filter((user) => {
-      if (term && !`${user.full_name} ${user.email} ${user.job_title ?? ""}`.toLowerCase().includes(term))
+      if (
+        term &&
+        !`${user.full_name} ${user.email} ${user.job_title ?? ""}`.toLowerCase().includes(term)
+      )
         return false;
       if (roleFilter !== ALL && !user.roles.includes(roleFilter as AppRole)) return false;
       if (statusFilter === "ACTIVE" && (!user.is_active || user.is_locked)) return false;
@@ -183,7 +195,9 @@ function AdminUsersPage() {
 
   const actionMutation = useMutation({
     mutationFn: (input: { action: AccessAction; reason: string }) =>
-      applyAction({ data: { userId: selectedId as string, action: input.action, reason: input.reason } }),
+      applyAction({
+        data: { userId: selectedId as string, action: input.action, reason: input.reason },
+      }),
     onSuccess: async (result) => {
       toast.success(
         result.temporaryPassword
@@ -234,7 +248,8 @@ function AdminUsersPage() {
       setCreateOpen(false);
       await refresh();
     },
-    onError: (error: Error) => toast.error(userErrorMessage(error, "User account could not be created")),
+    onError: (error: Error) =>
+      toast.error(userErrorMessage(error, "User account could not be created")),
   });
 
   if (usersQuery.isError) {
@@ -253,7 +268,9 @@ function AdminUsersPage() {
         title="User accounts"
         description="Manage system accounts, roles, and access for authorized users."
         actions={
-          can("users.manage") ? <Button onClick={() => setCreateOpen(true)}>Create user</Button> : null
+          can("users.manage") ? (
+            <Button onClick={() => setCreateOpen(true)}>Create user</Button>
+          ) : null
         }
       />
 
@@ -318,7 +335,10 @@ function AdminUsersPage() {
       {usersQuery.isLoading ? (
         <LoadingBlock rows={5} />
       ) : rows.length === 0 ? (
-        <EmptyState title="No users match these filters" description="Try clearing the search or filters." />
+        <EmptyState
+          title="No users match these filters"
+          description="Try clearing the search or filters."
+        />
       ) : (
         <>
           <div className="overflow-x-auto border border-border bg-card shadow-sm">
@@ -333,7 +353,11 @@ function AdminUsersPage() {
                       onClick={() => setSortDir((prev) => (prev === "asc" ? "desc" : "asc"))}
                     >
                       Name
-                      {sortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
+                      {sortDir === "asc" ? (
+                        <ArrowUp className="size-3" />
+                      ) : (
+                        <ArrowDown className="size-3" />
+                      )}
                     </button>
                   </TableHead>
                   <TableHead scope="col">Email</TableHead>
@@ -351,7 +375,9 @@ function AdminUsersPage() {
                     <TableCell className="font-medium">
                       {user.full_name}
                       {user.job_title ? (
-                        <span className="block text-xs text-muted-foreground">{user.job_title}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {user.job_title}
+                        </span>
                       ) : null}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
@@ -370,7 +396,9 @@ function AdminUsersPage() {
                           {user.is_active ? "Active" : "Inactive"}
                         </Badge>
                         {user.is_locked ? <Badge variant="destructive">Locked</Badge> : null}
-                        {user.must_change_password ? <Badge variant="outline">Password change required</Badge> : null}
+                        {user.must_change_password ? (
+                          <Badge variant="outline">Password change required</Badge>
+                        ) : null}
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
@@ -383,7 +411,10 @@ function AdminUsersPage() {
                         onClick={() => {
                           setSelectedId(user.id);
                           setRolesDraft(user.roles);
-                          setProfileDraft({ fullName: user.full_name, jobTitle: user.job_title ?? "" });
+                          setProfileDraft({
+                            fullName: user.full_name,
+                            jobTitle: user.job_title ?? "",
+                          });
                         }}
                       >
                         Manage
@@ -397,8 +428,8 @@ function AdminUsersPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {current * PAGE_SIZE + 1}-{Math.min(rows.length, (current + 1) * PAGE_SIZE)} of{" "}
-              {rows.length}
+              Showing {current * PAGE_SIZE + 1}-{Math.min(rows.length, (current + 1) * PAGE_SIZE)}{" "}
+              of {rows.length}
             </p>
             <div className="flex gap-2">
               <Button
@@ -468,7 +499,8 @@ function AdminUsersPage() {
             <section className="space-y-3">
               <h3 className="text-sm font-semibold">Role</h3>
               <p className="text-xs text-muted-foreground">
-                Each internal user holds exactly one role. Selecting another role replaces the current one.
+                Each internal user holds exactly one role. Selecting another role replaces the
+                current one.
               </p>
               <RadioGroup
                 value={rolesDraft[0] ?? ""}
@@ -487,17 +519,20 @@ function AdminUsersPage() {
               </RadioGroup>
               {removingOwnAdmin ? (
                 <p className="text-xs text-destructive">
-                  You are removing your own Administrator access. The server blocks this if you are the
-                  last active Administrator.
+                  You are removing your own Administrator access. The server blocks this if you are
+                  the last active Administrator.
                 </p>
               ) : null}
               {can("users.assign_roles") ? (
-                <Button size="sm" onClick={() => setRolesDialogOpen(true)} disabled={rolesDraft.length !== 1}>
+                <Button
+                  size="sm"
+                  onClick={() => setRolesDialogOpen(true)}
+                  disabled={rolesDraft.length !== 1}
+                >
                   Update role
                 </Button>
               ) : null}
             </section>
-
 
             <section className="space-y-3">
               <h3 className="text-sm font-semibold">Account actions</h3>
@@ -527,12 +562,16 @@ function AdminUsersPage() {
               ) : (
                 <div className="flex flex-wrap gap-1">
                   {(securityQuery.data?.permissions ?? []).map((permission) => (
-                    <Badge key={permission} variant="outline" className="text-[11px]" title={permission}>
+                    <Badge
+                      key={permission}
+                      variant="outline"
+                      className="text-[11px]"
+                      title={permission}
+                    >
                       {permissionLabel(permission)}
                     </Badge>
                   ))}
                 </div>
-
               )}
             </section>
 
@@ -546,7 +585,7 @@ function AdminUsersPage() {
                     <li key={event.id} className="flex justify-between gap-2 py-2">
                       <span>{humanizeToken(event.event_type)}</span>
                       <span className="text-xs text-muted-foreground">
-                        {event.result}  -  {formatDateTime(event.occurred_at)}
+                        {event.result} - {formatDateTime(event.occurred_at)}
                       </span>
                     </li>
                   ))}
@@ -580,7 +619,6 @@ function AdminUsersPage() {
         onConfirm={(reason) => rolesMutation.mutate(reason)}
       />
 
-
       <CreateUserDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
@@ -600,7 +638,12 @@ function CreateUserDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pending: boolean;
-  onSubmit: (values: { email: string; fullName: string; jobTitle: string; roles: AppRole[] }) => void;
+  onSubmit: (values: {
+    email: string;
+    fullName: string;
+    jobTitle: string;
+    roles: AppRole[];
+  }) => void;
 }) {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -631,7 +674,12 @@ function CreateUserDialog({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="new-email">Email</Label>
-            <Input id="new-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input
+              id="new-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="new-name">Full name</Label>
@@ -673,4 +721,3 @@ function CreateUserDialog({
     </Dialog>
   );
 }
-

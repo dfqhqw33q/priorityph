@@ -18,7 +18,10 @@ export const Route = createFileRoute("/setup")({
   head: () => ({
     meta: [
       { title: "Initial setup — Priority Handling Logistics, Inc." },
-      { name: "description", content: "Create the first Administrator account for the evaluation system." },
+      {
+        name: "description",
+        content: "Create the first Administrator account for the evaluation system.",
+      },
       { property: "og:title", content: "Initial setup" },
       { property: "og:description", content: "Create the first Administrator account." },
       { property: "og:type", content: "website" },
@@ -80,7 +83,9 @@ function SetupPage() {
                 <Label htmlFor="fullName">Full name</Label>
                 <Input id="fullName" {...form.register("fullName")} />
                 {form.formState.errors.fullName ? (
-                  <p className="text-xs text-destructive">{form.formState.errors.fullName.message}</p>
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.fullName.message}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
@@ -92,9 +97,16 @@ function SetupPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" autoComplete="new-password" {...form.register("password")} />
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  {...form.register("password")}
+                />
                 {form.formState.errors.password ? (
-                  <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
                 ) : null}
               </div>
               <Button type="submit" className="w-full" disabled={pending || allowed === null}>

@@ -34,7 +34,8 @@ async function upsertAccessSession(
 
 export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   const { getAdmin } = await import("./server-core.server");
-  const { generateEvaluationData, generateEmployeeFinalizedBrowserPDF } = await import("./documents.server");
+  const { generateEvaluationData, generateEmployeeFinalizedBrowserPDF } =
+    await import("./documents.server");
   const admin = await getAdmin();
 
   const { data: evaluation } = await admin
@@ -51,7 +52,9 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
     .order("last_verified_at", { ascending: false })
     .limit(10);
 
-  const accessEmail = accessRows?.find((row) => typeof row.email === "string" && row.email.includes("@"))?.email;
+  const accessEmail = accessRows?.find(
+    (row) => typeof row.email === "string" && row.email.includes("@"),
+  )?.email;
 
   if (!accessEmail) {
     const idempotencyKey = `step1-finalized:${evaluationId}`;
@@ -80,7 +83,8 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
     .eq("idempotency_key", idempotencyKey)
     .maybeSingle();
 
-  if (existing) return { status: existing.mail_status === "SENT" ? ("QUEUED" as const) : ("SKIPPED" as const) };
+  if (existing)
+    return { status: existing.mail_status === "SENT" ? ("QUEUED" as const) : ("SKIPPED" as const) };
 
   const { data: delivery, error: insertError } = await admin
     .from("employee_email_deliveries" as never)
@@ -106,7 +110,10 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   if (!apiKey || !fromAddress || !fromAddress.includes("@")) {
     await admin
       .from("employee_email_deliveries" as never)
-      .update({ mail_status: "FAILED", provider_message: "BREVO_API_KEY or EMAIL_FROM is not configured." })
+      .update({
+        mail_status: "FAILED",
+        provider_message: "BREVO_API_KEY or EMAIL_FROM is not configured.",
+      })
       .eq("id", delivery.id);
     return { status: "FAILED" as const };
   }
@@ -138,7 +145,8 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
         to: [{ email: accessEmail }],
         subject,
         htmlContent: html,
-        textContent: "Your completed Step 1 evaluation has been finalized and is available for review.",
+        textContent:
+          "Your completed Step 1 evaluation has been finalized and is available for review.",
         attachment: [
           {
             content: base64Pdf,
@@ -174,7 +182,8 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
 
 export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string) {
   const { getAdmin } = await import("./server-core.server");
-  const { generateEvaluationData, generateEmployeeFinalizedBrowserPDF } = await import("./documents.server");
+  const { generateEvaluationData, generateEmployeeFinalizedBrowserPDF } =
+    await import("./documents.server");
   const admin = await getAdmin();
 
   const { data: evaluation } = await admin
@@ -191,7 +200,9 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
     .order("last_verified_at", { ascending: false })
     .limit(10);
 
-  const accessEmail = accessRows?.find((row) => typeof row.email === "string" && row.email.includes("@"))?.email;
+  const accessEmail = accessRows?.find(
+    (row) => typeof row.email === "string" && row.email.includes("@"),
+  )?.email;
 
   if (!accessEmail) {
     const idempotencyKey = `evaluation-finalized:${evaluationId}`;
@@ -220,7 +231,8 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
     .eq("idempotency_key", idempotencyKey)
     .maybeSingle();
 
-  if (existing) return { status: existing.mail_status === "SENT" ? ("QUEUED" as const) : ("SKIPPED" as const) };
+  if (existing)
+    return { status: existing.mail_status === "SENT" ? ("QUEUED" as const) : ("SKIPPED" as const) };
 
   const { data: delivery, error: insertError } = await admin
     .from("employee_email_deliveries" as never)
@@ -246,7 +258,10 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
   if (!apiKey || !fromAddress || !fromAddress.includes("@")) {
     await admin
       .from("employee_email_deliveries" as never)
-      .update({ mail_status: "FAILED", provider_message: "BREVO_API_KEY or EMAIL_FROM is not configured." })
+      .update({
+        mail_status: "FAILED",
+        provider_message: "BREVO_API_KEY or EMAIL_FROM is not configured.",
+      })
       .eq("id", delivery.id);
     return { status: "FAILED" as const };
   }
@@ -393,15 +408,13 @@ export const verifyEmployeeProfile = createServerFn({ method: "POST" })
       .eq("employee_number", data.employeeNumber)
       .maybeSingle();
     if (!employee) {
-      await admin
-        .from("public_submission_attempts")
-        .insert({
-          attempt_type: "VERIFICATION",
-          outcome: "DENIED",
-          device_session_id: data.deviceSessionId,
-          ip_address: meta.ip,
-          user_agent: meta.userAgent,
-        } as never);
+      await admin.from("public_submission_attempts").insert({
+        attempt_type: "VERIFICATION",
+        outcome: "DENIED",
+        device_session_id: data.deviceSessionId,
+        ip_address: meta.ip,
+        user_agent: meta.userAgent,
+      } as never);
       return { status: "NOT_FOUND" };
     }
     if (employee.employment_status !== "ACTIVE") return { status: "INACTIVE" };
@@ -411,16 +424,14 @@ export const verifyEmployeeProfile = createServerFn({ method: "POST" })
       (data.middleName && normalize(employee.middle_name) !== normalize(data.middleName)) ||
       normalize(employee.last_name) !== normalize(data.lastName)
     ) {
-      await admin
-        .from("public_submission_attempts")
-        .insert({
-          employee_id: employee.id,
-          attempt_type: "VERIFICATION",
-          outcome: "DENIED",
-          device_session_id: data.deviceSessionId,
-          ip_address: meta.ip,
-          user_agent: meta.userAgent,
-        } as never);
+      await admin.from("public_submission_attempts").insert({
+        employee_id: employee.id,
+        attempt_type: "VERIFICATION",
+        outcome: "DENIED",
+        device_session_id: data.deviceSessionId,
+        ip_address: meta.ip,
+        user_agent: meta.userAgent,
+      } as never);
       return { status: "NOT_FOUND" };
     }
     const { data: cycle } = await admin
@@ -447,17 +458,15 @@ export const verifyEmployeeProfile = createServerFn({ method: "POST" })
       });
     }
 
-    await admin
-      .from("public_submission_attempts")
-      .insert({
-        cycle_id: cycle?.id ?? null,
-        employee_id: employee.id,
-        attempt_type: "VERIFICATION",
-        outcome: "SUCCESS",
-        device_session_id: data.deviceSessionId,
-        ip_address: meta.ip,
-        user_agent: meta.userAgent,
-      } as never);
+    await admin.from("public_submission_attempts").insert({
+      cycle_id: cycle?.id ?? null,
+      employee_id: employee.id,
+      attempt_type: "VERIFICATION",
+      outcome: "SUCCESS",
+      device_session_id: data.deviceSessionId,
+      ip_address: meta.ip,
+      user_agent: meta.userAgent,
+    } as never);
     return { status: "VERIFIED", employeeId: employee.id, alreadySubmitted: false };
   });
 
@@ -548,18 +557,16 @@ export const submitStep1 = createServerFn({ method: "POST" })
       .eq("employee_id", employeeId)
       .maybeSingle();
     if (existing) {
-      await admin
-        .from("public_submission_attempts")
-        .insert({
-          cycle_id: cycle.id,
-          employee_id: employeeId,
-          submission_id: data.submissionId,
-          device_session_id: data.deviceSessionId,
-          attempt_type: "SUBMISSION",
-          outcome: "DUPLICATE",
-          ip_address: meta.ip,
-          user_agent: meta.userAgent,
-        } as never);
+      await admin.from("public_submission_attempts").insert({
+        cycle_id: cycle.id,
+        employee_id: employeeId,
+        submission_id: data.submissionId,
+        device_session_id: data.deviceSessionId,
+        attempt_type: "SUBMISSION",
+        outcome: "DUPLICATE",
+        ip_address: meta.ip,
+        user_agent: meta.userAgent,
+      } as never);
       await writeAudit(
         {
           action: "STEP1_DUPLICATE_ATTEMPT",
@@ -627,19 +634,17 @@ export const submitStep1 = createServerFn({ method: "POST" })
       if (error) throw validationError("Could not securely store the signature");
       inlineSignature = null;
     }
-    const { error: signatureError } = await admin
-      .from("employee_signatures")
-      .insert({
-        evaluation_id: evaluation.id,
-        employee_id: employeeId,
-        method: data.signature.method,
-        storage_path: storagePath,
-        signature_data: inlineSignature,
-        content_type: data.signature.contentType,
-        file_size: signatureData.length,
-        signed_at: new Date().toISOString(),
-        source_version: 1,
-      } as never);
+    const { error: signatureError } = await admin.from("employee_signatures").insert({
+      evaluation_id: evaluation.id,
+      employee_id: employeeId,
+      method: data.signature.method,
+      storage_path: storagePath,
+      signature_data: inlineSignature,
+      content_type: data.signature.contentType,
+      file_size: signatureData.length,
+      signed_at: new Date().toISOString(),
+      source_version: 1,
+    } as never);
     if (signatureError) {
       await admin.from("evaluations").delete().eq("id", evaluation.id);
       throw validationError("Could not record your signature");
@@ -673,18 +678,16 @@ export const submitStep1 = createServerFn({ method: "POST" })
       body: "A new performance evaluation has been submitted to you for review and assessment.",
       dedupe_key: `${evaluation.id}:STEP1_SUBMITTED`,
     } as never);
-    await admin
-      .from("public_submission_attempts")
-      .insert({
-        cycle_id: cycle.id,
-        employee_id: employeeId,
-        submission_id: data.submissionId,
-        device_session_id: data.deviceSessionId,
-        attempt_type: "SUBMISSION",
-        outcome: "SUCCESS",
-        ip_address: meta.ip,
-        user_agent: meta.userAgent,
-      } as never);
+    await admin.from("public_submission_attempts").insert({
+      cycle_id: cycle.id,
+      employee_id: employeeId,
+      submission_id: data.submissionId,
+      device_session_id: data.deviceSessionId,
+      attempt_type: "SUBMISSION",
+      outcome: "SUCCESS",
+      ip_address: meta.ip,
+      user_agent: meta.userAgent,
+    } as never);
 
     await writeAudit(
       {

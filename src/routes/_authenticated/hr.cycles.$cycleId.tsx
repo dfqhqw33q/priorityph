@@ -58,14 +58,17 @@ function CycleDetailPage() {
 
   useEffect(() => {
     if (shareUrl && canvasRef.current) {
-      QRCode.toCanvas(canvasRef.current, shareUrl, { width: 220, margin: 1 }).catch(() => undefined);
+      QRCode.toCanvas(canvasRef.current, shareUrl, { width: 220, margin: 1 }).catch(
+        () => undefined,
+      );
     }
   }, [shareUrl]);
 
   const mutation = useMutation({
     mutationFn: async (reason: string) => {
       if (!action) return;
-      if (action.kind === "status") await setStatus({ data: { cycleId, status: action.status, reason } });
+      if (action.kind === "status")
+        await setStatus({ data: { cycleId, status: action.status, reason } });
       else if (action.kind === "regenerate") await regenerate({ data: { cycleId, reason } });
       else await removeDraft({ data: { cycleId, reason } });
     },
@@ -107,7 +110,12 @@ function CycleDetailPage() {
               <>
                 <Button
                   onClick={() =>
-                    setAction({ kind: "status", status: "ACTIVE", title: "Activate cycle", label: "Activate" })
+                    setAction({
+                      kind: "status",
+                      status: "ACTIVE",
+                      title: "Activate cycle",
+                      label: "Activate",
+                    })
                   }
                 >
                   Activate
@@ -121,7 +129,12 @@ function CycleDetailPage() {
               <Button
                 variant="outline"
                 onClick={() =>
-                  setAction({ kind: "status", status: "CLOSED", title: "Close cycle early", label: "Close" })
+                  setAction({
+                    kind: "status",
+                    status: "CLOSED",
+                    title: "Close cycle early",
+                    label: "Close",
+                  })
                 }
               >
                 Close cycle
@@ -165,7 +178,11 @@ function CycleDetailPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               <canvas ref={canvasRef} className="rounded-md border border-border bg-white p-2" />
               <div className="flex-1 space-y-3">
-                <Input readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} />
+                <Input
+                  readOnly
+                  value={shareUrl}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
@@ -221,7 +238,11 @@ function CycleDetailPage() {
         }
         description="Please give a short reason. This is kept in the activity history."
         confirmLabel={
-          action?.kind === "regenerate" ? "Regenerate" : action?.kind === "delete" ? "Delete" : (action?.label ?? "Confirm")
+          action?.kind === "regenerate"
+            ? "Regenerate"
+            : action?.kind === "delete"
+              ? "Delete"
+              : (action?.label ?? "Confirm")
         }
         destructive={action?.kind === "delete" || (action?.kind === "status" && action.destructive)}
         pending={mutation.isPending}
@@ -230,4 +251,3 @@ function CycleDetailPage() {
     </div>
   );
 }
-

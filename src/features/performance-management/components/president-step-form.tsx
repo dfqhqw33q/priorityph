@@ -59,7 +59,8 @@ export function PresidentStepFields({
         const invalid = errors.includes(item.id);
         const describedBy = item.help_text ? `${item.id}-help` : undefined;
         const isTextField = item.input_type === "TEXT" || item.input_type === "LONG_TEXT";
-        const aiEligible = Boolean(onAiSuggest) && !readOnly && isTextField && hasAiMapping(item.code);
+        const aiEligible =
+          Boolean(onAiSuggest) && !readOnly && isTextField && hasAiMapping(item.code);
         const suggestion = suggestions[item.id];
 
         return (
@@ -88,7 +89,9 @@ export function PresidentStepFields({
                     }
                   }}
                 >
-                  <Sparkles className={suggestingItemId === item.id ? "size-3.5 animate-spin" : "size-3.5"} />
+                  <Sparkles
+                    className={suggestingItemId === item.id ? "size-3.5 animate-spin" : "size-3.5"}
+                  />
                   {suggestingItemId === item.id ? "Generating…" : "Generate AI suggestion"}
                 </Button>
               ) : null}
@@ -167,7 +170,9 @@ export function PresidentStepFields({
                     }
                   />
                 ) : (
-                  <p className="whitespace-pre-wrap text-sm text-foreground">{suggestion.suggestion}</p>
+                  <p className="whitespace-pre-wrap text-sm text-foreground">
+                    {suggestion.suggestion}
+                  </p>
                 )}
 
                 <div className="flex flex-wrap gap-2">
@@ -220,20 +225,24 @@ export function PresidentStepFields({
                   <div className="space-y-2 border-t border-border pt-2 text-xs text-muted-foreground">
                     <p>{suggestion.evidence.purpose}</p>
                     <p>
-                      Based only on {suggestion.evidence.employeeName} — {suggestion.evidence.cycle}.
+                      Based only on {suggestion.evidence.employeeName} — {suggestion.evidence.cycle}
+                      .
                     </p>
                     <ul className="space-y-0.5">
                       {suggestion.evidence.factors.map((factor) => (
                         <li key={factor.letter}>
-                          {factor.letter}. {factor.title} — employee {factor.employeeRating ?? "—"}, supervisor{" "}
-                          {factor.supervisorRating ?? "—"}, president {factor.presidentRating ?? "—"}
+                          {factor.letter}. {factor.title} — employee {factor.employeeRating ?? "—"},
+                          supervisor {factor.supervisorRating ?? "—"}, president{" "}
+                          {factor.presidentRating ?? "—"}
                         </li>
                       ))}
                     </ul>
                     {suggestion.evidence.finalScore !== null ? (
                       <p>
                         Final score {suggestion.evidence.finalScore}
-                        {suggestion.evidence.finalRatingLabel ? ` (${suggestion.evidence.finalRatingLabel})` : ""}
+                        {suggestion.evidence.finalRatingLabel
+                          ? ` (${suggestion.evidence.finalRatingLabel})`
+                          : ""}
                       </p>
                     ) : null}
                   </div>

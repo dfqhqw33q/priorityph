@@ -41,7 +41,9 @@ export const getMyAccess = createServerFn({ method: "GET" })
         .from("role_permissions")
         .select("permission_code")
         .in("role_code", roles);
-      permissions = Array.from(new Set((permRows ?? []).map((r) => r.permission_code as Permission)));
+      permissions = Array.from(
+        new Set((permRows ?? []).map((r) => r.permission_code as Permission)),
+      );
     }
 
     return {
@@ -61,7 +63,8 @@ export const recordLoginEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { event: "LOGIN" | "LOGOUT" | "PASSWORD_CHANGED" }) => input)
   .handler(async ({ data, context }) => {
-    const { getAdmin, writeAudit, getRequestMeta, getActorRoles } = await import("./server-core.server");
+    const { getAdmin, writeAudit, getRequestMeta, getActorRoles } =
+      await import("./server-core.server");
     const admin = await getAdmin();
     const meta = getRequestMeta();
     const roles = await getActorRoles(context.userId);
@@ -113,10 +116,12 @@ export const recordLoginEvent = createServerFn({ method: "POST" })
   });
 
 export const recordAuthFailure = createServerFn({ method: "POST" })
-  .inputValidator((input: { email: string; event: "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" }) => ({
-    email: String(input.email).slice(0, 200),
-    event: input.event,
-  }))
+  .inputValidator(
+    (input: { email: string; event: "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" }) => ({
+      email: String(input.email).slice(0, 200),
+      event: input.event,
+    }),
+  )
   .handler(async ({ data }) => {
     const { getAdmin, writeAudit, getRequestMeta } = await import("./server-core.server");
     const admin = await getAdmin();
@@ -161,9 +166,12 @@ export const needsBootstrap = createServerFn({ method: "GET" }).handler(async ()
 export const bootstrapAdministrator = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => bootstrapAdminSchema.parse(input))
   .handler(async ({ data }) => {
-    const { getAdmin, writeAudit, validationError, safeMessage } = await import("./server-core.server");
+    const { getAdmin, writeAudit, validationError, safeMessage } =
+      await import("./server-core.server");
     const admin = await getAdmin();
-    const { count } = await admin.from("internal_users").select("id", { count: "exact", head: true });
+    const { count } = await admin
+      .from("internal_users")
+      .select("id", { count: "exact", head: true });
     if ((count ?? 0) > 0) throw validationError("Initial setup has already been completed");
 
     try {

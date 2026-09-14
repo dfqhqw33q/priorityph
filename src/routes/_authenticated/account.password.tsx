@@ -52,21 +52,33 @@ function ChangePasswordPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Account settings" description="Update your password and keep your account secure." />
+      <PageHeader
+        title="Account settings"
+        description="Update your password and keep your account secure."
+      />
 
       <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Change password</CardTitle>
-            <CardDescription>Use at least 10 characters and avoid common passwords.</CardDescription>
+            <CardDescription>
+              Use at least 10 characters and avoid common passwords.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
               <div className="space-y-2">
                 <Label htmlFor="password">New password</Label>
-                <Input id="password" type="password" autoComplete="new-password" {...form.register("password")} />
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  {...form.register("password")}
+                />
                 {form.formState.errors.password ? (
-                  <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
@@ -78,7 +90,9 @@ function ChangePasswordPage() {
                   {...form.register("confirmPassword")}
                 />
                 {form.formState.errors.confirmPassword ? (
-                  <p className="text-xs text-destructive">{form.formState.errors.confirmPassword.message}</p>
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.confirmPassword.message}
+                  </p>
                 ) : null}
               </div>
               <Button type="submit" disabled={pending}>
@@ -91,4 +105,3 @@ function ChangePasswordPage() {
     </div>
   );
 }
-

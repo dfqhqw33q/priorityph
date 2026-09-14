@@ -8,7 +8,8 @@ export const Route = createFileRoute("/_authenticated/admin/employee-profiles")(
       { title: "Employee profile management | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Manage employee profiles used for evaluation records. Access is limited to System Administrators.",
+        content:
+          "Manage employee profiles used for evaluation records. Access is limited to System Administrators.",
       },
     ],
   }),

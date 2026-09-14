@@ -65,9 +65,7 @@ const SignatureColumn: React.FC<{
     <div className="text-center font-bold uppercase text-[11px] leading-tight mb-1 break-words">
       {heading}
     </div>
-    <div className="text-center text-[10px] leading-tight mb-4 break-words">
-      {subheading}
-    </div>
+    <div className="text-center text-[10px] leading-tight mb-4 break-words">{subheading}</div>
     <div className="flex-1 flex items-center justify-center border-b border-black mb-1 min-h-[40px]">
       {block.signatureImageSrc && (
         <img
@@ -97,9 +95,7 @@ const SignatureColumn: React.FC<{
  * Fully responsive, print-optimized performance evaluation form
  * Supports automatic page breaks and flexible content height
  */
-export const PerformanceEvaluationSheet: React.FC<
-  PerformanceEvaluationSheetProps
-> = ({
+export const PerformanceEvaluationSheet: React.FC<PerformanceEvaluationSheetProps> = ({
   companyName,
   companyAddress,
   periodFrom,
@@ -258,12 +254,8 @@ export const PerformanceEvaluationSheet: React.FC<
                       {factor.letter}.
                     </span>
                     <div className="flex-1">
-                      <span className="font-bold uppercase text-[12px]">
-                        {factor.title}.
-                      </span>{" "}
-                      <span className="text-[12px] break-words">
-                        {factor.description}
-                      </span>
+                      <span className="font-bold uppercase text-[12px]">{factor.title}.</span>{" "}
+                      <span className="text-[12px] break-words">{factor.description}</span>
                     </div>
                   </div>
                 </td>
@@ -306,13 +298,15 @@ export const PerformanceEvaluationSheet: React.FC<
         </h4>
 
         <div className="mb-4">
-          <div className="font-bold text-[12px] mb-2">STEP TWO: Develop conclusion and comments</div>
+          <div className="font-bold text-[12px] mb-2">
+            STEP TWO: Develop conclusion and comments
+          </div>
         </div>
 
         <div className="mb-6">
           <p className="text-[12px] mb-2">
-            1. If the overall rating is excellent or poor, explain why the employee was
-            rated such or support rating with specific incidents.
+            1. If the overall rating is excellent or poor, explain why the employee was rated such
+            or support rating with specific incidents.
           </p>
           <div className="border-b border-black min-h-[40px] mb-2 px-2 py-1 text-[12px] break-words">
             {overallRatingExplanation}
@@ -341,7 +335,9 @@ export const PerformanceEvaluationSheet: React.FC<
           </div>
 
           <div className="flex gap-2 text-[12px]">
-            <span className="font-semibold">To be more effective on present job the employee should:</span>
+            <span className="font-semibold">
+              To be more effective on present job the employee should:
+            </span>
             <div className="flex-1 border-b border-black px-2 py-1 break-words min-h-[24px]">
               {effectivenessRecommendation}
             </div>

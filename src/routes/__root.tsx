@@ -95,10 +95,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Priority Handling Logistics, Inc." },
-      { name: "description", content: "Priority Handling Logistics, Inc. Performance Evaluation System." },
+      {
+        name: "description",
+        content: "Priority Handling Logistics, Inc. Performance Evaluation System.",
+      },
       { name: "author", content: "Priority Handling Logistics, Inc." },
       { property: "og:title", content: "Priority Handling Logistics, Inc." },
-      { property: "og:description", content: "Priority Handling Logistics, Inc. Performance Evaluation System." },
+      {
+        property: "og:description",
+        content: "Priority Handling Logistics, Inc. Performance Evaluation System.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

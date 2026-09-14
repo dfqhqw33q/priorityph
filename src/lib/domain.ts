@@ -1,4 +1,3 @@
-
 export const APP_NAME = "Priority Handling Logistics, Inc.";
 
 export const APP_ROLES = [
@@ -304,7 +303,6 @@ export function roleLandingPath(roles: AppRole[]): string {
   if (roles.includes("ADMINISTRATOR")) return "/admin";
   return "/unauthorized";
 }
-
 
 export const SCORING_RULE_STATUSES = ["DRAFT", "ACTIVE", "RETIRED"] as const;
 export type ScoringRuleStatus = (typeof SCORING_RULE_STATUSES)[number];

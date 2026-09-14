@@ -5,7 +5,13 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState, EvaluationStatusBadge, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  EvaluationStatusBadge,
+  LoadingBlock,
+  PageHeader,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import { getEvaluationHistory } from "@/lib/reports.functions";
 import { humanizeToken } from "@/lib/domain";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
@@ -36,7 +42,11 @@ function HistoryDetailPage() {
       setDocumentHtml(result.html);
     } catch (error) {
       setDocumentOpen(false);
-      window.alert(error instanceof Error ? error.message : "The final evaluation document is not available yet.");
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "The final evaluation document is not available yet.",
+      );
     } finally {
       setDocumentAction(null);
     }
@@ -63,13 +73,28 @@ function HistoryDetailPage() {
             <EvaluationStatusBadge status={detail.status} />
             {detail.status === "FINALIZED" ? (
               <>
-                <Button variant="outline" size="sm" onClick={() => openFinalDocument("preview")} disabled={documentAction !== null}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openFinalDocument("preview")}
+                  disabled={documentAction !== null}
+                >
                   {documentAction === "preview" ? "Opening..." : "Preview"}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => openFinalDocument("print")} disabled={documentAction !== null}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openFinalDocument("print")}
+                  disabled={documentAction !== null}
+                >
                   {documentAction === "print" ? "Opening..." : "Print"}
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => openFinalDocument("preview")} disabled={documentAction !== null}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openFinalDocument("preview")}
+                  disabled={documentAction !== null}
+                >
                   Refresh PDF
                 </Button>
               </>
@@ -89,8 +114,14 @@ function HistoryDetailPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Info label="Self-assessment submitted" value={formatDateTime(detail.employee_submitted_at)} />
-        <Info label="Supervisor review submitted" value={formatDateTime(detail.supervisor_submitted_at)} />
+        <Info
+          label="Self-assessment submitted"
+          value={formatDateTime(detail.employee_submitted_at)}
+        />
+        <Info
+          label="Supervisor review submitted"
+          value={formatDateTime(detail.supervisor_submitted_at)}
+        />
         <Info label="Finalized" value={formatDateTime(detail.finalized_at)} />
         <Info label="Final rating" value={score?.finalRatingLabel ?? "-"} />
       </div>
@@ -114,10 +145,16 @@ function HistoryDetailPage() {
           <CardTitle className="text-base font-bold">Scores</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 text-sm sm:grid-cols-3">
-          <Info label="Employee self-rating average" value={String(score?.employeeAverage ?? "-")} />
+          <Info
+            label="Employee self-rating average"
+            value={String(score?.employeeAverage ?? "-")}
+          />
           <Info label="Supervisor rating average" value={String(score?.supervisorAverage ?? "-")} />
           <Info label="Final score" value={String(score?.finalScore ?? "-")} />
-          <Info label="Scoring version" value={score?.ruleVersion ? String(score.ruleVersion) : "-"} />
+          <Info
+            label="Scoring version"
+            value={score?.ruleVersion ? String(score.ruleVersion) : "-"}
+          />
         </CardContent>
       </Card>
 
@@ -130,9 +167,12 @@ function HistoryDetailPage() {
             <p className="text-sm text-muted-foreground">No progress recorded yet.</p>
           ) : (
             events.map((event) => (
-              <div key={event.id} className="border-b border-border pb-3 text-sm last:border-0 last:pb-0">
+              <div
+                key={event.id}
+                className="border-b border-border pb-3 text-sm last:border-0 last:pb-0"
+              >
                 <p className="font-semibold text-foreground">
-                  {humanizeToken(event.event_type)}  -  {event.actorName}
+                  {humanizeToken(event.event_type)} - {event.actorName}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDateTime(event.occurred_at)}
@@ -153,9 +193,12 @@ function HistoryDetailPage() {
             <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
           ) : (
             auditTrail.map((event) => (
-              <div key={event.id} className="border-b border-border pb-3 text-sm last:border-0 last:pb-0">
+              <div
+                key={event.id}
+                className="border-b border-border pb-3 text-sm last:border-0 last:pb-0"
+              >
                 <p className="font-semibold text-foreground">
-                  {humanizeToken(event.action)}  -  {event.module}
+                  {humanizeToken(event.action)} - {event.module}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDateTime(event.occurred_at)}
@@ -168,7 +211,10 @@ function HistoryDetailPage() {
       </Card>
 
       <div>
-        <Link className="text-sm font-medium text-primary hover:underline" to="/hr/evaluation-history">
+        <Link
+          className="text-sm font-medium text-primary hover:underline"
+          to="/hr/evaluation-history"
+        >
           Back to evaluation history
         </Link>
       </div>
@@ -184,4 +230,3 @@ function Info({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

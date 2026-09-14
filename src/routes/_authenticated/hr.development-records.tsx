@@ -16,7 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import {
   listDevelopmentEmployees,
   listDevelopmentRecords,
@@ -154,7 +159,10 @@ function DevelopmentRecordsPage() {
         />
       ) : (
         <div className="overflow-hidden border border-border bg-card shadow-sm">
-          <table className="w-full text-left text-sm" aria-label="Development records grouped by employee">
+          <table
+            className="w-full text-left text-sm"
+            aria-label="Development records grouped by employee"
+          >
             <caption className="sr-only">Development records grouped by employee</caption>
             <thead className="hidden border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground sm:table-header-group">
               <tr>
@@ -191,11 +199,17 @@ function DevelopmentRecordsPage() {
                   </td>
                   <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
                     <MobileCellLabel label="Development Needs" />
-                    <RecordList records={group.records} render={(record) => record.developmentNeed} />
+                    <RecordList
+                      records={group.records}
+                      render={(record) => record.developmentNeed}
+                    />
                   </td>
                   <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
                     <MobileCellLabel label="Activities" />
-                    <RecordList records={group.records} render={(record) => record.developmentActivity} />
+                    <RecordList
+                      records={group.records}
+                      render={(record) => record.developmentActivity}
+                    />
                   </td>
                   <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
                     <MobileCellLabel label="Source Evaluation" />
@@ -221,11 +235,17 @@ function DevelopmentRecordsPage() {
                   </td>
                   <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
                     <MobileCellLabel label="Status" />
-                    <RecordList records={group.records} render={(record) => humanizeToken(record.status)} />
+                    <RecordList
+                      records={group.records}
+                      render={(record) => humanizeToken(record.status)}
+                    />
                   </td>
                   <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
                     <MobileCellLabel label="Date" />
-                    <RecordList records={group.records} render={(record) => formatDateTime(record.recordDate)} />
+                    <RecordList
+                      records={group.records}
+                      render={(record) => formatDateTime(record.recordDate)}
+                    />
                   </td>
                   <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
                     <MobileCellLabel label="Notes" />
@@ -290,7 +310,9 @@ function RecordList({
     <ol className="space-y-1">
       {records.map((record) => (
         <li key={record.id} className="break-words">
-          <span className="mr-1 text-muted-foreground">{records.length > 1 ? `${records.indexOf(record) + 1}.` : ""}</span>
+          <span className="mr-1 text-muted-foreground">
+            {records.length > 1 ? `${records.indexOf(record) + 1}.` : ""}
+          </span>
           {render(record)}
         </li>
       ))}
@@ -443,4 +465,3 @@ function RecordDialog({
     </Dialog>
   );
 }
-

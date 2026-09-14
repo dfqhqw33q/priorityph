@@ -22,9 +22,8 @@ export const listTemplates = createServerFn({ method: "GET" })
 export const listCycles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<CycleSummary[]> => {
-    const { getAdmin, requirePermission, cycleCountsForCycles } = await import(
-      "./server-core.server"
-    );
+    const { getAdmin, requirePermission, cycleCountsForCycles } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "cycles.view", "Evaluation Cycles");
     const admin = await getAdmin();
     const { data } = await admin
@@ -60,9 +59,7 @@ export const getCycle = createServerFn({ method: "GET" })
 export const saveCycle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    cycleFormSchema
-      .and(z.object({ cycleId: z.string().uuid().optional() }))
-      .parse(input),
+    cycleFormSchema.and(z.object({ cycleId: z.string().uuid().optional() })).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
@@ -87,9 +84,11 @@ export const saveCycle = createServerFn({ method: "POST" })
         .eq("id", data.cycleId)
         .maybeSingle();
       if (!existing) throw validationError("Cycle not found");
-      if (existing.status !== "DRAFT")
-        throw validationError("Only draft cycles can be edited");
-      const { error } = await admin.from("evaluation_cycles").update(payload).eq("id", data.cycleId);
+      if (existing.status !== "DRAFT") throw validationError("Only draft cycles can be edited");
+      const { error } = await admin
+        .from("evaluation_cycles")
+        .update(payload)
+        .eq("id", data.cycleId);
       if (error) throw validationError(error.message);
       await writeAudit({
         actorUserId: context.userId,
@@ -153,7 +152,9 @@ export const changeCycleStatus = createServerFn({ method: "POST" })
       DISABLED: [],
     };
     if (!allowed[existing.status as CycleStatus].includes(next))
-      throw validationError(`A ${existing.status.toLowerCase()} cycle cannot become ${next.toLowerCase()}`);
+      throw validationError(
+        `A ${existing.status.toLowerCase()} cycle cannot become ${next.toLowerCase()}`,
+      );
 
     const patch: {
       status: CycleStatus;
@@ -194,8 +195,14 @@ export const regenerateCycleToken = createServerFn({ method: "POST" })
     z.object({ cycleId: z.string().uuid(), reason: reasonSchema }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError, generateCycleToken } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      generateCycleToken,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "cycles.manage_link", "Evaluation Cycles");
     const admin = await getAdmin();
     const roles = await getActorRoles(context.userId);
@@ -206,7 +213,8 @@ export const regenerateCycleToken = createServerFn({ method: "POST" })
       .eq("id", data.cycleId)
       .maybeSingle();
     if (!existing) throw validationError("Cycle not found");
-    if (existing.status !== "ACTIVE") throw validationError("Only active cycles have a shared link");
+    if (existing.status !== "ACTIVE")
+      throw validationError("Only active cycles have a shared link");
 
     const { error } = await admin
       .from("evaluation_cycles")

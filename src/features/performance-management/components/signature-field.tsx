@@ -5,7 +5,12 @@ import { Label } from "@/components/ui/label";
 
 export type SignatureValue = { method: "DRAWN" | "UPLOAD"; data: string };
 
-type Props = { value?: SignatureValue; disabled?: boolean; compact?: boolean; onChange: (value: SignatureValue | undefined) => void };
+type Props = {
+  value?: SignatureValue;
+  disabled?: boolean;
+  compact?: boolean;
+  onChange: (value: SignatureValue | undefined) => void;
+};
 
 export function SignatureField({ value, disabled = false, compact = false, onChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,7 +29,10 @@ export function SignatureField({ value, disabled = false, compact = false, onCha
   function point(event: React.PointerEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current!;
     const bounds = canvas.getBoundingClientRect();
-    return { x: (event.clientX - bounds.left) * (canvas.width / bounds.width), y: (event.clientY - bounds.top) * (canvas.height / bounds.height) };
+    return {
+      x: (event.clientX - bounds.left) * (canvas.width / bounds.width),
+      y: (event.clientY - bounds.top) * (canvas.height / bounds.height),
+    };
   }
 
   function start(event: React.PointerEvent<HTMLCanvasElement>) {
@@ -67,7 +75,7 @@ export function SignatureField({ value, disabled = false, compact = false, onCha
   function upload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!['image/png', 'image/jpeg'].includes(file.type)) return;
+    if (!["image/png", "image/jpeg"].includes(file.type)) return;
     if (file.size > 500_000) return;
     const reader = new FileReader();
     reader.onload = () => onChange({ method: "UPLOAD", data: String(reader.result) });
@@ -78,19 +86,51 @@ export function SignatureField({ value, disabled = false, compact = false, onCha
     <div className="space-y-3 rounded-md border border-border p-3">
       <Label>Electronic signature *</Label>
       {value?.method === "UPLOAD" ? (
-        <div className={`flex ${compact ? "h-24" : "h-32"} w-full items-center justify-center rounded border border-dashed border-border bg-white p-2`}>
-          <img src={value.data} alt="Uploaded electronic signature" className="max-h-full max-w-full object-contain" />
+        <div
+          className={`flex ${compact ? "h-24" : "h-32"} w-full items-center justify-center rounded border border-dashed border-border bg-white p-2`}
+        >
+          <img
+            src={value.data}
+            alt="Uploaded electronic signature"
+            className="max-h-full max-w-full object-contain"
+          />
         </div>
       ) : (
-        <canvas ref={canvasRef} width={640} height={180} aria-label="Draw your signature" className={`${compact ? "h-24" : "h-32"} w-full touch-none rounded border border-dashed border-border bg-white`} onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerLeave={end} />
+        <canvas
+          ref={canvasRef}
+          width={640}
+          height={180}
+          aria-label="Draw your signature"
+          className={`${compact ? "h-24" : "h-32"} w-full touch-none rounded border border-dashed border-border bg-white`}
+          onPointerDown={start}
+          onPointerMove={move}
+          onPointerUp={end}
+          onPointerLeave={end}
+        />
       )}
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={clear} disabled={disabled}>Clear</Button>
-        <Label htmlFor="signature-upload" className="cursor-pointer rounded-md border border-input px-3 py-2 text-sm">Upload image</Label>
-        <Input id="signature-upload" type="file" accept="image/png,image/jpeg" className="hidden" onChange={upload} disabled={disabled} />
+        <Button type="button" variant="outline" size="sm" onClick={clear} disabled={disabled}>
+          Clear
+        </Button>
+        <Label
+          htmlFor="signature-upload"
+          className="cursor-pointer rounded-md border border-input px-3 py-2 text-sm"
+        >
+          Upload image
+        </Label>
+        <Input
+          id="signature-upload"
+          type="file"
+          accept="image/png,image/jpeg"
+          className="hidden"
+          onChange={upload}
+          disabled={disabled}
+        />
         <span className="text-xs text-muted-foreground">PNG or JPEG, up to 500 KB</span>
       </div>
-      {value?.method === "UPLOAD" ? <p className="text-xs text-muted-foreground">Uploaded signature preview.</p> : null}
+      {value?.method === "UPLOAD" ? (
+        <p className="text-xs text-muted-foreground">Uploaded signature preview.</p>
+      ) : null}
     </div>
   );
 }

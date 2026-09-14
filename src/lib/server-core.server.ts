@@ -142,9 +142,17 @@ export async function requireUsableAccount(userId: string): Promise<void> {
 export function safeMessage(error: unknown, fallback: string): string {
   if (error instanceof AuthorizationError) return error.message;
 
-  if (error && typeof error === "object" && "issues" in error && Array.isArray((error as { issues?: unknown[] }).issues)) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "issues" in error &&
+    Array.isArray((error as { issues?: unknown[] }).issues)
+  ) {
     const issues = (error as { issues?: { message?: string }[] }).issues ?? [];
-    const message = issues.map((issue) => issue.message).filter(Boolean).join("; ");
+    const message = issues
+      .map((issue) => issue.message)
+      .filter(Boolean)
+      .join("; ");
     if (message) return message;
   }
 
@@ -154,10 +162,12 @@ export function safeMessage(error: unknown, fallback: string): string {
     if (raw.startsWith("[") && raw.includes('"message"')) {
       try {
         const parsed = JSON.parse(raw) as Array<{ message?: string }>;
-        const message = parsed.map((issue) => issue.message).filter(Boolean).join("; ");
+        const message = parsed
+          .map((issue) => issue.message)
+          .filter(Boolean)
+          .join("; ");
         if (message) return message;
-      } catch {
-      }
+      } catch {}
       return "Please complete all required fields before submitting.";
     }
     return raw;
@@ -169,10 +179,12 @@ export function safeMessage(error: unknown, fallback: string): string {
     if (normalized.startsWith("[") && normalized.includes('"message"')) {
       try {
         const parsed = JSON.parse(normalized) as Array<{ message?: string }>;
-        const message = parsed.map((issue) => issue.message).filter(Boolean).join("; ");
+        const message = parsed
+          .map((issue) => issue.message)
+          .filter(Boolean)
+          .join("; ");
         if (message) return message;
-      } catch {
-      }
+      } catch {}
       return "Please complete all required fields before submitting.";
     }
     return normalized;
@@ -258,13 +270,7 @@ export async function cycleCountsForCycles(cycleIds: string[]) {
     )
       current.step1_count += 1;
     if (
-      [
-        "FOR_REVIEW",
-        "FOR_PROCESSING",
-        "FOR_APPROVAL",
-        "RETURNED",
-        "FINALIZED",
-      ].includes(row.status)
+      ["FOR_REVIEW", "FOR_PROCESSING", "FOR_APPROVAL", "RETURNED", "FINALIZED"].includes(row.status)
     )
       current.supervisor_count += 1;
     if (["FOR_APPROVAL", "FINALIZED"].includes(row.status)) current.president_count += 1;
@@ -357,26 +363,27 @@ export async function loadEvaluationDetail(evaluationId: string): Promise<Evalua
     }
   ).evaluation_cycles;
   const supervisorId = (row as { supervisor_user_id: string | null }).supervisor_user_id;
-  const [{ data: criteria }, { data: ratings }, { data: signature }, supervisor] = await Promise.all([
-    admin
-      .from("evaluation_criteria")
-      .select("id, letter, title, description, position")
-      .eq("template_id", cycle.template_id)
-      .order("position"),
-    admin
-      .from("evaluation_ratings")
-      .select("criterion_id, evaluator_type, rating, is_locked")
-      .eq("evaluation_id", evaluationId),
-    admin
-      .from("evaluation_stage_signatures")
-      .select("method, signature_data, storage_path, signed_at")
-      .eq("evaluation_id", evaluationId)
-      .eq("stage", "RATER_STEP2")
-      .maybeSingle(),
-    supervisorId
-      ? admin.from("internal_users").select("full_name").eq("id", supervisorId).maybeSingle()
-      : Promise.resolve({ data: null }),
-  ]);
+  const [{ data: criteria }, { data: ratings }, { data: signature }, supervisor] =
+    await Promise.all([
+      admin
+        .from("evaluation_criteria")
+        .select("id, letter, title, description, position")
+        .eq("template_id", cycle.template_id)
+        .order("position"),
+      admin
+        .from("evaluation_ratings")
+        .select("criterion_id, evaluator_type, rating, is_locked")
+        .eq("evaluation_id", evaluationId),
+      admin
+        .from("evaluation_stage_signatures")
+        .select("method, signature_data, storage_path, signed_at")
+        .eq("evaluation_id", evaluationId)
+        .eq("stage", "RATER_STEP2")
+        .maybeSingle(),
+      supervisorId
+        ? admin.from("internal_users").select("full_name").eq("id", supervisorId).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
   let raterSignature = signature ?? null;
   if (raterSignature?.storage_path) {
     const { data: signed } = await admin.storage
@@ -533,7 +540,6 @@ export async function dashboardStats(userId: string) {
   return { roles, activeCycles, employees, awaitingSupervisor, awaitingPresident, finalized };
 }
 
-
 export type PresidentAnswerInput = { itemId: string; value: string };
 
 type PresidentItemRow = {
@@ -664,7 +670,6 @@ export async function savePresidentStep(
 
   return { itemCount: current.items.length };
 }
-
 
 async function countEvaluations(statuses: string[]) {
   const admin = await getAdmin();

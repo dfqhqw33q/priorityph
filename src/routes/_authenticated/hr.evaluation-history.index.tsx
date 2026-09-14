@@ -28,10 +28,14 @@ export const Route = createFileRoute("/_authenticated/hr/evaluation-history/")({
       { title: "Evaluation history | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Search permanent evaluation records, outcomes and workflow progress in one place.",
+        content:
+          "Search permanent evaluation records, outcomes and workflow progress in one place.",
       },
       { property: "og:title", content: "Evaluation history" },
-      { property: "og:description", content: "Completed evaluations, scores, and performance trends." },
+      {
+        property: "og:description",
+        content: "Completed evaluations, scores, and performance trends.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -48,7 +52,8 @@ function HistoryPage() {
 
   const query = useQuery({
     queryKey: ["evaluation-history", { search: debouncedSearch, status, page }],
-    queryFn: () => fetchReport({ data: { search: debouncedSearch, status, page, pageSize: PAGE_SIZE } }),
+    queryFn: () =>
+      fetchReport({ data: { search: debouncedSearch, status, page, pageSize: PAGE_SIZE } }),
     retry: false,
   });
   const rows = (query.data?.rows ?? []) as ReportRow[];
@@ -64,7 +69,10 @@ function HistoryPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard label="Total evaluations" value={query.data.totalCount} />
           <StatCard label="Scored evaluations" value={query.data.summary.scored} />
-          <StatCard label="Average final score" value={query.data.summary.averageFinalScore?.toFixed(2) ?? "-"} />
+          <StatCard
+            label="Average final score"
+            value={query.data.summary.averageFinalScore?.toFixed(2) ?? "-"}
+          />
         </div>
       ) : null}
 
@@ -117,22 +125,34 @@ function HistoryPage() {
       {query.isLoading ? (
         <LoadingBlock rows={6} />
       ) : query.isError ? (
-        <EmptyState title="Evaluation history could not be loaded" description={(query.error as Error).message} />
+        <EmptyState
+          title="Evaluation history could not be loaded"
+          description={(query.error as Error).message}
+        />
       ) : rows.length === 0 ? (
-        <EmptyState title="No evaluation history" description="Evaluations appear here once they are completed." />
+        <EmptyState
+          title="No evaluation history"
+          description="Evaluations appear here once they are completed."
+        />
       ) : (
         <div className="overflow-x-auto border border-border bg-card shadow-sm">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Evaluation history</caption>
             <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
               <tr>
-                {["Employee", "Cycle", "Status", "Employee average", "Supervisor average", "Final score", "Finalized"].map(
-                  (heading) => (
-                    <th key={heading} className="px-4 py-3.5 font-semibold">
-                      {heading}
-                    </th>
-                  ),
-                )}
+                {[
+                  "Employee",
+                  "Cycle",
+                  "Status",
+                  "Employee average",
+                  "Supervisor average",
+                  "Final score",
+                  "Finalized",
+                ].map((heading) => (
+                  <th key={heading} className="px-4 py-3.5 font-semibold">
+                    {heading}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -157,14 +177,18 @@ function HistoryPage() {
                   <td className="px-4 py-3.5">
                     <EvaluationStatusBadge status={row.status as never} />
                   </td>
-                  <td className="px-4 py-3.5 tabular-nums text-foreground">{row.employeeAverage?.toFixed(2) ?? "-"}</td>
+                  <td className="px-4 py-3.5 tabular-nums text-foreground">
+                    {row.employeeAverage?.toFixed(2) ?? "-"}
+                  </td>
                   <td className="px-4 py-3.5 tabular-nums text-foreground">
                     {row.supervisorAverage?.toFixed(2) ?? "-"}
                   </td>
                   <td className="px-4 py-3.5 font-semibold tabular-nums text-primary">
                     {row.finalScore?.toFixed(2) ?? "-"} {row.finalRating ?? ""}
                   </td>
-                  <td className="px-4 py-3.5 text-xs text-muted-foreground">{formatDateTime(row.finalizedAt)}</td>
+                  <td className="px-4 py-3.5 text-xs text-muted-foreground">
+                    {formatDateTime(row.finalizedAt)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -174,7 +198,11 @@ function HistoryPage() {
 
       {query.data && query.data.totalCount > PAGE_SIZE ? (
         <div className="flex gap-2">
-          <Button variant="outline" disabled={page === 0} onClick={() => setPage((value) => value - 1)}>
+          <Button
+            variant="outline"
+            disabled={page === 0}
+            onClick={() => setPage((value) => value - 1)}
+          >
             Previous
           </Button>
           <Button
@@ -189,4 +217,3 @@ function HistoryPage() {
     </div>
   );
 }
-

@@ -269,7 +269,8 @@ export const createOtherRecognitionCandidate = createServerFn({ method: "POST" }
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("../../lib/server-core.server");
+    const { getAdmin, requirePermission, validationError } =
+      await import("../../lib/server-core.server");
     await requirePermission(context.userId, "recognition.manage", "Social Recognition");
     const admin = await getAdmin();
     const { data: evaluation } = await admin
@@ -318,7 +319,8 @@ export const generateRecognitionCertificate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ recordId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("../../lib/server-core.server");
+    const { getAdmin, requirePermission, validationError } =
+      await import("../../lib/server-core.server");
     await requirePermission(context.userId, "recognition.manage", "Social Recognition");
     const admin = await getAdmin();
     const { data: row } = await admin

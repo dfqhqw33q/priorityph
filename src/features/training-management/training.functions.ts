@@ -330,7 +330,8 @@ export async function ensureTrainingRequirementForCommitteeDecision(
       training_date: null,
       related_competency: "",
       committee_recommendation: clean(committee.recommendation),
-      notes: "Officially required by the Performance Evaluation Committee after President finalization.",
+      notes:
+        "Officially required by the Performance Evaluation Committee after President finalization.",
     },
     { onConflict: "source_evaluation_id,source_key" },
   );

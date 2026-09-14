@@ -4,18 +4,43 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const idSchema = z.object({ employeeId: z.string().uuid() });
-const uploadSchema = z.object({ employeeId: z.string().uuid(), fileName: z.string().trim().min(1).max(180), contentType: z.string().max(120), contentBase64: z.string().min(1).max(14_000_000), category: z.enum(["AWARDS_RECOGNITION", "TRAINING_CERTIFICATES", "SUPPORTING_DOCUMENTS", "OTHER_DOCUMENTS"] as const) });
+const uploadSchema = z.object({
+  employeeId: z.string().uuid(),
+  fileName: z.string().trim().min(1).max(180),
+  contentType: z.string().max(120),
+  contentBase64: z.string().min(1).max(14_000_000),
+  category: z.enum([
+    "AWARDS_RECOGNITION",
+    "TRAINING_CERTIFICATES",
+    "SUPPORTING_DOCUMENTS",
+    "OTHER_DOCUMENTS",
+  ] as const),
+});
 
 export const listEmployeeDocuments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => idSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles } = await import("./server-core.server");
+    const { getAdmin, requirePermission, writeAudit, getActorRoles } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "employees.view", "Employee Files");
     const admin = await getAdmin();
-    const { data: rows, error } = await admin.from("employee_documents").select("id, employee_id, evaluation_id, category, file_name, content_type, file_size, created_at").eq("employee_id", data.employeeId).order("created_at", { ascending: false });
+    const { data: rows, error } = await admin
+      .from("employee_documents")
+      .select(
+        "id, employee_id, evaluation_id, category, file_name, content_type, file_size, created_at",
+      )
+      .eq("employee_id", data.employeeId)
+      .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    await writeAudit({ actorUserId: context.userId, actorRole: (await getActorRoles(context.userId)).join(","), action: "EMPLOYEE_FILE_VIEWED", module: "Employee Files", entityType: "employee", entityId: data.employeeId });
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "EMPLOYEE_FILE_VIEWED",
+      module: "Employee Files",
+      entityType: "employee",
+      entityId: data.employeeId,
+    });
     return rows ?? [];
   });
 
@@ -23,55 +48,105 @@ export const getEmployeeDocumentUrl = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ documentId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "employees.view", "Employee Files");
     const admin = await getAdmin();
-    const { data: document } = await admin.from("employee_documents").select("employee_id, storage_path, file_name").eq("id", data.documentId).maybeSingle();
+    const { data: document } = await admin
+      .from("employee_documents")
+      .select("employee_id, storage_path, file_name")
+      .eq("id", data.documentId)
+      .maybeSingle();
     if (!document) throw validationError("Document not found");
-    const { data: signed, error } = await admin.storage.from("employee-files").createSignedUrl(document.storage_path, 300);
-    if (error || !signed?.signedUrl) throw validationError(error?.message ?? "Could not create document link");
-    await writeAudit({ actorUserId: context.userId, actorRole: (await getActorRoles(context.userId)).join(","), action: "DOCUMENT_DOWNLOADED", module: "Employee Files", entityType: "employee_document", entityId: data.documentId, newValue: { fileName: document.file_name } });
+    const { data: signed, error } = await admin.storage
+      .from("employee-files")
+      .createSignedUrl(document.storage_path, 300);
+    if (error || !signed?.signedUrl)
+      throw validationError(error?.message ?? "Could not create document link");
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "DOCUMENT_DOWNLOADED",
+      module: "Employee Files",
+      entityType: "employee_document",
+      entityId: data.documentId,
+      newValue: { fileName: document.file_name },
+    });
     return { url: signed.signedUrl, fileName: document.file_name };
   });
-
 
 export const uploadEmployeeDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => uploadSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "employees.view", "Employee Files");
     const admin = await getAdmin();
     const bytes = Uint8Array.from(Buffer.from(data.contentBase64, "base64"));
     if (bytes.length > 10_000_000) throw validationError("Documents must be 10 MB or smaller");
     const safeName = data.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `employees/${data.employeeId}/documents/${crypto.randomUUID()}-${safeName}`;
-    const { error: uploadError } = await admin.storage.from("employee-files").upload(path, bytes, { contentType: data.contentType || "application/octet-stream", upsert: false });
+    const { error: uploadError } = await admin.storage
+      .from("employee-files")
+      .upload(path, bytes, {
+        contentType: data.contentType || "application/octet-stream",
+        upsert: false,
+      });
     if (uploadError) throw validationError(uploadError.message);
-    const { data: document, error } = await admin.from("employee_documents").insert({ employee_id: data.employeeId, category: data.category, file_name: data.fileName, storage_path: path, content_type: data.contentType || "application/octet-stream", file_size: bytes.length, created_by: context.userId }).select().single();
+    const { data: document, error } = await admin
+      .from("employee_documents")
+      .insert({
+        employee_id: data.employeeId,
+        category: data.category,
+        file_name: data.fileName,
+        storage_path: path,
+        content_type: data.contentType || "application/octet-stream",
+        file_size: bytes.length,
+        created_by: context.userId,
+      })
+      .select()
+      .single();
     if (error) throw validationError(error.message);
-    await writeAudit({ actorUserId: context.userId, actorRole: (await getActorRoles(context.userId)).join(","), action: "DOCUMENT_UPLOADED", module: "Employee Files", entityType: "employee_document", entityId: document.id, newValue: { category: data.category, fileName: data.fileName, fileSize: bytes.length } });
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "DOCUMENT_UPLOADED",
+      module: "Employee Files",
+      entityType: "employee_document",
+      entityId: document.id,
+      newValue: { category: data.category, fileName: data.fileName, fileSize: bytes.length },
+    });
     return document;
   });
 
 export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ 
-    evaluationId: z.string().uuid(),
-    presidentSignatureData: z.string().optional(),
-  }).parse(input))
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        evaluationId: z.string().uuid(),
+        presidentSignatureData: z.string().optional(),
+      })
+      .parse(input),
+  )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermissionAny, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermissionAny, validationError } =
+      await import("./server-core.server");
     const { generateEvaluationData, generateEvaluationHTML } = await import("./documents.server");
 
     try {
       console.log(`[getEvaluationSheetHtml] Starting for evaluation: ${data.evaluationId}`);
-      
-      await requirePermissionAny(context.userId, ["evaluations.view_201", "president.view", "evaluations.review_step3"], "Evaluation Sheet");
+
+      await requirePermissionAny(
+        context.userId,
+        ["evaluations.view_201", "president.view", "evaluations.review_step3"],
+        "Evaluation Sheet",
+      );
       console.log(`[getEvaluationSheetHtml] Permissions check passed`);
 
       const admin = await getAdmin();
-      
+
       let presidentName = "";
       if (data.presidentSignatureData) {
         const { data: currentUser } = await admin
@@ -81,7 +156,7 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
           .maybeSingle();
         presidentName = currentUser?.full_name || "";
       }
-      
+
       const { data: evaluation, error: evalError } = await admin
         .from("evaluations")
         .select("id, status, cycle_id")
@@ -90,17 +165,18 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
 
       console.log(`[getEvaluationSheetHtml] Query result:`, { evaluation, evalError });
 
-      if (evalError) throw validationError(`Database error fetching evaluation: ${evalError.message}`);
+      if (evalError)
+        throw validationError(`Database error fetching evaluation: ${evalError.message}`);
       if (!evaluation) throw validationError(`Evaluation not found with ID: ${data.evaluationId}`);
 
       console.log(`[getEvaluationSheetHtml] Evaluation found, generating data...`);
-      
+
       const evaluationData = await generateEvaluationData(data.evaluationId, {
         presidentSignatureData: data.presidentSignatureData,
         presidentName: presidentName,
       });
       console.log(`[getEvaluationSheetHtml] Evaluation data generated`);
-      
+
       const html = generateEvaluationHTML(evaluationData);
       console.log(`[getEvaluationSheetHtml] HTML generated, returning`);
 
@@ -108,7 +184,7 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error(`[getEvaluationSheetHtml] Error occurred:`, errorMsg);
-      
+
       if (error instanceof Error && error.message.includes("VALIDATION")) {
         throw error;
       }
@@ -127,7 +203,8 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermissionAny, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermissionAny, validationError } =
+      await import("./server-core.server");
     const { createFinalEvaluationDocument } = await import("./documents.server");
 
     await requirePermissionAny(
@@ -140,14 +217,17 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
     const path = `evaluations/${data.evaluationId}/final-document.html`;
 
     if (data.forceRefresh || true) {
-      await createFinalEvaluationDocument(data.evaluationId, context.userId, { forceRefresh: true });
+      await createFinalEvaluationDocument(data.evaluationId, context.userId, {
+        forceRefresh: true,
+      });
     }
 
-    const { data: signed, error } = await admin.storage.from("employee-files").createSignedUrl(path, 300);
+    const { data: signed, error } = await admin.storage
+      .from("employee-files")
+      .createSignedUrl(path, 300);
     if (error || !signed?.signedUrl) {
       throw validationError(error?.message ?? "Final evaluation document is not available yet.");
     }
 
     return { url: signed.signedUrl };
   });
-

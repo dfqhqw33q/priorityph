@@ -27,8 +27,7 @@ function messageFor(eventType: string): string {
       "A completed performance evaluation is ready for Personnel processing.",
     PERSONNEL_SUBMITTED:
       "A performance evaluation is ready for your Committee review and recommendation.",
-    COMMITTEE_SUBMITTED:
-      "A performance evaluation is ready for your review and final approval.",
+    COMMITTEE_SUBMITTED: "A performance evaluation is ready for your review and final approval.",
     SUPERVISOR_SUBMITTED_TO_PRESIDENT:
       "A performance evaluation has been submitted to you for review and assessment.",
     PRESIDENT_RETURNED:

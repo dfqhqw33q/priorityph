@@ -16,7 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import {
   createOtherRecognitionCandidate,
   generateRecognitionCertificate,
@@ -397,7 +402,7 @@ function ReviewDialog({
         <DialogHeader>
           <DialogTitle>Review recognition candidate</DialogTitle>
           <DialogDescription>
-            {candidate?.employeeName}  -  {candidate?.recognitionType}
+            {candidate?.employeeName} - {candidate?.recognitionType}
           </DialogDescription>
         </DialogHeader>
         <p className="whitespace-pre-wrap text-sm">{candidate?.reason}</p>
@@ -520,4 +525,3 @@ function OtherDialog({
     </Dialog>
   );
 }
-

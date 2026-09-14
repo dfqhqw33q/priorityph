@@ -4,7 +4,12 @@ import { useServerFn } from "@tanstack/react-start";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import { getCompetencyProfile } from "@/lib/reports.functions";
 
 export const Route = createFileRoute("/_authenticated/hr/competency/$employeeId")({
@@ -165,7 +170,7 @@ function CompetencyProfilePage() {
                   >
                     <div>
                       <p className="font-semibold">
-                        {period.cycleYear}  -  {period.sourceLabel}
+                        {period.cycleYear} - {period.sourceLabel}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {period.factors.length} factors from finalized evaluation
@@ -209,4 +214,3 @@ function Info({ label, value }: { label: string; value: string | null | undefine
     </div>
   );
 }
-

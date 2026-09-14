@@ -11,10 +11,15 @@ export const Route = createFileRoute("/_authenticated/president/evaluations/$eva
         content: "Review the complete accumulated evaluation and make the final approval decision.",
       },
       { property: "og:title", content: "President final approval" },
-      { property: "og:description", content: "Final approval for the canonical evaluation workflow." },
+      {
+        property: "og:description",
+        content: "Final approval for the canonical evaluation workflow.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <EvaluationStageDetail stage="PRESIDENT" evaluationId={Route.useParams().evaluationId} />,
+  component: () => (
+    <EvaluationStageDetail stage="PRESIDENT" evaluationId={Route.useParams().evaluationId} />
+  ),
 });

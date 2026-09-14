@@ -13,7 +13,12 @@ import { BouncingDots } from "@/components/loading-ui/bouncing-dots";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyAccess, needsBootstrap, recordAuthFailure, recordLoginEvent } from "@/lib/access.functions";
+import {
+  getMyAccess,
+  needsBootstrap,
+  recordAuthFailure,
+  recordLoginEvent,
+} from "@/lib/access.functions";
 import { APP_NAME, roleLandingPath } from "@/lib/domain";
 import { loginSchema } from "@/lib/schemas";
 
@@ -22,9 +27,15 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in — Priority Handling Logistics, Inc." },
-      { name: "description", content: "Secure sign-in for HR, supervisors, the President and administrators." },
+      {
+        name: "description",
+        content: "Secure sign-in for HR, supervisors, the President and administrators.",
+      },
       { property: "og:title", content: "Sign in — Priority Handling Logistics, Inc." },
-      { property: "og:description", content: "Secure sign-in for internal evaluation system users." },
+      {
+        property: "og:description",
+        content: "Secure sign-in for internal evaluation system users.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
@@ -64,7 +75,9 @@ function LoginPage() {
         password: values.password,
       });
       if (error) {
-        await logFailure({ data: { email: values.email, event: "LOGIN_FAILED" } }).catch(() => undefined);
+        await logFailure({ data: { email: values.email, event: "LOGIN_FAILED" } }).catch(
+          () => undefined,
+        );
         toast.error("Incorrect email or password");
         return;
       }
@@ -113,7 +126,12 @@ function LoginPage() {
             <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" autoComplete="username" {...form.register("email")} />
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="username"
+                  {...form.register("email")}
+                />
                 {form.formState.errors.email ? (
                   <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
                 ) : null}
@@ -127,7 +145,9 @@ function LoginPage() {
                   {...form.register("password")}
                 />
                 {form.formState.errors.password ? (
-                  <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
                 ) : null}
               </div>
               <Button type="submit" className="w-full" disabled={pending}>

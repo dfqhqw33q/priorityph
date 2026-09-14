@@ -16,7 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState, LoadingBlock, PageHeader, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import {
   listTrainingData,
   listTrainingEmployees,
@@ -51,7 +56,10 @@ function TrainingPage() {
   const [relatedCompetency, setRelatedCompetency] = useState("");
   const [editing, setEditing] = useState<TrainingRecord | null>(null);
   const query = useQuery({
-    queryKey: ["training-management", { search: debouncedSearch, employeeId, status, provider, relatedCompetency }],
+    queryKey: [
+      "training-management",
+      { search: debouncedSearch, employeeId, status, provider, relatedCompetency },
+    ],
     queryFn: () =>
       fetchTraining({
         data: {
@@ -467,4 +475,3 @@ function RecordDialog({
     </Dialog>
   );
 }
-

@@ -322,7 +322,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
           <DialogHeader className="border-b border-border px-6 py-5 pr-12">
             <DialogTitle>{detailQuery.data?.employee.full_name ?? "Employee File"}</DialogTitle>
             <DialogDescription>
-              Digital 201 File  -  Employee records and evaluation history
+              Digital 201 File - Employee records and evaluation history
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5 px-6 pb-6">
@@ -478,7 +478,7 @@ function EmployeeFileContent({
             Employee no. {employee?.employee_number ?? "-"}
           </p>
           <p className="mt-1 text-sm text-foreground">
-            {employee?.job_title ?? "-"}  -  {employee?.division ?? "-"}
+            {employee?.job_title ?? "-"} - {employee?.division ?? "-"}
             {employee?.section ? `  -  ${employee.section}` : ""}
           </p>
         </div>
@@ -951,7 +951,7 @@ function PeriodSummary({
         <div className="flex items-center justify-between gap-2">
           <EvaluationStatusBadge status={evaluation.status as EvaluationStatus} />
           <span className="text-xs text-muted-foreground">
-            {evaluation.jobTitle}  -  {evaluation.division}
+            {evaluation.jobTitle} - {evaluation.division}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -996,4 +996,3 @@ function ratingSummary(evaluation: HistoryEvaluation | null, criterionId: string
 function formatScore(value: number | null | undefined) {
   return value === null || value === undefined ? "-" : Number(value).toFixed(2);
 }
-

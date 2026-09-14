@@ -4,7 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState, LoadingBlock, PageHeader, StatCard, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  StatCard,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import { getSupervisorStats } from "@/lib/evaluations.functions";
 import { humanizeToken } from "@/lib/domain";
 
@@ -14,10 +20,14 @@ export const Route = createFileRoute("/_authenticated/supervisor/")({
       { title: "Supervisor dashboard | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Review employee Step 1 self-assessments and submit supervisor ratings to the President.",
+        content:
+          "Review employee Step 1 self-assessments and submit supervisor ratings to the President.",
       },
       { property: "og:title", content: "Supervisor dashboard" },
-      { property: "og:description", content: "Employee Step 1 submissions awaiting supervisor review." },
+      {
+        property: "og:description",
+        content: "Employee Step 1 submissions awaiting supervisor review.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -73,9 +83,7 @@ function SupervisorDashboard() {
             <ul className="divide-y divide-border text-sm">
               {(query.data?.activity ?? []).map((event) => (
                 <li key={event.id} className="flex flex-wrap justify-between gap-2 py-2">
-                  <span className="font-medium text-foreground">
-                    {humanizeToken(event.action)}
-                  </span>
+                  <span className="font-medium text-foreground">{humanizeToken(event.action)}</span>
                   <span className="text-xs text-muted-foreground">
                     {formatDateTime(event.occurred_at)}
                   </span>
@@ -88,4 +96,3 @@ function SupervisorDashboard() {
     </div>
   );
 }
-

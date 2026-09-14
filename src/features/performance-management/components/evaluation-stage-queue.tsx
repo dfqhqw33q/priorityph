@@ -21,8 +21,19 @@ const titles: Record<Stage, string> = {
 
 export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
   const fetchQueue = useServerFn(listEvaluationStageQueue);
-  const query = useQuery({ queryKey: ["phase2-queue", stage], queryFn: () => fetchQueue({ data: { stage } }), retry: false });
-  const detailPath = stage === "REVIEWING_SUPERVISOR" ? "/reviewing-supervisor/evaluations/$evaluationId" : stage === "PERSONNEL" ? "/personnel/evaluations/$evaluationId" : stage === "COMMITTEE" ? "/committee/evaluations/$evaluationId" : "/president/approvals/$evaluationId";
+  const query = useQuery({
+    queryKey: ["phase2-queue", stage],
+    queryFn: () => fetchQueue({ data: { stage } }),
+    retry: false,
+  });
+  const detailPath =
+    stage === "REVIEWING_SUPERVISOR"
+      ? "/reviewing-supervisor/evaluations/$evaluationId"
+      : stage === "PERSONNEL"
+        ? "/personnel/evaluations/$evaluationId"
+        : stage === "COMMITTEE"
+          ? "/committee/evaluations/$evaluationId"
+          : "/president/approvals/$evaluationId";
   return (
     <div className="space-y-6">
       <PageHeader
@@ -37,10 +48,14 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
                 : "Review evaluations and make the final approval decision."
         }
       />
-      {query.isLoading ? <LoadingBlock rows={5} /> : query.isError ? (
+      {query.isLoading ? (
+        <LoadingBlock rows={5} />
+      ) : query.isError ? (
         <EmptyState
           title="Queue unavailable"
-          description={query.error instanceof Error ? query.error.message : "Unable to load the queue"}
+          description={
+            query.error instanceof Error ? query.error.message : "Unable to load the queue"
+          }
         />
       ) : (query.data ?? []).length === 0 ? (
         <EmptyState
@@ -85,4 +100,3 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
     </div>
   );
 }
-

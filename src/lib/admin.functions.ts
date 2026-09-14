@@ -287,14 +287,12 @@ export const setRolePermissions = createServerFn({ method: "POST" })
       .eq("role_code", data.role);
     await admin.from("role_permissions").delete().eq("role_code", data.role);
     if (data.permissions.length > 0) {
-      const { error } = await admin
-        .from("role_permissions")
-        .insert(
-          data.permissions.map((permission) => ({
-            role_code: data.role,
-            permission_code: permission,
-          })),
-        );
+      const { error } = await admin.from("role_permissions").insert(
+        data.permissions.map((permission) => ({
+          role_code: data.role,
+          permission_code: permission,
+        })),
+      );
       if (error) throw validationError(error.message);
     }
     await writeAudit({

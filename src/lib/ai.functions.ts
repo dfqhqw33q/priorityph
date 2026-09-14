@@ -4,10 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { AiSuggestionResult } from "@/lib/ai-suggestions";
 
-const raterSuggestionCache = new Map<
-  string,
-  { expiresAt: number; value: RaterAiSuggestion }
->();
+const raterSuggestionCache = new Map<string, { expiresAt: number; value: RaterAiSuggestion }>();
 const RATER_CACHE_TTL = 5 * 60_000;
 
 function readRaterSuggestionCache(key: string): RaterAiSuggestion | null {
@@ -271,8 +268,7 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       getAiProviderName,
       rewriteEvaluationText,
       containsEvaluationMetaLanguage,
-    } =
-      await import("./ai-provider.server");
+    } = await import("./ai-provider.server");
     const prompt = [
       "You are an advisory assistant embedded in an annual performance evaluation.",
       "Write the actual evaluation content directly about the employee and their performance.",
@@ -321,7 +317,8 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
       suggestions = Object.fromEntries(
         fields.map((field) => {
           const value = rewriteEvaluationText(String(parsed[field]));
-          if (containsEvaluationMetaLanguage(value)) throw new Error("Meta-language in field output");
+          if (containsEvaluationMetaLanguage(value))
+            throw new Error("Meta-language in field output");
           return [field, value.slice(0, 4000)];
         }),
       ) as RaterAiSuggestion["suggestions"];
@@ -344,7 +341,8 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
         )
           throw new Error("Invalid recommendation option");
         const reason = rewriteEvaluationText(recommendation.reason);
-        if (containsEvaluationMetaLanguage(reason)) throw new Error("Meta-language in recommendation");
+        if (containsEvaluationMetaLanguage(reason))
+          throw new Error("Meta-language in recommendation");
         return {
           recommendedOption: recommendation.recommendedOption,
           reason: reason.slice(0, 1000),
@@ -354,10 +352,7 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
         parsed["developmentPotential"],
         developmentOptions,
       );
-      advancementOutlook = parseRecommendation(
-        parsed["advancementOutlook"],
-        advancementOptions,
-      );
+      advancementOutlook = parseRecommendation(parsed["advancementOutlook"], advancementOptions);
     } catch {
       throw validationError("AI returned invalid field suggestions.");
     }
@@ -547,8 +542,7 @@ export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" 
       getAiProviderName,
       rewriteEvaluationText,
       containsEvaluationMetaLanguage,
-    } =
-      await import("./ai-provider.server");
+    } = await import("./ai-provider.server");
     const prompt = [
       "You are assisting the Reviewing Supervisor / Division Head in completing the existing Step 3 review fields.",
       "Return JSON with exactly these string keys: comments, recommendations.",
@@ -575,15 +569,14 @@ export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" 
           : "AI assistance is unavailable. You can complete these fields manually.",
       );
     }
-    if (
-      typeof parsed["comments"] !== "string" ||
-      typeof parsed["recommendations"] !== "string"
-    )
+    if (typeof parsed["comments"] !== "string" || typeof parsed["recommendations"] !== "string")
       throw validationError("AI returned invalid Reviewing Supervisor suggestions.");
     const comments = rewriteEvaluationText(String(parsed["comments"]));
     const recommendations = rewriteEvaluationText(String(parsed["recommendations"]));
     if (containsEvaluationMetaLanguage(comments) || containsEvaluationMetaLanguage(recommendations))
-      throw validationError("AI returned evaluator-focused text. Please regenerate the suggestion.");
+      throw validationError(
+        "AI returned evaluator-focused text. Please regenerate the suggestion.",
+      );
     const generatedAt = new Date().toISOString();
     await writeAudit(
       {
@@ -711,12 +704,14 @@ export const suggestCommitteeTrainingRecommendation = createServerFn({ method: "
         )?.rating ?? null,
       supervisorRating:
         detail.ratings.find(
-          (rating) => rating.criterion_id === criterion.id && rating.evaluator_type === "SUPERVISOR",
+          (rating) =>
+            rating.criterion_id === criterion.id && rating.evaluator_type === "SUPERVISOR",
         )?.rating ?? null,
       reviewingSupervisorRating:
         detail.ratings.find(
           (rating) =>
-            rating.criterion_id === criterion.id && rating.evaluator_type === "REVIEWING_SUPERVISOR",
+            rating.criterion_id === criterion.id &&
+            rating.evaluator_type === "REVIEWING_SUPERVISOR",
         )?.rating ?? null,
     }));
     const source = detail as typeof detail & Record<string, string | null>;
@@ -1042,7 +1037,9 @@ export const suggestPresidentField = createServerFn({ method: "POST" })
     }
     if (!suggestion) throw validationError("AI returned an empty suggestion.");
     if (containsEvaluationMetaLanguage(suggestion))
-      throw validationError("AI returned evaluator-focused text. Please regenerate the suggestion.");
+      throw validationError(
+        "AI returned evaluator-focused text. Please regenerate the suggestion.",
+      );
     if (suggestion.length > 4000) suggestion = suggestion.slice(0, 4000);
 
     const generatedAt = new Date().toISOString();

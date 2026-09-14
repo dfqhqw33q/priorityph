@@ -25,7 +25,10 @@ import {
   PageHeader,
   formatDateTime,
 } from "@/components/shared/shared-ui";
-import { EvaluationRatingCards, ratingFor } from "@/features/performance-management/components/rating-matrix";
+import {
+  EvaluationRatingCards,
+  ratingFor,
+} from "@/features/performance-management/components/rating-matrix";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluation } from "@/lib/evaluations.functions";
 import { saveRaterStep2 } from "@/lib/evaluation-workflow.functions";
@@ -100,7 +103,9 @@ function RaterAiField(props: Step2Props) {
       ) : props.ai ? (
         <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3">
           <>
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary">AI suggestion</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+              AI suggestion
+            </p>
             <Textarea
               className="mt-2 bg-background"
               rows={3}
@@ -198,7 +203,13 @@ function Step2Input(props: Step2Props) {
   );
 }
 
-function Step2Choice({ field, label, options, compactOptions = false, ...props }: Step2Props & { options: string[]; compactOptions?: boolean }) {
+function Step2Choice({
+  field,
+  label,
+  options,
+  compactOptions = false,
+  ...props
+}: Step2Props & { options: string[]; compactOptions?: boolean }) {
   return (
     <fieldset className="space-y-2">
       <legend className="text-sm font-medium">{label}</legend>
@@ -606,7 +617,8 @@ function SupervisorReviewPage() {
         <CardHeader>
           <CardTitle className="text-base">Performance factors</CardTitle>
           <CardDescription>
-            Employee ratings are shown for reference. Rate each factor from 1 (poor) to 5 (excellent).
+            Employee ratings are shown for reference. Rate each factor from 1 (poor) to 5
+            (excellent).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -663,75 +675,79 @@ function SupervisorReviewPage() {
         <CardContent className="space-y-5">
           {aiUnavailable ? <p className="text-sm text-muted-foreground">{aiUnavailable}</p> : null}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-tight">PERFORMANCE CONCLUSIONS</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-tight">
+              PERFORMANCE CONCLUSIONS
+            </h3>
             <RaterAiField
-            label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents."
-            field="overallExplanation"
-            step2={step2}
-            setStep2={setStep2}
-            editable={editable}
-            canEdit={can("evaluations.step2")}
-            setDirty={setDirty}
-            ai={aiSuggestions.overallExplanation}
-            onEdit={(value) => editSuggestion("overallExplanation", value)}
-            editing={Boolean(aiEditing.overallExplanation)}
-            onToggleEdit={() => toggleSuggestionEdit("overallExplanation")}
-            onUse={() => applySuggestion("overallExplanation")}
-            onDiscard={() => discardSuggestion("overallExplanation")}
+              label="1. If the overall rating is excellent or poor, explain why the employee was rated such or support rating with specific incidents."
+              field="overallExplanation"
+              step2={step2}
+              setStep2={setStep2}
+              editable={editable}
+              canEdit={can("evaluations.step2")}
+              setDirty={setDirty}
+              ai={aiSuggestions.overallExplanation}
+              onEdit={(value) => editSuggestion("overallExplanation", value)}
+              editing={Boolean(aiEditing.overallExplanation)}
+              onToggleEdit={() => toggleSuggestionEdit("overallExplanation")}
+              onUse={() => applySuggestion("overallExplanation")}
+              onDiscard={() => discardSuggestion("overallExplanation")}
             />
             <p className="text-sm font-medium">
               2. Summarize the principal strengths and weakness of the employee.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
-            <RaterAiField
-              label="Principal Strengths"
-              field="strengths"
-              step2={step2}
-              setStep2={setStep2}
-              editable={editable}
-              canEdit={can("evaluations.step2")}
-              setDirty={setDirty}
-              ai={aiSuggestions.strengths}
-              onEdit={(value) => editSuggestion("strengths", value)}
-              editing={Boolean(aiEditing.strengths)}
-              onToggleEdit={() => toggleSuggestionEdit("strengths")}
-              onUse={() => applySuggestion("strengths")}
-              onDiscard={() => discardSuggestion("strengths")}
-            />
-            <RaterAiField
-              label="Principal Weakness"
-              field="weaknesses"
-              step2={step2}
-              setStep2={setStep2}
-              editable={editable}
-              canEdit={can("evaluations.step2")}
-              setDirty={setDirty}
-              ai={aiSuggestions.weaknesses}
-              onEdit={(value) => editSuggestion("weaknesses", value)}
-              editing={Boolean(aiEditing.weaknesses)}
-              onToggleEdit={() => toggleSuggestionEdit("weaknesses")}
-              onUse={() => applySuggestion("weaknesses")}
-              onDiscard={() => discardSuggestion("weaknesses")}
-            />
+              <RaterAiField
+                label="Principal Strengths"
+                field="strengths"
+                step2={step2}
+                setStep2={setStep2}
+                editable={editable}
+                canEdit={can("evaluations.step2")}
+                setDirty={setDirty}
+                ai={aiSuggestions.strengths}
+                onEdit={(value) => editSuggestion("strengths", value)}
+                editing={Boolean(aiEditing.strengths)}
+                onToggleEdit={() => toggleSuggestionEdit("strengths")}
+                onUse={() => applySuggestion("strengths")}
+                onDiscard={() => discardSuggestion("strengths")}
+              />
+              <RaterAiField
+                label="Principal Weakness"
+                field="weaknesses"
+                step2={step2}
+                setStep2={setStep2}
+                editable={editable}
+                canEdit={can("evaluations.step2")}
+                setDirty={setDirty}
+                ai={aiSuggestions.weaknesses}
+                onEdit={(value) => editSuggestion("weaknesses", value)}
+                editing={Boolean(aiEditing.weaknesses)}
+                onToggleEdit={() => toggleSuggestionEdit("weaknesses")}
+                onUse={() => applySuggestion("weaknesses")}
+                onDiscard={() => discardSuggestion("weaknesses")}
+              />
             </div>
             <RaterAiField
-            label="To be more effective on present job the employee should:"
-            field="effectiveness"
-            step2={step2}
-            setStep2={setStep2}
-            editable={editable}
-            canEdit={can("evaluations.step2")}
-            setDirty={setDirty}
-            ai={aiSuggestions.effectiveness}
-            onEdit={(value) => editSuggestion("effectiveness", value)}
-            editing={Boolean(aiEditing.effectiveness)}
-            onToggleEdit={() => toggleSuggestionEdit("effectiveness")}
-            onUse={() => applySuggestion("effectiveness")}
-            onDiscard={() => discardSuggestion("effectiveness")}
+              label="To be more effective on present job the employee should:"
+              field="effectiveness"
+              step2={step2}
+              setStep2={setStep2}
+              editable={editable}
+              canEdit={can("evaluations.step2")}
+              setDirty={setDirty}
+              ai={aiSuggestions.effectiveness}
+              onEdit={(value) => editSuggestion("effectiveness", value)}
+              editing={Boolean(aiEditing.effectiveness)}
+              onToggleEdit={() => toggleSuggestionEdit("effectiveness")}
+              onUse={() => applySuggestion("effectiveness")}
+              onDiscard={() => discardSuggestion("effectiveness")}
             />
           </section>
           <section className="space-y-4 border-t border-border/60 pt-4">
-            <h3 className="text-sm font-semibold uppercase tracking-tight">DEVELOPMENT AND CAREER</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-tight">
+              DEVELOPMENT AND CAREER
+            </h3>
             <div className="grid gap-5 lg:grid-cols-2">
               <Step2Choice
                 label="3. The employee's development potential on present job is:"
@@ -766,125 +782,125 @@ function SupervisorReviewPage() {
                 setDirty={setDirty}
               />
             </div>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <RecommendationPanel
-              label="Development Potential"
-              recommendation={aiRecommendations.developmentPotential}
-              editable={editable && can("evaluations.step2")}
-              onApply={() => applyRecommendation("developmentPotential")}
-              onDismiss={() => discardRecommendation("developmentPotential")}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <RecommendationPanel
+                label="Development Potential"
+                recommendation={aiRecommendations.developmentPotential}
+                editable={editable && can("evaluations.step2")}
+                onApply={() => applyRecommendation("developmentPotential")}
+                onDismiss={() => discardRecommendation("developmentPotential")}
+              />
+              <RecommendationPanel
+                label="Advancement Outlook"
+                recommendation={aiRecommendations.advancementOutlook}
+                editable={editable && can("evaluations.step2")}
+                onApply={() => applyRecommendation("advancementOutlook")}
+                onDismiss={() => discardRecommendation("advancementOutlook")}
+              />
+            </div>
+            <RaterAiField
+              label="5. Suggest ways to accelerate employee's growth and development."
+              field="growthSuggestions"
+              step2={step2}
+              setStep2={setStep2}
+              editable={editable}
+              canEdit={can("evaluations.step2")}
+              setDirty={setDirty}
+              ai={aiSuggestions.growthSuggestions}
+              onEdit={(value) => editSuggestion("growthSuggestions", value)}
+              editing={Boolean(aiEditing.growthSuggestions)}
+              onToggleEdit={() => toggleSuggestionEdit("growthSuggestions")}
+              onUse={() => applySuggestion("growthSuggestions")}
+              onDiscard={() => discardSuggestion("growthSuggestions")}
             />
-            <RecommendationPanel
-              label="Advancement Outlook"
-              recommendation={aiRecommendations.advancementOutlook}
-              editable={editable && can("evaluations.step2")}
-              onApply={() => applyRecommendation("advancementOutlook")}
-              onDismiss={() => discardRecommendation("advancementOutlook")}
-            />
-          </div>
-          <RaterAiField
-            label="5. Suggest ways to accelerate employee's growth and development."
-            field="growthSuggestions"
-            step2={step2}
-            setStep2={setStep2}
-            editable={editable}
-            canEdit={can("evaluations.step2")}
-            setDirty={setDirty}
-            ai={aiSuggestions.growthSuggestions}
-            onEdit={(value) => editSuggestion("growthSuggestions", value)}
-            editing={Boolean(aiEditing.growthSuggestions)}
-            onToggleEdit={() => toggleSuggestionEdit("growthSuggestions")}
-            onUse={() => applySuggestion("growthSuggestions")}
-            onDiscard={() => discardSuggestion("growthSuggestions")}
-          />
           </section>
           <section className="space-y-4 border-t border-border/60 pt-4">
             <h3 className="text-sm font-semibold uppercase tracking-tight">JOB / TRANSFER</h3>
-          <Step2Choice
-            label="6. Has the employee expressed any interest in assuming another job or transferring to another company / division / department / section?"
-            field="transferInterest"
-            options={["YES", "NO", "NOT_AWARE"]}
-            step2={step2}
-            setStep2={setStep2}
-            editable={editable}
-            canEdit={can("evaluations.step2")}
-            setDirty={setDirty}
-            compactOptions
-          />
-          {step2.transferInterest === "YES" ? (
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Step2Input
-                label="What job?"
-                field="transferJob"
-                step2={step2}
-                setStep2={setStep2}
-                editable={editable}
-                canEdit={can("evaluations.step2")}
-                setDirty={setDirty}
-              />
-              <Step2Input
-                label="Where?"
-                field="transferWhere"
-                step2={step2}
-                setStep2={setStep2}
-                editable={editable}
-                canEdit={can("evaluations.step2")}
-                setDirty={setDirty}
-              />
-              <Step2Input
-                label="Is he qualified?"
-                field="transferQualified"
-                step2={step2}
-                setStep2={setStep2}
-                editable={editable}
-                canEdit={can("evaluations.step2")}
-                setDirty={setDirty}
-              />
-            </div>
-          ) : null}
+            <Step2Choice
+              label="6. Has the employee expressed any interest in assuming another job or transferring to another company / division / department / section?"
+              field="transferInterest"
+              options={["YES", "NO", "NOT_AWARE"]}
+              step2={step2}
+              setStep2={setStep2}
+              editable={editable}
+              canEdit={can("evaluations.step2")}
+              setDirty={setDirty}
+              compactOptions
+            />
+            {step2.transferInterest === "YES" ? (
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Step2Input
+                  label="What job?"
+                  field="transferJob"
+                  step2={step2}
+                  setStep2={setStep2}
+                  editable={editable}
+                  canEdit={can("evaluations.step2")}
+                  setDirty={setDirty}
+                />
+                <Step2Input
+                  label="Where?"
+                  field="transferWhere"
+                  step2={step2}
+                  setStep2={setStep2}
+                  editable={editable}
+                  canEdit={can("evaluations.step2")}
+                  setDirty={setDirty}
+                />
+                <Step2Input
+                  label="Is he qualified?"
+                  field="transferQualified"
+                  step2={step2}
+                  setStep2={setStep2}
+                  editable={editable}
+                  canEdit={can("evaluations.step2")}
+                  setDirty={setDirty}
+                />
+              </div>
+            ) : null}
           </section>
           <div className="grid items-start gap-6 border-t border-border/60 pt-4 lg:grid-cols-2">
             <section className="min-w-0 space-y-4">
               <h3 className="text-sm font-semibold uppercase tracking-tight">OTHER COMMENTS</h3>
               <RaterAiField
-            label="7. Other comments and recommendations"
-            field="otherComments"
-            step2={step2}
-            setStep2={setStep2}
-            editable={editable}
-            canEdit={can("evaluations.step2")}
-            setDirty={setDirty}
-            ai={aiSuggestions.otherComments}
-            onEdit={(value) => editSuggestion("otherComments", value)}
-            editing={Boolean(aiEditing.otherComments)}
-            onToggleEdit={() => toggleSuggestionEdit("otherComments")}
-            onUse={() => applySuggestion("otherComments")}
-            onDiscard={() => discardSuggestion("otherComments")}
+                label="7. Other comments and recommendations"
+                field="otherComments"
+                step2={step2}
+                setStep2={setStep2}
+                editable={editable}
+                canEdit={can("evaluations.step2")}
+                setDirty={setDirty}
+                ai={aiSuggestions.otherComments}
+                onEdit={(value) => editSuggestion("otherComments", value)}
+                editing={Boolean(aiEditing.otherComments)}
+                onToggleEdit={() => toggleSuggestionEdit("otherComments")}
+                onUse={() => applySuggestion("otherComments")}
+                onDiscard={() => discardSuggestion("otherComments")}
               />
             </section>
             <section className="min-w-0 space-y-4">
               <h3 className="text-sm font-semibold uppercase tracking-tight">SIGNATURE</h3>
               <div className="space-y-1.5">
-            <SignatureField
-              {...(signature ? { value: signature } : {})}
-              compact
-              disabled={!editable}
-              onChange={(value) => {
-                setSignature(value);
-                setDirty(true);
-              }}
-            />
+                <SignatureField
+                  {...(signature ? { value: signature } : {})}
+                  compact
+                  disabled={!editable}
+                  onChange={(value) => {
+                    setSignature(value);
+                    setDirty(true);
+                  }}
+                />
               </div>
               <div className="space-y-1.5">
-            <Label htmlFor="step2-date">Date</Label>
-            <input
-              id="step2-date"
-              type="text"
-              className="h-8 w-auto min-w-0 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:outline-none"
-              value={step2["date"] || currentDate}
-              readOnly
-              aria-readonly="true"
-            />
+                <Label htmlFor="step2-date">Date</Label>
+                <input
+                  id="step2-date"
+                  type="text"
+                  className="h-8 w-auto min-w-0 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:outline-none"
+                  value={step2["date"] || currentDate}
+                  readOnly
+                  aria-readonly="true"
+                />
               </div>
             </section>
           </div>
@@ -945,4 +961,3 @@ function Field({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

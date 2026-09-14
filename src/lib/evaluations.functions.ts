@@ -5,11 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supervisorDraftSchema, queueFiltersSchema } from "./schemas";
 import type { EvaluationDetail, EvaluationListItem } from "./domain";
 
-const SUPERVISOR_QUEUE_STATUSES = [
-  "SUBMITTED",
-  "DRAFT",
-  "RETURNED",
-];
+const SUPERVISOR_QUEUE_STATUSES = ["SUBMITTED", "DRAFT", "RETURNED"];
 
 const PRESIDENT_QUEUE_STATUSES = ["FOR_APPROVAL"];
 

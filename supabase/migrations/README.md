@@ -6,13 +6,13 @@ This directory is the source-controlled definition of the PostgreSQL database us
 
 The directory contains five SQL migrations:
 
-| Migration | Responsibility |
-| --- | --- |
-| `20260909150000_core_schema_rbac.sql` | Core enums, users, roles, permissions, employees, evaluation templates, cycles, evaluations, ratings, events, audit records, authorization functions, protection triggers, grants, RLS, and reference data. |
-| `20260909150100_evaluation_workflow_scoring.sql` | President review templates and responses, scoring rules and results, notification events, finalization fields, AI fields, and phase-two workflow records and permissions. |
-| `20260909150200_documents_access_signatures.sql` | Employee documents, private `employee-files` storage access, profile verification, public submission tracking, email delivery tracking, and internal signatures. |
-| `20260909150300_learning_training_succession_recognition.sql` | Development records, training recommendations and records, succession profiles, and recognition candidates and records. |
-| `20260909150400_notifications_reporting_performance.sql` | Per-user notifications, notification fan-out, reporting summary function, and application performance indexes. |
+| Migration                                                     | Responsibility                                                                                                                                                                                              |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `20260909150000_core_schema_rbac.sql`                         | Core enums, users, roles, permissions, employees, evaluation templates, cycles, evaluations, ratings, events, audit records, authorization functions, protection triggers, grants, RLS, and reference data. |
+| `20260909150100_evaluation_workflow_scoring.sql`              | President review templates and responses, scoring rules and results, notification events, finalization fields, AI fields, and phase-two workflow records and permissions.                                   |
+| `20260909150200_documents_access_signatures.sql`              | Employee documents, private `employee-files` storage access, profile verification, public submission tracking, email delivery tracking, and internal signatures.                                            |
+| `20260909150300_learning_training_succession_recognition.sql` | Development records, training recommendations and records, succession profiles, and recognition candidates and records.                                                                                     |
+| `20260909150400_notifications_reporting_performance.sql`      | Per-user notifications, notification fan-out, reporting summary function, and application performance indexes.                                                                                              |
 
 The files are flattened consolidated migrations. There are no migration fragments or include directives beneath `supabase/migrations`. The SQL preserves the existing database behavior, including reference data, constraints, indexes, functions, triggers, grants, RLS policies, storage policies, and realtime notification configuration.
 

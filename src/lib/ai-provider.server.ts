@@ -7,13 +7,23 @@
 
 export class AiUnavailableError extends Error {}
 
-const evaluationMetaLanguage = /\b(?:the\s+)?(?:supervisor(?:'s)?|reviewing supervisor|immediate supervisor|evaluator|evaluation process|system|ai|model)\b/i;
+const evaluationMetaLanguage =
+  /\b(?:the\s+)?(?:supervisor(?:'s)?|reviewing supervisor|immediate supervisor|evaluator|evaluation process|system|ai|model)\b/i;
 
 export function rewriteEvaluationText(text: string): string {
   return text
-    .replace(/\bThe Supervisor ratings indicate areas for improvement in\b/gi, "Further development in")
-    .replace(/\bThe Supervisor assessment reflects solid performance in\b/gi, "The employee demonstrates solid performance in")
-    .replace(/\bThe Reviewing Supervisor ratings place the employee at a satisfactory level\b/gi, "The employee demonstrates satisfactory overall performance")
+    .replace(
+      /\bThe Supervisor ratings indicate areas for improvement in\b/gi,
+      "Further development in",
+    )
+    .replace(
+      /\bThe Supervisor assessment reflects solid performance in\b/gi,
+      "The employee demonstrates solid performance in",
+    )
+    .replace(
+      /\bThe Reviewing Supervisor ratings place the employee at a satisfactory level\b/gi,
+      "The employee demonstrates satisfactory overall performance",
+    )
     .trim();
 }
 
@@ -100,8 +110,7 @@ export async function generateAiText(
       ? JSON.stringify({
           strengths:
             "The employee demonstrates strengths in the highest-rated performance factors.",
-          weaknesses:
-            "Further development is recommended in the lower-rated performance factors.",
+          weaknesses: "Further development is recommended in the lower-rated performance factors.",
           effectiveness:
             "The employee can improve present-job effectiveness by focusing on the lower-rated performance factors.",
           q1Explanation: null,
@@ -118,12 +127,14 @@ export async function generateAiText(
             "Targeted coaching, guided practice, and job-specific training may support further growth.",
           otherComments:
             "The employee's current performance supports focused development in the identified areas.",
-          recommendedTraining: "Targeted job-specific development in an identified performance area.",
+          recommendedTraining:
+            "Targeted job-specific development in an identified performance area.",
           relatedCompetency: null,
           rationale:
             "Focused development may strengthen the employee's capability in an area identified by the evaluation.",
           trainingFocus: "Guided practice and applied skill development.",
-          details: "The Committee should review the evidence and decide whether formal training is required.",
+          details:
+            "The Committee should review the evidence and decide whether formal training is required.",
         })
       : "The employee's recorded performance supports a concise, evidence-based evaluation statement.";
   throw new AiUnavailableError("AI assistance unavailable. You can complete this field manually.");

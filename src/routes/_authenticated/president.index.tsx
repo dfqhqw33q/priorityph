@@ -4,7 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState, LoadingBlock, PageHeader, StatCard, formatDateTime } from "@/components/shared/shared-ui";
+import {
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  StatCard,
+  formatDateTime,
+} from "@/components/shared/shared-ui";
 import { getPresidentStats } from "@/lib/president.functions";
 import { humanizeToken } from "@/lib/domain";
 
@@ -17,7 +23,10 @@ export const Route = createFileRoute("/_authenticated/president/")({
         content: "Track supervisor submissions and complete Step 2 conclusions and Step 3 review.",
       },
       { property: "og:title", content: "President dashboard" },
-      { property: "og:description", content: "Evaluations awaiting presidential review and sign-off." },
+      {
+        property: "og:description",
+        content: "Evaluations awaiting presidential review and sign-off.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -72,9 +81,7 @@ function PresidentDashboard() {
             <ul className="divide-y divide-border text-sm">
               {(query.data?.activity ?? []).map((event) => (
                 <li key={event.id} className="flex flex-wrap justify-between gap-2 py-2">
-                  <span className="font-medium text-foreground">
-                    {humanizeToken(event.action)}
-                  </span>
+                  <span className="font-medium text-foreground">{humanizeToken(event.action)}</span>
                   <span className="text-xs text-muted-foreground">
                     {formatDateTime(event.occurred_at)}
                   </span>
@@ -87,4 +94,3 @@ function PresidentDashboard() {
     </div>
   );
 }
-

@@ -32,7 +32,14 @@ import {
   TableRow,
   ResponsiveTableValue,
 } from "@/components/ui/table";
-import { CycleStatusBadge, EmptyState, LoadingBlock, PageHeader, formatCompactDateTime, formatCompactDateTimeParts } from "@/components/shared/shared-ui";
+import {
+  CycleStatusBadge,
+  EmptyState,
+  LoadingBlock,
+  PageHeader,
+  formatCompactDateTime,
+  formatCompactDateTimeParts,
+} from "@/components/shared/shared-ui";
 import { listCycles, listTemplates, saveCycle } from "@/lib/cycles.functions";
 import { useAccess } from "@/hooks/use-access";
 
@@ -80,7 +87,8 @@ function CyclesPage() {
       queryClient.invalidateQueries({ queryKey: ["cycles"] });
       navigate({ to: "/hr/cycles/$cycleId", params: { cycleId: result.cycleId } });
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : "Could not save the cycle"),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Could not save the cycle"),
   });
 
   const rows = (cyclesQuery.data ?? []).filter((cycle) =>
@@ -93,7 +101,9 @@ function CyclesPage() {
         title="Evaluation cycles"
         description="Each yearly cycle has one assessment link and QR code shared with all employees."
         actions={
-          can("cycles.manage") ? <Button onClick={() => setOpen(true)}>New cycle</Button> : undefined
+          can("cycles.manage") ? (
+            <Button onClick={() => setOpen(true)}>New cycle</Button>
+          ) : undefined
         }
       />
 
@@ -141,8 +151,12 @@ function CyclesPage() {
                       {formatCompactDateTime(cycle.ends_at)}
                     </ResponsiveTableValue>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">{cycle.step1_count}</TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">{cycle.supervisor_count}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">
+                    {cycle.step1_count}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">
+                    {cycle.supervisor_count}
+                  </TableCell>
                   <TableCell className="whitespace-nowrap text-right">
                     <Button variant="outline" size="sm" asChild>
                       <Link to="/hr/cycles/$cycleId" params={{ cycleId: cycle.id }}>
@@ -161,7 +175,9 @@ function CyclesPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>New evaluation cycle</DialogTitle>
-            <DialogDescription>New cycles start as a draft. Activate the cycle to share the employee link.</DialogDescription>
+            <DialogDescription>
+              New cycles start as a draft. Activate the cycle to share the employee link.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -208,7 +224,9 @@ function CyclesPage() {
                   id="startsAt"
                   type="datetime-local"
                   value={form.startsAt}
-                  onChange={(event) => setForm((prev) => ({ ...prev, startsAt: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, startsAt: event.target.value }))
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -227,7 +245,9 @@ function CyclesPage() {
                 id="instructions"
                 rows={3}
                 value={form.instructions}
-                onChange={(event) => setForm((prev) => ({ ...prev, instructions: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, instructions: event.target.value }))
+                }
               />
             </div>
           </div>
@@ -244,4 +264,3 @@ function CyclesPage() {
     </div>
   );
 }
-
