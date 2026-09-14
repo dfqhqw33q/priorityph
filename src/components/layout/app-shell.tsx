@@ -498,7 +498,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   async function signOut() {
     try {
       await logEvent({ data: { event: "LOGOUT" } });
-    } catch {}
+    } catch (error) {
+      void error;
+    }
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();

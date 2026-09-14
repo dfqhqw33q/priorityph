@@ -1,4 +1,5 @@
 import { getAdmin, validationError } from "./server-core.server";
+import type { AdminClient } from "./server-core.server";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { chromium as playwrightChromium } from "playwright-core";
 import chromium from "@sparticuz/chromium";
@@ -81,7 +82,7 @@ export function generateEvaluationHTML(params: {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
+      .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
   const text = (value: string) => escapeHtml(value || "");
   const renderLines = (value: string, maxCharsPerLine = 105) => {
@@ -582,7 +583,7 @@ function wrapText(text: string, maxCharsPerLine: number) {
 }
 
 async function convertSignatureToDataUrl(
-  admin: any,
+  admin: AdminClient,
   signatureData: {
     method: string;
     storage_path?: string;
@@ -985,7 +986,7 @@ export async function generateEvaluationData(
         "id, version, employee_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, is_finalized, employee_submitted_at, supervisor_user_id, president_user_id, finalized_by, supervisor_submitted_at, supervisor_remarks, supervisor_step2_overall_explanation, supervisor_step2_strengths, supervisor_step2_weaknesses, supervisor_step2_effectiveness, supervisor_step2_development_potential, supervisor_step2_advancement_outlook, supervisor_step2_growth_suggestions, supervisor_step2_transfer_interest, supervisor_step2_transfer_job, supervisor_step2_transfer_where, supervisor_step2_transfer_qualified, supervisor_step2_other_comments, supervisor_step2_date, cycle_id, evaluation_cycles(name, year, starts_at, ends_at, template_id)",
       )
       .eq("id", evaluationId)
-      .maybeSingle()) as any;
+      .maybeSingle()) as never;
 
     console.log(
       `[generateEvaluationData] Main query - evaluation found: ${!!evaluation}, error: ${evalError?.message}`,
@@ -1050,8 +1051,8 @@ export async function generateEvaluationData(
         .from("employee_signatures")
         .select("method, storage_path, signature_data, content_type")
         .eq("evaluation_id", evaluationId),
-      (admin as any)
-        .from("internal_user_signatures")
+      admin
+        .from("internal_user_signatures" as never)
         .select("user_id, stage, method, storage_path, signature_data, content_type")
         .eq("evaluation_id", evaluationId),
       admin
@@ -1087,7 +1088,7 @@ export async function generateEvaluationData(
     ].filter((id): id is string => Boolean(id));
     const { data: userListResult } = userIds.length
       ? await admin.from("internal_users").select("id, full_name, job_title").in("id", userIds)
-      : ({ data: [] } as any);
+      : ({ data: [] } as never);
 
     const ratingMap = new Map<string, Record<string, number | undefined>>();
     for (const row of ratingsResult.data ?? []) {
@@ -1174,7 +1175,7 @@ export async function generateEvaluationData(
     });
 
     const userLookup = new Map(
-      (userListResult ?? []).map((user: any) => [
+      (userListResult ?? []).map((user) => [
         user.id,
         { full_name: user.full_name, job_title: user.job_title ?? null },
       ]),
@@ -1209,7 +1210,7 @@ export async function generateEvaluationData(
 
     const reviewedWithMeSignature = await convertSignatureToDataUrl(
       admin,
-      (employeeSignaturesResult.data?.[0] ?? null) as any,
+      (employeeSignaturesResult.data?.[0] ?? null) as never,
     );
 
     const reviewedWithMeDateStr = evaluation.employee_submitted_at
@@ -1218,13 +1219,10 @@ export async function generateEvaluationData(
 
     // Use the actual saved stage signatures from the submitted workflow, with the internal-user table as a fallback only.
     const stageSignatureMap = new Map(
-      (stageSignatureResult.data ?? []).map((signature: any) => [signature.stage, signature]),
+      (stageSignatureResult.data ?? []).map((signature) => [signature.stage, signature]),
     );
     const internalSignatureMap = new Map(
-      (internalUserSignaturesResult.data ?? []).map((signature: any) => [
-        signature.stage,
-        signature,
-      ]),
+      (internalUserSignaturesResult.data ?? []).map((signature) => [signature.stage, signature]),
     );
 
     const raterStage =
@@ -1234,10 +1232,10 @@ export async function generateEvaluationData(
       internalSignatureMap.get("REVIEWING_SUPERVISOR_STEP3");
 
     const appraisedBySignature = raterStage
-      ? await convertSignatureToDataUrl(admin, raterStage as any)
+      ? await convertSignatureToDataUrl(admin, raterStage as never)
       : undefined;
     const reviewedBySignature = reviewerStage
-      ? await convertSignatureToDataUrl(admin, reviewerStage as any)
+      ? await convertSignatureToDataUrl(admin, reviewerStage as never)
       : undefined;
     const personnelStage =
       stageSignatureMap.get("PERSONNEL") ?? internalSignatureMap.get("HR_REVIEW");
@@ -1246,14 +1244,16 @@ export async function generateEvaluationData(
     const presidentStage =
       stageSignatureMap.get("PRESIDENT") ?? internalSignatureMap.get("PRESIDENT_STEP3");
     const personnelSignature = personnelStage
-      ? await convertSignatureToDataUrl(admin, personnelStage as any)
+      ? await convertSignatureToDataUrl(admin, personnelStage as never)
       : undefined;
     const committeeSignature = committeeStage
-      ? await convertSignatureToDataUrl(admin, committeeStage as any)
+      ? await convertSignatureToDataUrl(admin, committeeStage as never)
       : undefined;
     const presidentSignature =
       options.presidentSignatureData ||
-      (presidentStage ? await convertSignatureToDataUrl(admin, presidentStage as any) : undefined);
+      (presidentStage
+        ? await convertSignatureToDataUrl(admin, presidentStage as never)
+        : undefined);
     const raterStep2Date =
       evaluation.supervisor_step2_date ??
       (stageSignatureResult.data ?? []).find((s) => s.stage === "RATER_STEP2")?.signed_at ??

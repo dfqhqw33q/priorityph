@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { employeeProfileSchema, step1SubmissionSchema } from "./schemas";
 import type { PublicCycleInfo, Criterion } from "./domain";
+import type { AdminClient } from "./server-core.server";
 import { z } from "zod";
 
 export type PublicCycleResult =
@@ -9,7 +10,7 @@ export type PublicCycleResult =
   | { ok: false; reason: "INVALID" | "NOT_STARTED" | "EXPIRED" | "CLOSED" };
 
 async function upsertAccessSession(
-  admin: any,
+  admin: AdminClient,
   input: {
     cycleId: string;
     employeeId: string;

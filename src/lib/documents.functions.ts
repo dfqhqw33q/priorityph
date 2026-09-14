@@ -87,12 +87,10 @@ export const uploadEmployeeDocument = createServerFn({ method: "POST" })
     if (bytes.length > 10_000_000) throw validationError("Documents must be 10 MB or smaller");
     const safeName = data.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `employees/${data.employeeId}/documents/${crypto.randomUUID()}-${safeName}`;
-    const { error: uploadError } = await admin.storage
-      .from("employee-files")
-      .upload(path, bytes, {
-        contentType: data.contentType || "application/octet-stream",
-        upsert: false,
-      });
+    const { error: uploadError } = await admin.storage.from("employee-files").upload(path, bytes, {
+      contentType: data.contentType || "application/octet-stream",
+      upsert: false,
+    });
     if (uploadError) throw validationError(uploadError.message);
     const { data: document, error } = await admin
       .from("employee_documents")
@@ -216,11 +214,9 @@ export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const path = `evaluations/${data.evaluationId}/final-document.html`;
 
-    if (data.forceRefresh || true) {
-      await createFinalEvaluationDocument(data.evaluationId, context.userId, {
-        forceRefresh: true,
-      });
-    }
+    await createFinalEvaluationDocument(data.evaluationId, context.userId, {
+      forceRefresh: true,
+    });
 
     const { data: signed, error } = await admin.storage
       .from("employee-files")

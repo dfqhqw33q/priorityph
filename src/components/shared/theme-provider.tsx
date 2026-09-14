@@ -33,7 +33,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (stored === "light" || stored === "dark") {
         return stored;
       }
-    } catch {}
+    } catch (error) {
+      void error;
+    }
     return "light";
   });
 
@@ -43,7 +45,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored === "dark") return "dark";
       if (stored === "light") return "light";
-    } catch {}
+    } catch (error) {
+      void error;
+    }
     return "light";
   });
 
@@ -55,7 +59,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   function setTheme(nextTheme: Theme) {
     try {
       localStorage.setItem(STORAGE_KEY, nextTheme);
-    } catch {}
+    } catch (error) {
+      void error;
+    }
     setThemeState(nextTheme);
   }
 

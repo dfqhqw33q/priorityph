@@ -19,7 +19,8 @@ export const Route = createFileRoute("/_authenticated/president/evaluations/$eva
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => (
-    <EvaluationStageDetail stage="PRESIDENT" evaluationId={Route.useParams().evaluationId} />
-  ),
+  component: function PresidentEvaluationRoute() {
+    const { evaluationId } = Route.useParams();
+    return <EvaluationStageDetail stage="PRESIDENT" evaluationId={evaluationId} />;
+  },
 });

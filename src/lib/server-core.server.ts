@@ -167,7 +167,9 @@ export function safeMessage(error: unknown, fallback: string): string {
           .filter(Boolean)
           .join("; ");
         if (message) return message;
-      } catch {}
+      } catch (parseError) {
+        void parseError;
+      }
       return "Please complete all required fields before submitting.";
     }
     return raw;
@@ -184,7 +186,9 @@ export function safeMessage(error: unknown, fallback: string): string {
           .filter(Boolean)
           .join("; ");
         if (message) return message;
-      } catch {}
+      } catch (parseError) {
+        void parseError;
+      }
       return "Please complete all required fields before submitting.";
     }
     return normalized;

@@ -621,8 +621,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
     const workflowDate = new Date().toISOString().slice(0, 10);
     const submissionDate = data.submit ? data.date || workflowDate : data.date || "";
 
-    let nextStatus: EvaluationStatus;
-    nextStatus = data.submit ? "FOR_PROCESSING" : "FOR_REVIEW";
+    const nextStatus: EvaluationStatus = data.submit ? "FOR_PROCESSING" : "FOR_REVIEW";
 
     const result = await transition(
       data.evaluationId,
