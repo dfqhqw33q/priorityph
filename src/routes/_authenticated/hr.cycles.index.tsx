@@ -124,6 +124,39 @@ function CyclesPage() {
     };
   }, [shareUrl]);
 
+  async function copyQrLink() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Evaluation link copied");
+    } catch {
+      toast.error("Could not copy the evaluation link");
+    }
+  }
+
+  async function copyQrImage() {
+    if (!qrCodeUrl || !window.ClipboardItem) {
+      toast.error("Image copying is not supported in this browser");
+      return;
+    }
+    try {
+      const blob = await fetch(qrCodeUrl).then((response) => response.blob());
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      toast.success("QR image copied");
+    } catch {
+      toast.error("Could not copy the QR image");
+    }
+  }
+
+  function downloadQrImage() {
+    if (!qrCodeUrl || !selectedCycle) return;
+    const link = document.createElement("a");
+    link.href = qrCodeUrl;
+    link.download = `performance-evaluation-${selectedCycle.year}-qr.png`;
+    link.click();
+    toast.success("QR image downloaded");
+  }
+
   const activateMutation = useMutation({
     mutationFn: (reason: string) =>
       setStatus({ data: { cycleId: activateCycleId!, status: "ACTIVE", reason } }),
@@ -354,6 +387,19 @@ function CyclesPage() {
               </p>
             )}
           </div>
+          {qrCodeUrl ? (
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button variant="outline" onClick={copyQrLink}>
+                Copy link
+              </Button>
+              <Button variant="outline" onClick={copyQrImage}>
+                Copy image
+              </Button>
+              <Button variant="outline" onClick={downloadQrImage}>
+                Download
+              </Button>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 
