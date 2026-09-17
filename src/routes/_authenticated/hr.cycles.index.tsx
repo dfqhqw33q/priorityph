@@ -89,11 +89,11 @@ function CyclesPage() {
           endsAt: new Date(form.endsAt).toISOString(),
         },
       }),
-    onSuccess: (result) => {
+    onSuccess: () => {
       toast.success("Cycle created");
       setOpen(false);
       queryClient.invalidateQueries({ queryKey: ["cycles"] });
-      navigate({ to: "/hr/cycles/$cycleId", params: { cycleId: result.cycleId } });
+      navigate({ to: "/hr/cycles" });
     },
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "Could not save the cycle"),
@@ -177,7 +177,7 @@ function CyclesPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Opens</TableHead>
                 <TableHead>Closes</TableHead>
-                <TableHead />
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
