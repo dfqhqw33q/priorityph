@@ -537,15 +537,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NavLinks />
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
+          <div className="flex flex-col gap-2">
+            <div className="flex min-w-0 items-center justify-between gap-2">
               <span className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
                 Theme
               </span>
               <ThemeModeControls className="flex items-center gap-0.5 group-data-[collapsible=icon]:hidden" />
               <ThemeToggle className="hidden size-7 group-data-[collapsible=icon]:inline-flex" />
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
               <SidebarTrigger
                 aria-label="Collapse or expand sidebar"
                 title="Collapse or expand sidebar"
@@ -561,8 +561,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SidebarInset>
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
-            <SidebarTrigger aria-label="Toggle navigation" />
-
             <div className="ml-auto flex items-center gap-3">
               <NotificationCenter />
               <DropdownMenu>
