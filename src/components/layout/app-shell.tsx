@@ -45,6 +45,7 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
   SidebarInset,
+  SidebarFooter,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -133,6 +134,14 @@ const NAV: Array<{
         children: [{ to: "/hr/employees", label: "201 Files", permission: "evaluations.view_201" }],
       },
       {
+        label: "Evaluations",
+        icon: ClipboardList,
+        children: [
+          { to: "/personnel", label: "To Review", permission: "personnel.process" },
+          { label: "Completed" },
+        ],
+      },
+      {
         label: "Performance",
         icon: ClipboardList,
         children: [
@@ -184,7 +193,7 @@ const NAV: Array<{
         label: "Processing",
         icon: ClipboardList,
         direct: true,
-        children: [{ to: "/personnel", label: "For Review", permission: "personnel.process" }],
+        children: [{ label: "Processing" }],
       },
     ],
   },
@@ -329,13 +338,13 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     const Icon = item.icon;
     if (!item.to)
       return (
-        <SidebarMenuButton type="button">
+        <SidebarMenuButton type="button" tooltip={item.label}>
           {Icon ? <Icon className="size-4" /> : null}
           <span>{item.label}</span>
         </SidebarMenuButton>
       );
     return (
-      <SidebarMenuButton asChild isActive={active}>
+      <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
         <Link to={item.to} onClick={navigate}>
           {Icon ? <Icon className="size-4" /> : null}
           <span>{item.label}</span>
@@ -380,7 +389,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           <SidebarMenuItem key={category.label}>
             <Collapsible defaultOpen={shouldDefaultOpen} className="group/collapsible">
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="w-full">
+                <SidebarMenuButton className="w-full" tooltip={category.label}>
                   {CategoryIcon ? <CategoryIcon className="size-4" /> : null}
                   <span>{category.label}</span>
                   <span className="ml-auto text-xs" aria-hidden="true">
@@ -515,7 +524,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <Sidebar collapsible="offcanvas" className="border-r border-border bg-card">
+      <Sidebar collapsible="icon" className="border-r border-border bg-card">
         <SidebarHeader className="flex h-16 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-5 text-sidebar-foreground">
           <Link to="/" className="flex min-w-0 translate-y-1 items-center gap-3">
             <img
@@ -533,6 +542,25 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SidebarContent className="px-3 py-5">
           <NavLinks />
         </SidebarContent>
+        <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
+          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <span className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+                Theme
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <SidebarTrigger
+                aria-label="Collapse or expand sidebar"
+                title="Collapse or expand sidebar"
+              />
+              <span className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+                Collapse
+              </span>
+            </div>
+          </div>
+        </SidebarFooter>
       </Sidebar>
 
       <SidebarInset>
@@ -565,11 +593,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                         "No role assigned"}
                     </p>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <div className="px-2 py-1.5">
-                    <p className="mb-2 text-xs font-medium text-muted-foreground">Appearance</p>
-                    <ThemeToggle className="w-full justify-center" />
-                  </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="gap-2">
                     <LogOut className="size-4" />
