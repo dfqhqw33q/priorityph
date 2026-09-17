@@ -32,7 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { ThemeModeControls, ThemeToggle } from "@/components/layout/theme-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -543,14 +543,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NavLinks />
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
-          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <span className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
                 Theme
               </span>
+              <ThemeModeControls className="flex items-center gap-0.5 group-data-[collapsible=icon]:hidden" />
+              <ThemeToggle className="hidden size-7 group-data-[collapsible=icon]:inline-flex" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <SidebarTrigger
                 aria-label="Collapse or expand sidebar"
                 title="Collapse or expand sidebar"
