@@ -145,20 +145,18 @@ const NAV: Array<{
         label: "Performance",
         icon: ClipboardList,
         children: [
-          { to: "/hr/cycles", label: "Evaluation Cycles", permission: "cycles.view" },
+          { to: "/hr/cycles", label: "Cycle", permission: "cycles.view" },
           { to: "/hr/evaluation-history", label: "History", permission: "evaluations.view_201" },
         ],
       },
       {
-        label: "Competencies",
+        label: "Competency",
         icon: BrainCircuit,
-        children: [
-          { to: "/hr/competency", label: "Profiles", permission: "evaluations.view_201" },
-          { label: "Gaps" },
-        ],
+        direct: true,
+        children: [{ to: "/hr/competency", label: "Profiles", permission: "evaluations.view_201" }],
       },
       {
-        label: "Learning Management",
+        label: "Learning",
         icon: GraduationCap,
         direct: true,
         children: [
@@ -170,7 +168,7 @@ const NAV: Array<{
         ],
       },
       {
-        label: "Training Management",
+        label: "Training",
         icon: BriefcaseBusiness,
         direct: true,
         children: [
@@ -178,13 +176,13 @@ const NAV: Array<{
         ],
       },
       {
-        label: "Succession Planning",
+        label: "Planning",
         icon: Handshake,
         direct: true,
         children: [{ to: "/hr/succession", label: "Succession", permission: "succession.view" }],
       },
       {
-        label: "Social Recognition",
+        label: "Recognition",
         icon: Medal,
         direct: true,
         children: [{ to: "/hr/recognition", label: "Recognition", permission: "recognition.view" }],
