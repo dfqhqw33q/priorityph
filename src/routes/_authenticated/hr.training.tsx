@@ -240,12 +240,12 @@ function TrainingDirectory({
             return (
               <TableRow key={employee.employeeId}>
                 <TableCell className="whitespace-nowrap">
-                  <button type="button" className="font-semibold text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>
+                  <button type="button" className="font-normal text-foreground hover:text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>
                     {employee.employeeNumber}
                   </button>
                 </TableCell>
                 <TableCell>
-                  <button type="button" className="font-semibold text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>
+                  <button type="button" className="font-normal text-foreground hover:text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>
                     {employee.employeeName}
                   </button>
                 </TableCell>

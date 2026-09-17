@@ -195,7 +195,7 @@ function DevelopmentRecordsPage() {
                     <TableCell className="whitespace-nowrap">
                       <button
                         type="button"
-                        className="font-semibold text-primary hover:underline"
+                        className="font-normal text-foreground hover:text-primary hover:underline"
                         onClick={() => setEmployeeId(group.employeeId)}
                       >
                         {group.employeeNumber}
@@ -204,7 +204,7 @@ function DevelopmentRecordsPage() {
                     <TableCell>
                       <button
                         type="button"
-                        className="font-semibold text-primary hover:underline"
+                        className="font-normal text-foreground hover:text-primary hover:underline"
                         onClick={() => setEmployeeId(group.employeeId)}
                       >
                         {group.employeeName}

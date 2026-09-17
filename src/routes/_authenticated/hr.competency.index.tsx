@@ -72,7 +72,7 @@ function CompetencyIndexPage() {
                 <TableRow key={employee.id}>
                   <TableCell className="whitespace-nowrap">
                     <Link
-                      className="font-semibold text-primary hover:underline"
+                      className="font-normal text-foreground hover:text-primary hover:underline"
                       to="/hr/competency/$employeeId"
                       params={{ employeeId: employee.id }}
                     >
@@ -81,7 +81,7 @@ function CompetencyIndexPage() {
                   </TableCell>
                   <TableCell>
                     <Link
-                      className="font-semibold text-primary hover:underline"
+                      className="font-normal text-foreground hover:text-primary hover:underline"
                       to="/hr/competency/$employeeId"
                       params={{ employeeId: employee.id }}
                     >

@@ -268,7 +268,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
                   <TableCell className="tabular-nums">
                     <button
                       type="button"
-                      className="font-semibold text-primary hover:underline"
+                      className="font-normal text-foreground hover:text-primary hover:underline"
                       onClick={() => {
                         setSelected(row.id);
                         setSelectedEvaluationId(null);
@@ -284,7 +284,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
                   <TableCell className="font-medium">
                     <button
                       type="button"
-                      className="font-semibold text-primary hover:underline"
+                      className="font-normal text-foreground hover:text-primary hover:underline"
                       onClick={() => setSelected(row.id)}
                     >
                       {row.full_name}

@@ -184,9 +184,9 @@ function HistoryPage() {
                   <TableCell className="whitespace-nowrap tabular-nums">
                     {row.employeeNumber}
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell>
                     <Link
-                      className="font-semibold text-foreground hover:text-primary hover:underline"
+                      className="font-normal text-foreground hover:text-primary hover:underline"
                       to="/hr/evaluation-history/$evaluationId"
                       params={{ evaluationId: row.evaluationId }}
                     >
