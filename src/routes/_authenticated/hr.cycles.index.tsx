@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
+import { Archive, Check, Copy, Download, Link as LinkIcon, Plus, QrCode } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -212,7 +213,7 @@ function CyclesPage() {
             <option value="DISABLED">Archived</option>
           </select>
         </div>
-        {can("cycles.manage") ? <Button onClick={() => setOpen(true)}>New Cycle</Button> : null}
+        {can("cycles.manage") ? <Button onClick={() => setOpen(true)}><Plus />New Cycle</Button> : null}
       </div>
 
       {cyclesQuery.isLoading ? (
@@ -254,15 +255,18 @@ function CyclesPage() {
                     <div className="flex justify-start gap-2">
                       {cycle.status === "DRAFT" && can("cycles.manage") ? (
                         <Button size="sm" onClick={() => setActivateCycleId(cycle.id)}>
+                          <Check />
                           Activate
                         </Button>
                       ) : (
                         <Button variant="outline" size="sm" onClick={() => setSelectedCycle(cycle)}>
+                          <QrCode />
                           QR Code
                         </Button>
                       )}
                       {can("cycles.manage") && cycle.status !== "DISABLED" ? (
                         <Button variant="ghost" size="sm" onClick={() => setArchiveCycleId(cycle.id)}>
+                          <Archive />
                           Archive
                         </Button>
                       ) : null}
@@ -360,6 +364,7 @@ function CyclesPage() {
               Cancel
             </Button>
             <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+              <Plus />
               Create cycle
             </Button>
           </DialogFooter>
@@ -390,12 +395,15 @@ function CyclesPage() {
           {qrCodeUrl ? (
             <div className="flex flex-wrap justify-center gap-2">
               <Button variant="outline" onClick={copyQrLink}>
+                <LinkIcon />
                 Copy link
               </Button>
               <Button variant="outline" onClick={copyQrImage}>
+                <Copy />
                 Copy image
               </Button>
               <Button variant="outline" onClick={downloadQrImage}>
+                <Download />
                 Download
               </Button>
             </div>

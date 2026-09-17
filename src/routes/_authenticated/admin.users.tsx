@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { userErrorMessage } from "@/lib/validation";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -269,7 +269,7 @@ function AdminUsersPage() {
         description="Manage system accounts, roles, and access for authorized users."
         actions={
           can("users.manage") ? (
-            <Button onClick={() => setCreateOpen(true)}>Create user</Button>
+            <Button onClick={() => setCreateOpen(true)}><Plus />Create user</Button>
           ) : null
         }
       />

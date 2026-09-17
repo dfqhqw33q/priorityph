@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -145,6 +146,7 @@ function HistoryPage() {
               setPage(0);
             }}
           >
+            <RotateCcw />
             Clear filters
           </Button>
         </CardContent>
@@ -225,6 +227,7 @@ function HistoryPage() {
             disabled={page === 0}
             onClick={() => setPage((value) => value - 1)}
           >
+            <ArrowLeft />
             Previous
           </Button>
           <Button
@@ -232,6 +235,7 @@ function HistoryPage() {
             disabled={(page + 1) * PAGE_SIZE >= query.data.totalCount}
             onClick={() => setPage((value) => value + 1)}
           >
+            <ArrowRight />
             Next
           </Button>
         </div>
