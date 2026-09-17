@@ -8,6 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   EmptyState,
   EvaluationStatusBadge,
   LoadingBlock,
@@ -155,30 +163,28 @@ function HistoryPage() {
           description="Evaluations appear here once they are completed."
         />
       ) : (
-        <div className="overflow-x-auto border border-border bg-card shadow-sm">
-          <table className="w-full text-left text-sm">
+        <div className="max-w-full border border-border bg-card shadow-sm">
+          <Table>
             <caption className="sr-only">Evaluation history</caption>
-            <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
-              <tr>
-                {[
-                  "Employee",
-                  "Cycle",
-                  "Status",
-                  "Finalized",
-                ].map((heading) => (
-                  <th key={heading} className="px-4 py-3.5 font-semibold">
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[120px] whitespace-nowrap">Employee Number</TableHead>
+                <TableHead className="min-w-[190px]">Full Name</TableHead>
+                <TableHead className="min-w-[150px]">Job Title</TableHead>
+                <TableHead className="min-w-[170px]">Division / Department</TableHead>
+                <TableHead className="min-w-[150px]">Section / Unit</TableHead>
+                <TableHead className="min-w-[240px]">Cycle</TableHead>
+                <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
+                <TableHead className="min-w-[190px] whitespace-nowrap">Finalized</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {rows.map((row) => (
-                <tr
-                  key={row.evaluationId}
-                  className="border-b border-border transition-colors last:border-0 hover:bg-muted/30"
-                >
-                  <td className="px-4 py-3.5">
+                <TableRow key={row.evaluationId}>
+                  <TableCell className="whitespace-nowrap tabular-nums">
+                    {row.employeeNumber}
+                  </TableCell>
+                  <TableCell className="font-medium">
                     <Link
                       className="font-semibold text-foreground hover:text-primary hover:underline"
                       to="/hr/evaluation-history/$evaluationId"
@@ -186,21 +192,29 @@ function HistoryPage() {
                     >
                       {row.fullName}
                     </Link>
-                    <div className="text-xs text-muted-foreground">{row.employeeNumber}</div>
-                  </td>
-                  <td className="px-4 py-3.5 text-foreground">
+                  </TableCell>
+                  <TableCell className="min-w-[150px] text-muted-foreground">
+                    {row.jobTitle || "—"}
+                  </TableCell>
+                  <TableCell className="min-w-[170px] text-muted-foreground">
+                    {row.division || "—"}
+                  </TableCell>
+                  <TableCell className="min-w-[150px] text-muted-foreground">
+                    {row.section || "—"}
+                  </TableCell>
+                  <TableCell className="min-w-[240px] text-foreground">
                     {row.cycleName} ({row.cycleYear})
-                  </td>
-                  <td className="px-4 py-3.5">
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <EvaluationStatusBadge status={row.status as never} />
-                  </td>
-                  <td className="px-4 py-3.5 text-xs text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                     {formatDateTime(row.finalizedAt)}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 
