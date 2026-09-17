@@ -189,12 +189,6 @@ const NAV: Array<{
         direct: true,
         children: [{ to: "/hr/recognition", label: "Recognition", permission: "recognition.view" }],
       },
-      {
-        label: "Processing",
-        icon: ClipboardList,
-        direct: true,
-        children: [{ label: "Processing" }],
-      },
     ],
   },
   {
