@@ -25,6 +25,9 @@ export type DevelopmentRecord = {
   employeeId: string;
   employeeName: string;
   employeeNumber: string;
+  employeeJobTitle: string;
+  employeeDivision: string;
+  employeeSection: string;
   sourceEvaluationId: string | null;
   sourceCycleName: string | null;
   sourceCycleYear: number | null;
@@ -37,7 +40,7 @@ export type DevelopmentRecord = {
 };
 
 function mapRecord(row: Record<string, unknown>): DevelopmentRecord {
-  const employee = row["employees"] as { full_name?: string; employee_number?: string } | null;
+  const employee = row["employees"] as { full_name?: string; employee_number?: string; job_title?: string; division?: string; section?: string } | null;
   const evaluation = row["evaluations"] as {
     id?: string;
     evaluation_cycles?: { name?: string; year?: number } | null;
@@ -47,6 +50,9 @@ function mapRecord(row: Record<string, unknown>): DevelopmentRecord {
     employeeId: String(row["employee_id"]),
     employeeName: employee?.full_name ?? "Unknown employee",
     employeeNumber: employee?.employee_number ?? "",
+    employeeJobTitle: employee?.job_title ?? "",
+    employeeDivision: employee?.division ?? "",
+    employeeSection: employee?.section ?? "",
     sourceEvaluationId: (row["source_evaluation_id"] as string | null) ?? null,
     sourceCycleName: evaluation?.evaluation_cycles?.name ?? null,
     sourceCycleYear: evaluation?.evaluation_cycles?.year ?? null,
@@ -78,7 +84,7 @@ export const listDevelopmentRecords = createServerFn({ method: "GET" })
     let query = admin
       .from("development_records")
       .select(
-        "id, employee_id, source_evaluation_id, development_need, development_activity, status, record_date, notes, is_system_generated, created_at, employees!inner(full_name, employee_number), evaluations(id, evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, development_need, development_activity, status, record_date, notes, is_system_generated, created_at, employees!inner(full_name, employee_number, job_title, division, section), evaluations(id, evaluation_cycles(name, year))",
       )
       .order("record_date", { ascending: false })
       .order("created_at", { ascending: false });

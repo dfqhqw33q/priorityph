@@ -17,6 +17,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   EmptyState,
   LoadingBlock,
   PageHeader,
@@ -98,11 +106,14 @@ function DevelopmentRecordsPage() {
         groups.set(record.employeeId, {
           employeeName: record.employeeName,
           employeeNumber: record.employeeNumber,
+          employeeJobTitle: record.employeeJobTitle,
+          employeeDivision: record.employeeDivision,
+          employeeSection: record.employeeSection,
           records: [record],
         });
       }
       return groups;
-    }, new Map<string, { employeeName: string; employeeNumber: string; records: DevelopmentRecord[] }>()),
+    }, new Map<string, { employeeName: string; employeeNumber: string; employeeJobTitle: string; employeeDivision: string; employeeSection: string; records: DevelopmentRecord[] }>()),
   ).map(([employeeId, group]) => ({ employeeId, ...group }));
 
   return (
@@ -158,120 +169,61 @@ function DevelopmentRecordsPage() {
           description="No development needs have been recorded yet."
         />
       ) : (
-        <div className="overflow-hidden border border-border bg-card shadow-sm">
-          <table
-            className="w-full text-left text-sm"
-            aria-label="Development records grouped by employee"
-          >
-            <caption className="sr-only">Development records grouped by employee</caption>
-            <thead className="hidden border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground sm:table-header-group">
-              <tr>
-                {[
-                  "Employee",
-                  "Development Needs",
-                  "Activities",
-                  "Source Evaluation",
-                  "Status",
-                  "Date",
-                  "Notes",
-                  "Actions",
-                ].map((heading) => (
-                  <th key={heading} className="px-4 py-3 font-semibold">
-                    {heading}
-                  </th>
+        employeeId ? (
+          <DevelopmentDetail
+            group={recordsByEmployee[0]}
+            onBack={() => setEmployeeId("")}
+            onEdit={setEditing}
+          />
+        ) : (
+          <div className="border border-border bg-card shadow-sm">
+            <Table>
+              <caption className="sr-only">Development records by employee</caption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee ID</TableHead>
+                  <TableHead>Full Name</TableHead>
+                  <TableHead>Job Title</TableHead>
+                  <TableHead>Division / Department</TableHead>
+                  <TableHead>Section / Unit</TableHead>
+                  <TableHead>Cycle</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recordsByEmployee.map((group) => (
+                  <TableRow key={group.employeeId}>
+                    <TableCell className="whitespace-nowrap">
+                      <button
+                        type="button"
+                        className="font-semibold text-primary hover:underline"
+                        onClick={() => setEmployeeId(group.employeeId)}
+                      >
+                        {group.employeeNumber}
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        type="button"
+                        className="font-semibold text-primary hover:underline"
+                        onClick={() => setEmployeeId(group.employeeId)}
+                      >
+                        {group.employeeName}
+                      </button>
+                    </TableCell>
+                    <TableCell>{group.employeeJobTitle || "-"}</TableCell>
+                    <TableCell>{group.employeeDivision || "-"}</TableCell>
+                    <TableCell>{group.employeeSection || "-"}</TableCell>
+                    <TableCell>
+                      {group.records[0]?.sourceCycleName
+                        ? `${group.records[0].sourceCycleName} (${group.records[0].sourceCycleYear})`
+                        : "-"}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tr>
-            </thead>
-            <tbody className="block sm:table-row-group">
-              {recordsByEmployee.map((group) => (
-                <tr
-                  key={group.employeeId}
-                  className="block border-b border-border p-4 last:border-0 sm:table-row sm:p-0"
-                >
-                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
-                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">
-                      Employee
-                    </span>
-                    <span className="font-semibold">{group.employeeName}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      Employee No. {group.employeeNumber}
-                    </span>
-                  </td>
-                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
-                    <MobileCellLabel label="Development Needs" />
-                    <RecordList
-                      records={group.records}
-                      render={(record) => record.developmentNeed}
-                    />
-                  </td>
-                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
-                    <MobileCellLabel label="Activities" />
-                    <RecordList
-                      records={group.records}
-                      render={(record) => record.developmentActivity}
-                    />
-                  </td>
-                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
-                    <MobileCellLabel label="Source Evaluation" />
-                    <ul className="space-y-1">
-                      {group.records.map((record) => (
-                        <li key={record.id}>
-                          {record.sourceEvaluationId ? (
-                            <Link
-                              className="text-primary hover:underline"
-                              to="/hr/evaluation-history/$evaluationId"
-                              params={{ evaluationId: record.sourceEvaluationId }}
-                            >
-                              {record.sourceCycleName
-                                ? `Performance Evaluation ${record.sourceCycleYear}`
-                                : "View evaluation"}
-                            </Link>
-                          ) : (
-                            "-"
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
-                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
-                    <MobileCellLabel label="Status" />
-                    <RecordList
-                      records={group.records}
-                      render={(record) => humanizeToken(record.status)}
-                    />
-                  </td>
-                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
-                    <MobileCellLabel label="Date" />
-                    <RecordList
-                      records={group.records}
-                      render={(record) => formatDateTime(record.recordDate)}
-                    />
-                  </td>
-                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
-                    <MobileCellLabel label="Notes" />
-                    <RecordList records={group.records} render={(record) => record.notes || "-"} />
-                  </td>
-                  <td className="block px-0 py-2 align-top sm:table-cell sm:px-4 sm:py-4">
-                    <MobileCellLabel label="Actions" />
-                    <div className="space-y-1">
-                      {group.records.map((record) => (
-                        <Button
-                          key={record.id}
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto"
-                          onClick={() => setEditing(record)}
-                        >
-                          Edit
-                        </Button>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </TableBody>
+            </Table>
+          </div>
+        )
       )}
       <RecordDialog
         open={Boolean(editing)}
@@ -296,6 +248,79 @@ function MobileCellLabel({ label }: { label: string }) {
     <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">
       {label}
     </span>
+  );
+}
+
+function DevelopmentDetail({
+  group,
+  onBack,
+  onEdit,
+}: {
+  group: { employeeName: string; employeeNumber: string; records: DevelopmentRecord[] } | undefined;
+  onBack: () => void;
+  onEdit: (record: DevelopmentRecord) => void;
+}) {
+  if (!group) return null;
+  return (
+    <div className="space-y-4">
+      <Button variant="outline" onClick={onBack}>
+        Back to employees
+      </Button>
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Employee ID
+          </p>
+          <h2 className="text-xl font-semibold">{group.employeeName}</h2>
+          <p className="text-sm text-muted-foreground">{group.employeeNumber}</p>
+        </CardContent>
+      </Card>
+      <div className="space-y-4">
+        {group.records.map((record) => (
+          <Card key={record.id}>
+            <CardContent className="space-y-4 pt-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">{record.developmentNeed}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {record.developmentActivity} · {humanizeToken(record.status)} · {formatDateTime(record.recordDate)}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => onEdit(record)}>
+                  Edit
+                </Button>
+              </div>
+              <div className="grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Source Evaluation
+                  </p>
+                  {record.sourceEvaluationId ? (
+                    <Link
+                      className="text-primary hover:underline"
+                      to="/hr/evaluation-history/$evaluationId"
+                      params={{ evaluationId: record.sourceEvaluationId }}
+                    >
+                      {record.sourceCycleName
+                        ? `${record.sourceCycleName} (${record.sourceCycleYear})`
+                        : "View evaluation"}
+                    </Link>
+                  ) : (
+                    "-"
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Notes
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap">{record.notes || "-"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
 

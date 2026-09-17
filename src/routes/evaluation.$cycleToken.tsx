@@ -133,7 +133,7 @@ function PublicEvaluationPage() {
       return;
     }
     const missing = [
-      ["employeeNumber", "Employee number"],
+      ["employeeNumber", "Employee ID"],
       ["firstName", "First name"],
       ["lastName", "Last name"],
     ].filter(([key]) => !identity[key as "employeeNumber" | "firstName" | "lastName"].trim());
@@ -281,7 +281,7 @@ function PublicEvaluationPage() {
   }
 
   const fields: { key: keyof typeof identity; label: string }[] = [
-    { key: "employeeNumber", label: "Employee number" },
+    { key: "employeeNumber", label: "Employee ID" },
     { key: "firstName", label: "First name" },
     { key: "middleName", label: "Middle name" },
     { key: "lastName", label: "Last name" },
@@ -389,7 +389,7 @@ function PublicEvaluationPage() {
           <CardHeader>
             <CardTitle className="text-base font-bold">Your details</CardTitle>
             <CardDescription>
-              Enter your employee number and name to verify your record.
+              Enter your Employee ID and name to verify your record.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

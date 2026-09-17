@@ -99,7 +99,7 @@ export function EmployeeProfileManagementPage() {
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {(
             [
-              ["employeeNumber", "Employee number"],
+              ["employeeNumber", "Employee ID"],
               ["firstName", "First name"],
               ["middleName", "Middle name"],
               ["lastName", "Last name"],
@@ -170,7 +170,7 @@ export function EmployeeProfileManagementPage() {
             <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
               <tr>
                 {[
-                  "Employee number",
+                  "Employee ID",
                   "Name",
                   "Job title",
                   "Division",

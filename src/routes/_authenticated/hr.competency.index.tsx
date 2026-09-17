@@ -5,6 +5,14 @@ import { useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { EmptyState, LoadingBlock, PageHeader } from "@/components/shared/shared-ui";
 import { listDigital201Employees } from "@/lib/reports.functions";
 
@@ -55,25 +63,23 @@ function CompetencyIndexPage() {
           description="Only existing employee records are shown here."
         />
       ) : (
-        <div className="overflow-x-auto border border-border bg-card shadow-sm">
-          <table className="w-full text-left text-sm">
+        <div className="border border-border bg-card shadow-sm">
+          <Table>
             <caption className="sr-only">Employees with competency profiles</caption>
-            <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
-              <tr>
-                {["Employee", "Position", "Division", "Status"].map((heading) => (
-                  <th key={heading} className="px-4 py-3 font-semibold">
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+            <TableHeader><TableRow><TableHead>Employee ID</TableHead><TableHead>Full Name</TableHead><TableHead>Job Title</TableHead><TableHead>Division / Department</TableHead><TableHead>Section / Unit</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+            <TableBody>
               {employees.map((employee) => (
-                <tr
-                  key={employee.id}
-                  className="border-b border-border last:border-0 hover:bg-muted/30"
-                >
-                  <td className="px-4 py-3">
+                <TableRow key={employee.id}>
+                  <TableCell className="whitespace-nowrap">
+                    <Link
+                      className="font-semibold text-primary hover:underline"
+                      to="/hr/competency/$employeeId"
+                      params={{ employeeId: employee.id }}
+                    >
+                      {employee.employee_number}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
                     <Link
                       className="font-semibold text-primary hover:underline"
                       to="/hr/competency/$employeeId"
@@ -81,17 +87,15 @@ function CompetencyIndexPage() {
                     >
                       {employee.full_name}
                     </Link>
-                    <p className="text-xs text-muted-foreground">{employee.employee_number}</p>
-                  </td>
-                  <td className="px-4 py-3">{employee.job_title || "-"}</td>
-                  <td className="px-4 py-3">{employee.division || "-"}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {employee.employment_status || "-"}
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell>{employee.job_title || "-"}</TableCell>
+                  <TableCell>{employee.division || "-"}</TableCell>
+                  <TableCell>{employee.section || "-"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{employee.employment_status || "-"}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

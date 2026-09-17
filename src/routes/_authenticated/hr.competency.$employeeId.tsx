@@ -44,7 +44,7 @@ function CompetencyProfilePage() {
     <div className="space-y-6">
       <PageHeader
         title={employee.full_name}
-        description={`${employee.job_title || "Employee"} - Employee no. ${employee.employee_number}`}
+        description={`${employee.job_title || "Employee"} - Employee ID ${employee.employee_number}`}
         actions={
           <Link className="text-sm font-medium text-primary hover:underline" to="/hr/competency">
             Back to employees

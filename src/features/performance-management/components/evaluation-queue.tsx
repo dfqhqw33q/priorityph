@@ -156,7 +156,7 @@ export function EvaluationQueue({
           <Label htmlFor="queue-search">Search</Label>
           <Input
             id="queue-search"
-            placeholder="Employee number or name"
+            placeholder="Employee ID or name"
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -227,7 +227,7 @@ export function EvaluationQueue({
                     <SortButton label="Employee" sortKey="full_name_snapshot" />
                   </TableHead>
                   <TableHead scope="col">
-                    <SortButton label="Employee no." sortKey="employee_number_snapshot" />
+                    <SortButton label="Employee ID" sortKey="employee_number_snapshot" />
                   </TableHead>
                   <TableHead scope="col">Job title</TableHead>
                   <TableHead scope="col">Division / section</TableHead>

@@ -16,6 +16,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { EmptyState, LoadingBlock, PageHeader } from "@/components/shared/shared-ui";
 import {
   listSuccessionProfiles,
@@ -35,6 +43,7 @@ function SuccessionPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [transferInterest, setTransferInterest] = useState("");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [editing, setEditing] = useState<SuccessionProfile | null>(null);
   const query = useQuery({
     queryKey: ["succession-profiles", { search: debouncedSearch, transferInterest }],
@@ -90,127 +99,21 @@ function SuccessionPage() {
           description="Profiles appear after finalized evaluations contain Q3, Q4, or Q6 information."
         />
       ) : (
-        <div className="space-y-4" aria-label="Career and succession profiles">
-          {query.data.map((profile) => {
-            const committeeDecision = profile.committeeDecision;
-            return (
-              <Card key={profile.id}>
-                <CardContent className="space-y-6 pt-6">
-                  <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <h2 className="text-base font-semibold">{profile.employeeName}</h2>
-                      <p className="text-sm text-muted-foreground">
-                        Employee no. {profile.employeeNumber}
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setEditing(profile)}>
-                      Edit notes
-                    </Button>
-                  </div>
-
-                  <section className="space-y-3">
-                    <div>
-                      <h3 className="font-semibold">Career &amp; Succession Profile</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Employee career interests and development information from the source
-                        evaluation.
-                      </p>
-                    </div>
-                    <div className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-4">
-                      <ProfileField
-                        label="Development Potential"
-                        value={profile.developmentPotential}
-                        className="xl:col-span-2"
-                      />
-                      <ProfileField
-                        label="Advancement Outlook"
-                        value={profile.advancementOutlook}
-                        className="xl:col-span-2"
-                      />
-                      <ProfileField label="Career Interest" value={profile.careerInterest} />
-                      <ProfileField label="Transfer Interest" value={profile.transferInterest} />
-                      <ProfileField label="Desired Job" value={profile.desiredJob} />
-                      <ProfileField label="Desired Location" value={profile.desiredLocation} />
-                      <ProfileField label="Qualification" value={profile.qualification} />
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Source Evaluation
-                      </p>
-                      <Link
-                        className="text-primary hover:underline"
-                        to="/hr/evaluation-history/$evaluationId"
-                        params={{ evaluationId: profile.sourceEvaluationId }}
-                      >
-                        {profile.sourceCycleName
-                          ? `${profile.sourceCycleName} (${profile.sourceCycleYear})`
-                          : "View evaluation"}
-                      </Link>
-                    </div>
-                  </section>
-
-                  <section className="space-y-3 rounded-md border border-primary/30 bg-primary/5 p-4">
-                    <div>
-                      <h3 className="font-semibold">Latest Committee Decision</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Finalized organizational action. This does not replace the employee&apos;s
-                        career preferences.
-                      </p>
-                    </div>
-                    {committeeDecision ? (
-                      <div className="grid gap-4 text-sm sm:grid-cols-2">
-                        <ProfileField
-                          label="Final Action"
-                          value={
-                            committeeDecision.finalAction === "PROMOTE" ? "Promote" : "Transfer"
-                          }
-                        />
-                        <ProfileField label="Status" value="Finalized" />
-                        <ProfileField
-                          label="Action Details"
-                          value={committeeDecision.actionDetails}
-                          className="whitespace-pre-wrap"
-                        />
-                        <ProfileField
-                          label="Committee Recommendation"
-                          value={committeeDecision.recommendation}
-                          className="whitespace-pre-wrap"
-                        />
-                        <div className="sm:col-span-2">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Source Evaluation
-                          </p>
-                          <Link
-                            className="text-primary hover:underline"
-                            to="/hr/evaluation-history/$evaluationId"
-                            params={{ evaluationId: committeeDecision.sourceEvaluationId }}
-                          >
-                            {committeeDecision.sourceCycleName
-                              ? `${committeeDecision.sourceCycleName} (${committeeDecision.sourceCycleYear})`
-                              : "View evaluation"}
-                          </Link>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No finalized Promote or Transfer decision is recorded for this profile.
-                      </p>
-                    )}
-                  </section>
-
-                  <div className="border-t border-border pt-4 text-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Management Notes
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
-                      {profile.notes || "-"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        selectedEmployeeId ? (
+          <SuccessionDetail
+            profile={query.data.find((item) => item.employeeId === selectedEmployeeId)}
+            onBack={() => setSelectedEmployeeId(null)}
+            onEdit={setEditing}
+          />
+        ) : (
+          <div className="border border-border bg-card shadow-sm">
+            <Table>
+              <caption className="sr-only">Succession profiles by employee</caption>
+              <TableHeader><TableRow><TableHead>Employee ID</TableHead><TableHead>Full Name</TableHead><TableHead>Job Title</TableHead><TableHead>Division / Department</TableHead><TableHead>Section / Unit</TableHead><TableHead>Cycle</TableHead></TableRow></TableHeader>
+              <TableBody>{query.data.map((profile) => <TableRow key={profile.id}><TableCell className="whitespace-nowrap"><button type="button" className="font-semibold text-primary hover:underline" onClick={() => setSelectedEmployeeId(profile.employeeId)}>{profile.employeeNumber}</button></TableCell><TableCell><button type="button" className="font-semibold text-primary hover:underline" onClick={() => setSelectedEmployeeId(profile.employeeId)}>{profile.employeeName}</button></TableCell><TableCell>{profile.employeeJobTitle || "-"}</TableCell><TableCell>{profile.employeeDivision || "-"}</TableCell><TableCell>{profile.employeeSection || "-"}</TableCell><TableCell>{profile.sourceCycleName ? `${profile.sourceCycleName} (${profile.sourceCycleYear})` : "-"}</TableCell></TableRow>)}</TableBody>
+            </Table>
+          </div>
+        )
       )}
       <NotesDialog
         profile={editing}
@@ -221,6 +124,28 @@ function SuccessionPage() {
           if (editing) mutation.mutate({ id: editing.id, notes });
         }}
       />
+    </div>
+  );
+}
+
+function SuccessionDetail({
+  profile,
+  onBack,
+  onEdit,
+}: {
+  profile: SuccessionProfile | undefined;
+  onBack: () => void;
+  onEdit: (profile: SuccessionProfile) => void;
+}) {
+  if (!profile) return null;
+  const decision = profile.committeeDecision;
+  return (
+    <div className="space-y-4">
+      <Button variant="outline" onClick={onBack}>Back to employees</Button>
+      <Card><CardContent className="pt-6"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Employee ID</p><h2 className="text-xl font-semibold">{profile.employeeName}</h2><p className="text-sm text-muted-foreground">{profile.employeeNumber}</p></div><Button variant="outline" size="sm" onClick={() => onEdit(profile)}>Edit notes</Button></div></CardContent></Card>
+      <Card><CardContent className="grid gap-4 pt-6 text-sm sm:grid-cols-2"><ProfileField label="Development Potential" value={profile.developmentPotential} className="sm:col-span-2" /><ProfileField label="Advancement Outlook" value={profile.advancementOutlook} className="sm:col-span-2" /><ProfileField label="Career Interest" value={profile.careerInterest} /><ProfileField label="Transfer Interest" value={profile.transferInterest} /><ProfileField label="Desired Job" value={profile.desiredJob} /><ProfileField label="Desired Location" value={profile.desiredLocation} /><ProfileField label="Qualification" value={profile.qualification} /><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Source Evaluation</p><Link className="text-primary hover:underline" to="/hr/evaluation-history/$evaluationId" params={{ evaluationId: profile.sourceEvaluationId }}>{profile.sourceCycleName ? `${profile.sourceCycleName} (${profile.sourceCycleYear})` : "View evaluation"}</Link></div></CardContent></Card>
+      <Card><CardContent className="space-y-3 pt-6"><h3 className="font-semibold">Committee Decision</h3>{decision ? <div className="grid gap-3 text-sm sm:grid-cols-2"><ProfileField label="Final Action" value={decision.finalAction === "PROMOTE" ? "Promote" : "Transfer"} /><ProfileField label="Status" value="Finalized" /><ProfileField label="Action Details" value={decision.actionDetails} className="whitespace-pre-wrap" /><ProfileField label="Committee Recommendation" value={decision.recommendation} className="whitespace-pre-wrap" /></div> : <p className="text-sm text-muted-foreground">No finalized Promote or Transfer decision is recorded for this profile.</p>}</CardContent></Card>
+      <Card><CardContent className="pt-6"><ProfileField label="Management Notes" value={profile.notes} className="whitespace-pre-wrap" /></CardContent></Card>
     </div>
   );
 }

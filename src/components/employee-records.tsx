@@ -253,7 +253,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
             <caption className="sr-only">Employee records</caption>
             <TableHeader>
               <TableRow>
-                <TableHead scope="col">Employee no.</TableHead>
+                <TableHead scope="col">Employee ID</TableHead>
                 <TableHead scope="col">Full name</TableHead>
                 <TableHead scope="col">Job title</TableHead>
                 <TableHead scope="col">Division / section</TableHead>
@@ -477,7 +477,7 @@ function EmployeeFileContent({
         <div>
           <p className="text-lg font-semibold">{employee?.full_name ?? "Employee"}</p>
           <p className="text-sm text-muted-foreground">
-            Employee no. {employee?.employee_number ?? "-"}
+            Employee ID {employee?.employee_number ?? "-"}
           </p>
           <p className="mt-1 text-sm text-foreground">
             {employee?.job_title ?? "-"} - {employee?.division ?? "-"}
@@ -832,7 +832,7 @@ function EvaluationInformationTable({
     ["Evaluation Period", comparison?.cycleName ?? "N/A", selected?.cycleName ?? "N/A"],
     ["Status", comparison?.status ?? "N/A", selected?.status ?? "N/A"],
     ["Employee", comparison?.fullName ?? "N/A", selected?.fullName ?? "N/A"],
-    ["Employee No.", comparison?.employeeNumber ?? "N/A", selected?.employeeNumber ?? "N/A"],
+    ["Employee ID", comparison?.employeeNumber ?? "N/A", selected?.employeeNumber ?? "N/A"],
     ["Position", comparison?.jobTitle ?? "N/A", selected?.jobTitle ?? "N/A"],
     ["Department / Division", comparison?.division ?? "N/A", selected?.division ?? "N/A"],
     [

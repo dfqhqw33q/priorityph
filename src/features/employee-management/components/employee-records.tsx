@@ -253,27 +253,46 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
             <caption className="sr-only">Employee records</caption>
             <TableHeader>
               <TableRow>
-                <TableHead scope="col">Employee no.</TableHead>
-                <TableHead scope="col">Full name</TableHead>
-                <TableHead scope="col">Job title</TableHead>
-                <TableHead scope="col">Division / section</TableHead>
+                <TableHead scope="col">Employee ID</TableHead>
+                <TableHead scope="col">Full Name</TableHead>
+                <TableHead scope="col">Job Title</TableHead>
+                <TableHead scope="col">Division / Department</TableHead>
+                <TableHead scope="col">Section / Unit</TableHead>
                 <TableHead scope="col">Status</TableHead>
                 <TableHead scope="col">Created</TableHead>
-                <TableHead scope="col" className="text-right">
-                  Action
-                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="tabular-nums">{row.employee_number}</TableCell>
-                  <TableCell className="font-medium">{row.full_name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{row.job_title}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {row.division}
-                    {row.section ? `  -  ${row.section}` : ""}
+                  <TableCell className="tabular-nums">
+                    <button
+                      type="button"
+                      className="font-semibold text-primary hover:underline"
+                      onClick={() => {
+                        setSelected(row.id);
+                        setSelectedEvaluationId(null);
+                        setComparisonEvaluationId(null);
+                        setCompareOpen(false);
+                        setComparisonFirstId("");
+                        setComparisonSecondId("");
+                      }}
+                    >
+                      {row.employee_number}
+                    </button>
                   </TableCell>
+                  <TableCell className="font-medium">
+                    <button
+                      type="button"
+                      className="font-semibold text-primary hover:underline"
+                      onClick={() => setSelected(row.id)}
+                    >
+                      {row.full_name}
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{row.job_title}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{row.division || "-"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{row.section || "-"}</TableCell>
                   <TableCell>
                     <Badge variant={row.employment_status === "ACTIVE" ? "secondary" : "outline"}>
                       {row.employment_status}
@@ -281,24 +300,6 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {formatDateTime(row.created_at)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {allow201 ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelected(row.id);
-                          setSelectedEvaluationId(null);
-                          setComparisonEvaluationId(null);
-                          setCompareOpen(false);
-                          setComparisonFirstId("");
-                          setComparisonSecondId("");
-                        }}
-                      >
-                        History
-                      </Button>
-                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}
@@ -477,7 +478,7 @@ function EmployeeFileContent({
         <div>
           <p className="text-lg font-semibold">{employee?.full_name ?? "Employee"}</p>
           <p className="text-sm text-muted-foreground">
-            Employee no. {employee?.employee_number ?? "-"}
+            Employee ID {employee?.employee_number ?? "-"}
           </p>
           <p className="mt-1 text-sm text-foreground">
             {employee?.job_title ?? "-"} - {employee?.division ?? "-"}
@@ -832,7 +833,7 @@ function EvaluationInformationTable({
     ["Evaluation Period", comparison?.cycleName ?? "N/A", selected?.cycleName ?? "N/A"],
     ["Status", comparison?.status ?? "N/A", selected?.status ?? "N/A"],
     ["Employee", comparison?.fullName ?? "N/A", selected?.fullName ?? "N/A"],
-    ["Employee No.", comparison?.employeeNumber ?? "N/A", selected?.employeeNumber ?? "N/A"],
+    ["Employee ID", comparison?.employeeNumber ?? "N/A", selected?.employeeNumber ?? "N/A"],
     ["Position", comparison?.jobTitle ?? "N/A", selected?.jobTitle ?? "N/A"],
     ["Department / Division", comparison?.division ?? "N/A", selected?.division ?? "N/A"],
     [

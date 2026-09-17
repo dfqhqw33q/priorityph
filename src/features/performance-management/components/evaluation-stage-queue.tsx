@@ -76,7 +76,7 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
             <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
               <tr>
                 <th className="px-4 py-3 font-semibold">Employee</th>
-                <th className="px-4 py-3 font-semibold">Employee number</th>
+                <th className="px-4 py-3 font-semibold">Employee ID</th>
                 <th className="px-4 py-3 font-semibold">Cycle</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 text-right font-semibold">Action</th>

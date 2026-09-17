@@ -17,6 +17,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   EmptyState,
   LoadingBlock,
   PageHeader,
@@ -54,6 +62,7 @@ function TrainingPage() {
   const [status, setStatus] = useState("");
   const [provider, setProvider] = useState("");
   const [relatedCompetency, setRelatedCompetency] = useState("");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [editing, setEditing] = useState<TrainingRecord | null>(null);
   const query = useQuery({
     queryKey: [
@@ -147,8 +156,14 @@ function TrainingPage() {
         />
       ) : data ? (
         <>
-          <TrainingRecommendations recommendations={data.recommendations} />
-          <TrainingRecords records={data.records} onEdit={setEditing} />
+          <TrainingDirectory
+            recommendations={data.recommendations}
+            records={data.records}
+            selectedEmployeeId={selectedEmployeeId}
+            onSelect={setSelectedEmployeeId}
+            onBack={() => setSelectedEmployeeId(null)}
+            onEdit={setEditing}
+          />
         </>
       ) : null}
       <RecordDialog
@@ -160,6 +175,119 @@ function TrainingPage() {
           if (editing) mutation.mutate({ ...form, id: editing.id });
         }}
       />
+    </div>
+  );
+}
+
+function TrainingDirectory({
+  recommendations,
+  records,
+  selectedEmployeeId,
+  onSelect,
+  onBack,
+  onEdit,
+}: {
+  recommendations: Awaited<ReturnType<typeof listTrainingData>>["recommendations"];
+  records: Awaited<ReturnType<typeof listTrainingData>>["records"];
+  selectedEmployeeId: string | null;
+  onSelect: (employeeId: string) => void;
+  onBack: () => void;
+  onEdit: (record: TrainingRecord) => void;
+}) {
+  const employees = Array.from(
+    new Map(
+      [...recommendations, ...records].map((item) => [
+        item.employeeId,
+        { employeeId: item.employeeId, employeeName: item.employeeName, employeeNumber: item.employeeNumber, employeeJobTitle: item.employeeJobTitle, employeeDivision: item.employeeDivision, employeeSection: item.employeeSection },
+      ]),
+    ).values(),
+  );
+  if (selectedEmployeeId) {
+    const employee = employees.find((item) => item.employeeId === selectedEmployeeId);
+    const employeeRecommendations = recommendations.filter(
+      (item) => item.employeeId === selectedEmployeeId,
+    );
+    const employeeRecords = records.filter((item) => item.employeeId === selectedEmployeeId);
+    return (
+      <TrainingDetail
+        employee={employee}
+        recommendations={employeeRecommendations}
+        records={employeeRecords}
+        onBack={onBack}
+        onEdit={onEdit}
+      />
+    );
+  }
+  return (
+    <div className="border border-border bg-card shadow-sm">
+      <Table>
+        <caption className="sr-only">Training records by employee</caption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Employee ID</TableHead>
+            <TableHead>Full Name</TableHead>
+            <TableHead>Job Title</TableHead>
+            <TableHead>Division / Department</TableHead>
+            <TableHead>Section / Unit</TableHead>
+            <TableHead>Cycle</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {employees.map((employee) => {
+            const source = [...recommendations, ...records].find(
+              (item) => item.employeeId === employee.employeeId,
+            );
+            return (
+              <TableRow key={employee.employeeId}>
+                <TableCell className="whitespace-nowrap">
+                  <button type="button" className="font-semibold text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>
+                    {employee.employeeNumber}
+                  </button>
+                </TableCell>
+                <TableCell>
+                  <button type="button" className="font-semibold text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>
+                    {employee.employeeName}
+                  </button>
+                </TableCell>
+                <TableCell>{employee.employeeJobTitle || "-"}</TableCell>
+                <TableCell>{employee.employeeDivision || "-"}</TableCell>
+                <TableCell>{employee.employeeSection || "-"}</TableCell>
+                <TableCell>
+                  {source?.sourceCycleName ? `${source.sourceCycleName} (${source.sourceCycleYear})` : "-"}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function TrainingDetail({
+  employee,
+  recommendations,
+  records,
+  onBack,
+  onEdit,
+}: {
+  employee: { employeeName: string; employeeNumber: string } | undefined;
+  recommendations: Awaited<ReturnType<typeof listTrainingData>>["recommendations"];
+  records: Awaited<ReturnType<typeof listTrainingData>>["records"];
+  onBack: () => void;
+  onEdit: (record: TrainingRecord) => void;
+}) {
+  if (!employee) return null;
+  return (
+    <div className="space-y-4">
+      <Button variant="outline" onClick={onBack}>Back to employees</Button>
+      <Card><CardContent className="pt-6"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Employee ID</p><h2 className="text-xl font-semibold">{employee.employeeName}</h2><p className="text-sm text-muted-foreground">{employee.employeeNumber}</p></CardContent></Card>
+      {recommendations.map((item) => (
+        <Card key={`recommendation-${item.id}`}><CardContent className="space-y-3 pt-6"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recommended</p><h3 className="font-semibold">{item.trainingTitle}</h3></div><p className="whitespace-pre-wrap text-sm">{item.recommendation}</p><p className="text-sm text-muted-foreground">Provider: - · Related Competency: {item.relatedCompetency || "-"}</p><Link className="text-primary hover:underline" to="/hr/evaluation-history/$evaluationId" params={{ evaluationId: item.sourceEvaluationId }}>{item.sourceCycleName ? `${item.sourceCycleName} (${item.sourceCycleYear})` : "View evaluation"}</Link></CardContent></Card>
+      ))}
+      {records.map((record) => (
+        <Card key={record.id}><CardContent className="space-y-3 pt-6"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{humanizeToken(record.status)}</p><h3 className="font-semibold">{record.trainingTitle}</h3></div><Button variant="outline" size="sm" onClick={() => onEdit(record)}>Edit</Button></div><div className="grid gap-3 text-sm sm:grid-cols-2"><p>Provider: {record.provider || "-"}</p><p>Training Date: {record.trainingDate ? formatDateTime(record.trainingDate) : "-"}</p><p>Source: {record.source}</p><p>Related Competency: {record.relatedCompetency || "-"}</p><p className="sm:col-span-2">Committee Recommendation: {record.committeeRecommendation || "-"}</p><p className="sm:col-span-2 whitespace-pre-wrap">Training Details: {record.notes || "-"}</p></div><Link className="text-primary hover:underline" to="/hr/evaluation-history/$evaluationId" params={{ evaluationId: record.sourceEvaluationId }}>{record.sourceCycleName ? `${record.sourceCycleName} (${record.sourceCycleYear})` : "View evaluation"}</Link></CardContent></Card>
+      ))}
     </div>
   );
 }

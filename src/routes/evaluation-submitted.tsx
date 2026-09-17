@@ -39,7 +39,7 @@ function SubmittedPage() {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             {duplicate
-              ? "An assessment for this employee number has already been recorded for this cycle."
+              ? "An assessment for this Employee ID has already been recorded for this cycle."
               : "Your Step 1 performance self-assessment has been successfully received. You may close this page."}
           </p>
         </CardContent>

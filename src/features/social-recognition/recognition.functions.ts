@@ -23,6 +23,9 @@ export type RecognitionCandidate = {
   employeeId: string;
   employeeName: string;
   employeeNumber: string;
+  employeeJobTitle: string;
+  employeeDivision: string;
+  employeeSection: string;
   sourceEvaluationId: string;
   sourceCycleName: string | null;
   sourceCycleYear: number | null;
@@ -49,7 +52,7 @@ export type RecognitionRecord = {
 };
 
 function related(row: Record<string, unknown>) {
-  const employee = row["employees"] as { full_name?: string; employee_number?: string } | null;
+  const employee = row["employees"] as { full_name?: string; employee_number?: string; job_title?: string; division?: string; section?: string } | null;
   const evaluation = row["evaluations"] as {
     evaluation_cycles?: { name?: string; year?: number } | null;
   } | null;
@@ -57,6 +60,9 @@ function related(row: Record<string, unknown>) {
     employeeId: String(row["employee_id"]),
     employeeName: employee?.full_name ?? "Unknown employee",
     employeeNumber: employee?.employee_number ?? "",
+    employeeJobTitle: employee?.job_title ?? "",
+    employeeDivision: employee?.division ?? "",
+    employeeSection: employee?.section ?? "",
     sourceEvaluationId: String(row["source_evaluation_id"]),
     sourceCycleName: evaluation?.evaluation_cycles?.name ?? null,
     sourceCycleYear: evaluation?.evaluation_cycles?.year ?? null,
@@ -97,13 +103,13 @@ export const listRecognitionData = createServerFn({ method: "GET" })
     let candidates = admin
       .from("recognition_candidates")
       .select(
-        "id, employee_id, source_evaluation_id, recognition_type, reason, status, review_notes, created_at, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, recognition_type, reason, status, review_notes, created_at, employees!inner(full_name, employee_number, job_title, division, section), evaluations(evaluation_cycles(name, year))",
       )
       .order("created_at", { ascending: false });
     let records = admin
       .from("recognition_records")
       .select(
-        "id, candidate_id, employee_id, source_evaluation_id, recognition_type, reason, recognition_date, approved_at, certificate_generated_at, employees!inner(full_name, employee_number), evaluations(evaluation_cycles(name, year))",
+        "id, candidate_id, employee_id, source_evaluation_id, recognition_type, reason, recognition_date, approved_at, certificate_generated_at, employees!inner(full_name, employee_number, job_title, division, section), evaluations(evaluation_cycles(name, year))",
       )
       .order("recognition_date", { ascending: false });
     if (data.employeeId) {

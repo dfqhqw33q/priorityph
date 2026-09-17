@@ -12,6 +12,9 @@ export type SuccessionProfile = {
   employeeId: string;
   employeeName: string;
   employeeNumber: string;
+  employeeJobTitle: string;
+  employeeDivision: string;
+  employeeSection: string;
   sourceEvaluationId: string;
   sourceCycleName: string | null;
   sourceCycleYear: number | null;
@@ -35,7 +38,7 @@ export type SuccessionProfile = {
 };
 
 function mapProfile(row: Record<string, unknown>): SuccessionProfile {
-  const employee = row["employees"] as { full_name?: string; employee_number?: string } | null;
+  const employee = row["employees"] as { full_name?: string; employee_number?: string; job_title?: string; division?: string; section?: string } | null;
   const evaluation = row["evaluations"] as {
     id?: string;
     is_finalized?: boolean;
@@ -67,6 +70,9 @@ function mapProfile(row: Record<string, unknown>): SuccessionProfile {
     employeeId: String(row["employee_id"]),
     employeeName: employee?.full_name ?? "Unknown employee",
     employeeNumber: employee?.employee_number ?? "",
+    employeeJobTitle: employee?.job_title ?? "",
+    employeeDivision: employee?.division ?? "",
+    employeeSection: employee?.section ?? "",
     sourceEvaluationId: String(row["source_evaluation_id"]),
     sourceCycleName: evaluation?.evaluation_cycles?.name ?? null,
     sourceCycleYear: evaluation?.evaluation_cycles?.year ?? null,
@@ -99,7 +105,7 @@ export const listSuccessionProfiles = createServerFn({ method: "GET" })
     let query = admin
       .from("succession_profiles")
       .select(
-        "id, employee_id, source_evaluation_id, development_potential, advancement_outlook, career_interest, transfer_interest, desired_job, desired_location, qualification, notes, updated_at, employees!inner(full_name, employee_number), evaluations!inner(id, is_finalized, status, evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, development_potential, advancement_outlook, career_interest, transfer_interest, desired_job, desired_location, qualification, notes, updated_at, employees!inner(full_name, employee_number, job_title, division, section), evaluations!inner(id, is_finalized, status, evaluation_cycles(name, year))",
       )
       .order("updated_at", { ascending: false });
     if (data.search.trim()) {

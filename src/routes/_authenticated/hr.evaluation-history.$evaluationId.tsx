@@ -67,7 +67,7 @@ function HistoryDetailPage() {
     <div className="space-y-6">
       <PageHeader
         title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year}) - Employee no. ${detail.employee_number_snapshot}`}
+        description={`${detail.cycle_name} (${detail.cycle_year}) - Employee ID ${detail.employee_number_snapshot}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <EvaluationStatusBadge status={detail.status} />
@@ -131,7 +131,7 @@ function HistoryDetailPage() {
           <CardTitle className="text-base font-bold">Employee information</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          <Info label="Employee number" value={detail.employee_number_snapshot} />
+          <Info label="Employee ID" value={detail.employee_number_snapshot} />
           <Info label="Full name" value={detail.full_name_snapshot} />
           <Info label="Job title" value={detail.job_title_snapshot} />
           <Info label="Division / department" value={detail.division_snapshot} />

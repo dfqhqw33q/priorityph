@@ -88,7 +88,7 @@ function HistoryPage() {
       <Card className="border border-border bg-card shadow-sm">
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-[1fr_180px_180px_auto] sm:items-end">
           <div className="space-y-1.5">
-            <Label htmlFor="history-search">Employee number or name</Label>
+            <Label htmlFor="history-search">Employee ID or name</Label>
             <Input
               id="history-search"
               placeholder="Search employees..."
@@ -168,7 +168,7 @@ function HistoryPage() {
             <caption className="sr-only">Evaluation history</caption>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[120px] whitespace-nowrap">Employee Number</TableHead>
+                <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
                 <TableHead className="min-w-[190px]">Full Name</TableHead>
                 <TableHead className="min-w-[150px]">Job Title</TableHead>
                 <TableHead className="min-w-[170px]">Division / Department</TableHead>

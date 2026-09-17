@@ -647,7 +647,7 @@ export function EvaluationStageDetail({
     <div className="space-y-6">
       <PageHeader
         title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year})  -  Employee no. ${detail.employee_number_snapshot}`}
+        description={`${detail.cycle_name} (${detail.cycle_year})  -  Employee ID ${detail.employee_number_snapshot}`}
         actions={<EvaluationStatusBadge status={detail.status} />}
       />
       <Card>
@@ -655,7 +655,7 @@ export function EvaluationStageDetail({
           <CardTitle className="text-base">Employee information</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-x-5 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-6">
-          <Field label="Employee number" value={detail.employee_number_snapshot} />
+          <Field label="Employee ID" value={detail.employee_number_snapshot} />
           <Field label="Full name" value={detail.full_name_snapshot} />
           <Field label="Job title" value={detail.job_title_snapshot} />
           <Field label="Division / department" value={detail.division_snapshot} />
