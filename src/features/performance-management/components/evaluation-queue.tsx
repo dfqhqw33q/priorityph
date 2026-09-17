@@ -218,7 +218,7 @@ export function EvaluationQueue({
         />
       ) : (
         <>
-          <div className="overflow-x-auto border border-border bg-card shadow-sm">
+          <div className="border border-border bg-card shadow-sm">
             <Table>
               <caption className="sr-only">Employee evaluations available for review</caption>
               <TableHeader>

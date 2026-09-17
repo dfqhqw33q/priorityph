@@ -248,7 +248,7 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
           description="Records appear once employees submit their self-assessments."
         />
       ) : (
-        <div className="overflow-x-auto border border-border bg-card shadow-sm">
+        <div className="border border-border bg-card shadow-sm">
           <Table>
             <caption className="sr-only">Employee records</caption>
             <TableHeader>

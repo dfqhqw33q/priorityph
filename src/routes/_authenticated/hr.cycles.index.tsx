@@ -220,7 +220,7 @@ function CyclesPage() {
       ) : rows.length === 0 ? (
         <EmptyState title="No cycles yet" description="Create an annual cycle to get started." />
       ) : (
-        <div className="overflow-x-auto border border-border bg-card shadow-sm">
+        <div className="border border-border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
@@ -229,7 +229,7 @@ function CyclesPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Opens</TableHead>
                 <TableHead>Closes</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -250,8 +250,8 @@ function CyclesPage() {
                       {formatCompactDateTime(cycle.ends_at)}
                     </ResponsiveTableValue>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right">
-                    <div className="flex justify-end gap-2">
+                  <TableCell className="whitespace-nowrap">
+                    <div className="flex justify-start gap-2">
                       {cycle.status === "DRAFT" && can("cycles.manage") ? (
                         <Button size="sm" onClick={() => setActivateCycleId(cycle.id)}>
                           Activate
