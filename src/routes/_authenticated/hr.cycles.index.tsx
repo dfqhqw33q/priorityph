@@ -1,7 +1,7 @@
 ﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 
@@ -60,10 +60,11 @@ function CyclesPage() {
   const setStatus = useServerFn(changeCycleStatus);
   const [open, setOpen] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<CycleSummary | null>(null);
+  const [activateCycleId, setActivateCycleId] = useState<string | null>(null);
   const [archiveCycleId, setArchiveCycleId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatusFilter] = useState("ALL");
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   const cyclesQuery = useQuery({ queryKey: ["cycles"], queryFn: () => fetchCycles() });
   const templatesQuery = useQuery({ queryKey: ["templates"], queryFn: () => fetchTemplates() });
@@ -110,12 +111,30 @@ function CyclesPage() {
       : "";
 
   useEffect(() => {
-    if (shareUrl && canvasRef.current) {
-      QRCode.toCanvas(canvasRef.current, shareUrl, { width: 220, margin: 1 }).catch(
-        () => undefined,
-      );
-    }
+    let cancelled = false;
+    setQrCodeUrl(null);
+    if (!shareUrl) return;
+    QRCode.toDataURL(shareUrl, { width: 220, margin: 1 })
+      .then((url) => {
+        if (!cancelled) setQrCodeUrl(url);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
   }, [shareUrl]);
+
+  const activateMutation = useMutation({
+    mutationFn: (reason: string) =>
+      setStatus({ data: { cycleId: activateCycleId!, status: "ACTIVE", reason } }),
+    onSuccess: () => {
+      setActivateCycleId(null);
+      queryClient.invalidateQueries({ queryKey: ["cycles"] });
+      toast.success("Cycle activated");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Could not activate cycle"),
+  });
 
   const archiveMutation = useMutation({
     mutationFn: (reason: string) =>
@@ -200,9 +219,15 @@ function CyclesPage() {
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setSelectedCycle(cycle)}>
-                        Open
-                      </Button>
+                      {cycle.status === "DRAFT" && can("cycles.manage") ? (
+                        <Button size="sm" onClick={() => setActivateCycleId(cycle.id)}>
+                          Activate
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => setSelectedCycle(cycle)}>
+                          QR Code
+                        </Button>
+                      )}
                       {can("cycles.manage") && cycle.status !== "DISABLED" ? (
                         <Button variant="ghost" size="sm" onClick={() => setArchiveCycleId(cycle.id)}>
                           Archive
@@ -311,18 +336,36 @@ function CyclesPage() {
       <Dialog open={selectedCycle !== null} onOpenChange={(isOpen) => !isOpen && setSelectedCycle(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Performance Evaluation 2026</DialogTitle>
+            <DialogTitle>Performance Evaluation {selectedCycle?.year}</DialogTitle>
             <DialogDescription>QR Code</DialogDescription>
           </DialogHeader>
           <div className="flex justify-center">
-            {shareUrl ? (
-              <canvas ref={canvasRef} className="rounded-md border border-border bg-white p-2" />
+            {qrCodeUrl ? (
+              <img
+                src={qrCodeUrl}
+                alt={`QR code for Performance Evaluation ${selectedCycle?.year}`}
+                className="rounded-md border border-border bg-white p-2"
+                width={236}
+                height={236}
+              />
             ) : (
-              <p className="text-sm text-muted-foreground">A QR code is available after activation.</p>
+              <p className="text-sm text-muted-foreground">
+                A QR code is available after activation.
+              </p>
             )}
           </div>
         </DialogContent>
       </Dialog>
+
+      <ReasonDialog
+        open={activateCycleId !== null}
+        onOpenChange={(isOpen) => !isOpen && setActivateCycleId(null)}
+        title="Activate cycle"
+        description="Activating this cycle will generate its employee evaluation link and QR code."
+        confirmLabel="Activate"
+        pending={activateMutation.isPending}
+        onConfirm={(reason) => activateMutation.mutate(reason)}
+      />
 
       <ReasonDialog
         open={archiveCycleId !== null}
