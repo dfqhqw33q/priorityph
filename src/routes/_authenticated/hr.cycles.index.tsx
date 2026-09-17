@@ -1,7 +1,8 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -39,9 +40,11 @@ import {
   PageHeader,
   formatCompactDateTime,
   formatCompactDateTimeParts,
+  ReasonDialog,
 } from "@/components/shared/shared-ui";
-import { listCycles, listTemplates, saveCycle } from "@/lib/cycles.functions";
+import { changeCycleStatus, listCycles, listTemplates, saveCycle } from "@/lib/cycles.functions";
 import { useAccess } from "@/hooks/use-access";
+import type { CycleSummary } from "@/lib/domain";
 
 export const Route = createFileRoute("/_authenticated/hr/cycles/")({
   component: CyclesPage,
@@ -54,8 +57,13 @@ function CyclesPage() {
   const fetchCycles = useServerFn(listCycles);
   const fetchTemplates = useServerFn(listTemplates);
   const save = useServerFn(saveCycle);
+  const setStatus = useServerFn(changeCycleStatus);
   const [open, setOpen] = useState(false);
+  const [selectedCycle, setSelectedCycle] = useState<CycleSummary | null>(null);
+  const [archiveCycleId, setArchiveCycleId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [status, setStatusFilter] = useState("ALL");
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const cyclesQuery = useQuery({ queryKey: ["cycles"], queryFn: () => fetchCycles() });
   const templatesQuery = useQuery({ queryKey: ["templates"], queryFn: () => fetchTemplates() });
@@ -92,27 +100,68 @@ function CyclesPage() {
   });
 
   const rows = (cyclesQuery.data ?? []).filter((cycle) =>
-    `${cycle.name} ${cycle.year} ${cycle.status}`.toLowerCase().includes(search.toLowerCase()),
+    `${cycle.name} ${cycle.year} ${cycle.status}`.toLowerCase().includes(search.toLowerCase()) &&
+    (status === "ALL" || cycle.status === status),
   );
+
+  const shareUrl =
+    selectedCycle?.cycle_token && typeof window !== "undefined"
+      ? `${window.location.origin}/evaluation/${selectedCycle.cycle_token}`
+      : "";
+
+  useEffect(() => {
+    if (shareUrl && canvasRef.current) {
+      QRCode.toCanvas(canvasRef.current, shareUrl, { width: 220, margin: 1 }).catch(
+        () => undefined,
+      );
+    }
+  }, [shareUrl]);
+
+  const archiveMutation = useMutation({
+    mutationFn: (reason: string) =>
+      setStatus({ data: { cycleId: archiveCycleId!, status: "DISABLED", reason } }),
+    onSuccess: () => {
+      setArchiveCycleId(null);
+      queryClient.invalidateQueries({ queryKey: ["cycles"] });
+      toast.success("Cycle archived");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Could not archive cycle"),
+  });
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Evaluation cycles"
         description="Each yearly cycle has one assessment link and QR code shared with all employees."
-        actions={
-          can("cycles.manage") ? (
-            <Button onClick={() => setOpen(true)}>New cycle</Button>
-          ) : undefined
-        }
       />
 
-      <Input
-        placeholder="Search cycles"
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <Label htmlFor="cycle-search">Search Cycle</Label>
+          <Input
+            id="cycle-search"
+            placeholder="Search cycles"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
+        <div className="w-full space-y-1.5 sm:w-44">
+          <Label htmlFor="cycle-status">Status</Label>
+          <select
+            id="cycle-status"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            value={status}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="ALL">All</option>
+            <option value="ACTIVE">Open</option>
+            <option value="CLOSED">Closed</option>
+            <option value="DISABLED">Archived</option>
+          </select>
+        </div>
+        {can("cycles.manage") ? <Button onClick={() => setOpen(true)}>New Cycle</Button> : null}
+      </div>
 
       {cyclesQuery.isLoading ? (
         <LoadingBlock />
@@ -128,8 +177,6 @@ function CyclesPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Opens</TableHead>
                 <TableHead>Closes</TableHead>
-                <TableHead className="text-right">Self-assessments</TableHead>
-                <TableHead className="text-right">Supervisor reviews</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -151,18 +198,17 @@ function CyclesPage() {
                       {formatCompactDateTime(cycle.ends_at)}
                     </ResponsiveTableValue>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">
-                    {cycle.step1_count}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">
-                    {cycle.supervisor_count}
-                  </TableCell>
                   <TableCell className="whitespace-nowrap text-right">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/hr/cycles/$cycleId" params={{ cycleId: cycle.id }}>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setSelectedCycle(cycle)}>
                         Open
-                      </Link>
-                    </Button>
+                      </Button>
+                      {can("cycles.manage") && cycle.status !== "DISABLED" ? (
+                        <Button variant="ghost" size="sm" onClick={() => setArchiveCycleId(cycle.id)}>
+                          Archive
+                        </Button>
+                      ) : null}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -261,6 +307,32 @@ function CyclesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={selectedCycle !== null} onOpenChange={(isOpen) => !isOpen && setSelectedCycle(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Performance Evaluation 2026</DialogTitle>
+            <DialogDescription>QR Code</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center">
+            {shareUrl ? (
+              <canvas ref={canvasRef} className="rounded-md border border-border bg-white p-2" />
+            ) : (
+              <p className="text-sm text-muted-foreground">A QR code is available after activation.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ReasonDialog
+        open={archiveCycleId !== null}
+        onOpenChange={(isOpen) => !isOpen && setArchiveCycleId(null)}
+        title="Archive cycle"
+        description="Please give a short reason. The cycle and its records will remain viewable."
+        confirmLabel="Archive"
+        pending={archiveMutation.isPending}
+        onConfirm={(reason) => archiveMutation.mutate(reason)}
+      />
     </div>
   );
 }

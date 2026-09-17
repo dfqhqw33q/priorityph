@@ -1,4 +1,4 @@
-﻿import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+﻿import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
@@ -18,7 +18,6 @@ import {
 } from "@/components/shared/shared-ui";
 import {
   changeCycleStatus,
-  deleteDraftCycle,
   getCycle,
   regenerateCycleToken,
 } from "@/lib/cycles.functions";
@@ -31,18 +30,15 @@ export const Route = createFileRoute("/_authenticated/hr/cycles/$cycleId")({
 
 type Action =
   | { kind: "status"; status: CycleStatus; title: string; label: string; destructive?: boolean }
-  | { kind: "regenerate" }
-  | { kind: "delete" };
+  | { kind: "regenerate" };
 
 function CycleDetailPage() {
   const { cycleId } = useParams({ from: "/_authenticated/hr/cycles/$cycleId" });
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { can } = useAccess();
   const fetchCycle = useServerFn(getCycle);
   const setStatus = useServerFn(changeCycleStatus);
   const regenerate = useServerFn(regenerateCycleToken);
-  const removeDraft = useServerFn(deleteDraftCycle);
   const [action, setAction] = useState<Action | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -69,16 +65,13 @@ function CycleDetailPage() {
       if (!action) return;
       if (action.kind === "status")
         await setStatus({ data: { cycleId, status: action.status, reason } });
-      else if (action.kind === "regenerate") await regenerate({ data: { cycleId, reason } });
-      else await removeDraft({ data: { cycleId, reason } });
+      else await regenerate({ data: { cycleId, reason } });
     },
     onSuccess: () => {
-      const wasDelete = action?.kind === "delete";
       setAction(null);
       queryClient.invalidateQueries({ queryKey: ["cycle", cycleId] });
       queryClient.invalidateQueries({ queryKey: ["cycles"] });
       toast.success("Cycle updated");
-      if (wasDelete) navigate({ to: "/hr/cycles" });
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Action failed"),
   });
@@ -120,9 +113,6 @@ function CycleDetailPage() {
                 >
                   Activate
                 </Button>
-                <Button variant="outline" onClick={() => setAction({ kind: "delete" })}>
-                  Delete draft
-                </Button>
               </>
             ) : null}
             {canManage && cycle.status === "ACTIVE" ? (
@@ -147,13 +137,13 @@ function CycleDetailPage() {
                   setAction({
                     kind: "status",
                     status: "DISABLED",
-                    title: "Disable cycle",
-                    label: "Disable",
+                    title: "Archive cycle",
+                    label: "Archive",
                     destructive: true,
                   })
                 }
               >
-                Disable
+                Archive
               </Button>
             ) : null}
           </div>
@@ -232,19 +222,15 @@ function CycleDetailPage() {
         title={
           action?.kind === "regenerate"
             ? "Regenerate shared link"
-            : action?.kind === "delete"
-              ? "Delete draft cycle"
-              : (action?.title ?? "Confirm")
+            : (action?.title ?? "Confirm")
         }
         description="Please give a short reason. This is kept in the activity history."
         confirmLabel={
           action?.kind === "regenerate"
             ? "Regenerate"
-            : action?.kind === "delete"
-              ? "Delete"
-              : (action?.label ?? "Confirm")
+            : (action?.label ?? "Confirm")
         }
-        destructive={action?.kind === "delete" || (action?.kind === "status" && action.destructive)}
+        destructive={action?.kind === "status" && action.destructive}
         pending={mutation.isPending}
         onConfirm={(reason) => mutation.mutate(reason)}
       />

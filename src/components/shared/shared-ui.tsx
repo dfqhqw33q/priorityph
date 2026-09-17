@@ -152,7 +152,7 @@ const CYCLE_VARIANTS: Record<CycleStatus, string> = {
 export function CycleStatusBadge({ status }: { status: CycleStatus }) {
   return (
     <Badge variant="outline" className={cn("px-2.5 py-0.5 text-xs", CYCLE_VARIANTS[status])}>
-      {status.charAt(0) + status.slice(1).toLowerCase()}
+      {status === "DISABLED" ? "Archived" : status.charAt(0) + status.slice(1).toLowerCase()}
     </Badge>
   );
 }
