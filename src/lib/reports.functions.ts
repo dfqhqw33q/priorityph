@@ -229,6 +229,9 @@ export const getReport = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const roles = await getActorRoles(context.userId);
     const { permittedStatuses, supervisorOnly } = getRoleHistoryAccess(roles);
+    const isCompletedView = data.recordType === "completed";
+    const forcedStatus = isCompletedView ? "SUBMITTED" : "FINALIZED";
+    const effectivePermittedStatuses = isCompletedView ? ["SUBMITTED"] : permittedStatuses;
 
     let query = admin
       .from("evaluations")
@@ -245,10 +248,15 @@ export const getReport = createServerFn({ method: "POST" })
     }
     if (data.division.trim()) query = query.eq("division_snapshot", data.division.trim());
     if (data.section.trim()) query = query.eq("section_snapshot", data.section.trim());
-    if (permittedStatuses && permittedStatuses.length > 0) {
-      query = query.in("status", permittedStatuses as never);
+    if (effectivePermittedStatuses && effectivePermittedStatuses.length > 0) {
+      query = query.in("status", effectivePermittedStatuses as never);
     }
-    if (data.status.trim() && (!permittedStatuses || permittedStatuses.length === 0 || permittedStatuses.includes(data.status.trim()))) {
+    if (forcedStatus) {
+      query = query.eq("status", forcedStatus as never);
+    } else if (
+      data.status.trim() &&
+      (!permittedStatuses || permittedStatuses.length === 0 || permittedStatuses.includes(data.status.trim()))
+    ) {
       query = query.eq("status", data.status.trim() as never);
     }
     if (supervisorOnly) query = query.eq("supervisor_user_id", context.userId);

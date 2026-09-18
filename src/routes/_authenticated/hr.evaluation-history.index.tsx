@@ -36,12 +36,16 @@ type HistoryPageProps = {
   title: string;
   description: string;
   defaultStatus?: string;
+  mode?: "history" | "completed";
+  showStatusFilter?: boolean;
 };
 
 export function HistoryTablePage({
   title,
   description,
   defaultStatus = ALL,
+  mode = "history",
+  showStatusFilter = mode === "history",
 }: HistoryPageProps) {
   const fetchReport = useServerFn(getReport);
   const [search, setSearch] = useState("");
@@ -50,15 +54,18 @@ export function HistoryTablePage({
   const [cycleId, setCycleId] = useState(ALL);
   const [page, setPage] = useState(0);
 
+  const effectiveStatus = mode === "completed" ? "SUBMITTED" : status || defaultStatus;
+
   const query = useQuery({
-    queryKey: ["evaluation-history", { search: debouncedSearch, status, cycleId, page }],
+    queryKey: ["evaluation-history", { mode, search: debouncedSearch, status: effectiveStatus, cycleId, page }],
     queryFn: () =>
       fetchReport({
         data: {
           search: debouncedSearch,
-          status,
+          status: effectiveStatus,
           cycleId: cycleId === ALL ? null : cycleId,
           year: null,
+          recordType: mode,
           page,
           pageSize: PAGE_SIZE,
         },
@@ -72,14 +79,17 @@ export function HistoryTablePage({
     () => cycleOptions.find((cycle) => cycle.id === cycleId) ?? null,
     [cycleId, cycleOptions],
   );
-  const hasActiveFilters = search.trim().length > 0 || status !== defaultStatus || cycleId !== ALL;
+  const hasActiveFilters =
+    search.trim().length > 0 ||
+    (showStatusFilter && status !== defaultStatus) ||
+    cycleId !== ALL;
 
-  const emptyTitle = search.trim() || status !== defaultStatus || cycleId !== ALL
+  const emptyTitle = search.trim() || (showStatusFilter && status !== defaultStatus) || cycleId !== ALL
     ? "No evaluation records found"
     : "No evaluation records found";
   const emptyDescription = cycleId !== ALL
     ? "There are no evaluations for the selected evaluation cycle."
-    : search.trim() || status !== defaultStatus
+    : search.trim() || (showStatusFilter && status !== defaultStatus)
       ? "There are no evaluations matching your current filters."
       : "There are no evaluations for the selected evaluation cycle.";
 
@@ -87,7 +97,7 @@ export function HistoryTablePage({
     <div className="space-y-6">
       <PageHeader title={title} description={description} />
 
-      {query.data ? (
+      {mode === "history" && query.data ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <StatCard label="Total evaluations" value={query.data.totalCount} />
           <StatCard
@@ -98,12 +108,16 @@ export function HistoryTablePage({
       ) : null}
 
       <Card className="border border-border bg-card shadow-sm">
-        <CardContent className="grid gap-4 pt-6 md:grid-cols-[1.2fr_1fr_1.2fr_auto] md:items-end">
+        <CardContent
+          className={`grid gap-4 pt-6 md:items-end ${
+            mode === "completed" ? "md:grid-cols-[1.2fr_1.2fr_auto]" : "md:grid-cols-[1.2fr_1fr_1.2fr_auto]"
+          }`}
+        >
           <div className="space-y-1.5">
             <Label htmlFor="history-search">Employee ID or name</Label>
             <Input
               id="history-search"
-              placeholder="Search employees..."
+              placeholder={mode === "completed" ? "Search employee ID or name" : "Search employees..."}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -111,27 +125,31 @@ export function HistoryTablePage({
               }}
             />
           </div>
+          {showStatusFilter ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="history-status">Status</Label>
+              <select
+                id="history-status"
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                value={status}
+                onChange={(e) => {
+                  setStatus(e.target.value);
+                  setPage(0);
+                }}
+              >
+                <option value={ALL}>All statuses</option>
+                {EVALUATION_STATUSES.map((value) => (
+                  <option key={value} value={value}>
+                    {EVALUATION_STATUS_LABELS[value]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
           <div className="space-y-1.5">
-            <Label htmlFor="history-status">Status</Label>
-            <select
-              id="history-status"
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
-                setPage(0);
-              }}
-            >
-              <option value={ALL}>All statuses</option>
-              {EVALUATION_STATUSES.map((value) => (
-                <option key={value} value={value}>
-                  {EVALUATION_STATUS_LABELS[value]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="history-cycle">Evaluation Cycle / Year</Label>
+            <Label htmlFor="history-cycle">
+              {mode === "completed" ? "Evaluation Cycle" : "Evaluation Cycle / Year"}
+            </Label>
             <select
               id="history-cycle"
               className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -141,7 +159,7 @@ export function HistoryTablePage({
                 setPage(0);
               }}
             >
-              <option value={ALL}>All evaluation cycles</option>
+              <option value={ALL}>{mode === "completed" ? "All cycles" : "All evaluation cycles"}</option>
               {cycleOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name ? `${option.name} (${option.year})` : `${option.year}`}
@@ -287,7 +305,9 @@ export const Route = createFileRoute("/_authenticated/hr/evaluation-history/")({
   component: () => (
     <HistoryTablePage
       title="Evaluation history"
-      description="Review employee evaluation records by cycle, status, and submission date."
+      description="Review finalized evaluation records across evaluation cycles."
+      defaultStatus="FINALIZED"
+      mode="history"
     />
   ),
 });

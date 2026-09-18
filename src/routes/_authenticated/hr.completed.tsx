@@ -10,8 +10,10 @@ function CompletedPage() {
   return (
     <HistoryTablePage
       title="Completed evaluations"
-      description="Review finalized evaluation records by cycle and employee."
-      defaultStatus="FINALIZED"
+      description="View submitted evaluation records for the selected cycle."
+      defaultStatus="SUBMITTED"
+      mode="completed"
+      showStatusFilter={false}
     />
   );
 }

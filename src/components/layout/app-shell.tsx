@@ -82,7 +82,7 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
   { prefix: "/hr/recognition", roles: ["HR"], permission: "recognition.view" },
   {
     prefix: "/hr/evaluation-history",
-    roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
+    roles: ["HR", "PRESIDENT"],
   },
   {
     prefix: "/hr/completed",
@@ -197,7 +197,6 @@ const NAV: Array<{
     direct: [
       { to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1" },
     ],
-    secondary: [{ to: "/hr/evaluation-history", label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -223,7 +222,6 @@ const NAV: Array<{
         permission: "evaluations.review_step3",
       },
     ],
-    secondary: [{ to: "/hr/evaluation-history", label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -242,7 +240,6 @@ const NAV: Array<{
   {
     roles: ["COMMITTEE"],
     direct: [{ to: "/committee", label: "Dashboard", icon: Gauge, permission: "committee.review" }],
-    secondary: [{ to: "/hr/evaluation-history", label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
