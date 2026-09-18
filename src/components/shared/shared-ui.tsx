@@ -165,6 +165,21 @@ export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
   );
 }
 
+export function DashboardSummaryLayout({
+  status,
+  activity,
+}: {
+  status: ReactNode;
+  activity: ReactNode;
+}) {
+  return (
+    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <div className="min-w-0">{status}</div>
+      <div className="min-w-0">{activity}</div>
+    </div>
+  );
+}
+
 export function LoadingBlock({
   rows = 4,
   variant = "table",

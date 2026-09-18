@@ -7,6 +7,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   EmptyState,
+  DashboardSummaryLayout,
   LoadingBlock,
   PageHeader,
   StatCard,
@@ -75,13 +76,15 @@ function AdminOverview() {
             <StatCard label="Employee Records" value={stats?.employeeRecords ?? 0} to="/admin/employees" hint="Profiles" />
           </div>
 
-          <Card className="border border-border bg-card shadow-sm">
+          <DashboardSummaryLayout
+            status={
+              <Card className="border border-border bg-card shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Evaluation Status</CardTitle>
             </CardHeader>
             <CardContent className="h-[260px] p-3 pt-0">
               <ChartContainer
-                config={{ value: { color: "hsl(var(--chart-5))", label: "Evaluations" } }}
+                config={{ value: { color: "var(--warning)", label: "Evaluations" } }}
                 className="h-full w-full"
               >
                 <ResponsiveContainer width="100%" height="100%">
@@ -91,13 +94,13 @@ function AdminOverview() {
                     margin={{ top: 6, right: 12, left: 8, bottom: 6 }}
                     barGap={8}
                   >
-                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis
                       type="number"
                       allowDecimals={false}
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                       domain={[0, (dataMax: number) => Math.max(dataMax, 1)]}
                     />
                     <YAxis
@@ -106,23 +109,23 @@ function AdminOverview() {
                       tickLine={false}
                       axisLine={false}
                       width={100}
-                      tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+                      tick={{ fill: "var(--foreground)", fontSize: 12 }}
                     />
                     <Tooltip
-                      cursor={{ fill: "hsl(var(--muted))" }}
+                      cursor={{ fill: "var(--muted)" }}
                       content={
                         <ChartTooltipContent hideLabel formatter={(value) => [value, "Evaluations"]} />
                       }
                     />
                     <Bar
                       dataKey="value"
-                      fill="hsl(var(--chart-5))"
+                      fill="var(--warning)"
                       radius={[0, 6, 6, 0]}
                       barSize={18}
                       label={{
                         position: "right",
                         formatter: (value: number | string) => `${value}`,
-                        fill: "hsl(var(--foreground))",
+                        fill: "var(--foreground)",
                         fontSize: 12,
                         fontWeight: 600,
                       }}
@@ -131,7 +134,10 @@ function AdminOverview() {
                 </ResponsiveContainer>
               </ChartContainer>
             </CardContent>
-          </Card>
+              </Card>
+            }
+            activity={
+              <Card className="border border-border bg-card shadow-sm">
 
           <Card className="border border-border bg-card shadow-sm">
             <CardHeader className="pb-3">
@@ -156,7 +162,9 @@ function AdminOverview() {
                 </ul>
               )}
             </CardContent>
-          </Card>
+              </Card>
+            }
+          />
         </>
       )}
     </div>

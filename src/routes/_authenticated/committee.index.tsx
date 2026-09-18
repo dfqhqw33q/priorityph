@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   EmptyState,
   AuditActivityTable,
+  DashboardSummaryLayout,
   LoadingBlock,
   PageHeader,
   StatCard,
@@ -123,7 +124,9 @@ function CommitteeDashboard() {
             />
           </div>
 
-          <Card className="border border-border bg-card shadow-sm">
+          <DashboardSummaryLayout
+            status={
+              <Card className="border border-border bg-card shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Evaluation Status</CardTitle>
             </CardHeader>
@@ -180,7 +183,10 @@ function CommitteeDashboard() {
                 </ResponsiveContainer>
               </ChartContainer>
             </CardContent>
-          </Card>
+              </Card>
+            }
+            activity={
+              <Card className="border border-border bg-card shadow-sm">
 
           <Card className="border border-border bg-card shadow-sm">
             <CardHeader className="pb-3">
@@ -189,7 +195,9 @@ function CommitteeDashboard() {
             <CardContent className="pt-0">
               <AuditActivityTable rows={query.data?.activity ?? []} />
             </CardContent>
-          </Card>
+              </Card>
+            }
+          />
         </>
       )}
     </div>
