@@ -138,7 +138,7 @@ export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
 
   return (
     <div className="max-w-full overflow-hidden border border-border bg-card shadow-sm">
-      <Table className="w-full min-w-0 table-fixed">
+      <Table className="!w-full !min-w-0 table-fixed">
         <caption className="sr-only">Recent evaluation activity</caption>
         <TableHeader>
           <TableRow>
@@ -146,7 +146,7 @@ export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
             <TableHead className="w-[21%]">Performed By</TableHead>
             <TableHead className="w-[14%]">Role</TableHead>
             <TableHead className="w-[17%]">Employee</TableHead>
-            <TableHead className="w-[18%] whitespace-nowrap">Date &amp; Time</TableHead>
+            <TableHead className="w-[18%] whitespace-normal">Date &amp; Time</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -160,7 +160,9 @@ export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
                 {humanizeToken(row.performed_by_role)}
               </TableCell>
               <TableCell className="whitespace-normal break-words">{row.employee_name}</TableCell>
-              <TableCell className="whitespace-nowrap">{formatDateTime(row.occurred_at)}</TableCell>
+              <TableCell className="whitespace-normal break-words">
+                {formatDateTime(row.occurred_at)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
