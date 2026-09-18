@@ -124,7 +124,7 @@ function HrDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Evaluation Status</CardTitle>
             </CardHeader>
-            <CardContent className="h-[260px] p-3 pt-0">
+            <CardContent className="h-[220px] p-3 pt-0">
               <ChartContainer
                 config={{ value: { color: "var(--info)", label: "Evaluations" } }}
                 className="h-full w-full"

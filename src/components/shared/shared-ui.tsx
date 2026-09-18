@@ -137,25 +137,29 @@ export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
   }
 
   return (
-    <div className="max-w-full overflow-x-auto border border-border bg-card shadow-sm">
-      <Table>
+    <div className="max-w-full overflow-hidden border border-border bg-card shadow-sm">
+      <Table className="w-full min-w-0 table-fixed">
         <caption className="sr-only">Recent evaluation activity</caption>
         <TableHeader>
           <TableRow>
-            <TableHead className="min-w-[230px]">Activity</TableHead>
-            <TableHead className="min-w-[190px]">Performed By</TableHead>
-            <TableHead className="min-w-[160px]">Role</TableHead>
-            <TableHead className="min-w-[190px]">Employee</TableHead>
-            <TableHead className="min-w-[190px] whitespace-nowrap">Date &amp; Time</TableHead>
+            <TableHead className="w-[30%]">Activity</TableHead>
+            <TableHead className="w-[21%]">Performed By</TableHead>
+            <TableHead className="w-[14%]">Role</TableHead>
+            <TableHead className="w-[17%]">Employee</TableHead>
+            <TableHead className="w-[18%] whitespace-nowrap">Date &amp; Time</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="font-medium">{auditActivityLabel(row.action)}</TableCell>
-              <TableCell>{row.performed_by}</TableCell>
-              <TableCell>{humanizeToken(row.performed_by_role)}</TableCell>
-              <TableCell>{row.employee_name}</TableCell>
+              <TableCell className="whitespace-normal break-words font-medium">
+                {auditActivityLabel(row.action)}
+              </TableCell>
+              <TableCell className="whitespace-normal break-words">{row.performed_by}</TableCell>
+              <TableCell className="whitespace-normal break-words">
+                {humanizeToken(row.performed_by_role)}
+              </TableCell>
+              <TableCell className="whitespace-normal break-words">{row.employee_name}</TableCell>
               <TableCell className="whitespace-nowrap">{formatDateTime(row.occurred_at)}</TableCell>
             </TableRow>
           ))}
@@ -173,7 +177,7 @@ export function DashboardSummaryLayout({
   activity: ReactNode;
 }) {
   return (
-    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+    <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,13fr)]">
       <div className="min-w-0">{status}</div>
       <div className="min-w-0">{activity}</div>
     </div>
