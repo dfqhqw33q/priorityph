@@ -113,9 +113,9 @@ function ReadOnlyField({
   className?: string;
 }) {
   return (
-    <div className={className}>
+    <div className={`min-w-0 border-b border-border/60 pb-3 last:border-b-0 ${className}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 w-full max-w-none break-words whitespace-pre-wrap pr-1 text-sm leading-6 text-foreground lg:pr-3">
+      <p className="mt-1 w-full max-w-none break-words whitespace-pre-wrap text-sm leading-6 text-foreground">
         {String(value ?? "-") || "-"}
       </p>
     </div>
@@ -132,7 +132,7 @@ function ReadOnlyGroup({
   className?: string;
 }) {
   return (
-    <section className={`space-y-3 ${className}`}>
+    <section className={`space-y-4 border-t border-border/60 pt-4 first:border-t-0 first:pt-0 ${className}`}>
       <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
       {children}
     </section>
@@ -1021,7 +1021,7 @@ export function EvaluationStageDetail({
                   </div>
                 </ReadOnlyGroup>
               </div>
-              <div className="space-y-2 rounded-md border border-border p-4">
+              <div className="space-y-4 border-t border-border/60 pt-4">
                 <h3 className="font-semibold">STEP 3 - Reviewing Supervisor review (read-only)</h3>
                 {(() => {
                   const accStages = (
@@ -1032,22 +1032,18 @@ export function EvaluationStageDetail({
                   const revSupReview = accStages?.["reviewingSupervisorReview"] as
                     Record<string, unknown> | undefined;
                   return revSupReview ? (
-                    <>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">Comments</p>
-                        <p className="whitespace-pre-wrap text-sm">
-                          {String(revSupReview["comments"] ?? "-")}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">
-                          Recommendations
-                        </p>
-                        <p className="whitespace-pre-wrap text-sm">
-                          {String(revSupReview["recommendations"] ?? "-")}
-                        </p>
-                      </div>
-                    </>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <ReadOnlyField label="Comments" value={revSupReview["comments"]} />
+                      <ReadOnlyField
+                        label="Recommendations"
+                        value={revSupReview["recommendations"]}
+                      />
+                      <ReadOnlyField
+                        label="Date & Time"
+                        value={revSupReview["reviewing_supervisor_date"]}
+                      />
+                      <ReadOnlyField label="Submitted At" value={revSupReview["submitted_at"]} />
+                    </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
                       Reviewing Supervisor review not yet completed
@@ -1065,55 +1061,33 @@ export function EvaluationStageDetail({
                   const personnel = accStages?.["personnelProcessing"] as
                     Record<string, unknown> | undefined;
                   return personnel && detail.status !== "FOR_PROCESSING" ? (
-                    <div className="space-y-2 rounded-md border border-border p-4">
+                    <div className="space-y-4 border-t border-border/60 pt-4">
                       <h3 className="font-semibold">Personnel Office processing (read-only)</h3>
-                      <div className="grid gap-4 sm:grid-cols-2 text-sm">
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Present Salary
-                          </p>
-                          <p>{String(personnel["present_salary"] ?? "-")}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Last Increase Date
-                          </p>
-                          <p>{String(personnel["last_increase_date"] ?? "-")}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Last Increase Amount
-                          </p>
-                          <p>{String(personnel["last_increase_amount"] ?? "-")}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Total Points
-                          </p>
-                          <p>{String(personnel["total_points"] ?? "-")}</p>
-                        </div>
-                        <div className="sm:col-span-2">
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Nature of Last Increase
-                          </p>
-                          <p className="whitespace-pre-wrap">
-                            {String(personnel["last_increase_nature"] ?? "-")}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Adjective Rating
-                          </p>
-                          <p>{String(personnel["adjective_rating"] ?? "-")}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Recommended Increase / Bonus
-                          </p>
-                          <p className="whitespace-pre-wrap">
-                            {String(personnel["recommended_increase_bonus"] ?? "-")}
-                          </p>
-                        </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <ReadOnlyField label="Present Salary" value={personnel["present_salary"]} />
+                        <ReadOnlyField
+                          label="Last Increase Date"
+                          value={personnel["last_increase_date"]}
+                        />
+                        <ReadOnlyField
+                          label="Last Increase Amount"
+                          value={personnel["last_increase_amount"]}
+                        />
+                        <ReadOnlyField label="Total Points" value={personnel["total_points"]} />
+                        <ReadOnlyField
+                          className="sm:col-span-2"
+                          label="Nature of Last Increase"
+                          value={personnel["last_increase_nature"]}
+                        />
+                        <ReadOnlyField
+                          label="Adjective Rating"
+                          value={personnel["adjective_rating"]}
+                        />
+                        <ReadOnlyField
+                          label="Recommended Increase / Bonus"
+                          value={personnel["recommended_increase_bonus"]}
+                        />
+                        <ReadOnlyField label="Submitted At" value={personnel["submitted_at"]} />
                       </div>
                     </div>
                   ) : null;
@@ -1128,31 +1102,21 @@ export function EvaluationStageDetail({
                   const committee = accStages?.["committeeReview"] as
                     Record<string, unknown> | undefined;
                   return committee && detail.status !== "FOR_REVIEW" ? (
-                    <div className="space-y-2 rounded-md border border-border p-4">
+                    <div className="space-y-4 border-t border-border/60 pt-4">
                       <h3 className="font-semibold">Committee recommendation (read-only)</h3>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Final Action
-                          </p>
-                          <p>{String(committee["final_action"] ?? "-")}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Action Details
-                          </p>
-                          <p className="whitespace-pre-wrap">
-                            {String(committee["action_details"] ?? "-")}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            Committee Recommendation
-                          </p>
-                          <p className="whitespace-pre-wrap">
-                            {String(committee["recommendation"] ?? "-")}
-                          </p>
-                        </div>
+                      <div className="grid gap-4 lg:grid-cols-2">
+                        <ReadOnlyField label="Final Action" value={committee["final_action"]} />
+                        <ReadOnlyField
+                          className="lg:col-span-2"
+                          label="Action Details"
+                          value={committee["action_details"]}
+                        />
+                        <ReadOnlyField
+                          className="lg:col-span-2"
+                          label="Committee Recommendation"
+                          value={committee["recommendation"]}
+                        />
+                        <ReadOnlyField label="Submitted At" value={committee["submitted_at"]} />
                       </div>
                     </div>
                   ) : null;
