@@ -187,7 +187,12 @@ function ReviewingSupervisorDashboard() {
                       key={event.id}
                       className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-foreground">{humanizeToken(event.action)}</span>
+                      <span className="min-w-0">
+                        <span className="block font-medium text-foreground">{humanizeToken(event.action)}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {event.employee_name} ({event.employee_number})
+                        </span>
+                      </span>
                       <span className="text-xs text-muted-foreground">{formatDateTime(event.occurred_at)}</span>
                     </li>
                   ))}

@@ -963,23 +963,93 @@ export async function adminStats() {
   };
 }
 
-export async function recentActivity(modules: string[], limit = 8) {
+export async function recentActivity(
+  userId: string,
+  roles: AppRole[],
+  cycleId: string | null = null,
+  limit = 8,
+) {
+  const admin = await getAdmin();
+  const { data: events } = await admin
+    .from("evaluation_events")
+    .select("id, evaluation_id, event_type, from_status, to_status, actor_user_id, reason, occurred_at")
+    .order("occurred_at", { ascending: false })
+    .limit(limit * 8);
+
+  const eventRows = events ?? [];
+  const evaluationIds = Array.from(new Set(eventRows.map((event) => event.evaluation_id)));
+  if (evaluationIds.length === 0) return [];
+
+  const [{ data: evaluations }, { data: reviewingAssignments }, { data: committeeAssignments }] =
+    await Promise.all([
+      admin
+        .from("evaluations")
+        .select("id, cycle_id, full_name_snapshot, employee_number_snapshot, supervisor_user_id, president_user_id")
+        .in("id", evaluationIds),
+      roles.includes("REVIEWING_SUPERVISOR")
+        ? admin
+            .from("reviewing_supervisor_reviews")
+            .select("evaluation_id")
+            .eq("reviewer_user_id", userId)
+        : Promise.resolve({ data: [] }),
+      roles.includes("COMMITTEE")
+        ? admin
+            .from("committee_reviews")
+            .select("evaluation_id")
+            .eq("committee_user_id", userId)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+  const evaluationById = new Map((evaluations ?? []).map((evaluation) => [evaluation.id, evaluation]));
+  const reviewingIds = new Set((reviewingAssignments ?? []).map((row) => row.evaluation_id));
+  const committeeIds = new Set((committeeAssignments ?? []).map((row) => row.evaluation_id));
+  const isHr = roles.includes("HR") || roles.includes("ADMINISTRATOR");
+
+  const isVisible = (event: (typeof eventRows)[number]) => {
+    if (isHr) return true;
+    const evaluation = evaluationById.get(event.evaluation_id);
+    if (!evaluation) return false;
+    if (cycleId && evaluation.cycle_id !== cycleId) return false;
+    if (event.actor_user_id === userId || evaluation.president_user_id === userId) return true;
+    if (roles.includes("SUPERVISOR") && evaluation.supervisor_user_id === userId) return true;
+    if (roles.includes("REVIEWING_SUPERVISOR") && reviewingIds.has(event.evaluation_id)) return true;
+    if (roles.includes("COMMITTEE") && committeeIds.has(event.evaluation_id)) return true;
+
+    // Unassigned queue events are visible only at the stage where the role can act.
+    if (roles.includes("SUPERVISOR") && event.event_type === "STEP1_SUBMITTED") return true;
+    if (roles.includes("REVIEWING_SUPERVISOR") && event.event_type === "RATER_STEP2_SUBMITTED") return true;
+    if (roles.includes("COMMITTEE") && event.event_type === "PERSONNEL_SUBMITTED") return true;
+    return roles.includes("PRESIDENT") && event.event_type === "COMMITTEE_SUBMITTED";
+  };
+
+  return eventRows
+    .filter((event) => !cycleId || evaluationById.get(event.evaluation_id)?.cycle_id === cycleId)
+    .filter(isVisible)
+    .slice(0, limit)
+    .map((event) => {
+      const evaluation = evaluationById.get(event.evaluation_id);
+      return {
+        id: event.id,
+        action: event.event_type,
+        occurred_at: event.occurred_at,
+        reason: event.reason,
+        evaluation_id: event.evaluation_id,
+        employee_name: evaluation?.full_name_snapshot ?? "Unknown employee",
+        employee_number: evaluation?.employee_number_snapshot ?? "—",
+        status: event.to_status,
+      };
+    });
+}
+
+export async function recentAuditActivity(modules: string[], limit = 8) {
   const admin = await getAdmin();
   const { data } = await admin
     .from("audit_logs")
     .select("id, occurred_at, action, module, result, reason")
     .in("module", modules)
     .order("occurred_at", { ascending: false })
-    .limit(limit * 4);
-
-  const filtered = (data ?? []).filter((entry) => {
-    const action = String(entry.action ?? "");
-    const normalized = action.replace(/_/g, " ");
-    return !/(ACCESS|VIEWED|LOGIN|AUDIT_LOG|UNAUTHORIZED|QUEUE)/i.test(normalized)
-      && /(SUBMITTED|DRAFT|RETURNED|REVIEW|APPROVAL|FINALIZED|COMPLETED|STEP|SAVED)/i.test(normalized);
-  });
-
-  return filtered.slice(0, limit);
+    .limit(limit);
+  return data ?? [];
 }
 
 export async function recentSecurityEvents(limit = 8) {

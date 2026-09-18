@@ -456,12 +456,12 @@ export const updateEmployeeProfile = createServerFn({ method: "POST" })
 export const getAdminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { requirePermission, adminStats, recentActivity, recentSecurityEvents } =
+    const { requirePermission, adminStats, recentAuditActivity, recentSecurityEvents } =
       await import("./server-core.server");
     await requirePermission(context.userId, "users.view", "Administration");
     const [stats, activity, security] = await Promise.all([
       adminStats(),
-      recentActivity(["User Management", "Roles & Permissions", "Evaluation Cycles"]),
+      recentAuditActivity(["User Management", "Roles & Permissions", "Evaluation Cycles"]),
       recentSecurityEvents(),
     ]);
     return { ...stats, activity, security };

@@ -11,12 +11,13 @@ export const getPresidentStats = createServerFn({ method: "GET" })
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    const { requirePermission, presidentStats, recentActivity } =
+    const { requirePermission, presidentStats, recentActivity, getActorRoles } =
       await import("./server-core.server");
     await requirePermission(context.userId, "president.view", "President Review");
+    const roles = await getActorRoles(context.userId);
     const [stats, activity] = await Promise.all([
       presidentStats(context.userId, data.cycleId ?? null),
-      recentActivity(["President Review", "Evaluation Workflow"]),
+      recentActivity(context.userId, roles, data.cycleId ?? null),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
   });

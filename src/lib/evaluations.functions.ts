@@ -89,18 +89,13 @@ export const getHRStats = createServerFn({ method: "GET" })
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    const { requirePermission, statusCountsForCycle, recentActivity } =
+    const { requirePermission, statusCountsForCycle, recentActivity, getActorRoles } =
       await import("./server-core.server");
     await requirePermission(context.userId, "cycles.view", "HR Dashboard");
+    const roles = await getActorRoles(context.userId);
     const [counts, activity] = await Promise.all([
       statusCountsForCycle(data.cycleId ?? null),
-      recentActivity([
-        "Supervisor Review",
-        "Reviewing Supervisor Review",
-        "Committee Review",
-        "President Review",
-        "Evaluation Workflow",
-      ]),
+      recentActivity(context.userId, roles, data.cycleId ?? null),
     ]);
 
     const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
@@ -130,12 +125,13 @@ export const getSupervisorStats = createServerFn({ method: "GET" })
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    const { requirePermission, supervisorStats, recentActivity } =
+    const { requirePermission, supervisorStats, recentActivity, getActorRoles } =
       await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.view_step1", "Supervisor Review");
+    const roles = await getActorRoles(context.userId);
     const [stats, activity] = await Promise.all([
       supervisorStats(context.userId, data.cycleId ?? null),
-      recentActivity(["Supervisor Review", "Evaluation Workflow"]),
+      recentActivity(context.userId, roles, data.cycleId ?? null),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
   });
@@ -146,16 +142,17 @@ export const getReviewingSupervisorStats = createServerFn({ method: "GET" })
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    const { requirePermission, reviewingSupervisorStats, recentActivity } =
+    const { requirePermission, reviewingSupervisorStats, recentActivity, getActorRoles } =
       await import("./server-core.server");
     await requirePermission(
       context.userId,
       "evaluations.review_step3",
       "Reviewing Supervisor Review",
     );
+    const roles = await getActorRoles(context.userId);
     const [stats, activity] = await Promise.all([
       reviewingSupervisorStats(context.userId, data.cycleId ?? null),
-      recentActivity(["Reviewing Supervisor Review", "Evaluation Workflow"]),
+      recentActivity(context.userId, roles, data.cycleId ?? null),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
   });
@@ -166,12 +163,13 @@ export const getCommitteeStats = createServerFn({ method: "GET" })
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    const { requirePermission, committeeStats, recentActivity } =
+    const { requirePermission, committeeStats, recentActivity, getActorRoles } =
       await import("./server-core.server");
     await requirePermission(context.userId, "committee.review", "Committee Review");
+    const roles = await getActorRoles(context.userId);
     const [stats, activity] = await Promise.all([
       committeeStats(context.userId, data.cycleId ?? null),
-      recentActivity(["Committee Review", "Evaluation Workflow"]),
+      recentActivity(context.userId, roles, data.cycleId ?? null),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
   });
