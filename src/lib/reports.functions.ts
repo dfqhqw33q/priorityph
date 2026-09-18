@@ -22,6 +22,7 @@ export type ReportRow = {
   cycleName: string;
   cycleYear: number;
   status: string;
+  submittedAt: string | null;
   employeeAverage: number | null;
   supervisorAverage: number | null;
   finalScore: number | null;
@@ -184,10 +185,10 @@ export const getReport = createServerFn({ method: "POST" })
     let query = admin
       .from("evaluations")
       .select(
-        "id, status, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, finalized_at, cycle_id, evaluation_cycles!inner(name, year)",
+        "id, status, employee_submitted_at, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, finalized_at, cycle_id, evaluation_cycles!inner(name, year)",
         { count: "exact" },
       )
-      .order("finalized_at", { ascending: false, nullsFirst: false });
+      .order("employee_submitted_at", { ascending: false, nullsFirst: false });
 
     const search = data.search.trim();
     if (search) {
@@ -256,6 +257,7 @@ export const getReport = createServerFn({ method: "POST" })
         cycleName: cycle?.name ?? "",
         cycleYear: cycle?.year ?? 0,
         status: row.status,
+        submittedAt: row.employee_submitted_at ?? null,
         employeeAverage: score?.employee ?? null,
         supervisorAverage: score?.supervisor ?? null,
         finalScore: score?.final ?? null,

@@ -1,7 +1,7 @@
 ﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,62 +32,73 @@ const ALL = "";
 const PAGE_SIZE = 25;
 const CURRENT_YEAR = new Date().getFullYear();
 
-export const Route = createFileRoute("/_authenticated/hr/evaluation-history/")({
-  head: () => ({
-    meta: [
-      { title: "Evaluation history | Priority Handling Logistics, Inc." },
-      {
-        name: "description",
-        content:
-          "Search permanent evaluation records, outcomes and workflow progress in one place.",
-      },
-      { property: "og:title", content: "Evaluation history" },
-      {
-        property: "og:description",
-        content: "Completed evaluations, scores, and performance trends.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: HistoryPage,
-});
+type HistoryPageProps = {
+  title: string;
+  description: string;
+  defaultStatus?: string;
+};
 
-function HistoryPage() {
+export function HistoryTablePage({
+  title,
+  description,
+  defaultStatus = ALL,
+}: HistoryPageProps) {
   const fetchReport = useServerFn(getReport);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
-  const [status, setStatus] = useState(ALL);
-  const [year, setYear] = useState(CURRENT_YEAR);
+  const [status, setStatus] = useState(defaultStatus);
+  const [cycleId, setCycleId] = useState(ALL);
   const [page, setPage] = useState(0);
 
   const query = useQuery({
-    queryKey: ["evaluation-history", { search: debouncedSearch, status, year, page }],
+    queryKey: ["evaluation-history", { search: debouncedSearch, status, cycleId, page }],
     queryFn: () =>
-      fetchReport({ data: { search: debouncedSearch, status, year, page, pageSize: PAGE_SIZE } }),
+      fetchReport({
+        data: {
+          search: debouncedSearch,
+          status,
+          cycleId: cycleId === ALL ? null : cycleId,
+          year: null,
+          page,
+          pageSize: PAGE_SIZE,
+        },
+      }),
     retry: false,
   });
+
   const rows = (query.data?.rows ?? []) as ReportRow[];
-  const years = Array.from(
-    new Set([CURRENT_YEAR, ...(query.data?.options.years ?? [])]),
-  ).sort((left, right) => right - left);
+  const cycleOptions = (query.data?.options.cycles ?? []).filter((cycle) => cycle.id && cycle.year);
+  const selectedCycle = useMemo(
+    () => cycleOptions.find((cycle) => cycle.id === cycleId) ?? null,
+    [cycleId, cycleOptions],
+  );
+  const hasActiveFilters = search.trim().length > 0 || status !== defaultStatus || cycleId !== ALL;
+
+  const emptyTitle = search.trim() || status !== defaultStatus || cycleId !== ALL
+    ? "No evaluation records found"
+    : "No evaluation records found";
+  const emptyDescription = cycleId !== ALL
+    ? "There are no evaluations for the selected evaluation cycle."
+    : search.trim() || status !== defaultStatus
+      ? "There are no evaluations matching your current filters."
+      : "There are no evaluations for the selected evaluation cycle.";
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Evaluation history"
-        description="Review completed evaluations, scores, and performance trends."
-      />
+      <PageHeader title={title} description={description} />
 
       {query.data ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <StatCard label="Total evaluations" value={query.data.totalCount} />
-          <StatCard label="Current year evaluation" value={year} />
+          <StatCard
+            label="Current cycle"
+            value={selectedCycle ? `${selectedCycle.name} (${selectedCycle.year})` : "All cycles"}
+          />
         </div>
       ) : null}
 
       <Card className="border border-border bg-card shadow-sm">
-        <CardContent className="grid gap-4 pt-6 sm:grid-cols-[1fr_180px_180px_auto] sm:items-end">
+        <CardContent className="grid gap-4 pt-6 md:grid-cols-[1.2fr_1fr_1.2fr_auto] md:items-end">
           <div className="space-y-1.5">
             <Label htmlFor="history-search">Employee ID or name</Label>
             <Input
@@ -120,19 +131,20 @@ function HistoryPage() {
             </select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="history-year">Year</Label>
+            <Label htmlFor="history-cycle">Evaluation Cycle / Year</Label>
             <select
-              id="history-year"
+              id="history-cycle"
               className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              value={year}
+              value={cycleId}
               onChange={(e) => {
-                setYear(Number(e.target.value));
+                setCycleId(e.target.value);
                 setPage(0);
               }}
             >
-              {years.map((option) => (
-                <option key={option} value={option}>
-                  {option}
+              <option value={ALL}>All evaluation cycles</option>
+              {cycleOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name ? `${option.name} (${option.year})` : `${option.year}`}
                 </option>
               ))}
             </select>
@@ -141,8 +153,8 @@ function HistoryPage() {
             variant="outline"
             onClick={() => {
               setSearch("");
-              setStatus(ALL);
-              setYear(CURRENT_YEAR);
+              setStatus(defaultStatus);
+              setCycleId(ALL);
               setPage(0);
             }}
           >
@@ -156,18 +168,30 @@ function HistoryPage() {
         <LoadingBlock rows={6} />
       ) : query.isError ? (
         <EmptyState
-          title="Evaluation history could not be loaded"
+          title={title + " could not be loaded"}
           description={(query.error as Error).message}
         />
       ) : rows.length === 0 ? (
-        <EmptyState
-          title="No evaluation history"
-          description="Evaluations appear here once they are completed."
-        />
+        <EmptyState title={emptyTitle} description={emptyDescription}>
+          {hasActiveFilters ? (
+            <Button
+              className="mt-4"
+              variant="outline"
+              onClick={() => {
+                setSearch("");
+                setStatus(defaultStatus);
+                setCycleId(ALL);
+                setPage(0);
+              }}
+            >
+              Clear filters
+            </Button>
+          ) : null}
+        </EmptyState>
       ) : (
         <div className="max-w-full border border-border bg-card shadow-sm">
           <Table>
-            <caption className="sr-only">Evaluation history</caption>
+            <caption className="sr-only">{title}</caption>
             <TableHeader>
               <TableRow>
                 <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
@@ -177,18 +201,16 @@ function HistoryPage() {
                 <TableHead className="min-w-[150px]">Section / Unit</TableHead>
                 <TableHead className="min-w-[240px]">Cycle</TableHead>
                 <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
-                <TableHead className="min-w-[190px] whitespace-nowrap">Finalized</TableHead>
+                <TableHead className="min-w-[190px] whitespace-nowrap">Date Submitted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.evaluationId}>
-                  <TableCell className="whitespace-nowrap tabular-nums">
-                    {row.employeeNumber}
-                  </TableCell>
+                  <TableCell className="whitespace-nowrap tabular-nums">{row.employeeNumber}</TableCell>
                   <TableCell>
                     <Link
-                      className="font-normal text-foreground hover:text-primary hover:underline"
+                      className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       to="/hr/evaluation-history/$evaluationId"
                       params={{ evaluationId: row.evaluationId }}
                     >
@@ -211,7 +233,7 @@ function HistoryPage() {
                     <EvaluationStatusBadge status={row.status as never} />
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                    {formatDateTime(row.finalizedAt)}
+                    {formatDateTime(row.submittedAt ?? row.finalizedAt)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -243,3 +265,29 @@ function HistoryPage() {
     </div>
   );
 }
+
+export const Route = createFileRoute("/_authenticated/hr/evaluation-history/")({
+  head: () => ({
+    meta: [
+      { title: "Evaluation history | Priority Handling Logistics, Inc." },
+      {
+        name: "description",
+        content:
+          "Search permanent evaluation records, outcomes and workflow progress in one place.",
+      },
+      { property: "og:title", content: "Evaluation history" },
+      {
+        property: "og:description",
+        content: "Completed evaluations, scores, and performance trends.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: () => (
+    <HistoryTablePage
+      title="Evaluation history"
+      description="Review employee evaluation records by cycle, status, and submission date."
+    />
+  ),
+});

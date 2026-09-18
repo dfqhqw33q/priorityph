@@ -64,11 +64,20 @@ export function StatCard({
   );
 }
 
-export function EmptyState({ title, description }: { title: string; description?: string }) {
+export function EmptyState({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children?: ReactNode;
+}) {
   return (
     <div className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       {description ? <p className="mt-1.5 text-xs text-muted-foreground">{description}</p> : null}
+      {children}
     </div>
   );
 }

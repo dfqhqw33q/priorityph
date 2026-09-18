@@ -138,7 +138,7 @@ const NAV: Array<{
         icon: ClipboardList,
         children: [
           { to: "/personnel", label: "To Review", permission: "personnel.process" },
-          { label: "Completed" },
+          { to: "/hr/completed", label: "Completed", permission: "evaluations.view_201" },
         ],
       },
       {
