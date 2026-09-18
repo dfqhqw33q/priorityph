@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supervisorDraftSchema, queueFiltersSchema } from "./schemas";
 import type { EvaluationDetail, EvaluationListItem } from "./domain";
 
-const SUPERVISOR_QUEUE_STATUSES = ["SUBMITTED", "DRAFT", "RETURNED"];
+const SUPERVISOR_QUEUE_STATUSES = ["SUBMITTED"];
 
 const PRESIDENT_QUEUE_STATUSES = ["FOR_APPROVAL"];
 
@@ -27,19 +27,8 @@ export const listSupervisorQueue = createServerFn({ method: "GET" })
       module: "Supervisor Review",
       newValue: { filters: data },
     });
-    const [current, returned] = await Promise.all([
-      listEvaluations(
-        SUPERVISOR_QUEUE_STATUSES.filter((status) => status !== "RETURNED"),
-        data,
-      ),
-      listEvaluations(["RETURNED"], {
-        ...data,
-        correctionStage: "SUPERVISOR_DRAFT",
-      }),
-    ]);
-    return [...current, ...returned].filter(
-      (row) => !row.supervisor_user_id || row.supervisor_user_id === context.userId,
-    );
+    const rows = await listEvaluations(SUPERVISOR_QUEUE_STATUSES, data);
+    return rows.filter((row) => !row.supervisor_user_id || row.supervisor_user_id === context.userId);
   });
 
 export const listPresidentQueue = createServerFn({ method: "GET" })
@@ -120,7 +109,7 @@ export const getHRStats = createServerFn({ method: "GET" })
     return {
       totalEvaluations,
       awaitingReview: counts.SUBMITTED + counts.FOR_REVIEW,
-      completed: counts.FINALIZED,
+      completed: counts.SUBMITTED,
       drafts: counts.DRAFT,
       pending,
       statusBreakdown: counts,

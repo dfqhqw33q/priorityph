@@ -57,9 +57,10 @@ function PresidentDashboard() {
   const chartData = useMemo(() => {
     const breakdown = query.data?.statusBreakdown ?? {};
     const rows = [
-      { status: "FOR_APPROVAL", label: "Pending Approvals", value: breakdown.FOR_APPROVAL ?? 0 },
+      { status: "FOR_APPROVAL", label: "To Review", value: breakdown.FOR_APPROVAL ?? 0 },
       { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
-      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
+      { status: "SUBMITTED", label: "Completed", value: breakdown.SUBMITTED ?? 0 },
+      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
     ];
     return rows.filter(
       (row) => row.value > 0 || ["FOR_APPROVAL", "RETURNED", "FINALIZED"].includes(row.status),
@@ -102,30 +103,36 @@ function PresidentDashboard() {
         <LoadingBlock rows={4} variant="cards" />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard
-              label="Pending Approvals"
-              value={query.data?.pendingApprovals ?? 0}
+              label="Total Evaluations"
+              value={query.data?.totalEvaluations ?? 0}
+              to="/hr/evaluation-history"
+              hint={cycleId ? "Current cycle" : "All cycles"}
+            />
+            <StatCard
+              label="To Review"
+              value={query.data?.toReview ?? query.data?.pendingApprovals ?? 0}
               to="/president/evaluations"
-              hint="Ready for review"
+              hint="Pending approval"
             />
             <StatCard
               label="Returned"
               value={query.data?.returned ?? 0}
-              to="/president/evaluations"
+              to="/hr/returned"
               hint="Needs correction"
             />
             <StatCard
               label="Completed"
               value={query.data?.completed ?? 0}
               to="/hr/completed"
-              hint="Finalized"
+              hint="Submitted records"
             />
             <StatCard
-              label="Total Finalized"
-              value={query.data?.totalFinalized ?? query.data?.finalized ?? 0}
-              to="/hr/evaluation-history"
-              hint={cycleId ? "Current cycle" : "All cycles"}
+              label="Drafts"
+              value={query.data?.drafts ?? 0}
+              to="/hr/drafts"
+              hint="In progress"
             />
           </div>
 

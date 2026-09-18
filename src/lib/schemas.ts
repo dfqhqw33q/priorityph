@@ -513,7 +513,7 @@ export const reportFiltersSchema = z.object({
   status: z.string().max(40).default(""),
   finalRating: z.string().max(80).default(""),
   search: z.string().max(120).default(""),
-  recordType: z.enum(["history", "completed"]).default("history"),
+  recordType: z.enum(["history", "completed", "drafts", "returned"]).default("history"),
   page: z.number().int().min(0).max(10000).default(0),
   pageSize: z.number().int().min(5).max(100).default(25),
 });

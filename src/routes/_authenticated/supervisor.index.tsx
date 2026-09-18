@@ -59,9 +59,10 @@ function SupervisorDashboard() {
   const chartData = useMemo(() => {
     const breakdown = query.data?.statusBreakdown ?? {};
     return [
-      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
       { status: "SUBMITTED", label: "To Review", value: breakdown.SUBMITTED ?? 0 },
-      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
+      { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
+      { status: "FINALIZED", label: "Completed", value: breakdown.SUBMITTED ?? 0 },
+      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
     ];
   }, [query.data?.statusBreakdown]);
 
@@ -103,27 +104,27 @@ function SupervisorDashboard() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Total Evaluations Processed"
-              value={query.data?.totalEvaluations ?? 0}
-              to="/hr/evaluation-history"
-              hint={cycleId ? "Current cycle" : "All cycles"}
-            />
-            <StatCard
               label="To Review"
-              value={query.data?.pending ?? 0}
+              value={query.data?.toReview ?? query.data?.pending ?? 0}
               to="/supervisor/evaluations"
               hint="Submitted"
+            />
+            <StatCard
+              label="Returned"
+              value={query.data?.returned ?? 0}
+              to="/hr/returned"
+              hint="Needs correction"
             />
             <StatCard
               label="Completed"
               value={query.data?.completed ?? 0}
               to="/hr/completed"
-              hint="Finalized"
+              hint="Submitted records"
             />
             <StatCard
               label="Drafts"
               value={query.data?.drafts ?? 0}
-              to="/supervisor/evaluations"
+              to="/hr/drafts"
               hint="In progress"
             />
           </div>

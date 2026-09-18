@@ -202,6 +202,78 @@ function getRoleHistoryAccess(roleNames: string[]) {
   return { permittedStatuses: [], supervisorOnly: false };
 }
 
+function getRoleCompletedAccess(roleNames: string[]) {
+  if (roleNames.includes("HR") || roleNames.includes("ADMINISTRATOR")) {
+    return { statusSet: ["SUBMITTED"], assignment: "all" as const };
+  }
+
+  if (roleNames.includes("SUPERVISOR")) {
+    return { statusSet: ["SUBMITTED"], assignment: "supervisor" as const };
+  }
+
+  if (roleNames.includes("REVIEWING_SUPERVISOR")) {
+    return { statusSet: ["SUBMITTED"], assignment: "reviewing_supervisor" as const };
+  }
+
+  if (roleNames.includes("COMMITTEE")) {
+    return { statusSet: ["SUBMITTED"], assignment: "committee" as const };
+  }
+
+  if (roleNames.includes("PRESIDENT")) {
+    return { statusSet: ["SUBMITTED"], assignment: "president" as const };
+  }
+
+  return { statusSet: [], assignment: "all" as const };
+}
+
+function getRoleDraftsAccess(roleNames: string[]) {
+  if (roleNames.includes("HR") || roleNames.includes("ADMINISTRATOR")) {
+    return { statusSet: ["DRAFT"], assignment: "all" as const };
+  }
+
+  if (roleNames.includes("SUPERVISOR")) {
+    return { statusSet: ["DRAFT"], assignment: "supervisor" as const };
+  }
+
+  if (roleNames.includes("REVIEWING_SUPERVISOR")) {
+    return { statusSet: ["DRAFT"], assignment: "reviewing_supervisor" as const };
+  }
+
+  if (roleNames.includes("COMMITTEE")) {
+    return { statusSet: ["DRAFT"], assignment: "committee" as const };
+  }
+
+  if (roleNames.includes("PRESIDENT")) {
+    return { statusSet: ["DRAFT"], assignment: "president" as const };
+  }
+
+  return { statusSet: [], assignment: "all" as const };
+}
+
+function getRoleReturnedAccess(roleNames: string[]) {
+  if (roleNames.includes("HR") || roleNames.includes("ADMINISTRATOR")) {
+    return { statusSet: ["RETURNED"], assignment: "all" as const };
+  }
+
+  if (roleNames.includes("SUPERVISOR")) {
+    return { statusSet: ["RETURNED"], assignment: "supervisor" as const };
+  }
+
+  if (roleNames.includes("REVIEWING_SUPERVISOR")) {
+    return { statusSet: ["RETURNED"], assignment: "reviewing_supervisor" as const };
+  }
+
+  if (roleNames.includes("COMMITTEE")) {
+    return { statusSet: ["RETURNED"], assignment: "committee" as const };
+  }
+
+  if (roleNames.includes("PRESIDENT")) {
+    return { statusSet: ["RETURNED"], assignment: "president" as const };
+  }
+
+  return { statusSet: [], assignment: "all" as const };
+}
+
 export const getReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: Partial<ReportFilters>) => reportFiltersSchema.parse(input ?? {}))
@@ -230,8 +302,20 @@ export const getReport = createServerFn({ method: "POST" })
     const roles = await getActorRoles(context.userId);
     const { permittedStatuses, supervisorOnly } = getRoleHistoryAccess(roles);
     const isCompletedView = data.recordType === "completed";
-    const forcedStatus = isCompletedView ? "SUBMITTED" : "FINALIZED";
-    const effectivePermittedStatuses = isCompletedView ? ["SUBMITTED"] : permittedStatuses;
+    const isDraftsView = data.recordType === "drafts";
+    const isReturnedView = data.recordType === "returned";
+    const { statusSet: completedStatusSet, assignment: completionAssignment } =
+      getRoleCompletedAccess(roles);
+    const { statusSet: draftStatusSet, assignment: draftAssignment } = getRoleDraftsAccess(roles);
+    const { statusSet: returnedStatusSet, assignment: returnedAssignment } =
+      getRoleReturnedAccess(roles);
+    const effectivePermittedStatuses = isCompletedView
+      ? completedStatusSet
+      : isDraftsView
+        ? draftStatusSet
+        : isReturnedView
+          ? returnedStatusSet
+          : permittedStatuses;
 
     let query = admin
       .from("evaluations")
@@ -251,12 +335,7 @@ export const getReport = createServerFn({ method: "POST" })
     if (effectivePermittedStatuses && effectivePermittedStatuses.length > 0) {
       query = query.in("status", effectivePermittedStatuses as never);
     }
-    if (forcedStatus) {
-      query = query.eq("status", forcedStatus as never);
-    } else if (
-      data.status.trim() &&
-      (!permittedStatuses || permittedStatuses.length === 0 || permittedStatuses.includes(data.status.trim()))
-    ) {
+    if (!isCompletedView && data.status.trim() && (!permittedStatuses || permittedStatuses.length === 0 || permittedStatuses.includes(data.status.trim()))) {
       query = query.eq("status", data.status.trim() as never);
     }
     if (supervisorOnly) query = query.eq("supervisor_user_id", context.userId);
@@ -270,6 +349,68 @@ export const getReport = createServerFn({ method: "POST" })
       const matchingIds = (matchingScores ?? []).map((score) => score.evaluation_id);
       if (matchingIds.length > 0) query = query.in("id", matchingIds);
       else query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+
+    const workflowAssignment = isCompletedView
+      ? completionAssignment
+      : isDraftsView
+        ? draftAssignment
+        : isReturnedView
+          ? returnedAssignment
+          : "all";
+
+    if (workflowAssignment !== "all") {
+      let authorizedIds: string[] = [];
+      const targetStatus = isCompletedView ? "SUBMITTED" : isDraftsView ? "DRAFT" : "RETURNED";
+      if (workflowAssignment === "supervisor") {
+        const { data: rows } = await admin
+          .from("evaluations")
+          .select("id")
+          .eq("status", targetStatus)
+          .eq("supervisor_user_id", context.userId);
+        authorizedIds = (rows ?? []).map((row) => row.id);
+      } else if (workflowAssignment === "reviewing_supervisor") {
+        const { data: rows } = await admin
+          .from("reviewing_supervisor_reviews")
+          .select("evaluation_id")
+          .eq("reviewer_user_id", context.userId);
+        const evaluationIds = (rows ?? []).map((row) => row.evaluation_id);
+        if (evaluationIds.length > 0) {
+          const { data: matchingRows } = await admin
+            .from("evaluations")
+            .select("id")
+            .in("id", evaluationIds)
+            .eq("status", targetStatus);
+          authorizedIds = (matchingRows ?? []).map((row) => row.id);
+        }
+      } else if (workflowAssignment === "committee") {
+        const { data: rows } = await admin
+          .from("committee_reviews")
+          .select("evaluation_id")
+          .eq("committee_user_id", context.userId);
+        const evaluationIds = (rows ?? []).map((row) => row.evaluation_id);
+        if (evaluationIds.length > 0) {
+          const { data: matchingRows } = await admin
+            .from("evaluations")
+            .select("id")
+            .in("id", evaluationIds)
+            .eq("status", targetStatus);
+          authorizedIds = (matchingRows ?? []).map((row) => row.id);
+        }
+      } else if (workflowAssignment === "president") {
+        const { data: rows } = await admin
+          .from("evaluations")
+          .select("id")
+          .eq("status", targetStatus)
+          .eq("president_user_id", context.userId);
+        authorizedIds = (rows ?? []).map((row) => row.id);
+      }
+
+      if (authorizedIds.length === 0) {
+        query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+      } else {
+        query = query.in("id", authorizedIds as never);
+      }
     }
 
     const from = data.page * data.pageSize;

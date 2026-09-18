@@ -36,7 +36,7 @@ type HistoryPageProps = {
   title: string;
   description: string;
   defaultStatus?: string;
-  mode?: "history" | "completed";
+  mode?: "history" | "completed" | "drafts" | "returned";
   showStatusFilter?: boolean;
 };
 
@@ -54,7 +54,14 @@ export function HistoryTablePage({
   const [cycleId, setCycleId] = useState(ALL);
   const [page, setPage] = useState(0);
 
-  const effectiveStatus = mode === "completed" ? "SUBMITTED" : status || defaultStatus;
+  const effectiveStatus =
+    mode === "completed"
+      ? "SUBMITTED"
+      : mode === "drafts"
+        ? "DRAFT"
+        : mode === "returned"
+          ? "RETURNED"
+          : status || defaultStatus;
 
   const query = useQuery({
     queryKey: ["evaluation-history", { mode, search: debouncedSearch, status: effectiveStatus, cycleId, page }],
@@ -223,38 +230,48 @@ export function HistoryTablePage({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.evaluationId}>
-                  <TableCell className="whitespace-nowrap tabular-nums">{row.employeeNumber}</TableCell>
-                  <TableCell>
-                    <Link
-                      className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      to="/hr/evaluation-history/$evaluationId"
-                      params={{ evaluationId: row.evaluationId }}
-                    >
-                      {row.fullName}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="min-w-[150px] text-muted-foreground">
-                    {row.jobTitle || "—"}
-                  </TableCell>
-                  <TableCell className="min-w-[170px] text-muted-foreground">
-                    {row.division || "—"}
-                  </TableCell>
-                  <TableCell className="min-w-[150px] text-muted-foreground">
-                    {row.section || "—"}
-                  </TableCell>
-                  <TableCell className="min-w-[240px] text-foreground">
-                    {row.cycleName} ({row.cycleYear})
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <EvaluationStatusBadge status={row.status as never} />
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                    {formatDateTime(row.submittedAt ?? row.finalizedAt)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {rows.map((row) => {
+                const visibleStatus =
+                  mode === "completed"
+                    ? "SUBMITTED"
+                    : mode === "drafts"
+                      ? "DRAFT"
+                      : mode === "returned"
+                        ? "RETURNED"
+                        : row.status;
+                return (
+                  <TableRow key={row.evaluationId}>
+                    <TableCell className="whitespace-nowrap tabular-nums">{row.employeeNumber}</TableCell>
+                    <TableCell>
+                      <Link
+                        className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        to="/hr/evaluation-history/$evaluationId"
+                        params={{ evaluationId: row.evaluationId }}
+                      >
+                        {row.fullName}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="min-w-[150px] text-muted-foreground">
+                      {row.jobTitle || "—"}
+                    </TableCell>
+                    <TableCell className="min-w-[170px] text-muted-foreground">
+                      {row.division || "—"}
+                    </TableCell>
+                    <TableCell className="min-w-[150px] text-muted-foreground">
+                      {row.section || "—"}
+                    </TableCell>
+                    <TableCell className="min-w-[240px] text-foreground">
+                      {row.cycleName} ({row.cycleYear})
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <EvaluationStatusBadge status={visibleStatus as never} />
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                      {formatDateTime(row.submittedAt ?? row.finalizedAt)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

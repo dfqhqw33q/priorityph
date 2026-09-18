@@ -29,8 +29,10 @@ import { Route as AuthenticatedCommitteeIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedHrIndexRouteImport } from './routes/_authenticated/hr.index'
 import { Route as AuthenticatedHrCompletedRouteImport } from './routes/_authenticated/hr.completed'
 import { Route as AuthenticatedHrDevelopmentRecordsRouteImport } from './routes/_authenticated/hr.development-records'
+import { Route as AuthenticatedHrDraftsRouteImport } from './routes/_authenticated/hr.drafts'
 import { Route as AuthenticatedHrEmployeesRouteImport } from './routes/_authenticated/hr.employees'
 import { Route as AuthenticatedHrRecognitionRouteImport } from './routes/_authenticated/hr.recognition'
+import { Route as AuthenticatedHrReturnedRouteImport } from './routes/_authenticated/hr.returned'
 import { Route as AuthenticatedHrSuccessionRouteImport } from './routes/_authenticated/hr.succession'
 import { Route as AuthenticatedHrTrainingRouteImport } from './routes/_authenticated/hr.training'
 import { Route as AuthenticatedPersonnelIndexRouteImport } from './routes/_authenticated/personnel.index'
@@ -159,6 +161,11 @@ const AuthenticatedHrDevelopmentRecordsRoute =
     path: '/hr/development-records',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedHrDraftsRoute = AuthenticatedHrDraftsRouteImport.update({
+  id: '/hr/drafts',
+  path: '/hr/drafts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHrEmployeesRoute =
   AuthenticatedHrEmployeesRouteImport.update({
     id: '/hr/employees',
@@ -171,6 +178,11 @@ const AuthenticatedHrRecognitionRoute =
     path: '/hr/recognition',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedHrReturnedRoute = AuthenticatedHrReturnedRouteImport.update({
+  id: '/hr/returned',
+  path: '/hr/returned',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHrSuccessionRoute =
   AuthenticatedHrSuccessionRouteImport.update({
     id: '/hr/succession',
@@ -314,8 +326,10 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/hr/completed': typeof AuthenticatedHrCompletedRoute
   '/hr/development-records': typeof AuthenticatedHrDevelopmentRecordsRoute
+  '/hr/drafts': typeof AuthenticatedHrDraftsRoute
   '/hr/employees': typeof AuthenticatedHrEmployeesRoute
   '/hr/recognition': typeof AuthenticatedHrRecognitionRoute
+  '/hr/returned': typeof AuthenticatedHrReturnedRoute
   '/hr/succession': typeof AuthenticatedHrSuccessionRoute
   '/hr/training': typeof AuthenticatedHrTrainingRoute
   '/president/employees': typeof AuthenticatedPresidentEmployeesRoute
@@ -358,8 +372,10 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/hr/completed': typeof AuthenticatedHrCompletedRoute
   '/hr/development-records': typeof AuthenticatedHrDevelopmentRecordsRoute
+  '/hr/drafts': typeof AuthenticatedHrDraftsRoute
   '/hr/employees': typeof AuthenticatedHrEmployeesRoute
   '/hr/recognition': typeof AuthenticatedHrRecognitionRoute
+  '/hr/returned': typeof AuthenticatedHrReturnedRoute
   '/hr/succession': typeof AuthenticatedHrSuccessionRoute
   '/hr/training': typeof AuthenticatedHrTrainingRoute
   '/president/employees': typeof AuthenticatedPresidentEmployeesRoute
@@ -404,8 +420,10 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/hr/completed': typeof AuthenticatedHrCompletedRoute
   '/_authenticated/hr/development-records': typeof AuthenticatedHrDevelopmentRecordsRoute
+  '/_authenticated/hr/drafts': typeof AuthenticatedHrDraftsRoute
   '/_authenticated/hr/employees': typeof AuthenticatedHrEmployeesRoute
   '/_authenticated/hr/recognition': typeof AuthenticatedHrRecognitionRoute
+  '/_authenticated/hr/returned': typeof AuthenticatedHrReturnedRoute
   '/_authenticated/hr/succession': typeof AuthenticatedHrSuccessionRoute
   '/_authenticated/hr/training': typeof AuthenticatedHrTrainingRoute
   '/_authenticated/president/employees': typeof AuthenticatedPresidentEmployeesRoute
@@ -450,8 +468,10 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/hr/completed'
     | '/hr/development-records'
+    | '/hr/drafts'
     | '/hr/employees'
     | '/hr/recognition'
+    | '/hr/returned'
     | '/hr/succession'
     | '/hr/training'
     | '/president/employees'
@@ -494,8 +514,10 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/hr/completed'
     | '/hr/development-records'
+    | '/hr/drafts'
     | '/hr/employees'
     | '/hr/recognition'
+    | '/hr/returned'
     | '/hr/succession'
     | '/hr/training'
     | '/president/employees'
@@ -539,8 +561,10 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/hr/completed'
     | '/_authenticated/hr/development-records'
+    | '/_authenticated/hr/drafts'
     | '/_authenticated/hr/employees'
     | '/_authenticated/hr/recognition'
+    | '/_authenticated/hr/returned'
     | '/_authenticated/hr/succession'
     | '/_authenticated/hr/training'
     | '/_authenticated/president/employees'
@@ -721,6 +745,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHrDevelopmentRecordsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/hr/drafts': {
+      id: '/_authenticated/hr/drafts'
+      path: '/hr/drafts'
+      fullPath: '/hr/drafts'
+      preLoaderRoute: typeof AuthenticatedHrDraftsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/hr/employees': {
       id: '/_authenticated/hr/employees'
       path: '/hr/employees'
@@ -733,6 +764,13 @@ declare module '@tanstack/react-router' {
       path: '/hr/recognition'
       fullPath: '/hr/recognition'
       preLoaderRoute: typeof AuthenticatedHrRecognitionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/returned': {
+      id: '/_authenticated/hr/returned'
+      path: '/hr/returned'
+      fullPath: '/hr/returned'
+      preLoaderRoute: typeof AuthenticatedHrReturnedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/hr/succession': {
@@ -894,8 +932,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedHrCompletedRoute: typeof AuthenticatedHrCompletedRoute
   AuthenticatedHrDevelopmentRecordsRoute: typeof AuthenticatedHrDevelopmentRecordsRoute
+  AuthenticatedHrDraftsRoute: typeof AuthenticatedHrDraftsRoute
   AuthenticatedHrEmployeesRoute: typeof AuthenticatedHrEmployeesRoute
   AuthenticatedHrRecognitionRoute: typeof AuthenticatedHrRecognitionRoute
+  AuthenticatedHrReturnedRoute: typeof AuthenticatedHrReturnedRoute
   AuthenticatedHrSuccessionRoute: typeof AuthenticatedHrSuccessionRoute
   AuthenticatedHrTrainingRoute: typeof AuthenticatedHrTrainingRoute
   AuthenticatedPresidentEmployeesRoute: typeof AuthenticatedPresidentEmployeesRoute
@@ -933,8 +973,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHrCompletedRoute: AuthenticatedHrCompletedRoute,
   AuthenticatedHrDevelopmentRecordsRoute:
     AuthenticatedHrDevelopmentRecordsRoute,
+  AuthenticatedHrDraftsRoute: AuthenticatedHrDraftsRoute,
   AuthenticatedHrEmployeesRoute: AuthenticatedHrEmployeesRoute,
   AuthenticatedHrRecognitionRoute: AuthenticatedHrRecognitionRoute,
+  AuthenticatedHrReturnedRoute: AuthenticatedHrReturnedRoute,
   AuthenticatedHrSuccessionRoute: AuthenticatedHrSuccessionRoute,
   AuthenticatedHrTrainingRoute: AuthenticatedHrTrainingRoute,
   AuthenticatedPresidentEmployeesRoute: AuthenticatedPresidentEmployeesRoute,

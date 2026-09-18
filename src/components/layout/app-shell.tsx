@@ -85,7 +85,15 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
     roles: ["HR", "PRESIDENT"],
   },
   {
+    prefix: "/hr/returned",
+    roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
+  },
+  {
     prefix: "/hr/completed",
+    roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
+  },
+  {
+    prefix: "/hr/drafts",
     roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
   },
   { prefix: "/hr", roles: ["HR"], permission: "cycles.view" },
@@ -141,7 +149,9 @@ const NAV: Array<{
         icon: ClipboardList,
         children: [
           { to: "/personnel", label: "To Review", permission: "personnel.process" },
+          { to: "/hr/returned", label: "Returned", permission: "evaluations.view_201" },
           { to: "/hr/completed", label: "Completed", permission: "evaluations.view_201" },
+          { to: "/hr/drafts", label: "Drafts", permission: "evaluations.view_201" },
         ],
       },
       {
@@ -207,7 +217,9 @@ const NAV: Array<{
             label: "To Review",
             permission: "evaluations.view_step1",
           },
+          { to: "/hr/returned", label: "Returned" },
           { to: "/hr/completed", label: "Completed" },
+          { to: "/hr/drafts", label: "Drafts" },
         ],
       },
     ],
@@ -232,7 +244,9 @@ const NAV: Array<{
             label: "To Review",
             permission: "evaluations.review_step3",
           },
+          { to: "/hr/returned", label: "Returned" },
           { to: "/hr/completed", label: "Completed" },
+          { to: "/hr/drafts", label: "Drafts" },
         ],
       },
     ],
@@ -246,7 +260,9 @@ const NAV: Array<{
         icon: ClipboardList,
         children: [
           { to: "/committee", label: "To Review", permission: "committee.review" },
+          { to: "/hr/returned", label: "Returned" },
           { to: "/hr/completed", label: "Completed" },
+          { to: "/hr/drafts", label: "Drafts" },
         ],
       },
     ],
@@ -261,8 +277,9 @@ const NAV: Array<{
         icon: BadgeCheck,
         children: [
           { to: "/president/evaluations", label: "Pending", permission: "president.view" },
-          { label: "Returned" },
+          { to: "/hr/returned", label: "Returned" },
           { to: "/hr/completed", label: "Completed" },
+          { to: "/hr/drafts", label: "Drafts" },
         ],
       },
       {

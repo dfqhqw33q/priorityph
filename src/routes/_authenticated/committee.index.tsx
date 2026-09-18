@@ -45,7 +45,8 @@ function CommitteeDashboard() {
     const rows = [
       { status: "FOR_REVIEW", label: "To Review", value: breakdown.FOR_REVIEW ?? 0 },
       { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
-      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
+      { status: "SUBMITTED", label: "Completed", value: breakdown.SUBMITTED ?? 0 },
+      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
       { status: "TRAINING_REQUIRED", label: "Training Required", value: query.data?.trainingRequired ?? 0 },
     ];
     return rows.filter(
@@ -90,24 +91,30 @@ function CommitteeDashboard() {
         <LoadingBlock rows={4} variant="cards" />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard
-              label="Total Evaluations Processed"
-              value={query.data?.totalEvaluations ?? 0}
-              to="/hr/evaluation-history"
-              hint={cycleId ? "Current cycle" : "All cycles"}
-            />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard
               label="To Review"
-              value={query.data?.awaiting ?? 0}
+              value={query.data?.toReview ?? query.data?.awaiting ?? 0}
               to="/committee"
               hint="Ready for recommendation"
             />
             <StatCard
+              label="Returned"
+              value={query.data?.returned ?? 0}
+              to="/hr/returned"
+              hint="Needs correction"
+            />
+            <StatCard
               label="Completed"
-              value={query.data?.finalized ?? 0}
+              value={query.data?.completed ?? query.data?.finalized ?? 0}
               to="/hr/completed"
-              hint="Closed"
+              hint="Submitted records"
+            />
+            <StatCard
+              label="Drafts"
+              value={query.data?.drafts ?? 0}
+              to="/hr/drafts"
+              hint="In progress"
             />
             <StatCard
               label="Training Required"

@@ -41,12 +41,12 @@ function HrDashboard() {
     const breakdown = query.data?.statusBreakdown ?? {};
     const rows = [
       { status: "SUBMITTED", label: "To Review", value: breakdown.SUBMITTED ?? 0 },
-      { status: "FOR_REVIEW", label: "In Review", value: breakdown.FOR_REVIEW ?? 0 },
       { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
       { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
+      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
     ];
     return rows.filter(
-      (row) => row.value > 0 || ["SUBMITTED", "FOR_REVIEW", "RETURNED", "FINALIZED"].includes(row.status),
+      (row) => row.value > 0 || ["SUBMITTED", "RETURNED", "FINALIZED", "DRAFT"].includes(row.status),
     );
   }, [query.data?.statusBreakdown]);
 
@@ -86,7 +86,7 @@ function HrDashboard() {
         <LoadingBlock rows={4} variant="cards" />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard
               label="Total Evaluations"
               value={query.data?.totalEvaluations ?? 0}
@@ -95,20 +95,26 @@ function HrDashboard() {
             />
             <StatCard
               label="To Review"
-              value={query.data?.awaitingReview ?? 0}
+              value={query.data?.toReview ?? query.data?.awaitingReview ?? 0}
               to="/personnel"
               hint="Open tasks"
+            />
+            <StatCard
+              label="Returned"
+              value={query.data?.returned ?? 0}
+              to="/hr/returned"
+              hint="Needs correction"
             />
             <StatCard
               label="Completed"
               value={query.data?.completed ?? 0}
               to="/hr/completed"
-              hint="Finalized"
+              hint="Submitted records"
             />
             <StatCard
-              label="Pending"
-              value={query.data?.pending ?? 0}
-              to="/hr/evaluation-history"
+              label="Drafts"
+              value={query.data?.drafts ?? 0}
+              to="/hr/drafts"
               hint="In progress"
             />
           </div>
