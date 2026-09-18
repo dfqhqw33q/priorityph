@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -56,10 +56,10 @@ function PresidentDashboard() {
   const chartData = useMemo(() => {
     const breakdown = query.data?.statusBreakdown ?? {};
     return [
-      { status: "FOR_APPROVAL", label: "To Review", value: breakdown.FOR_APPROVAL ?? 0 },
-      { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
-      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
-      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
+      { status: "FOR_APPROVAL", label: "To Review", value: breakdown.FOR_APPROVAL ?? 0, color: "var(--info)" },
+      { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0, color: "var(--warning)" },
+      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0, color: "var(--success)" },
+      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0, color: "var(--muted-foreground)" },
     ];
   }, [query.data?.statusBreakdown]);
 
@@ -138,7 +138,7 @@ function PresidentDashboard() {
             </CardHeader>
             <CardContent className="h-[260px] p-3 pt-0">
               <ChartContainer
-                config={{ value: { color: "hsl(var(--chart-4))", label: "Evaluations" } }}
+                config={{ value: { color: "var(--info)", label: "Evaluations" } }}
                 className="h-full w-full"
               >
                 <ResponsiveContainer width="100%" height="100%">
@@ -173,7 +173,6 @@ function PresidentDashboard() {
                     />
                     <Bar
                       dataKey="value"
-                      fill="hsl(var(--chart-4))"
                       radius={[0, 6, 6, 0]}
                       barSize={18}
                       label={{
@@ -183,7 +182,9 @@ function PresidentDashboard() {
                         fontSize: 12,
                         fontWeight: 600,
                       }}
-                    />
+                    >
+                      {chartData.map((entry) => <Cell key={entry.status} fill={entry.color} />)}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>

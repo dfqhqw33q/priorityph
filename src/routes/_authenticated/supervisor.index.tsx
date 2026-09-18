@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -58,10 +58,10 @@ function SupervisorDashboard() {
   const chartData = useMemo(() => {
     const breakdown = query.data?.statusBreakdown ?? {};
     return [
-      { status: "SUBMITTED", label: "To Review", value: breakdown.SUBMITTED ?? 0 },
-      { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
-      { status: "FOR_REVIEW", label: "Completed", value: breakdown.FOR_REVIEW ?? 0 },
-      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
+      { status: "SUBMITTED", label: "To Review", value: breakdown.SUBMITTED ?? 0, color: "var(--info)" },
+      { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0, color: "var(--warning)" },
+      { status: "FOR_REVIEW", label: "Completed", value: breakdown.FOR_REVIEW ?? 0, color: "var(--success)" },
+      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0, color: "var(--muted-foreground)" },
     ];
   }, [query.data?.statusBreakdown]);
 
@@ -135,7 +135,7 @@ function SupervisorDashboard() {
             <CardContent className="h-[260px] p-3 pt-0">
               <ChartContainer
                 config={{
-                  value: { color: "hsl(var(--chart-1))", label: "Evaluations" },
+                  value: { color: "var(--info)", label: "Evaluations" },
                 }}
                 className="h-full w-full"
               >
@@ -171,7 +171,6 @@ function SupervisorDashboard() {
                     />
                     <Bar
                       dataKey="value"
-                      fill="hsl(var(--chart-1))"
                       radius={[0, 6, 6, 0]}
                       barSize={18}
                       label={{
@@ -181,7 +180,9 @@ function SupervisorDashboard() {
                         fontSize: 12,
                         fontWeight: 600,
                       }}
-                    />
+                    >
+                      {chartData.map((entry) => <Cell key={entry.status} fill={entry.color} />)}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>

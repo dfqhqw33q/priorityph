@@ -100,8 +100,9 @@ export function EmptyState({
 export type AuditActivityRow = {
   id: string;
   action: string;
+  performed_by: string;
+  performed_by_role: string;
   employee_name: string;
-  employee_number: string;
   occurred_at: string;
 };
 
@@ -142,8 +143,9 @@ export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
         <TableHeader>
           <TableRow>
             <TableHead className="min-w-[230px]">Activity</TableHead>
-            <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
-            <TableHead className="min-w-[190px]">Full Name</TableHead>
+            <TableHead className="min-w-[190px]">Performed By</TableHead>
+            <TableHead className="min-w-[160px]">Role</TableHead>
+            <TableHead className="min-w-[190px]">Employee</TableHead>
             <TableHead className="min-w-[190px] whitespace-nowrap">Date &amp; Time</TableHead>
           </TableRow>
         </TableHeader>
@@ -151,7 +153,8 @@ export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
           {rows.map((row) => (
             <TableRow key={row.id}>
               <TableCell className="font-medium">{auditActivityLabel(row.action)}</TableCell>
-              <TableCell className="whitespace-nowrap tabular-nums">{row.employee_number}</TableCell>
+              <TableCell>{row.performed_by}</TableCell>
+              <TableCell>{humanizeToken(row.performed_by_role)}</TableCell>
               <TableCell>{row.employee_name}</TableCell>
               <TableCell className="whitespace-nowrap">{formatDateTime(row.occurred_at)}</TableCell>
             </TableRow>

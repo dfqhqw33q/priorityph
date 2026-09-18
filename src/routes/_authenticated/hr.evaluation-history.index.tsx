@@ -245,7 +245,9 @@ export function HistoryTablePage({
               {rows.map((row) => {
                 const visibleStatus =
                   mode === "completed"
-                    ? row.status
+                    ? row.status === "FINALIZED"
+                      ? "FINALIZED"
+                      : "SUBMITTED"
                     : mode === "drafts"
                       ? "DRAFT"
                       : mode === "returned"

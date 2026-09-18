@@ -970,6 +970,20 @@ export async function recentActivity(
   limit = 8,
 ) {
   const admin = await getAdmin();
+  const meaningfulActions = [
+    "STEP1_SUBMITTED",
+    "EMPLOYEE_STEP1_SUBMITTED",
+    "RATER_STEP2_SUBMITTED",
+    "REVIEWING_SUPERVISOR_REVIEW_STARTED",
+    "REVIEWING_SUPERVISOR_SUBMITTED",
+    "PERSONNEL_SUBMITTED",
+    "COMMITTEE_SUBMITTED",
+    "PRESIDENT_APPROVED",
+    "PRESIDENT_RETURNED",
+    "EVALUATION_RESUBMITTED",
+    "FINALIZED",
+    "RETURNED",
+  ];
   const { data: auditRows } = await admin
     .from("audit_logs")
     .select("id, evaluation_id, action, module, actor_user_id, actor_role, reason, occurred_at, result")
@@ -984,11 +998,14 @@ export async function recentActivity(
       "Scoring",
       "Training Management",
     ])
+    .in("action", meaningfulActions)
     .eq("result", "SUCCESS")
     .order("occurred_at", { ascending: false })
     .limit(limit * 8);
 
-  const eventRows = (auditRows ?? []).filter((event) => event.evaluation_id);
+  const eventRows = (auditRows ?? []).filter(
+    (event) => event.evaluation_id,
+  );
   const evaluationIds = Array.from(new Set(eventRows.map((event) => event.evaluation_id as string)));
   if (evaluationIds.length === 0) return [];
 
@@ -1016,6 +1033,13 @@ export async function recentActivity(
   const reviewingIds = new Set((reviewingAssignments ?? []).map((row) => row.evaluation_id));
   const committeeIds = new Set((committeeAssignments ?? []).map((row) => row.evaluation_id));
   const isHr = roles.includes("HR") || roles.includes("ADMINISTRATOR");
+  const actorIds = Array.from(
+    new Set(eventRows.map((event) => event.actor_user_id).filter((id): id is string => Boolean(id))),
+  );
+  const { data: actors } = actorIds.length
+    ? await admin.from("internal_users").select("id, full_name").in("id", actorIds)
+    : { data: [] };
+  const actorById = new Map((actors ?? []).map((actor) => [actor.id, actor.full_name]));
 
   const isVisible = (event: (typeof eventRows)[number]) => {
     const evaluation = evaluationById.get(event.evaluation_id);
@@ -1045,6 +1069,13 @@ export async function recentActivity(
         occurred_at: event.occurred_at,
         reason: event.reason,
         evaluation_id: event.evaluation_id,
+        performed_by:
+          (event.actor_user_id ? actorById.get(event.actor_user_id) : null) ??
+          (event.action === "STEP1_SUBMITTED" ? evaluation?.full_name_snapshot : null) ??
+          "System",
+        performed_by_role:
+          event.actor_role?.split(",")[0]?.trim() ??
+          (event.action === "STEP1_SUBMITTED" ? "EMPLOYEE" : "SYSTEM"),
         employee_name: evaluation?.full_name_snapshot ?? "Unknown employee",
         employee_number: evaluation?.employee_number_snapshot ?? "—",
         status: null,
