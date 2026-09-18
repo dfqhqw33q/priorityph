@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,13 +47,15 @@ export function StatCard({
   label,
   value,
   hint,
+  to,
 }: {
   label: string;
   value: ReactNode;
   hint?: string;
+  to?: string;
 }) {
-  return (
-    <Card className="border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+  const content = (
+    <Card className="h-full border border-border bg-card shadow-sm transition-all hover:shadow-md">
       <CardContent className="pt-6">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
@@ -61,6 +64,17 @@ export function StatCard({
         {hint ? <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p> : null}
       </CardContent>
     </Card>
+  );
+
+  if (!to) return content;
+
+  return (
+    <Link
+      to={to}
+      className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      {content}
+    </Link>
   );
 }
 

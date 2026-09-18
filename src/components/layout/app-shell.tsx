@@ -82,8 +82,11 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
   { prefix: "/hr/recognition", roles: ["HR"], permission: "recognition.view" },
   {
     prefix: "/hr/evaluation-history",
-    roles: ["HR", "PRESIDENT"],
-    permission: "evaluations.view_201",
+    roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
+  },
+  {
+    prefix: "/hr/completed",
+    roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
   },
   { prefix: "/hr", roles: ["HR"], permission: "cycles.view" },
   { prefix: "/supervisor", roles: ["SUPERVISOR"], permission: "evaluations.view_step1" },
@@ -194,7 +197,7 @@ const NAV: Array<{
     direct: [
       { to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1" },
     ],
-    secondary: [{ label: "History", icon: History }],
+    secondary: [{ to: "/hr/evaluation-history", label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -205,7 +208,7 @@ const NAV: Array<{
             label: "To Review",
             permission: "evaluations.view_step1",
           },
-          { label: "Completed" },
+          { to: "/hr/completed", label: "Completed" },
         ],
       },
     ],
@@ -220,7 +223,7 @@ const NAV: Array<{
         permission: "evaluations.review_step3",
       },
     ],
-    secondary: [{ label: "History", icon: History }],
+    secondary: [{ to: "/hr/evaluation-history", label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
@@ -231,7 +234,7 @@ const NAV: Array<{
             label: "To Review",
             permission: "evaluations.review_step3",
           },
-          { label: "Completed" },
+          { to: "/hr/completed", label: "Completed" },
         ],
       },
     ],
@@ -239,14 +242,14 @@ const NAV: Array<{
   {
     roles: ["COMMITTEE"],
     direct: [{ to: "/committee", label: "Dashboard", icon: Gauge, permission: "committee.review" }],
-    secondary: [{ label: "History", icon: History }],
+    secondary: [{ to: "/hr/evaluation-history", label: "History", icon: History }],
     categories: [
       {
         label: "Evaluations",
         icon: ClipboardList,
         children: [
           { to: "/committee", label: "To Review", permission: "committee.review" },
-          { label: "Completed" },
+          { to: "/hr/completed", label: "Completed" },
         ],
       },
     ],
@@ -254,7 +257,7 @@ const NAV: Array<{
   {
     roles: ["PRESIDENT"],
     direct: [{ to: "/president", label: "Dashboard", icon: Gauge, permission: "president.view" }],
-    secondary: [{ label: "History", icon: History }],
+    secondary: [{ to: "/hr/evaluation-history", label: "History", icon: History }],
     categories: [
       {
         label: "Approvals",
@@ -262,7 +265,7 @@ const NAV: Array<{
         children: [
           { to: "/president/evaluations", label: "Pending", permission: "president.view" },
           { label: "Returned" },
-          { label: "Completed" },
+          { to: "/hr/completed", label: "Completed" },
         ],
       },
       {

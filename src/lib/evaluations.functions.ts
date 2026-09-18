@@ -71,17 +71,79 @@ export const listQueueFilterOptions = createServerFn({ method: "GET" })
     return queueFilterOptions();
   });
 
-export const getSupervisorStats = createServerFn({ method: "GET" })
+export const listEvaluationCycleOptionsForUser = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { getAdmin, requirePermissionAny } = await import("./server-core.server");
+    await requirePermissionAny(
+      context.userId,
+      ["cycles.view", "evaluations.view_step1", "evaluations.review_step3", "committee.review", "president.view"],
+      "Evaluation cycle selection",
+    );
+    const admin = await getAdmin();
+    const { data } = await admin
+      .from("evaluation_cycles")
+      .select("id, name, year, status")
+      .order("year", { ascending: false })
+      .order("created_at", { ascending: false });
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      year: row.year,
+      status: row.status,
+    }));
+  });
+
+export const getSupervisorStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     const { requirePermission, supervisorStats, recentActivity } =
       await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.view_step1", "Supervisor Review");
     const [stats, activity] = await Promise.all([
-      supervisorStats(),
+      supervisorStats(data.cycleId ?? null),
       recentActivity(["Supervisor Review"]),
     ]);
-    return { ...stats, activity };
+    return { ...stats, activity, cycleId: data.cycleId ?? null };
+  });
+
+export const getReviewingSupervisorStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { requirePermission, reviewingSupervisorStats, recentActivity } =
+      await import("./server-core.server");
+    await requirePermission(
+      context.userId,
+      "evaluations.review_step3",
+      "Reviewing Supervisor Review",
+    );
+    const [stats, activity] = await Promise.all([
+      reviewingSupervisorStats(data.cycleId ?? null),
+      recentActivity(["Reviewing Supervisor Review"]),
+    ]);
+    return { ...stats, activity, cycleId: data.cycleId ?? null };
+  });
+
+export const getCommitteeStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { requirePermission, committeeStats, recentActivity } =
+      await import("./server-core.server");
+    await requirePermission(context.userId, "committee.review", "Committee Review");
+    const [stats, activity] = await Promise.all([
+      committeeStats(data.cycleId ?? null),
+      recentActivity(["Committee Review"]),
+    ]);
+    return { ...stats, activity, cycleId: data.cycleId ?? null };
   });
 
 export const getEvaluation = createServerFn({ method: "GET" })

@@ -2,7 +2,14 @@ import { getRequest } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
-import type { AppRole, EvaluationDetail, EvaluationListItem, Permission } from "./domain";
+import {
+  EVALUATION_STATUSES,
+  type AppRole,
+  type EvaluationDetail,
+  type EvaluationListItem,
+  type EvaluationStatus,
+  type Permission,
+} from "./domain";
 
 export type AdminClient = SupabaseClient<Database>;
 
@@ -678,50 +685,94 @@ export async function savePresidentStep(
   return { itemCount: current.items.length };
 }
 
-async function countEvaluations(statuses: string[]) {
+async function countEvaluations(statuses: string[], cycleId: string | null = null) {
   const admin = await getAdmin();
-  const { count } = await admin
-    .from("evaluations")
-    .select("id", { count: "exact", head: true })
-    .in("status", statuses as never);
+  let query = admin.from("evaluations").select("id", { count: "exact", head: true });
+  if (cycleId) query = query.eq("cycle_id", cycleId);
+  const { count } = await query.in("status", statuses as never);
   return count ?? 0;
 }
 
-export async function supervisorStats() {
-  const [totalStep1, pending, drafts, submitted, withPresident] = await Promise.all([
-    countEvaluations([
-      "SUBMITTED",
-      "DRAFT",
-      "FOR_REVIEW",
-      "FOR_PROCESSING",
-      "FOR_APPROVAL",
-      "FINALIZED",
-    ]),
-    countEvaluations(["SUBMITTED"]),
-    countEvaluations(["DRAFT"]),
-    countEvaluations(["FOR_REVIEW"]),
-    countEvaluations(["FOR_PROCESSING", "FOR_APPROVAL", "FINALIZED"]),
-  ]);
-  return { totalStep1, pending, drafts, submitted, withPresident };
+export async function statusCountsForCycle(cycleId: string | null = null) {
+  const admin = await getAdmin();
+  let query = admin.from("evaluations").select("status");
+  if (cycleId) query = query.eq("cycle_id", cycleId);
+
+  const { data = [] } = await query;
+  const counts = Object.fromEntries(
+    EVALUATION_STATUSES.map((status) => [status, 0]),
+  ) as Record<EvaluationStatus, number>;
+
+  for (const row of data) {
+    const status = row.status as EvaluationStatus | undefined;
+    if (status && status in counts) counts[status] += 1;
+  }
+
+  return counts;
 }
 
-export async function presidentStats() {
+export async function supervisorStats(cycleId: string | null = null) {
+  const counts = await statusCountsForCycle(cycleId);
+  const totalStep1 =
+    counts.DRAFT +
+    counts.SUBMITTED +
+    counts.FOR_REVIEW +
+    counts.FOR_PROCESSING +
+    counts.FOR_APPROVAL +
+    counts.FINALIZED;
+
+  return {
+    totalStep1,
+    pending: counts.SUBMITTED,
+    drafts: counts.DRAFT,
+    submitted: counts.FOR_REVIEW,
+    withPresident: counts.FOR_PROCESSING + counts.FOR_APPROVAL + counts.FINALIZED,
+    statusBreakdown: counts,
+  };
+}
+
+export async function reviewingSupervisorStats(cycleId: string | null = null) {
+  const counts = await statusCountsForCycle(cycleId);
+  return {
+    awaiting: counts.FOR_REVIEW,
+    returned: counts.RETURNED,
+    inProgress: counts.FOR_PROCESSING + counts.FOR_APPROVAL + counts.FINALIZED,
+    finalized: counts.FINALIZED,
+    statusBreakdown: counts,
+  };
+}
+
+export async function committeeStats(cycleId: string | null = null) {
+  const counts = await statusCountsForCycle(cycleId);
+  return {
+    awaiting: counts.FOR_REVIEW,
+    returned: counts.RETURNED,
+    inProgress: counts.FOR_PROCESSING + counts.FOR_APPROVAL,
+    finalized: counts.FINALIZED,
+    statusBreakdown: counts,
+  };
+}
+
+export async function presidentStats(cycleId: string | null = null) {
   const admin = await getAdmin();
+  const counts = await statusCountsForCycle(cycleId);
   const [awaiting, inReview, submitted, finalized] = await Promise.all([
-    countEvaluations(["FOR_REVIEW", "FOR_PROCESSING"]),
-    countEvaluations(["FOR_APPROVAL"]),
-    countEvaluations(["FINALIZED"]),
-    countEvaluations(["FINALIZED"]),
+    countEvaluations(["FOR_REVIEW", "FOR_PROCESSING"], cycleId),
+    countEvaluations(["FOR_APPROVAL"], cycleId),
+    countEvaluations(["FINALIZED"], cycleId),
+    countEvaluations(["FINALIZED"], cycleId),
   ]);
-  const [{ count: step2 }, { count: step3 }] = await Promise.all([
+  const [step2, step3] = await Promise.all([
     admin
       .from("evaluations")
       .select("id", { count: "exact", head: true })
-      .not("president_step2_submitted_at", "is", null),
+      .not("president_step2_submitted_at", "is", null)
+      .then((result) => result.count ?? 0),
     admin
       .from("evaluations")
       .select("id", { count: "exact", head: true })
-      .not("president_step3_submitted_at", "is", null),
+      .not("president_step3_submitted_at", "is", null)
+      .then((result) => result.count ?? 0),
   ]);
   const { data: cycles } = await admin
     .from("evaluation_cycles")
@@ -735,6 +786,7 @@ export async function presidentStats() {
     step2Completed: step2 ?? 0,
     step3Completed: step3 ?? 0,
     activeYears: Array.from(new Set((cycles ?? []).map((c) => c.year))).sort((a, b) => b - a),
+    statusBreakdown: counts,
   };
 }
 
@@ -778,8 +830,14 @@ export async function recentActivity(modules: string[], limit = 8) {
     .select("id, occurred_at, action, module, result, reason")
     .in("module", modules)
     .order("occurred_at", { ascending: false })
-    .limit(limit);
-  return data ?? [];
+    .limit(limit * 4);
+
+  const filtered = (data ?? []).filter((entry) => {
+    const action = String(entry.action ?? "");
+    return !/(ACCESS|VIEWED|LOGIN|AUDIT_LOG|UNAUTHORIZED)/i.test(action);
+  });
+
+  return filtered.slice(0, limit);
 }
 
 export async function recentSecurityEvents(limit = 8) {

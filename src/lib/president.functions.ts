@@ -7,15 +7,18 @@ import type { PresidentStepData } from "./domain";
 
 export const getPresidentStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input: unknown) =>
+    z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     const { requirePermission, presidentStats, recentActivity } =
       await import("./server-core.server");
     await requirePermission(context.userId, "president.view", "President Review");
     const [stats, activity] = await Promise.all([
-      presidentStats(),
+      presidentStats(data.cycleId ?? null),
       recentActivity(["President Review"]),
     ]);
-    return { ...stats, activity };
+    return { ...stats, activity, cycleId: data.cycleId ?? null };
   });
 
 export const getPresidentSteps = createServerFn({ method: "GET" })
