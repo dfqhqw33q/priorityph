@@ -713,6 +713,7 @@ export async function statusCountsForCycle(cycleId: string | null = null) {
 
 export async function supervisorStats(cycleId: string | null = null) {
   const counts = await statusCountsForCycle(cycleId);
+  const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
   const totalStep1 =
     counts.DRAFT +
     counts.SUBMITTED +
@@ -722,10 +723,12 @@ export async function supervisorStats(cycleId: string | null = null) {
     counts.FINALIZED;
 
   return {
+    totalEvaluations,
     totalStep1,
     pending: counts.SUBMITTED,
     drafts: counts.DRAFT,
     submitted: counts.FOR_REVIEW,
+    completed: counts.FINALIZED,
     withPresident: counts.FOR_PROCESSING + counts.FOR_APPROVAL + counts.FINALIZED,
     statusBreakdown: counts,
   };
@@ -733,10 +736,14 @@ export async function supervisorStats(cycleId: string | null = null) {
 
 export async function reviewingSupervisorStats(cycleId: string | null = null) {
   const counts = await statusCountsForCycle(cycleId);
+  const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
+
   return {
+    totalEvaluations,
     awaiting: counts.FOR_REVIEW,
     returned: counts.RETURNED,
     inProgress: counts.FOR_PROCESSING + counts.FOR_APPROVAL + counts.FINALIZED,
+    completed: counts.FINALIZED,
     finalized: counts.FINALIZED,
     statusBreakdown: counts,
   };
@@ -744,10 +751,14 @@ export async function reviewingSupervisorStats(cycleId: string | null = null) {
 
 export async function committeeStats(cycleId: string | null = null) {
   const counts = await statusCountsForCycle(cycleId);
+  const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
+
   return {
+    totalEvaluations,
     awaiting: counts.FOR_REVIEW,
     returned: counts.RETURNED,
     inProgress: counts.FOR_PROCESSING + counts.FOR_APPROVAL,
+    completed: counts.FINALIZED,
     finalized: counts.FINALIZED,
     statusBreakdown: counts,
   };
@@ -756,6 +767,7 @@ export async function committeeStats(cycleId: string | null = null) {
 export async function presidentStats(cycleId: string | null = null) {
   const admin = await getAdmin();
   const counts = await statusCountsForCycle(cycleId);
+  const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
   const [awaiting, inReview, submitted, finalized] = await Promise.all([
     countEvaluations(["FOR_REVIEW", "FOR_PROCESSING"], cycleId),
     countEvaluations(["FOR_APPROVAL"], cycleId),
@@ -779,9 +791,11 @@ export async function presidentStats(cycleId: string | null = null) {
     .select("year")
     .eq("status", "ACTIVE");
   return {
+    totalEvaluations,
     awaiting,
     inReview,
     submitted,
+    completed: finalized,
     finalized,
     step2Completed: step2 ?? 0,
     step3Completed: step3 ?? 0,
@@ -834,7 +848,9 @@ export async function recentActivity(modules: string[], limit = 8) {
 
   const filtered = (data ?? []).filter((entry) => {
     const action = String(entry.action ?? "");
-    return !/(ACCESS|VIEWED|LOGIN|AUDIT_LOG|UNAUTHORIZED)/i.test(action);
+    const normalized = action.replace(/_/g, " ");
+    return !/(ACCESS|VIEWED|LOGIN|AUDIT_LOG|UNAUTHORIZED|QUEUE)/i.test(normalized)
+      && /(SUBMITTED|DRAFT|RETURNED|REVIEW|APPROVAL|FINALIZED|COMPLETED|STEP|SAVED)/i.test(normalized);
   });
 
   return filtered.slice(0, limit);

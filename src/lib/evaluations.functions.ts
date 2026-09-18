@@ -94,6 +94,32 @@ export const listEvaluationCycleOptionsForUser = createServerFn({ method: "GET" 
     }));
   });
 
+export const getHRStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { requirePermission, statusCountsForCycle, recentActivity } =
+      await import("./server-core.server");
+    await requirePermission(context.userId, "cycles.view", "HR Dashboard");
+    const [counts, activity] = await Promise.all([
+      statusCountsForCycle(data.cycleId ?? null),
+      recentActivity(["Supervisor Review", "Reviewing Supervisor Review", "Committee Review", "President Review"]),
+    ]);
+
+    const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
+    return {
+      totalEvaluations,
+      awaitingReview: counts.SUBMITTED + counts.FOR_REVIEW,
+      completed: counts.FINALIZED,
+      drafts: counts.DRAFT,
+      statusBreakdown: counts,
+      activity,
+      cycleId: data.cycleId ?? null,
+    };
+  });
+
 export const getSupervisorStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
