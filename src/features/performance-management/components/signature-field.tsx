@@ -13,7 +13,13 @@ type Props = {
   onSave?: () => Promise<void> | void;
 };
 
-export function SignatureField({ value, disabled = false, compact = false, onChange }: Props) {
+export function SignatureField({
+  value,
+  disabled = false,
+  compact = false,
+  onChange,
+  onSave,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawing, setDrawing] = useState(false);
   const [saved, setSaved] = useState(Boolean(value));
