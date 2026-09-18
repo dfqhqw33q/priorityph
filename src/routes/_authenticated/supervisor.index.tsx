@@ -146,13 +146,13 @@ function SupervisorDashboard() {
                     margin={{ top: 6, right: 12, left: 8, bottom: 6 }}
                     barGap={8}
                   >
-                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis
                       type="number"
                       allowDecimals={false}
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                       domain={[0, (dataMax: number) => Math.max(dataMax, 1)]}
                     />
                     <YAxis
@@ -161,10 +161,10 @@ function SupervisorDashboard() {
                       tickLine={false}
                       axisLine={false}
                       width={84}
-                      tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+                      tick={{ fill: "var(--foreground)", fontSize: 12 }}
                     />
                     <Tooltip
-                      cursor={{ fill: "hsl(var(--muted))" }}
+                      cursor={{ fill: "var(--muted)" }}
                       content={
                         <ChartTooltipContent hideLabel formatter={(value) => [value, "Evaluations"]} />
                       }
@@ -176,7 +176,7 @@ function SupervisorDashboard() {
                       label={{
                         position: "right",
                         formatter: (value: number | string) => `${value}`,
-                        fill: "hsl(var(--foreground))",
+                        fill: "var(--foreground)",
                         fontSize: 12,
                         fontWeight: 600,
                       }}

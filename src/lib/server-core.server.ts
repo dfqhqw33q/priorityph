@@ -715,39 +715,59 @@ async function countAssignedEvaluationsForRole(
   }
 
   if (role === "REVIEWING_SUPERVISOR") {
+    let evaluationQuery = admin
+      .from("evaluations")
+      .select("id")
+      .in("status", statuses as never);
+    if (cycleId) evaluationQuery = evaluationQuery.eq("cycle_id", cycleId);
+    const { data: evaluations } = await evaluationQuery;
+    const evaluationIds = (evaluations ?? []).map((row) => row.id);
+    if (!evaluationIds.length) return 0;
     const { data: rows } = await admin
       .from("reviewing_supervisor_reviews")
-      .select("evaluation_id")
-      .eq("reviewer_user_id", userId);
-    const ids = Array.from(new Set((rows ?? []).map((row) => row.evaluation_id)));
-    if (!ids.length) return 0;
-
-    let query = admin
-      .from("evaluations")
-      .select("id", { count: "exact", head: true })
-      .in("id", ids)
-      .in("status", statuses as never);
-    if (cycleId) query = query.eq("cycle_id", cycleId);
-    const { count } = await query;
-    return count ?? 0;
+      .select("evaluation_id, reviewer_user_id")
+      .in("evaluation_id", evaluationIds);
+    const assignments = new Map((rows ?? []).map((row) => [row.evaluation_id, row.reviewer_user_id]));
+    const eligibleIds = evaluationIds.filter((id) => !assignments.get(id) || assignments.get(id) === userId);
+    if (!eligibleIds.length) return 0;
+    const { data: personnelRows } = await admin
+      .from("personnel_processing")
+      .select("evaluation_id, submitted_at")
+      .in("evaluation_id", eligibleIds);
+    const processed = new Set(
+      (personnelRows ?? []).filter((row) => row.submitted_at).map((row) => row.evaluation_id),
+    );
+    return statuses.includes("FOR_REVIEW")
+      ? eligibleIds.filter((id) => !processed.has(id)).length
+      : eligibleIds.length;
   }
 
   if (role === "COMMITTEE") {
+    let evaluationQuery = admin
+      .from("evaluations")
+      .select("id")
+      .in("status", statuses as never);
+    if (cycleId) evaluationQuery = evaluationQuery.eq("cycle_id", cycleId);
+    const { data: evaluations } = await evaluationQuery;
+    const evaluationIds = (evaluations ?? []).map((row) => row.id);
+    if (!evaluationIds.length) return 0;
     const { data: rows } = await admin
       .from("committee_reviews")
-      .select("evaluation_id")
-      .eq("committee_user_id", userId);
-    const ids = Array.from(new Set((rows ?? []).map((row) => row.evaluation_id)));
-    if (!ids.length) return 0;
-
-    let query = admin
-      .from("evaluations")
-      .select("id", { count: "exact", head: true })
-      .in("id", ids)
-      .in("status", statuses as never);
-    if (cycleId) query = query.eq("cycle_id", cycleId);
-    const { count } = await query;
-    return count ?? 0;
+      .select("evaluation_id, committee_user_id")
+      .in("evaluation_id", evaluationIds);
+    const assignments = new Map((rows ?? []).map((row) => [row.evaluation_id, row.committee_user_id]));
+    const eligibleIds = evaluationIds.filter((id) => !assignments.get(id) || assignments.get(id) === userId);
+    if (!eligibleIds.length) return 0;
+    const { data: personnelRows } = await admin
+      .from("personnel_processing")
+      .select("evaluation_id, submitted_at")
+      .in("evaluation_id", eligibleIds);
+    const processed = new Set(
+      (personnelRows ?? []).filter((row) => row.submitted_at).map((row) => row.evaluation_id),
+    );
+    return statuses.includes("FOR_REVIEW")
+      ? eligibleIds.filter((id) => processed.has(id)).length
+      : eligibleIds.length;
   }
 
   let query = admin
