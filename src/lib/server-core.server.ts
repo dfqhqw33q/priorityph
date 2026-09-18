@@ -970,14 +970,26 @@ export async function recentActivity(
   limit = 8,
 ) {
   const admin = await getAdmin();
-  const { data: events } = await admin
-    .from("evaluation_events")
-    .select("id, evaluation_id, event_type, from_status, to_status, actor_user_id, reason, occurred_at")
+  const { data: auditRows } = await admin
+    .from("audit_logs")
+    .select("id, evaluation_id, action, module, actor_user_id, actor_role, reason, occurred_at, result")
+    .in("module", [
+      "Step 1 Submission",
+      "Evaluation Workflow",
+      "Evaluation Review",
+      "Supervisor Review",
+      "Reviewing Supervisor Review",
+      "Committee Review",
+      "President Review",
+      "Scoring",
+      "Training Management",
+    ])
+    .eq("result", "SUCCESS")
     .order("occurred_at", { ascending: false })
     .limit(limit * 8);
 
-  const eventRows = events ?? [];
-  const evaluationIds = Array.from(new Set(eventRows.map((event) => event.evaluation_id)));
+  const eventRows = (auditRows ?? []).filter((event) => event.evaluation_id);
+  const evaluationIds = Array.from(new Set(eventRows.map((event) => event.evaluation_id as string)));
   if (evaluationIds.length === 0) return [];
 
   const [{ data: evaluations }, { data: reviewingAssignments }, { data: committeeAssignments }] =
@@ -1006,20 +1018,19 @@ export async function recentActivity(
   const isHr = roles.includes("HR") || roles.includes("ADMINISTRATOR");
 
   const isVisible = (event: (typeof eventRows)[number]) => {
-    if (isHr) return true;
     const evaluation = evaluationById.get(event.evaluation_id);
     if (!evaluation) return false;
     if (cycleId && evaluation.cycle_id !== cycleId) return false;
+    if (isHr) return true;
     if (event.actor_user_id === userId || evaluation.president_user_id === userId) return true;
     if (roles.includes("SUPERVISOR") && evaluation.supervisor_user_id === userId) return true;
     if (roles.includes("REVIEWING_SUPERVISOR") && reviewingIds.has(event.evaluation_id)) return true;
     if (roles.includes("COMMITTEE") && committeeIds.has(event.evaluation_id)) return true;
-
-    // Unassigned queue events are visible only at the stage where the role can act.
-    if (roles.includes("SUPERVISOR") && event.event_type === "STEP1_SUBMITTED") return true;
-    if (roles.includes("REVIEWING_SUPERVISOR") && event.event_type === "RATER_STEP2_SUBMITTED") return true;
-    if (roles.includes("COMMITTEE") && event.event_type === "PERSONNEL_SUBMITTED") return true;
-    return roles.includes("PRESIDENT") && event.event_type === "COMMITTEE_SUBMITTED";
+    if (roles.includes("SUPERVISOR") && event.action === "STEP1_SUBMITTED") return true;
+    if (roles.includes("REVIEWING_SUPERVISOR") && event.action === "RATER_STEP2_SUBMITTED") return true;
+    if (roles.includes("COMMITTEE") && event.action === "PERSONNEL_SUBMITTED") return true;
+    if (roles.includes("PRESIDENT") && event.action === "COMMITTEE_SUBMITTED") return true;
+    return false;
   };
 
   return eventRows
@@ -1030,13 +1041,13 @@ export async function recentActivity(
       const evaluation = evaluationById.get(event.evaluation_id);
       return {
         id: event.id,
-        action: event.event_type,
+        action: event.action,
         occurred_at: event.occurred_at,
         reason: event.reason,
         evaluation_id: event.evaluation_id,
         employee_name: evaluation?.full_name_snapshot ?? "Unknown employee",
         employee_number: evaluation?.employee_number_snapshot ?? "—",
-        status: event.to_status,
+        status: null,
       };
     });
 }

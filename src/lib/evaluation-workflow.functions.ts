@@ -500,7 +500,8 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => raterStep2Schema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, validationError, writeAudit, getActorRoles } =
+      await import("./server-core.server");
     const { computeScore } = await import("./scoring.server");
     await requirePermission(context.userId, "evaluations.step2", "Rater Step 2");
     const admin = await getAdmin();
@@ -563,6 +564,17 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
       from_status: evaluation.status,
       to_status: nextStatus,
       actor_user_id: context.userId,
+    });
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: data.submit ? "RATER_STEP2_SUBMITTED" : "RATER_STEP2_DRAFT_SAVED",
+      module: "Evaluation Workflow",
+      entityType: "evaluation",
+      entityId: data.evaluationId,
+      evaluationId: data.evaluationId,
+      previousValue: { status: evaluation.status },
+      newValue: { status: nextStatus },
     });
     if (data.submit)
       await admin.from("notification_events").insert({
