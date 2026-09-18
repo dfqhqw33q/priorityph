@@ -32,6 +32,7 @@ import {
 import { listQueueFilterOptions } from "@/lib/evaluations.functions";
 import {
   EVALUATION_STATUS_LABELS,
+  getSupervisorDisplayStatus,
   type EvaluationListItem,
   type EvaluationStatus,
 } from "@/lib/domain";
@@ -204,7 +205,13 @@ export function EvaluationQueue({
             setStatus(value);
             setPage(0);
           }}
-          options={statuses.map((s) => ({ value: s, label: EVALUATION_STATUS_LABELS[s] }))}
+          options={statuses.map((s) => ({
+            value: s,
+            label:
+              queryKey === "supervisor-queue"
+                ? EVALUATION_STATUS_LABELS[getSupervisorDisplayStatus(s)]
+                : EVALUATION_STATUS_LABELS[s],
+          }))}
           allLabel="All statuses"
         />
       </div>
@@ -229,13 +236,12 @@ export function EvaluationQueue({
                   <TableHead scope="col">
                     <SortButton label="Employee ID" sortKey="employee_number_snapshot" />
                   </TableHead>
-                  <TableHead scope="col">Job title</TableHead>
-                  <TableHead scope="col">Division / section</TableHead>
+                  <TableHead scope="col">Job Title</TableHead>
+                  <TableHead scope="col">Division / Section</TableHead>
                   <TableHead scope="col">Cycle</TableHead>
                   <TableHead scope="col">
-                    <SortButton label="Self-assessment submitted" sortKey="employee_submitted_at" />
+                    <SortButton label="Date Submitted" sortKey="employee_submitted_at" />
                   </TableHead>
-                  <TableHead scope="col">Supervisor review submitted</TableHead>
                   <TableHead scope="col">
                     <SortButton label="Status" sortKey="status" />
                   </TableHead>
@@ -245,38 +251,48 @@ export function EvaluationQueue({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {visible.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">{row.full_name_snapshot}</TableCell>
-                    <TableCell className="tabular-nums">{row.employee_number_snapshot}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {row.job_title_snapshot}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {row.division_snapshot}
-                      {row.section_snapshot ? `  -  ${row.section_snapshot}` : ""}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {row.cycle_name} ({row.cycle_year})
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {formatDateTime(row.employee_submitted_at)}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {formatDateTime(row.supervisor_submitted_at)}
-                    </TableCell>
-                    <TableCell>
-                      <EvaluationStatusBadge status={row.status} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={detailPath} params={{ evaluationId: row.id }}>
-                          Open
+                {visible.map((row) => {
+                  const badgeStatus =
+                    queryKey === "supervisor-queue" ? getSupervisorDisplayStatus(row.status) : row.status;
+
+                  return (
+                    <TableRow key={row.id}>
+                      <TableCell className="font-medium">
+                        <Link
+                          className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          to={detailPath}
+                          params={{ evaluationId: row.id }}
+                        >
+                          {row.full_name_snapshot}
                         </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="tabular-nums">{row.employee_number_snapshot}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {row.job_title_snapshot || "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {row.division_snapshot || "—"}
+                        {row.section_snapshot ? ` / ${row.section_snapshot}` : ""}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {row.cycle_name} ({row.cycle_year})
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatDateTime(row.employee_submitted_at)}
+                      </TableCell>
+                      <TableCell>
+                        <EvaluationStatusBadge status={badgeStatus} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={detailPath} params={{ evaluationId: row.id }}>
+                            Open
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

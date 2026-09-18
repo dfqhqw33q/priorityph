@@ -40,6 +40,7 @@ import { Route as AuthenticatedPresidentIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedPresidentEmployeesRouteImport } from './routes/_authenticated/president.employees'
 import { Route as AuthenticatedReviewingSupervisorIndexRouteImport } from './routes/_authenticated/reviewing-supervisor.index'
 import { Route as AuthenticatedSupervisorIndexRouteImport } from './routes/_authenticated/supervisor.index'
+import { Route as AuthenticatedCommitteeEvaluationsIndexRouteImport } from './routes/_authenticated/committee.evaluations.index'
 import { Route as AuthenticatedCommitteeEvaluationsEvaluationIdRouteImport } from './routes/_authenticated/committee.evaluations.$evaluationId'
 import { Route as AuthenticatedHrCompetencyIndexRouteImport } from './routes/_authenticated/hr.competency.index'
 import { Route as AuthenticatedHrCompetencyEmployeeIdRouteImport } from './routes/_authenticated/hr.competency.$employeeId'
@@ -51,6 +52,7 @@ import { Route as AuthenticatedPersonnelEvaluationsEvaluationIdRouteImport } fro
 import { Route as AuthenticatedPresidentApprovalsEvaluationIdRouteImport } from './routes/_authenticated/president.approvals.$evaluationId'
 import { Route as AuthenticatedPresidentEvaluationsIndexRouteImport } from './routes/_authenticated/president.evaluations.index'
 import { Route as AuthenticatedPresidentEvaluationsEvaluationIdRouteImport } from './routes/_authenticated/president.evaluations.$evaluationId'
+import { Route as AuthenticatedReviewingSupervisorEvaluationsIndexRouteImport } from './routes/_authenticated/reviewing-supervisor.evaluations.index'
 import { Route as AuthenticatedReviewingSupervisorEvaluationsEvaluationIdRouteImport } from './routes/_authenticated/reviewing-supervisor.evaluations.$evaluationId'
 import { Route as AuthenticatedSupervisorEvaluationsIndexRouteImport } from './routes/_authenticated/supervisor.evaluations.index'
 import { Route as AuthenticatedSupervisorEvaluationsEvaluationIdRouteImport } from './routes/_authenticated/supervisor.evaluations.$evaluationId'
@@ -224,6 +226,12 @@ const AuthenticatedSupervisorIndexRoute =
     path: '/supervisor/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCommitteeEvaluationsIndexRoute =
+  AuthenticatedCommitteeEvaluationsIndexRouteImport.update({
+    id: '/committee/evaluations/',
+    path: '/committee/evaluations/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCommitteeEvaluationsEvaluationIdRoute =
   AuthenticatedCommitteeEvaluationsEvaluationIdRouteImport.update({
     id: '/committee/evaluations/$evaluationId',
@@ -290,6 +298,12 @@ const AuthenticatedPresidentEvaluationsEvaluationIdRoute =
     path: '/president/evaluations/$evaluationId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReviewingSupervisorEvaluationsIndexRoute =
+  AuthenticatedReviewingSupervisorEvaluationsIndexRouteImport.update({
+    id: '/reviewing-supervisor/evaluations/',
+    path: '/reviewing-supervisor/evaluations/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReviewingSupervisorEvaluationsEvaluationIdRoute =
   AuthenticatedReviewingSupervisorEvaluationsEvaluationIdRouteImport.update({
     id: '/reviewing-supervisor/evaluations/$evaluationId',
@@ -349,10 +363,12 @@ export interface FileRoutesByFullPath {
   '/president/evaluations/$evaluationId': typeof AuthenticatedPresidentEvaluationsEvaluationIdRoute
   '/reviewing-supervisor/evaluations/$evaluationId': typeof AuthenticatedReviewingSupervisorEvaluationsEvaluationIdRoute
   '/supervisor/evaluations/$evaluationId': typeof AuthenticatedSupervisorEvaluationsEvaluationIdRoute
+  '/committee/evaluations/': typeof AuthenticatedCommitteeEvaluationsIndexRoute
   '/hr/competency/': typeof AuthenticatedHrCompetencyIndexRoute
   '/hr/cycles/': typeof AuthenticatedHrCyclesIndexRoute
   '/hr/evaluation-history/': typeof AuthenticatedHrEvaluationHistoryIndexRoute
   '/president/evaluations/': typeof AuthenticatedPresidentEvaluationsIndexRoute
+  '/reviewing-supervisor/evaluations/': typeof AuthenticatedReviewingSupervisorEvaluationsIndexRoute
   '/supervisor/evaluations/': typeof AuthenticatedSupervisorEvaluationsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -395,10 +411,12 @@ export interface FileRoutesByTo {
   '/president/evaluations/$evaluationId': typeof AuthenticatedPresidentEvaluationsEvaluationIdRoute
   '/reviewing-supervisor/evaluations/$evaluationId': typeof AuthenticatedReviewingSupervisorEvaluationsEvaluationIdRoute
   '/supervisor/evaluations/$evaluationId': typeof AuthenticatedSupervisorEvaluationsEvaluationIdRoute
+  '/committee/evaluations': typeof AuthenticatedCommitteeEvaluationsIndexRoute
   '/hr/competency': typeof AuthenticatedHrCompetencyIndexRoute
   '/hr/cycles': typeof AuthenticatedHrCyclesIndexRoute
   '/hr/evaluation-history': typeof AuthenticatedHrEvaluationHistoryIndexRoute
   '/president/evaluations': typeof AuthenticatedPresidentEvaluationsIndexRoute
+  '/reviewing-supervisor/evaluations': typeof AuthenticatedReviewingSupervisorEvaluationsIndexRoute
   '/supervisor/evaluations': typeof AuthenticatedSupervisorEvaluationsIndexRoute
 }
 export interface FileRoutesById {
@@ -443,10 +461,12 @@ export interface FileRoutesById {
   '/_authenticated/president/evaluations/$evaluationId': typeof AuthenticatedPresidentEvaluationsEvaluationIdRoute
   '/_authenticated/reviewing-supervisor/evaluations/$evaluationId': typeof AuthenticatedReviewingSupervisorEvaluationsEvaluationIdRoute
   '/_authenticated/supervisor/evaluations/$evaluationId': typeof AuthenticatedSupervisorEvaluationsEvaluationIdRoute
+  '/_authenticated/committee/evaluations/': typeof AuthenticatedCommitteeEvaluationsIndexRoute
   '/_authenticated/hr/competency/': typeof AuthenticatedHrCompetencyIndexRoute
   '/_authenticated/hr/cycles/': typeof AuthenticatedHrCyclesIndexRoute
   '/_authenticated/hr/evaluation-history/': typeof AuthenticatedHrEvaluationHistoryIndexRoute
   '/_authenticated/president/evaluations/': typeof AuthenticatedPresidentEvaluationsIndexRoute
+  '/_authenticated/reviewing-supervisor/evaluations/': typeof AuthenticatedReviewingSupervisorEvaluationsIndexRoute
   '/_authenticated/supervisor/evaluations/': typeof AuthenticatedSupervisorEvaluationsIndexRoute
 }
 export interface FileRouteTypes {
@@ -491,10 +511,12 @@ export interface FileRouteTypes {
     | '/president/evaluations/$evaluationId'
     | '/reviewing-supervisor/evaluations/$evaluationId'
     | '/supervisor/evaluations/$evaluationId'
+    | '/committee/evaluations/'
     | '/hr/competency/'
     | '/hr/cycles/'
     | '/hr/evaluation-history/'
     | '/president/evaluations/'
+    | '/reviewing-supervisor/evaluations/'
     | '/supervisor/evaluations/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -537,10 +559,12 @@ export interface FileRouteTypes {
     | '/president/evaluations/$evaluationId'
     | '/reviewing-supervisor/evaluations/$evaluationId'
     | '/supervisor/evaluations/$evaluationId'
+    | '/committee/evaluations'
     | '/hr/competency'
     | '/hr/cycles'
     | '/hr/evaluation-history'
     | '/president/evaluations'
+    | '/reviewing-supervisor/evaluations'
     | '/supervisor/evaluations'
   id:
     | '__root__'
@@ -584,10 +608,12 @@ export interface FileRouteTypes {
     | '/_authenticated/president/evaluations/$evaluationId'
     | '/_authenticated/reviewing-supervisor/evaluations/$evaluationId'
     | '/_authenticated/supervisor/evaluations/$evaluationId'
+    | '/_authenticated/committee/evaluations/'
     | '/_authenticated/hr/competency/'
     | '/_authenticated/hr/cycles/'
     | '/_authenticated/hr/evaluation-history/'
     | '/_authenticated/president/evaluations/'
+    | '/_authenticated/reviewing-supervisor/evaluations/'
     | '/_authenticated/supervisor/evaluations/'
   fileRoutesById: FileRoutesById
 }
@@ -822,6 +848,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSupervisorIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/committee/evaluations/': {
+      id: '/_authenticated/committee/evaluations/'
+      path: '/committee/evaluations'
+      fullPath: '/committee/evaluations/'
+      preLoaderRoute: typeof AuthenticatedCommitteeEvaluationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/committee/evaluations/$evaluationId': {
       id: '/_authenticated/committee/evaluations/$evaluationId'
       path: '/committee/evaluations/$evaluationId'
@@ -899,6 +932,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPresidentEvaluationsEvaluationIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reviewing-supervisor/evaluations/': {
+      id: '/_authenticated/reviewing-supervisor/evaluations/'
+      path: '/reviewing-supervisor/evaluations'
+      fullPath: '/reviewing-supervisor/evaluations/'
+      preLoaderRoute: typeof AuthenticatedReviewingSupervisorEvaluationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reviewing-supervisor/evaluations/$evaluationId': {
       id: '/_authenticated/reviewing-supervisor/evaluations/$evaluationId'
       path: '/reviewing-supervisor/evaluations/$evaluationId'
@@ -955,10 +995,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPresidentEvaluationsEvaluationIdRoute: typeof AuthenticatedPresidentEvaluationsEvaluationIdRoute
   AuthenticatedReviewingSupervisorEvaluationsEvaluationIdRoute: typeof AuthenticatedReviewingSupervisorEvaluationsEvaluationIdRoute
   AuthenticatedSupervisorEvaluationsEvaluationIdRoute: typeof AuthenticatedSupervisorEvaluationsEvaluationIdRoute
+  AuthenticatedCommitteeEvaluationsIndexRoute: typeof AuthenticatedCommitteeEvaluationsIndexRoute
   AuthenticatedHrCompetencyIndexRoute: typeof AuthenticatedHrCompetencyIndexRoute
   AuthenticatedHrCyclesIndexRoute: typeof AuthenticatedHrCyclesIndexRoute
   AuthenticatedHrEvaluationHistoryIndexRoute: typeof AuthenticatedHrEvaluationHistoryIndexRoute
   AuthenticatedPresidentEvaluationsIndexRoute: typeof AuthenticatedPresidentEvaluationsIndexRoute
+  AuthenticatedReviewingSupervisorEvaluationsIndexRoute: typeof AuthenticatedReviewingSupervisorEvaluationsIndexRoute
   AuthenticatedSupervisorEvaluationsIndexRoute: typeof AuthenticatedSupervisorEvaluationsIndexRoute
 }
 
@@ -1005,12 +1047,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedReviewingSupervisorEvaluationsEvaluationIdRoute,
   AuthenticatedSupervisorEvaluationsEvaluationIdRoute:
     AuthenticatedSupervisorEvaluationsEvaluationIdRoute,
+  AuthenticatedCommitteeEvaluationsIndexRoute:
+    AuthenticatedCommitteeEvaluationsIndexRoute,
   AuthenticatedHrCompetencyIndexRoute: AuthenticatedHrCompetencyIndexRoute,
   AuthenticatedHrCyclesIndexRoute: AuthenticatedHrCyclesIndexRoute,
   AuthenticatedHrEvaluationHistoryIndexRoute:
     AuthenticatedHrEvaluationHistoryIndexRoute,
   AuthenticatedPresidentEvaluationsIndexRoute:
     AuthenticatedPresidentEvaluationsIndexRoute,
+  AuthenticatedReviewingSupervisorEvaluationsIndexRoute:
+    AuthenticatedReviewingSupervisorEvaluationsIndexRoute,
   AuthenticatedSupervisorEvaluationsIndexRoute:
     AuthenticatedSupervisorEvaluationsIndexRoute,
 }

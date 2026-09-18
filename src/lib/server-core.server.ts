@@ -707,7 +707,7 @@ async function countAssignedEvaluationsForRole(
     let query = admin
       .from("evaluations")
       .select("id", { count: "exact", head: true })
-      .eq("supervisor_user_id", userId)
+      .or(`supervisor_user_id.is.null,supervisor_user_id.eq.${userId}`)
       .in("status", statuses as never);
     if (cycleId) query = query.eq("cycle_id", cycleId);
     const { count } = await query;
@@ -812,8 +812,8 @@ export async function supervisorStats(userId: string, cycleId: string | null = n
     toReview: counts.SUBMITTED,
     returned: counts.RETURNED,
     drafts: counts.DRAFT,
-    submitted: counts.FOR_REVIEW,
-    completed: counts.SUBMITTED,
+    submitted: counts.SUBMITTED,
+    completed: counts.FINALIZED,
     withPresident: counts.FOR_PROCESSING + counts.FOR_APPROVAL + counts.FINALIZED,
     statusBreakdown: counts,
   };

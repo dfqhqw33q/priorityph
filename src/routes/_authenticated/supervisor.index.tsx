@@ -61,7 +61,7 @@ function SupervisorDashboard() {
     return [
       { status: "SUBMITTED", label: "To Review", value: breakdown.SUBMITTED ?? 0 },
       { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
-      { status: "FINALIZED", label: "Completed", value: breakdown.SUBMITTED ?? 0 },
+      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
       { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
     ];
   }, [query.data?.statusBreakdown]);

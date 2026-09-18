@@ -181,6 +181,10 @@ export const EVALUATION_STATUS_LABELS: Record<EvaluationStatus, string> = {
   FINALIZED: "Finalized",
 };
 
+export function getSupervisorDisplayStatus(status: EvaluationStatus): EvaluationStatus {
+  return status === "SUBMITTED" ? "FOR_REVIEW" : status;
+}
+
 export type EvaluatorType = "EMPLOYEE" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "PRESIDENT";
 
 export const RATING_SCALE = [
