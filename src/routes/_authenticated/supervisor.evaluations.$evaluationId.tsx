@@ -933,16 +933,11 @@ export function SupervisorReviewPage() {
                   }}
                 />
               </div>
-              <div className="space-y-1.5">
-                  <Label htmlFor="step2-date">Date &amp; Time</Label>
-                <input
-                  id="step2-date"
-                  type="text"
-                  className="h-8 w-auto min-w-0 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:outline-none"
-                  value={formatDateTime(step2["date"] || currentDate)}
-                  readOnly
-                  aria-readonly="true"
-                />
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-semibold text-foreground">Date &amp; Time:</span>
+                <span className="text-muted-foreground">
+                  {formatDateTime(step2["date"] || currentDate)}
+                </span>
               </div>
             </section>
           </div>
