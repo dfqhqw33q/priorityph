@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   EVALUATION_STATUS_LABELS,
   humanizeToken,
@@ -92,6 +93,71 @@ export function EmptyState({
       <p className="text-sm font-semibold text-foreground">{title}</p>
       {description ? <p className="mt-1.5 text-xs text-muted-foreground">{description}</p> : null}
       {children}
+    </div>
+  );
+}
+
+export type AuditActivityRow = {
+  id: string;
+  action: string;
+  employee_name: string;
+  employee_number: string;
+  occurred_at: string;
+};
+
+const AUDIT_ACTIVITY_LABELS: Record<string, string> = {
+  STEP1_SUBMITTED: "Evaluation submitted",
+  EMPLOYEE_STEP1_SUBMITTED: "Evaluation submitted",
+  RATER_STEP2_SUBMITTED: "Supervisor review submitted",
+  REVIEWING_SUPERVISOR_REVIEW_STARTED: "Review started",
+  REVIEWING_SUPERVISOR_SUBMITTED: "Reviewing Supervisor review submitted",
+  PERSONNEL_SUBMITTED: "Personnel processing submitted",
+  COMMITTEE_SUBMITTED: "Committee action submitted",
+  PRESIDENT_APPROVED: "Evaluation finalized",
+  PRESIDENT_RETURNED: "Evaluation returned",
+  EVALUATION_RESUBMITTED: "Evaluation resubmitted",
+  FINALIZED: "Evaluation finalized",
+};
+
+export function auditActivityLabel(action: string) {
+  return (
+    AUDIT_ACTIVITY_LABELS[action] ??
+    humanizeToken(action).replace(/^Evaluation Workflow /i, "")
+  );
+}
+
+export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
+  if (rows.length === 0) {
+    return (
+      <div className="flex min-h-[80px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-3 py-4 text-center">
+        <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-full overflow-x-auto border border-border bg-card shadow-sm">
+      <Table>
+        <caption className="sr-only">Recent evaluation activity</caption>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="min-w-[230px]">Activity</TableHead>
+            <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
+            <TableHead className="min-w-[190px]">Full Name</TableHead>
+            <TableHead className="min-w-[190px] whitespace-nowrap">Date &amp; Time</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={row.id}>
+              <TableCell className="font-medium">{auditActivityLabel(row.action)}</TableCell>
+              <TableCell className="whitespace-nowrap tabular-nums">{row.employee_number}</TableCell>
+              <TableCell>{row.employee_name}</TableCell>
+              <TableCell className="whitespace-nowrap">{formatDateTime(row.occurred_at)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

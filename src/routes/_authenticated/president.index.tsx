@@ -7,14 +7,13 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   EmptyState,
+  AuditActivityTable,
   LoadingBlock,
   PageHeader,
   StatCard,
-  formatDateTime,
 } from "@/components/shared/shared-ui";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { getPresidentStats } from "@/lib/president.functions";
-import { humanizeToken } from "@/lib/domain";
 import { listEvaluationCycleOptionsForUser } from "@/lib/evaluations.functions";
 
 export const Route = createFileRoute("/_authenticated/president/")({
@@ -196,28 +195,7 @@ function PresidentDashboard() {
               <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              {(query.data?.activity ?? []).length === 0 ? (
-                <div className="flex min-h-[80px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-3 py-4 text-center">
-                  <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
-                </div>
-              ) : (
-                <ul className="space-y-2 text-sm">
-                  {(query.data?.activity ?? []).map((event) => (
-                    <li
-                      key={event.id}
-                      className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0"
-                    >
-                      <span className="min-w-0">
-                        <span className="block font-medium text-foreground">{humanizeToken(event.action)}</span>
-                        <span className="block text-xs text-muted-foreground">
-                          {event.employee_name} ({event.employee_number})
-                        </span>
-                      </span>
-                      <span className="text-xs text-muted-foreground">{formatDateTime(event.occurred_at)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <AuditActivityTable rows={query.data?.activity ?? []} />
             </CardContent>
           </Card>
         </>
