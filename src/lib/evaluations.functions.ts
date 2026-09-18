@@ -109,7 +109,7 @@ export const getHRStats = createServerFn({ method: "GET" })
     return {
       totalEvaluations,
       awaitingReview: counts.SUBMITTED + counts.FOR_REVIEW,
-      completed: counts.SUBMITTED,
+      completed: counts.FOR_REVIEW,
       drafts: counts.DRAFT,
       pending,
       statusBreakdown: counts,

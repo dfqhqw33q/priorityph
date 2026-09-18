@@ -1,0 +1,678 @@
+
+> build
+> vite build && node scripts/copy-vercel-runtime-deps.mjs
+
+[90m[[90mnitro:vercel[90m][39m [36mℹ[39m Using [36mnodejs24.x[39m runtime.
+[90m[[90mnitro:vercel[90m][39m [36mℹ[39m Using [36mweb[39m entry format.
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+[36mvite v8.1.5 [32mbuilding client environment for production...[36m[39m
+[2Ktransforming...[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts:48:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts:284:26 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts:557:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts:666:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/access.functions.ts:62:33 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/access.functions.ts:126:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/access.functions.ts:174:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:48:27 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:101:27 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:132:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:210:28 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:272:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:312:30 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:355:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:401:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:471:32 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:521:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:561:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts:8:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts:24:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts:45:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts:105:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:16:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:34:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:86:27 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:121:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:137:44 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:157:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:173:30 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:197:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/public.functions.ts:339:31 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/public.functions.ts:381:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/public.functions.ts:474:28 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:41:25 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:59:26 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:124:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:192:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:237:33 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:24:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:214:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:499:31 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:587:46 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:606:42 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:673:42 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:744:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:797:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:836:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/succession-planning/succession.functions.ts:91:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/succession-planning/succession.functions.ts:142:40 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts:96:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts:176:43 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts:266:48 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts:324:47 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/learning-management/development.functions.ts:68:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/learning-management/development.functions.ts:117:40 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/training-management/training.functions.ts:111:33 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/training-management/training.functions.ts:182:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:20:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:47:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:78:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:121:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:195:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:143:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:396:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:445:49 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:606:50 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:669:55 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:807:60 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:832:45 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:920:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:1069:43 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:1092:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/notifications.functions.ts:112:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:client] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/notifications.functions.ts:138:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+✓ 2966 modules transformed.
+rendering chunks...
+computing gzip size...
+.vercel/output/static/assets/styles-BbRXe5d-.css                                         102.69 kB │ gzip:  17.37 kB
+.vercel/output/static/assets/root-DLTE-HSj.js                                              0.03 kB │ gzip:   0.05 kB
+.vercel/output/static/assets/hr.employees-Dj6oLgFY.js                                      0.08 kB │ gzip:   0.09 kB
+.vercel/output/static/assets/president.employees-Dj6oLgFY.js                               0.08 kB │ gzip:   0.09 kB
+.vercel/output/static/assets/circle-Bblzt8-a.js                                            0.13 kB │ gzip:   0.13 kB
+.vercel/output/static/assets/admin.employees-8xndXeHN.js                                   0.15 kB │ gzip:   0.15 kB
+.vercel/output/static/assets/plus-CI9RpULH.js                                              0.15 kB │ gzip:   0.15 kB
+.vercel/output/static/assets/committee.evaluations.index-Csh0-oiZ.js                       0.16 kB │ gzip:   0.16 kB
+.vercel/output/static/assets/personnel.index-CMMx0xHi.js                                   0.16 kB │ gzip:   0.16 kB
+.vercel/output/static/assets/president.evaluations.index-ZZ3U6H-x.js                       0.16 kB │ gzip:   0.16 kB
+.vercel/output/static/assets/reviewing-supervisor.evaluations.index-C-lcU7qm.js            0.17 kB │ gzip:   0.17 kB
+.vercel/output/static/assets/committee.evaluations._evaluationId-CZVxgl6n.js               0.27 kB │ gzip:   0.21 kB
+.vercel/output/static/assets/personnel.evaluations._evaluationId-CbcyUPbN.js               0.27 kB │ gzip:   0.21 kB
+.vercel/output/static/assets/president.approvals._evaluationId-AG4TIa8Q.js                 0.27 kB │ gzip:   0.21 kB
+.vercel/output/static/assets/president.evaluations._evaluationId-Y-mJndIY.js               0.27 kB │ gzip:   0.21 kB
+.vercel/output/static/assets/arrow-up-CS-Vbx0s.js                                          0.27 kB │ gzip:   0.20 kB
+.vercel/output/static/assets/reviewing-supervisor.evaluations._evaluationId-Bz9v6gO0.js    0.28 kB │ gzip:   0.22 kB
+.vercel/output/static/assets/hr.drafts-D2aWttIm.js                                         0.31 kB │ gzip:   0.25 kB
+.vercel/output/static/assets/hr.completed-RhU94Oug.js                                      0.32 kB │ gzip:   0.25 kB
+.vercel/output/static/assets/hr.returned-DyFFAK4X.js                                       0.32 kB │ gzip:   0.24 kB
+.vercel/output/static/assets/auth-middleware-JDjVgB0Q.js                                   0.33 kB │ gzip:   0.19 kB
+.vercel/output/static/assets/QueryClientProvider-DjPYKCML.js                               0.37 kB │ gzip:   0.26 kB
+.vercel/output/static/assets/redirect-Dhm19zUi.js                                          0.50 kB │ gzip:   0.31 kB
+.vercel/output/static/assets/useMatch-CLQ1qVQ4.js                                          0.61 kB │ gzip:   0.38 kB
+.vercel/output/static/assets/access.functions-D8kyQQsv.js                                  0.67 kB │ gzip:   0.41 kB
+.vercel/output/static/assets/use-access-Cs_BzgQ8.js                                        0.91 kB │ gzip:   0.55 kB
+.vercel/output/static/assets/tslib.es6-Tae09705.js                                         1.06 kB │ gzip:   0.52 kB
+.vercel/output/static/assets/routes-Cojde8LG.js                                            1.13 kB │ gzip:   0.61 kB
+.vercel/output/static/assets/evaluation-submitted-BCv_iEgf.js                              1.18 kB │ gzip:   0.65 kB
+.vercel/output/static/assets/createLucideIcon-WLBR_UkL.js                                  1.18 kB │ gzip:   0.68 kB
+.vercel/output/static/assets/evaluation-workflow.functions-BDj0cXJD.js                     1.20 kB │ gzip:   0.57 kB
+.vercel/output/static/assets/unauthorized-DjwXtrWk.js                                      1.29 kB │ gzip:   0.68 kB
+.vercel/output/static/assets/evaluations.functions-vuquqW6k.js                             1.43 kB │ gzip:   0.65 kB
+.vercel/output/static/assets/validation-DXOcfvxp.js                                        1.76 kB │ gzip:   0.71 kB
+.vercel/output/static/assets/admin.functions-DJH3jcpI.js                                   1.92 kB │ gzip:   0.83 kB
+.vercel/output/static/assets/forgot-password-BKsd2vN9.js                                   2.23 kB │ gzip:   1.10 kB
+.vercel/output/static/assets/account.password-DXqJH1xb.js                                  2.24 kB │ gzip:   0.96 kB
+.vercel/output/static/assets/sheet-BzoGpWcE.js                                             2.29 kB │ gzip:   0.91 kB
+.vercel/output/static/assets/documents.functions-Ck5gOLT8.js                               2.30 kB │ gzip:   1.10 kB
+.vercel/output/static/assets/reset-password-D8sS8oef.js                                    2.34 kB │ gzip:   1.03 kB
+.vercel/output/static/assets/hr.competency.index-BGT4tpRW.js                               2.36 kB │ gzip:   1.00 kB
+.vercel/output/static/assets/useMutation-DKeLLA3n.js                                       2.38 kB │ gzip:   0.99 kB
+.vercel/output/static/assets/setup-D-E6hjiC.js                                             2.51 kB │ gzip:   1.05 kB
+.vercel/output/static/assets/evaluation-stage-queue-CXqhOcrX.js                            2.95 kB │ gzip:   1.17 kB
+.vercel/output/static/assets/react-dom-B8hnoW2d.js                                         3.54 kB │ gzip:   1.34 kB
+.vercel/output/static/assets/admin.index-BYly5bZa.js                                       3.59 kB │ gzip:   1.49 kB
+.vercel/output/static/assets/login-Crr1LDVW.js                                             3.86 kB │ gzip:   1.59 kB
+.vercel/output/static/assets/dist-CubA40QC.js                                              4.19 kB │ gzip:   1.84 kB
+.vercel/output/static/assets/supervisor.index-CPmmSj7l.js                                  4.62 kB │ gzip:   1.82 kB
+.vercel/output/static/assets/hr.cycles._cycleId-DKCXg6b0.js                                4.63 kB │ gzip:   1.91 kB
+.vercel/output/static/assets/admin.employee-profiles-C1i3OKK6.js                           4.64 kB │ gzip:   1.84 kB
+.vercel/output/static/assets/button-CU8_k13M.js                                            4.74 kB │ gzip:   2.06 kB
+.vercel/output/static/assets/reviewing-supervisor.index-CaavwWOd.js                        4.78 kB │ gzip:   1.89 kB
+.vercel/output/static/assets/hr.index-cL6JA4WR.js                                          4.79 kB │ gzip:   1.90 kB
+.vercel/output/static/assets/committee.index-BUb6Zc_V.js                                   4.99 kB │ gzip:   1.95 kB
+.vercel/output/static/assets/hr.evaluation-history._evaluationId-owqothD-.js               5.32 kB │ gzip:   1.70 kB
+.vercel/output/static/assets/president.index-DUEX9x_l.js                                   5.38 kB │ gzip:   2.22 kB
+.vercel/output/static/assets/hr.competency._employeeId-B8WQ93le.js                         5.68 kB │ gzip:   1.74 kB
+.vercel/output/static/assets/hr.evaluation-history.index-g6f9dB3g.js                       6.15 kB │ gzip:   2.10 kB
+.vercel/output/static/assets/ai.functions-BttBkCdG.js                                      6.66 kB │ gzip:   2.78 kB
+.vercel/output/static/assets/supervisor.evaluations.index-87oD1xZA.js                      6.84 kB │ gzip:   2.45 kB
+.vercel/output/static/assets/hr.succession-CAgHAHkA.js                                     7.43 kB │ gzip:   2.43 kB
+.vercel/output/static/assets/admin.audit-logs-B3BrgyMc.js                                  7.96 kB │ gzip:   2.54 kB
+.vercel/output/static/assets/dist-BbqzGB3q.js                                              7.97 kB │ gzip:   2.93 kB
+.vercel/output/static/assets/hr.development-records-CpJj4t7w.js                            9.05 kB │ gzip:   2.91 kB
+.vercel/output/static/assets/schemas-B6eEtyHS.js                                           9.96 kB │ gzip:   2.64 kB
+.vercel/output/static/assets/hr.training-C2cRjyNf.js                                      10.67 kB │ gzip:   3.12 kB
+.vercel/output/static/assets/hr.cycles.index-DMPdpbt6.js                                  10.71 kB │ gzip:   3.67 kB
+.vercel/output/static/assets/hr.recognition-D-Xpc5nj.js                                   11.02 kB │ gzip:   3.45 kB
+.vercel/output/static/assets/admin.roles-jPrjEY5i.js                                      12.27 kB │ gzip:   4.51 kB
+.vercel/output/static/assets/evaluation._cycleToken-D0LNHHU0.js                           13.70 kB │ gzip:   5.13 kB
+.vercel/output/static/assets/employee-records-CS6yimwD.js                                 18.07 kB │ gzip:   5.17 kB
+.vercel/output/static/assets/admin.users-CQSRuiCq.js                                      19.74 kB │ gzip:   6.35 kB
+.vercel/output/static/assets/select-CF-Z-emp.js                                           22.32 kB │ gzip:   7.51 kB
+.vercel/output/static/assets/link-Wb1NVpWj.js                                             23.23 kB │ gzip:   8.66 kB
+.vercel/output/static/assets/supervisor.evaluations._evaluationId-BtGyzzR-.js             23.36 kB │ gzip:   6.68 kB
+.vercel/output/static/assets/cycles.functions-D4OqdgKB.js                                 24.40 kB │ gzip:   9.35 kB
+.vercel/output/static/assets/dist-B3ROsYGC.js                                             25.96 kB │ gzip:  10.07 kB
+.vercel/output/static/assets/evaluation-stage-detail-B_imVlMT.js                          28.24 kB │ gzip:   6.47 kB
+.vercel/output/static/assets/zod-DtSxDcSH.js                                              31.86 kB │ gzip:  11.47 kB
+.vercel/output/static/assets/utils-DH4_MFli.js                                            36.01 kB │ gzip:  11.94 kB
+.vercel/output/static/assets/domain-02md9v4W.js                                           42.71 kB │ gzip:  13.49 kB
+.vercel/output/static/assets/route-DYECfLau.js                                            71.23 kB │ gzip:  19.70 kB
+.vercel/output/static/assets/chart-B6kI4DG-.js                                           371.16 kB │ gzip:  99.29 kB
+.vercel/output/static/assets/index-CQYW6fsq.js                                           672.99 kB │ gzip: 189.42 kB
+
+[33m[33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+  - vite-tsconfig-paths (66%)
+  - tanstack-start-core:import-protection (21%)
+  - tanstack-start-core:import-protection-transform-cache (11%)
+See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 4.83s[39m
+[36mvite v8.1.5 [32mbuilding ssr environment for production...[36m[39m
+[2Ktransforming...[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:48:27 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:101:27 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:132:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:210:28 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:272:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:312:30 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:355:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:401:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:471:32 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:521:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts?tss-serverfn-split:561:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts?tss-serverfn-split:41:25 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts?tss-serverfn-split:59:26 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts?tss-serverfn-split:124:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts?tss-serverfn-split:192:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts?tss-serverfn-split:237:33 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts?tss-serverfn-split:16:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts?tss-serverfn-split:34:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts?tss-serverfn-split:86:27 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts?tss-serverfn-split:121:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts?tss-serverfn-split:137:44 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts?tss-serverfn-split:157:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts?tss-serverfn-split:173:30 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts?tss-serverfn-split:197:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/access.functions.ts?tss-serverfn-split:62:33 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/access.functions.ts?tss-serverfn-split:126:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/access.functions.ts?tss-serverfn-split:174:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/public.functions.ts?tss-serverfn-split:339:31 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/public.functions.ts?tss-serverfn-split:381:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/public.functions.ts?tss-serverfn-split:474:28 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/notifications.functions.ts?tss-serverfn-split:112:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/notifications.functions.ts?tss-serverfn-split:138:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts?tss-serverfn-split:24:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts?tss-serverfn-split:214:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts?tss-serverfn-split:499:31 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts?tss-serverfn-split:587:46 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts?tss-serverfn-split:606:42 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts?tss-serverfn-split:673:42 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts?tss-serverfn-split:744:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts?tss-serverfn-split:797:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts?tss-serverfn-split:836:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts?tss-serverfn-split:8:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts?tss-serverfn-split:24:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts?tss-serverfn-split:45:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts?tss-serverfn-split:105:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts?tss-serverfn-split:48:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts?tss-serverfn-split:284:26 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts?tss-serverfn-split:557:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts?tss-serverfn-split:666:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts?tss-serverfn-split:20:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts?tss-serverfn-split:47:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts?tss-serverfn-split:78:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts?tss-serverfn-split:121:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts?tss-serverfn-split:195:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/learning-management/development.functions.ts?tss-serverfn-split:68:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/learning-management/development.functions.ts?tss-serverfn-split:117:40 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:143:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:396:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:445:49 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:606:50 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:669:55 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:807:60 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:832:45 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:920:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:1069:43 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts?tss-serverfn-split:1092:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/training-management/training.functions.ts?tss-serverfn-split:111:33 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/training-management/training.functions.ts?tss-serverfn-split:182:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/succession-planning/succession.functions.ts?tss-serverfn-split:91:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/succession-planning/succession.functions.ts?tss-serverfn-split:142:40 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts?tss-serverfn-split:96:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts?tss-serverfn-split:176:43 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts?tss-serverfn-split:266:48 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts?tss-serverfn-split:324:47 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/public.functions.ts:339:31 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/public.functions.ts:381:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/public.functions.ts:474:28 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/training-management/training.functions.ts:111:33 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/training-management/training.functions.ts:182:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/succession-planning/succession.functions.ts:91:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/succession-planning/succession.functions.ts:142:40 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts:96:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts:176:43 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts:266:48 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/social-recognition/recognition.functions.ts:324:47 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/learning-management/development.functions.ts:68:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/features/learning-management/development.functions.ts:117:40 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts:48:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts:284:26 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts:557:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/reports.functions.ts:666:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/access.functions.ts:62:33 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/access.functions.ts:126:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/access.functions.ts:174:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:41:25 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:59:26 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:124:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:192:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/cycles.functions.ts:237:33 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:48:27 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:101:27 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:132:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:210:28 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:272:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:312:30 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:355:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:401:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:471:32 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:521:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/admin.functions.ts:561:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:24:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:214:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:499:31 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:587:46 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:606:42 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:673:42 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:744:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:797:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluation-workflow.functions.ts:836:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:16:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:34:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:86:27 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:121:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:137:44 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:157:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:173:30 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/evaluations.functions.ts:197:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts:8:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts:24:34 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts:45:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/president.functions.ts:105:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:20:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:47:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:78:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:121:39 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/documents.functions.ts:195:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:143:35 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:396:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:445:49 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:606:50 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:669:55 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:807:60 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:832:45 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:920:38 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:1069:43 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/ai.functions.ts:1092:41 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/notifications.functions.ts:112:36 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+[33m[plugin tanstack-start-core::server-fn:ssr] C:/Users/Charlotte Galleta/Desktop/priority ph/src/lib/notifications.functions.ts:138:37 createServerFn().inputValidator() is deprecated. Use createServerFn().validator() instead.[39m
+✓ 238 modules transformed.
+rendering chunks...
+computing gzip size...
+node_modules/.nitro/vite/services/ssr/assets/styles-BbRXe5d-.css                                         102.69 kB │ gzip: 17.37 kB
+node_modules/.nitro/vite/services/ssr/assets/utils-C_uf36nf.js                                             0.18 kB │ gzip:  0.15 kB
+node_modules/.nitro/vite/services/ssr/assets/empty-plugin-adapters-D9UWiqvJ.js                             0.22 kB │ gzip:  0.16 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.employees-D2RWVIdE.js                                      0.24 kB │ gzip:  0.17 kB
+node_modules/.nitro/vite/services/ssr/assets/president.employees-C2AATwgT.js                               0.25 kB │ gzip:  0.18 kB
+node_modules/.nitro/vite/services/ssr/assets/admin.employees-Bwpog_6e.js                                   0.33 kB │ gzip:  0.24 kB
+node_modules/.nitro/vite/services/ssr/assets/skeleton-D9W9wFsj.js                                          0.33 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/personnel.index-CuArbK0I.js                                   0.35 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/committee.evaluations.index-Be8fJNMF.js                       0.36 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/president.evaluations.index-CHhqWNte.js                       0.36 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/reviewing-supervisor.evaluations.index-Cal9LGWR.js            0.38 kB │ gzip:  0.27 kB
+node_modules/.nitro/vite/services/ssr/assets/createServerRpc-B90ckaqP.js                                   0.40 kB │ gzip:  0.27 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.competency._employeeId-DM_kaA7w.js                         0.41 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/use-debounced-value-D8iSbQH9.js                               0.43 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/president.approvals._evaluationId-Cgp1D-8x.js                 0.44 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/committee.evaluations._evaluationId-D9E17jDz.js               0.44 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.evaluation-history._evaluationId-CIEg0ers.js               0.44 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/personnel.evaluations._evaluationId-Dmr_LSP7.js               0.44 kB │ gzip:  0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/reviewing-supervisor.evaluations._evaluationId-DuQzpB2d.js    0.47 kB │ gzip:  0.26 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.drafts-CzULJwll.js                                         0.51 kB │ gzip:  0.34 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.returned-Cachoo6Y.js                                       0.52 kB │ gzip:  0.33 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.completed-DEBn9qKm.js                                      0.52 kB │ gzip:  0.34 kB
+node_modules/.nitro/vite/services/ssr/assets/president.approvals._evaluationId-DoJTasuP.js                 0.55 kB │ gzip:  0.32 kB
+node_modules/.nitro/vite/services/ssr/assets/committee.evaluations._evaluationId-D40CdfZH.js               0.55 kB │ gzip:  0.32 kB
+node_modules/.nitro/vite/services/ssr/assets/personnel.evaluations._evaluationId-BTE2jAQ7.js               0.55 kB │ gzip:  0.32 kB
+node_modules/.nitro/vite/services/ssr/assets/president.evaluations._evaluationId-CfGpKGGd.js               0.55 kB │ gzip:  0.32 kB
+node_modules/.nitro/vite/services/ssr/assets/reviewing-supervisor.evaluations._evaluationId-D-MZh774.js    0.59 kB │ gzip:  0.34 kB
+node_modules/.nitro/vite/services/ssr/assets/createSsrRpc-wK7K6lcR.js                                      0.60 kB │ gzip:  0.36 kB
+node_modules/.nitro/vite/services/ssr/assets/useServerFn-CrZF2pjq.js                                       0.63 kB │ gzip:  0.35 kB
+node_modules/.nitro/vite/services/ssr/assets/label-DBD1bRRP.js                                             0.64 kB │ gzip:  0.38 kB
+node_modules/.nitro/vite/services/ssr/assets/input-Cv9kK_r1.js                                             0.75 kB │ gzip:  0.46 kB
+node_modules/.nitro/vite/services/ssr/assets/createMiddleware-B_4t7rW1.js                                  0.83 kB │ gzip:  0.32 kB
+node_modules/.nitro/vite/services/ssr/assets/president.evaluations._evaluationId-CT4yTgZd.js               0.96 kB │ gzip:  0.46 kB
+node_modules/.nitro/vite/services/ssr/assets/supervisor.evaluations._evaluationId-BaFGije2.js              0.99 kB │ gzip:  0.47 kB
+node_modules/.nitro/vite/services/ssr/assets/evaluation-submitted-CjsK8xAl.js                              1.02 kB │ gzip:  0.49 kB
+node_modules/.nitro/vite/services/ssr/assets/ai-suggestions-6hhZNiNr.js                                    1.25 kB │ gzip:  0.57 kB
+node_modules/.nitro/vite/services/ssr/assets/unauthorized-CRL9B8nm.js                                      1.39 kB │ gzip:  0.63 kB
+node_modules/.nitro/vite/services/ssr/assets/evaluation-submitted-0NI7VB1u.js                              1.52 kB │ gzip:  0.70 kB
+node_modules/.nitro/vite/services/ssr/assets/card-CtX3ithx.js                                              1.57 kB │ gzip:  0.48 kB
+node_modules/.nitro/vite/services/ssr/assets/access.functions-D8dWQ1nN.js                                  1.60 kB │ gzip:  0.77 kB
+node_modules/.nitro/vite/services/ssr/assets/button-DFsBJW35.js                                            1.76 kB │ gzip:  0.81 kB
+node_modules/.nitro/vite/services/ssr/assets/theme-provider-BIQ1BHc3.js                                    1.84 kB │ gzip:  0.74 kB
+node_modules/.nitro/vite/services/ssr/assets/use-access-DfUvPrxI.js                                        1.95 kB │ gzip:  0.80 kB
+node_modules/.nitro/vite/services/ssr/assets/routes-xa-VjyAt.js                                            2.10 kB │ gzip:  0.89 kB
+node_modules/.nitro/vite/services/ssr/assets/reports.functions-BpvGe6LP.js                                 2.12 kB │ gzip:  0.89 kB
+node_modules/.nitro/vite/services/ssr/assets/client.server-B-5AsscI.js                                     2.14 kB │ gzip:  0.90 kB
+node_modules/.nitro/vite/services/ssr/assets/cycles.functions-DUQssXxT.js                                  2.22 kB │ gzip:  0.81 kB
+node_modules/.nitro/vite/services/ssr/assets/request-response-BEPp1C2k.js                                  2.38 kB │ gzip:  0.88 kB
+node_modules/.nitro/vite/services/ssr/assets/createCsrfMiddleware-jzif2P7h.js                              2.45 kB │ gzip:  0.86 kB
+node_modules/.nitro/vite/services/ssr/assets/start-UfWecX1W.js                                             2.56 kB │ gzip:  1.08 kB
+node_modules/.nitro/vite/services/ssr/assets/auth-middleware-BpbeoxIM.js                                   2.67 kB │ gzip:  1.09 kB
+node_modules/.nitro/vite/services/ssr/assets/succession.functions-BODcsTPP.js                              2.91 kB │ gzip:  1.11 kB
+node_modules/.nitro/vite/services/ssr/assets/table-BZM-R_UF.js                                             3.08 kB │ gzip:  0.93 kB
+node_modules/.nitro/vite/services/ssr/assets/evaluation-workflow.functions-CSUD2dbp.js                     3.34 kB │ gzip:  1.13 kB
+node_modules/.nitro/vite/services/ssr/assets/evaluations.functions-DFq436cI.js                             3.43 kB │ gzip:  1.14 kB
+node_modules/.nitro/vite/services/ssr/assets/sheet-KMQOGk6H.js                                             3.48 kB │ gzip:  1.12 kB
+node_modules/.nitro/vite/services/ssr/assets/forgot-password-D3YoZaek.js                                   3.64 kB │ gzip:  1.45 kB
+node_modules/.nitro/vite/services/ssr/assets/reset-password-BCtvOnoW.js                                    3.91 kB │ gzip:  1.39 kB
+node_modules/.nitro/vite/services/ssr/assets/account.password-MRqHXs98.js                                  4.02 kB │ gzip:  1.38 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.competency.index-BkwHFwV3.js                               4.20 kB │ gzip:  1.38 kB
+node_modules/.nitro/vite/services/ssr/assets/setup-DK0fbz14.js                                             4.36 kB │ gzip:  1.41 kB
+node_modules/.nitro/vite/services/ssr/assets/admin.functions-B0NqNYU2.js                                   4.53 kB │ gzip:  1.48 kB
+node_modules/.nitro/vite/services/ssr/assets/evaluation-stage-queue-B5nrl0pu.js                            4.58 kB │ gzip:  1.47 kB
+node_modules/.nitro/vite/services/ssr/assets/select-kWpQaD9r.js                                            4.66 kB │ gzip:  1.34 kB
+node_modules/.nitro/vite/services/ssr/assets/documents.functions-DPrwZrTV.js                               4.83 kB │ gzip:  1.74 kB
+node_modules/.nitro/vite/services/ssr/assets/ai-provider.server-DZhh1fnk.js                                4.85 kB │ gzip:  1.96 kB
+node_modules/.nitro/vite/services/ssr/assets/recognition.functions-D_C4zPfW.js                             5.14 kB │ gzip:  1.81 kB
+node_modules/.nitro/vite/services/ssr/assets/training.functions-CRiitZps.js                                5.70 kB │ gzip:  1.88 kB
+node_modules/.nitro/vite/services/ssr/assets/public.functions-DZZsjd51.js                                  5.71 kB │ gzip:  2.11 kB
+node_modules/.nitro/vite/services/ssr/index.js                                                             5.77 kB │ gzip:  2.29 kB
+node_modules/.nitro/vite/services/ssr/assets/domain-CGChZgGK.js                                            5.80 kB │ gzip:  2.02 kB
+node_modules/.nitro/vite/services/ssr/assets/client-BRY7I0QG.js                                            5.96 kB │ gzip:  2.13 kB
+node_modules/.nitro/vite/services/ssr/assets/development.functions-CPmwz0Hg.js                             5.98 kB │ gzip:  2.22 kB
+node_modules/.nitro/vite/services/ssr/assets/succession.functions-D3v-Ag-z.js                              6.22 kB │ gzip:  1.99 kB
+node_modules/.nitro/vite/services/ssr/assets/development.functions-CDjjhxAc.js                             6.23 kB │ gzip:  1.95 kB
+node_modules/.nitro/vite/services/ssr/assets/admin.index-DcgAM63d.js                                       6.48 kB │ gzip:  2.04 kB
+node_modules/.nitro/vite/services/ssr/assets/login-DuZc3MXt.js                                             6.53 kB │ gzip:  2.14 kB
+node_modules/.nitro/vite/services/ssr/assets/chart-DzY5Bs2b.js                                             7.19 kB │ gzip:  2.31 kB
+node_modules/.nitro/vite/services/ssr/assets/access.functions-DBBMRl_d.js                                  7.47 kB │ gzip:  2.25 kB
+node_modules/.nitro/vite/services/ssr/assets/notifications.functions-CAYdjZke.js                           7.50 kB │ gzip:  2.14 kB
+node_modules/.nitro/vite/services/ssr/assets/training.functions-Dc5RWzHa.js                                7.75 kB │ gzip:  2.15 kB
+node_modules/.nitro/vite/services/ssr/assets/president.functions-wtW5X8fp.js                               7.83 kB │ gzip:  2.08 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.cycles._cycleId-3BPokS47.js                                7.87 kB │ gzip:  2.49 kB
+node_modules/.nitro/vite/services/ssr/assets/admin.employee-profiles-CBzPm7mW.js                           8.02 kB │ gzip:  2.47 kB
+node_modules/.nitro/vite/services/ssr/assets/supervisor.index-HEg4EUy6.js                                  8.11 kB │ gzip:  2.44 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.index-CgsiBNMn.js                                          8.35 kB │ gzip:  2.53 kB
+node_modules/.nitro/vite/services/ssr/assets/reviewing-supervisor.index-BDj3foji.js                        8.36 kB │ gzip:  2.53 kB
+node_modules/.nitro/vite/services/ssr/assets/committee.index-hYEVQgqO.js                                   8.62 kB │ gzip:  2.58 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.evaluation-history._evaluationId-Be5Ika0i.js               9.24 kB │ gzip:  2.26 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.competency._employeeId-BBAPeURM.js                         9.27 kB │ gzip:  2.29 kB
+node_modules/.nitro/vite/services/ssr/assets/scoring.server-BwYwYoI-.js                                    9.40 kB │ gzip:  2.95 kB
+node_modules/.nitro/vite/services/ssr/assets/president.index-MlHfFIOX.js                                   9.81 kB │ gzip:  3.05 kB
+node_modules/.nitro/vite/services/ssr/assets/createServerFn-CIHAFgYl.js                                    9.82 kB │ gzip:  2.99 kB
+node_modules/.nitro/vite/services/ssr/assets/documents.functions-CfcVZHws.js                               9.98 kB │ gzip:  2.65 kB
+node_modules/.nitro/vite/services/ssr/assets/admin.roles-DUoMsG64.js                                      10.47 kB │ gzip:  3.08 kB
+node_modules/.nitro/vite/services/ssr/assets/cycles.functions-Dsn64xDZ.js                                 11.02 kB │ gzip:  2.37 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.evaluation-history.index-C0yjieZ6.js                      11.31 kB │ gzip:  2.95 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.evaluation-history.index-AwBr6rF7.js                      11.84 kB │ gzip:  3.15 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.succession-BEhwt96a.js                                    12.35 kB │ gzip:  3.02 kB
+node_modules/.nitro/vite/services/ssr/assets/supervisor.evaluations.index-hs35Efjs.js                     12.35 kB │ gzip:  3.40 kB
+node_modules/.nitro/vite/services/ssr/assets/evaluations.functions-Ds7KC3TP.js                            12.98 kB │ gzip:  2.83 kB
+node_modules/.nitro/vite/services/ssr/assets/public.functions-CWVXqxws.js                                 13.31 kB │ gzip:  3.44 kB
+node_modules/.nitro/vite/services/ssr/assets/shared-ui-DADo_raV.js                                        13.79 kB │ gzip:  3.61 kB
+node_modules/.nitro/vite/services/ssr/assets/admin.audit-logs-_Bn0A8BX.js                                 14.20 kB │ gzip:  3.44 kB
+node_modules/.nitro/vite/services/ssr/assets/ai.functions-BwOH_dI5.js                                     14.47 kB │ gzip:  4.17 kB
+node_modules/.nitro/vite/services/ssr/assets/recognition.functions-B_1BQwoK.js                            14.72 kB │ gzip:  3.55 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.development-records-C2BYLNuN.js                           15.18 kB │ gzip:  3.76 kB
+node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-Db_oet5W.js                       16.64 kB │ gzip:  2.29 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.cycles.index-C9SGPKmI.js                                  16.92 kB │ gzip:  4.10 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.training-CSzyH6E8.js                                      17.64 kB │ gzip:  4.01 kB
+node_modules/.nitro/vite/services/ssr/assets/hr.recognition-B1tyI4N1.js                                   18.59 kB │ gzip:  4.21 kB
+node_modules/.nitro/vite/services/ssr/assets/__23tanstack-start-server-fn-resolver-B0VOapIo.js            18.75 kB │ gzip:  5.16 kB
+node_modules/.nitro/vite/services/ssr/assets/schemas-BNtyTRDC.js                                          18.76 kB │ gzip:  4.22 kB
+node_modules/.nitro/vite/services/ssr/assets/evaluation._cycleToken-MFqGfCDe.js                           22.99 kB │ gzip:  6.37 kB
+node_modules/.nitro/vite/services/ssr/assets/admin.functions-DiIhwnH_.js                                  25.61 kB │ gzip:  5.29 kB
+node_modules/.nitro/vite/services/ssr/assets/admin.users-r93L4-2j.js                                      26.08 kB │ gzip:  6.03 kB
+node_modules/.nitro/vite/services/ssr/assets/server-core.server-BpR9R5Mp.js                               27.40 kB │ gzip:  6.56 kB
+node_modules/.nitro/vite/services/ssr/assets/reports.functions-iiemw1Qq.js                                29.86 kB │ gzip:  6.35 kB
+node_modules/.nitro/vite/services/ssr/assets/employee-records-C4RBsLHd.js                                 31.08 kB │ gzip:  6.79 kB
+node_modules/.nitro/vite/services/ssr/assets/evaluation-workflow.functions-DvOQB4mK.js                    32.79 kB │ gzip:  6.80 kB
+node_modules/.nitro/vite/services/ssr/assets/supervisor.evaluations._evaluationId-jZw_giCL.js             36.36 kB │ gzip:  7.96 kB
+node_modules/.nitro/vite/services/ssr/assets/router-ClyiJCht.js                                           39.31 kB │ gzip:  6.56 kB
+node_modules/.nitro/vite/services/ssr/assets/ai.functions-szd2St-Z.js                                     46.57 kB │ gzip:  9.52 kB
+node_modules/.nitro/vite/services/ssr/assets/documents.server-DUx0_sXe.js                                 46.66 kB │ gzip: 10.76 kB
+node_modules/.nitro/vite/services/ssr/assets/evaluation-stage-detail-B3Lt0U9o.js                          49.04 kB │ gzip:  8.70 kB
+node_modules/.nitro/vite/services/ssr/assets/server-DDAaQUVu.js                                           50.95 kB │ gzip: 13.15 kB
+node_modules/.nitro/vite/services/ssr/assets/route-ClWJIT4e.js                                            55.64 kB │ gzip: 11.90 kB
+
+[33m[33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+  - vite-tsconfig-paths (42%)
+  - tanstack-start-core:import-protection (32%)
+  - tanstack-start-core:import-protection-transform-cache (10%)
+  - tanstack-router:code-splitter:compile-reference-file (8%)
+  - tanstack-start-core::server-fn:ssr (4%)
+See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+[39m
+[32m✓ built in 4.29s[39m
+
+[90m[[90mnitro[90m][39m [35m◐[39m Building [[35mNitro[39m] [2m(preset: [36mvercel[39m, compatibility: [36m2026-09-18[39m)[22m
+[90m[[90mnitro[90m][39m [32m✔[39m Generated public [36m.vercel/output/static[39m
+[36mvite v8.1.5 [32mbuilding nitro environment for production...[36m[39m
+[2Ktransforming...✓ 2986 modules transformed.
+[36mℹ[39m Tracing dependencies:
+- [36mtslib[39m (2.8.1, 1.14.1)
+[32m✔[39m Traced 1 dependencies (8 files) in 104ms.
+[36mℹ[39m Ensure your production environment matches the builder OS and architecture ([36mwin32-x64[39m) to avoid native module issues.
+rendering chunks...
+computing gzip size...
+.vercel/output/functions/__server.func/_ssr/empty-plugin-adapters-D9UWiqvJ.mjs                             0.23 kB │ gzip:   0.16 kB
+.vercel/output/functions/__server.func/_ssr/hr.employees-D2RWVIdE.mjs                                      0.25 kB │ gzip:   0.18 kB
+.vercel/output/functions/__server.func/_ssr/president.employees-C2AATwgT.mjs                               0.25 kB │ gzip:   0.19 kB
+.vercel/output/functions/__server.func/_ssr/utils-C_uf36nf.mjs                                             0.29 kB │ gzip:   0.21 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__number.mjs                                          0.32 kB │ gzip:   0.24 kB
+.vercel/output/functions/__server.func/_ssr/createServerRpc-B90ckaqP.mjs                                   0.40 kB │ gzip:   0.27 kB
+.vercel/output/functions/__server.func/_ssr/admin.employees-Bwpog_6e.mjs                                   0.46 kB │ gzip:   0.30 kB
+.vercel/output/functions/__server.func/_ssr/hr.competency._employeeId-DM_kaA7w.mjs                         0.47 kB │ gzip:   0.29 kB
+.vercel/output/functions/__server.func/_ssr/personnel.index-CuArbK0I.mjs                                   0.48 kB │ gzip:   0.31 kB
+.vercel/output/functions/__server.func/_ssr/committee.evaluations.index-Be8fJNMF.mjs                       0.49 kB │ gzip:   0.32 kB
+.vercel/output/functions/__server.func/_ssr/president.approvals._evaluationId-Cgp1D-8x.mjs                 0.49 kB │ gzip:   0.30 kB
+.vercel/output/functions/__server.func/_ssr/president.evaluations.index-CHhqWNte.mjs                       0.49 kB │ gzip:   0.31 kB
+.vercel/output/functions/__server.func/_ssr/skeleton-D9W9wFsj.mjs                                          0.49 kB │ gzip:   0.33 kB
+.vercel/output/functions/__server.func/_ssr/committee.evaluations._evaluationId-D9E17jDz.mjs               0.50 kB │ gzip:   0.30 kB
+.vercel/output/functions/__server.func/_ssr/hr.evaluation-history._evaluationId-CIEg0ers.mjs               0.50 kB │ gzip:   0.29 kB
+.vercel/output/functions/__server.func/_ssr/personnel.evaluations._evaluationId-Dmr_LSP7.mjs               0.50 kB │ gzip:   0.30 kB
+.vercel/output/functions/__server.func/_ssr/reviewing-supervisor.evaluations.index-Cal9LGWR.mjs            0.51 kB │ gzip:   0.33 kB
+.vercel/output/functions/__server.func/_ssr/reviewing-supervisor.evaluations._evaluationId-DuQzpB2d.mjs    0.53 kB │ gzip:   0.30 kB
+.vercel/output/functions/__server.func/_chunks/ssr-renderer.mjs                                            0.60 kB │ gzip:   0.36 kB
+.vercel/output/functions/__server.func/_ssr/createSsrRpc-wK7K6lcR.mjs                                      0.61 kB │ gzip:   0.38 kB
+.vercel/output/functions/__server.func/_ssr/hr.drafts-CzULJwll.mjs                                         0.64 kB │ gzip:   0.41 kB
+.vercel/output/functions/__server.func/_ssr/use-debounced-value-D8iSbQH9.mjs                               0.65 kB │ gzip:   0.37 kB
+.vercel/output/functions/__server.func/_ssr/hr.returned-Cachoo6Y.mjs                                       0.65 kB │ gzip:   0.40 kB
+.vercel/output/functions/__server.func/_ssr/hr.completed-DEBn9qKm.mjs                                      0.65 kB │ gzip:   0.41 kB
+.vercel/output/functions/__server.func/_ssr/president.approvals._evaluationId-DoJTasuP.mjs                 0.68 kB │ gzip:   0.39 kB
+.vercel/output/functions/__server.func/_ssr/committee.evaluations._evaluationId-D40CdfZH.mjs               0.68 kB │ gzip:   0.38 kB
+.vercel/output/functions/__server.func/_ssr/personnel.evaluations._evaluationId-BTE2jAQ7.mjs               0.68 kB │ gzip:   0.38 kB
+.vercel/output/functions/__server.func/_ssr/president.evaluations._evaluationId-CfGpKGGd.mjs               0.68 kB │ gzip:   0.38 kB
+.vercel/output/functions/__server.func/_ssr/reviewing-supervisor.evaluations._evaluationId-D-MZh774.mjs    0.73 kB │ gzip:   0.41 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-direction.mjs                                 0.76 kB │ gzip:   0.40 kB
+.vercel/output/functions/__server.func/_ssr/createMiddleware-B_4t7rW1.mjs                                  0.83 kB │ gzip:   0.33 kB
+.vercel/output/functions/__server.func/_ssr/useServerFn-CrZF2pjq.mjs                                       0.83 kB │ gzip:   0.45 kB
+.vercel/output/functions/__server.func/_ssr/label-DBD1bRRP.mjs                                             0.96 kB │ gzip:   0.48 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-label.mjs                                     1.00 kB │ gzip:   0.51 kB
+.vercel/output/functions/__server.func/_ssr/president.evaluations._evaluationId-CT4yTgZd.mjs               1.02 kB │ gzip:   0.51 kB
+.vercel/output/functions/__server.func/_ssr/supervisor.evaluations._evaluationId-BaFGije2.mjs              1.05 kB │ gzip:   0.52 kB
+.vercel/output/functions/__server.func/_ssr/input-Cv9kK_r1.mjs                                             1.07 kB │ gzip:   0.57 kB
+.vercel/output/functions/__server.func/_ssr/evaluation-submitted-CjsK8xAl.mjs                              1.14 kB │ gzip:   0.55 kB
+.vercel/output/functions/__server.func/_ssr/ai-suggestions-6hhZNiNr.mjs                                    1.30 kB │ gzip:   0.60 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-separator.mjs                                 1.46 kB │ gzip:   0.64 kB
+.vercel/output/functions/__server.func/_runtime.mjs                                                        1.58 kB │ gzip:   0.74 kB
+.vercel/output/functions/__server.func/_ssr/access.functions-D8dWQ1nN.mjs                                  1.65 kB │ gzip:   0.81 kB
+.vercel/output/functions/__server.func/_libs/react-is.mjs                                                  1.67 kB │ gzip:   0.65 kB
+.vercel/output/functions/__server.func/_ssr/unauthorized-CRL9B8nm.mjs                                      1.76 kB │ gzip:   0.71 kB
+.vercel/output/functions/__server.func/_ssr/evaluation-submitted-0NI7VB1u.mjs                              1.82 kB │ gzip:   0.78 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__primitive.mjs                                       1.83 kB │ gzip:   0.72 kB
+.vercel/output/functions/__server.func/_ssr/card-CtX3ithx.mjs                                              2.05 kB │ gzip:   0.60 kB
+.vercel/output/functions/__server.func/_ssr/button-DFsBJW35.mjs                                            2.07 kB │ gzip:   0.92 kB
+.vercel/output/functions/__server.func/_ssr/use-access-DfUvPrxI.mjs                                        2.17 kB │ gzip:   0.91 kB
+.vercel/output/functions/__server.func/_ssr/client.server-B-5AsscI.mjs                                     2.19 kB │ gzip:   0.94 kB
+.vercel/output/functions/__server.func/_ssr/theme-provider-BIQ1BHc3.mjs                                    2.20 kB │ gzip:   0.87 kB
+.vercel/output/functions/__server.func/_ssr/reports.functions-BpvGe6LP.mjs                                 2.25 kB │ gzip:   0.95 kB
+.vercel/output/functions/__server.func/_libs/prop-types.mjs                                                2.27 kB │ gzip:   0.84 kB
+.vercel/output/functions/__server.func/_ssr/cycles.functions-DUQssXxT.mjs                                  2.33 kB │ gzip:   0.88 kB
+.vercel/output/functions/__server.func/_ssr/request-response-BEPp1C2k.mjs                                  2.42 kB │ gzip:   0.92 kB
+.vercel/output/functions/__server.func/_ssr/createCsrfMiddleware-jzif2P7h.mjs                              2.45 kB │ gzip:   0.86 kB
+.vercel/output/functions/__server.func/_ssr/start-UfWecX1W.mjs                                             2.46 kB │ gzip:   1.06 kB
+.vercel/output/functions/__server.func/_ssr/routes-xa-VjyAt.mjs                                            2.54 kB │ gzip:   1.01 kB
+.vercel/output/functions/__server.func/_ssr/auth-middleware-BpbeoxIM.mjs                                   2.72 kB │ gzip:   1.11 kB
+.vercel/output/functions/__server.func/_ssr/succession.functions-BODcsTPP.mjs                              2.99 kB │ gzip:   1.16 kB
+.vercel/output/functions/__server.func/_libs/class-variance-authority+clsx.mjs                             3.17 kB │ gzip:   1.24 kB
+.vercel/output/functions/__server.func/_libs/d3-path.mjs                                                   3.25 kB │ gzip:   1.16 kB
+.vercel/output/functions/__server.func/_ssr/evaluation-workflow.functions-CSUD2dbp.mjs                     3.49 kB │ gzip:   1.20 kB
+.vercel/output/functions/__server.func/_ssr/evaluations.functions-DFq436cI.mjs                             3.55 kB │ gzip:   1.19 kB
+.vercel/output/functions/__server.func/_libs/dijkstrajs.mjs                                                3.70 kB │ gzip:   1.54 kB
+.vercel/output/functions/__server.func/_ssr/table-BZM-R_UF.mjs                                             3.79 kB │ gzip:   1.05 kB
+.vercel/output/functions/__server.func/_ssr/sheet-KMQOGk6H.mjs                                             4.07 kB │ gzip:   1.26 kB
+.vercel/output/functions/__server.func/_ssr/forgot-password-D3YoZaek.mjs                                   4.38 kB │ gzip:   1.58 kB
+.vercel/output/functions/__server.func/_ssr/reset-password-BCtvOnoW.mjs                                    4.66 kB │ gzip:   1.52 kB
+.vercel/output/functions/__server.func/_ssr/admin.functions-B0NqNYU2.mjs                                   4.68 kB │ gzip:   1.55 kB
+.vercel/output/functions/__server.func/_ssr/account.password-MRqHXs98.mjs                                  4.75 kB │ gzip:   1.50 kB
+.vercel/output/functions/__server.func/_ssr/ai-provider.server-DZhh1fnk.mjs                                4.89 kB │ gzip:   1.99 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-avatar.mjs                                    4.93 kB │ gzip:   1.45 kB
+.vercel/output/functions/__server.func/_libs/d3-interpolate.mjs                                            5.02 kB │ gzip:   1.61 kB
+.vercel/output/functions/__server.func/_ssr/setup-DK0fbz14.mjs                                             5.20 kB │ gzip:   1.54 kB
+.vercel/output/functions/__server.func/_ssr/hr.competency.index-BkwHFwV3.mjs                               5.22 kB │ gzip:   1.53 kB
+.vercel/output/functions/__server.func/_ssr/recognition.functions-D_C4zPfW.mjs                             5.26 kB │ gzip:   1.86 kB
+.vercel/output/functions/__server.func/_ssr/evaluation-stage-queue-B5nrl0pu.mjs                            5.32 kB │ gzip:   1.55 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-collapsible.mjs                               5.53 kB │ gzip:   1.62 kB
+.vercel/output/functions/__server.func/_ssr/documents.functions-DPrwZrTV.mjs                               5.59 kB │ gzip:   1.87 kB
+.vercel/output/functions/__server.func/_ssr/select-kWpQaD9r.mjs                                            5.61 kB │ gzip:   1.53 kB
+.vercel/output/functions/__server.func/_ssr/ssr.mjs                                                        5.71 kB │ gzip:   2.29 kB
+.vercel/output/functions/__server.func/_ssr/public.functions-DZZsjd51.mjs                                  5.81 kB │ gzip:   2.17 kB
+.vercel/output/functions/__server.func/_ssr/training.functions-CRiitZps.mjs                                5.83 kB │ gzip:   1.93 kB
+.vercel/output/functions/__server.func/_ssr/domain-CGChZgGK.mjs                                            5.84 kB │ gzip:   2.05 kB
+.vercel/output/functions/__server.func/_ssr/client-BRY7I0QG.mjs                                            5.94 kB │ gzip:   2.16 kB
+.vercel/output/functions/__server.func/_ssr/development.functions-CPmwz0Hg.mjs                             6.08 kB │ gzip:   2.27 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-tabs.mjs                                      6.09 kB │ gzip:   1.77 kB
+.vercel/output/functions/__server.func/_ssr/succession.functions-D3v-Ag-z.mjs                              6.28 kB │ gzip:   2.03 kB
+.vercel/output/functions/__server.func/_ssr/development.functions-CDjjhxAc.mjs                             6.32 kB │ gzip:   2.00 kB
+.vercel/output/functions/__server.func/_libs/tanstack__react-query.mjs                                     6.63 kB │ gzip:   1.77 kB
+.vercel/output/functions/__server.func/index.mjs                                                           7.25 kB │ gzip:   2.59 kB
+.vercel/output/functions/__server.func/_ssr/login-DuZc3MXt.mjs                                             7.50 kB │ gzip:   2.27 kB
+.vercel/output/functions/__server.func/_ssr/access.functions-DBBMRl_d.mjs                                  7.50 kB │ gzip:   2.28 kB
+.vercel/output/functions/__server.func/_ssr/notifications.functions-CAYdjZke.mjs                           7.61 kB │ gzip:   2.19 kB
+.vercel/output/functions/__server.func/_ssr/admin.index-DcgAM63d.mjs                                       7.63 kB │ gzip:   2.20 kB
+.vercel/output/functions/__server.func/_ssr/training.functions-Dc5RWzHa.mjs                                7.86 kB │ gzip:   2.21 kB
+.vercel/output/functions/__server.func/_ssr/president.functions-wtW5X8fp.mjs                               7.91 kB │ gzip:   2.12 kB
+.vercel/output/functions/__server.func/_ssr/chart-DzY5Bs2b.mjs                                             8.05 kB │ gzip:   2.43 kB
+.vercel/output/functions/__server.func/_libs/d3-array.mjs                                                  8.05 kB │ gzip:   2.25 kB
+.vercel/output/functions/__server.func/_libs/eventemitter3.mjs                                             8.31 kB │ gzip:   2.05 kB
+.vercel/output/functions/__server.func/_ssr/admin.employee-profiles-CBzPm7mW.mjs                           9.09 kB │ gzip:   2.59 kB
+.vercel/output/functions/__server.func/_ssr/hr.cycles._cycleId-3BPokS47.mjs                                9.15 kB │ gzip:   2.65 kB
+.vercel/output/functions/__server.func/_ssr/supervisor.index-HEg4EUy6.mjs                                  9.39 kB │ gzip:   2.59 kB
+.vercel/output/functions/__server.func/_ssr/createServerFn-CIHAFgYl.mjs                                    9.39 kB │ gzip:   2.99 kB
+.vercel/output/functions/__server.func/_ssr/scoring.server-BwYwYoI-.mjs                                    9.45 kB │ gzip:   2.98 kB
+.vercel/output/functions/__server.func/_ssr/reviewing-supervisor.index-BDj3foji.mjs                        9.64 kB │ gzip:   2.68 kB
+.vercel/output/functions/__server.func/_ssr/hr.index-CgsiBNMn.mjs                                          9.66 kB │ gzip:   2.68 kB
+.vercel/output/functions/__server.func/_libs/@radix-ui/react-checkbox+[...].mjs                            9.74 kB │ gzip:   2.71 kB
+.vercel/output/functions/__server.func/_ssr/committee.index-hYEVQgqO.mjs                                   9.93 kB │ gzip:   2.73 kB
+.vercel/output/functions/__server.func/_ssr/documents.functions-CfcVZHws.mjs                              10.13 kB │ gzip:   2.71 kB
+.vercel/output/functions/__server.func/_libs/d3-color.mjs                                                 10.38 kB │ gzip:   3.57 kB
+.vercel/output/functions/__server.func/_libs/d3-format.mjs                                                10.56 kB │ gzip:   3.02 kB
+.vercel/output/functions/__server.func/_ssr/hr.evaluation-history._evaluationId-Be5Ika0i.mjs              10.93 kB │ gzip:   2.41 kB
+.vercel/output/functions/__server.func/_ssr/hr.competency._employeeId-BBAPeURM.mjs                        11.03 kB │ gzip:   2.39 kB
+.vercel/output/functions/__server.func/_ssr/president.index-MlHfFIOX.mjs                                  11.12 kB │ gzip:   3.20 kB
+.vercel/output/functions/__server.func/_ssr/cycles.functions-Dsn64xDZ.mjs                                 11.12 kB │ gzip:   2.42 kB
+.vercel/output/functions/__server.func/_ssr/admin.roles-DUoMsG64.mjs                                      11.77 kB │ gzip:   3.19 kB
+.vercel/output/functions/__server.func/_libs/tanstack__history.mjs                                        12.09 kB │ gzip:   3.48 kB
+.vercel/output/functions/__server.func/_libs/supabase__functions-js.mjs                                   12.49 kB │ gzip:   3.44 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-radio-group.mjs                              12.88 kB │ gzip:   3.14 kB
+.vercel/output/functions/__server.func/_ssr/evaluations.functions-Ds7KC3TP.mjs                            13.08 kB │ gzip:   2.88 kB
+.vercel/output/functions/__server.func/_ssr/hr.evaluation-history.index-C0yjieZ6.mjs                      13.09 kB │ gzip:   3.10 kB
+.vercel/output/functions/__server.func/_ssr/public.functions-CWVXqxws.mjs                                 13.40 kB │ gzip:   3.48 kB
+.vercel/output/functions/__server.func/_ssr/hr.evaluation-history.index-AwBr6rF7.mjs                      13.63 kB │ gzip:   3.33 kB
+.vercel/output/functions/__server.func/_ssr/supervisor.evaluations.index-hs35Efjs.mjs                     14.30 kB │ gzip:   3.52 kB
+.vercel/output/functions/__server.func/_libs/fast-equals.mjs                                              14.37 kB │ gzip:   3.62 kB
+.vercel/output/functions/__server.func/_ssr/hr.succession-BEhwt96a.mjs                                    14.82 kB │ gzip:   3.18 kB
+.vercel/output/functions/__server.func/_ssr/recognition.functions-B_1BQwoK.mjs                            14.85 kB │ gzip:   3.61 kB
+.vercel/output/functions/__server.func/_ssr/shared-ui-DADo_raV.mjs                                        15.51 kB │ gzip:   3.76 kB
+.vercel/output/functions/__server.func/_ssr/ai.functions-BwOH_dI5.mjs                                     15.58 kB │ gzip:   4.33 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-collection.mjs                               16.58 kB │ gzip:   3.70 kB
+.vercel/output/functions/__server.func/_tanstack-start-manifest_v-Db_oet5W.mjs                            16.69 kB │ gzip:   2.32 kB
+.vercel/output/functions/__server.func/_ssr/admin.audit-logs-_Bn0A8BX.mjs                                 16.92 kB │ gzip:   3.60 kB
+.vercel/output/functions/__server.func/_ssr/hr.development-records-C2BYLNuN.mjs                           17.69 kB │ gzip:   3.91 kB
+.vercel/output/functions/__server.func/_libs/h3-v2+rou3+srvx.mjs                                          18.20 kB │ gzip:   4.98 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-tooltip.mjs                                  18.88 kB │ gzip:   4.31 kB
+.vercel/output/functions/__server.func/_ssr/schemas-BNtyTRDC.mjs                                          19.34 kB │ gzip:   4.32 kB
+.vercel/output/functions/__server.func/__23tanstack-start-server-fn-resolver-B0VOapIo.mjs                 19.35 kB │ gzip:   5.21 kB
+.vercel/output/functions/__server.func/_ssr/hr.cycles.index-C9SGPKmI.mjs                                  19.83 kB │ gzip:   4.30 kB
+.vercel/output/functions/__server.func/_ssr/hr.training-CSzyH6E8.mjs                                      20.65 kB │ gzip:   4.17 kB
+.vercel/output/functions/__server.func/_ssr/hr.recognition-B1tyI4N1.mjs                                   21.61 kB │ gzip:   4.37 kB
+.vercel/output/functions/__server.func/_libs/decimal.js-light.mjs                                         23.31 kB │ gzip:   6.89 kB
+.vercel/output/functions/__server.func/_libs/lucide-react.mjs                                             24.01 kB │ gzip:   4.93 kB
+.vercel/output/functions/__server.func/_libs/d3-shape.mjs                                                 24.56 kB │ gzip:   5.02 kB
+.vercel/output/functions/__server.func/_libs/@floating-ui/dom+[...].mjs                                   25.38 kB │ gzip:   6.57 kB
+.vercel/output/functions/__server.func/_libs/@floating-ui/core+[...].mjs                                  25.55 kB │ gzip:   6.32 kB
+.vercel/output/functions/__server.func/_ssr/evaluation._cycleToken-MFqGfCDe.mjs                           25.63 kB │ gzip:   6.56 kB
+.vercel/output/functions/__server.func/_ssr/admin.functions-DiIhwnH_.mjs                                  25.75 kB │ gzip:   5.36 kB
+.vercel/output/functions/__server.func/_libs/h3+rou3+srvx.mjs                                             27.26 kB │ gzip:   7.16 kB
+.vercel/output/functions/__server.func/_ssr/server-core.server-BpR9R5Mp.mjs                               27.45 kB │ gzip:   6.59 kB
+.vercel/output/functions/__server.func/_ssr/reports.functions-iiemw1Qq.mjs                                29.97 kB │ gzip:   6.41 kB
+.vercel/output/functions/__server.func/_ssr/admin.users-r93L4-2j.mjs                                      30.04 kB │ gzip:   6.21 kB
+.vercel/output/functions/__server.func/_libs/@floating-ui/react-dom+[...].mjs                             31.24 kB │ gzip:   7.96 kB
+.vercel/output/functions/__server.func/_ssr/evaluation-workflow.functions-DvOQB4mK.mjs                    32.95 kB │ gzip:   6.86 kB
+.vercel/output/functions/__server.func/_ssr/employee-records-C4RBsLHd.mjs                                 35.37 kB │ gzip:   6.98 kB
+.vercel/output/functions/__server.func/_libs/supabase__supabase-js.mjs                                    36.39 kB │ gzip:  10.69 kB
+.vercel/output/functions/__server.func/_ssr/router-ClyiJCht.mjs                                           37.61 kB │ gzip:   6.48 kB
+.vercel/output/functions/__server.func/_libs/react-smooth.mjs                                             37.83 kB │ gzip:   8.15 kB
+.vercel/output/functions/__server.func/_ssr/supervisor.evaluations._evaluationId-jZw_giCL.mjs             39.83 kB │ gzip:   8.15 kB
+.vercel/output/functions/__server.func/_libs/pdf-lib__upng.mjs                                            45.32 kB │ gzip:  12.02 kB
+.vercel/output/functions/__server.func/_libs/@radix-ui/react-select+[...].mjs                             46.38 kB │ gzip:   9.78 kB
+.vercel/output/functions/__server.func/_ssr/documents.server-DUx0_sXe.mjs                                 46.72 kB │ gzip:  10.80 kB
+.vercel/output/functions/__server.func/_ssr/ai.functions-szd2St-Z.mjs                                     46.92 kB │ gzip:   9.61 kB
+.vercel/output/functions/__server.func/_ssr/server-DDAaQUVu.mjs                                           49.88 kB │ gzip:  13.06 kB
+.vercel/output/functions/__server.func/_libs/supabase__phoenix.mjs                                        50.54 kB │ gzip:  12.76 kB
+.vercel/output/functions/__server.func/_libs/sonner.mjs                                                   53.58 kB │ gzip:  12.11 kB
+.vercel/output/functions/__server.func/_ssr/evaluation-stage-detail-B3Lt0U9o.mjs                          55.23 kB │ gzip:   9.04 kB
+.vercel/output/functions/__server.func/_libs/pngjs.mjs                                                    56.25 kB │ gzip:  11.67 kB
+.vercel/output/functions/__server.func/_libs/@radix-ui/react-dropdown-menu+[...].mjs                      58.13 kB │ gzip:  11.41 kB
+.vercel/output/functions/__server.func/_libs/d3-scale+[...].mjs                                           58.22 kB │ gzip:  12.11 kB
+.vercel/output/functions/__server.func/_ssr/route-ClWJIT4e.mjs                                            59.94 kB │ gzip:  12.17 kB
+.vercel/output/functions/__server.func/_libs/tanstack__query-core.mjs                                     66.87 kB │ gzip:  14.19 kB
+.vercel/output/functions/__server.func/_libs/qrcode.mjs                                                   76.86 kB │ gzip:  18.65 kB
+.vercel/output/functions/__server.func/_libs/@hookform/resolvers+[...].mjs                                77.04 kB │ gzip:  18.16 kB
+.vercel/output/functions/__server.func/_libs/supabase__realtime-js.mjs                                    80.71 kB │ gzip:  20.55 kB
+.vercel/output/functions/__server.func/_libs/tailwind-merge.mjs                                           88.13 kB │ gzip:  15.66 kB
+.vercel/output/functions/__server.func/_libs/@radix-ui/react-alert-dialog+[...].mjs                       92.14 kB │ gzip:  20.85 kB
+.vercel/output/functions/__server.func/_libs/zod.mjs                                                     100.52 kB │ gzip:  17.43 kB
+.vercel/output/functions/__server.func/_libs/supabase__postgrest-js.mjs                                  105.54 kB │ gzip:  21.68 kB
+.vercel/output/functions/__server.func/_libs/@supabase/storage-js+[...].mjs                              119.58 kB │ gzip:  22.34 kB
+.vercel/output/functions/__server.func/_libs/@tanstack/router-core+[...].mjs                             121.77 kB │ gzip:  25.53 kB
+.vercel/output/functions/__server.func/_libs/lodash.mjs                                                  161.63 kB │ gzip:  29.39 kB
+.vercel/output/functions/__server.func/_libs/pako+pdf-lib__standard-fonts.mjs                            241.65 kB │ gzip: 122.17 kB
+.vercel/output/functions/__server.func/_libs/supabase__auth-js.mjs                                       312.89 kB │ gzip:  63.84 kB
+.vercel/output/functions/__server.func/_libs/recharts+[...].mjs                                          492.41 kB │ gzip:  92.92 kB
+.vercel/output/functions/__server.func/_libs/pdf-lib.mjs                                                 605.60 kB │ gzip: 114.33 kB
+.vercel/output/functions/__server.func/_libs/@tanstack/react-router+[...].mjs                            651.43 kB │ gzip: 136.41 kB
+
+[32m✓ built in 1.66s[39m
+[36mℹ[39m Generated [36m.vercel/output/nitro.json[39m
+
+[90m[[90mnitro[90m][39m [32m✔[39m You can preview this build using [36mnpx vite preview[39m
+[90m[[90mnitro[90m][39m [32m✔[39m You can deploy this build using [36mnpx nitro deploy --prebuilt[39m
+Copied PDF runtime dependencies into the Vercel function.

@@ -10,8 +10,8 @@ function CompletedPage() {
   return (
     <HistoryTablePage
       title="Completed evaluations"
-      description="View submitted evaluation records for the selected cycle."
-      defaultStatus="SUBMITTED"
+      description="View role-completed evaluation submissions for the selected cycle."
+      defaultStatus="FOR_REVIEW"
       mode="completed"
       showStatusFilter={false}
     />

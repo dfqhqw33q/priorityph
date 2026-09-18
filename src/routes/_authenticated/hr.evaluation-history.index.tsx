@@ -56,7 +56,7 @@ export function HistoryTablePage({
 
   const effectiveStatus =
     mode === "completed"
-      ? "SUBMITTED"
+      ? "FOR_REVIEW"
       : mode === "drafts"
         ? "DRAFT"
         : mode === "returned"
@@ -233,7 +233,7 @@ export function HistoryTablePage({
               {rows.map((row) => {
                 const visibleStatus =
                   mode === "completed"
-                    ? "SUBMITTED"
+                    ? row.status
                     : mode === "drafts"
                       ? "DRAFT"
                       : mode === "returned"

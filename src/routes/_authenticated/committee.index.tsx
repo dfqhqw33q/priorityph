@@ -137,18 +137,45 @@ function CommitteeDashboard() {
                   <BarChart
                     data={chartData}
                     layout="vertical"
-                    margin={{ top: 4, right: 12, left: 8, bottom: 4 }}
+                    margin={{ top: 6, right: 12, left: 8, bottom: 6 }}
+                    barGap={8}
                   >
-                    <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-                    <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
-                    <YAxis type="category" dataKey="label" tickLine={false} axisLine={false} width={98} />
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      domain={[0, (dataMax: number) => Math.max(dataMax, 1)]}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      width={98}
+                      tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+                    />
                     <Tooltip
                       cursor={{ fill: "hsl(var(--muted))" }}
                       content={
                         <ChartTooltipContent hideLabel formatter={(value) => [value, "Evaluations"]} />
                       }
                     />
-                    <Bar dataKey="value" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} />
+                    <Bar
+                      dataKey="value"
+                      fill="hsl(var(--chart-3))"
+                      radius={[0, 6, 6, 0]}
+                      barSize={18}
+                      label={{
+                        position: "right",
+                        formatter: (value: number | string) => `${value}`,
+                        fill: "hsl(var(--foreground))",
+                        fontSize: 12,
+                        fontWeight: 600,
+                      }}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
