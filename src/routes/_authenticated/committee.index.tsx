@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
+import { type EvaluationStatus } from "@/lib/domain";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +42,7 @@ function CommitteeDashboard() {
   });
 
   const chartData = useMemo(() => {
-    const breakdown = query.data?.statusBreakdown ?? {};
+    const breakdown = query.data?.statusBreakdown ?? ({} as Record<EvaluationStatus, number>);
     const rows = [
       { status: "FOR_REVIEW", label: "To Review", value: breakdown.FOR_REVIEW ?? 0, color: "var(--info)" },
       { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0, color: "var(--warning)" },
@@ -187,8 +188,6 @@ function CommitteeDashboard() {
             }
             activity={
               <Card className="border border-border bg-card shadow-sm">
-
-          <Card className="border border-border bg-card shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
             </CardHeader>

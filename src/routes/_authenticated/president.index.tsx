@@ -196,8 +196,6 @@ function PresidentDashboard() {
             }
             activity={
               <Card className="border border-border bg-card shadow-sm">
-
-          <Card className="border border-border bg-card shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
             </CardHeader>
