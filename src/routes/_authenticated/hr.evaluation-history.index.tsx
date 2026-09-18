@@ -27,6 +27,7 @@ import {
 import { getReport, type ReportRow } from "@/lib/reports.functions";
 import { EVALUATION_STATUS_LABELS, EVALUATION_STATUSES } from "@/lib/domain";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useAccess } from "@/hooks/use-access";
 
 const ALL = "";
 const PAGE_SIZE = 25;
@@ -82,6 +83,17 @@ export function HistoryTablePage({
 
   const rows = (query.data?.rows ?? []) as ReportRow[];
   const cycleOptions = (query.data?.options.cycles ?? []).filter((cycle) => cycle.id && cycle.year);
+  const currentRole = (useAccess()?.access?.roles ?? []) as Array<"HR" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE" | "PRESIDENT">;
+  const detailRoute =
+    currentRole.includes("SUPERVISOR")
+      ? "/supervisor/evaluations/$evaluationId"
+      : currentRole.includes("REVIEWING_SUPERVISOR")
+        ? "/reviewing-supervisor/evaluations/$evaluationId"
+        : currentRole.includes("COMMITTEE")
+          ? "/committee/evaluations/$evaluationId"
+          : currentRole.includes("PRESIDENT")
+            ? "/president/evaluations/$evaluationId"
+            : "/hr/evaluation-history/$evaluationId";
   const selectedCycle = useMemo(
     () => cycleOptions.find((cycle) => cycle.id === cycleId) ?? null,
     [cycleId, cycleOptions],
@@ -245,8 +257,8 @@ export function HistoryTablePage({
                     <TableCell>
                       <Link
                         className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        to="/hr/evaluation-history/$evaluationId"
-                        params={{ evaluationId: row.evaluationId }}
+                        to={detailRoute as never}
+                        params={{ evaluationId: row.evaluationId } as never}
                       >
                         {row.fullName}
                       </Link>

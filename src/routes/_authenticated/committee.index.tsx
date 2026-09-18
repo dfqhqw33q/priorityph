@@ -107,13 +107,13 @@ function CommitteeDashboard() {
             <StatCard
               label="Completed"
               value={query.data?.completed ?? query.data?.finalized ?? 0}
-              to="/hr/completed"
+              to="/committee/completed"
               hint="Submitted records"
             />
             <StatCard
               label="Drafts"
               value={query.data?.drafts ?? 0}
-              to="/hr/drafts"
+              to="/committee/drafts"
               hint="In progress"
             />
             <StatCard

@@ -89,12 +89,44 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
     roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
   },
   {
+    prefix: "/supervisor/completed",
+    roles: ["SUPERVISOR"],
+  },
+  {
+    prefix: "/supervisor/drafts",
+    roles: ["SUPERVISOR"],
+  },
+  {
+    prefix: "/reviewing-supervisor/completed",
+    roles: ["REVIEWING_SUPERVISOR"],
+  },
+  {
+    prefix: "/reviewing-supervisor/drafts",
+    roles: ["REVIEWING_SUPERVISOR"],
+  },
+  {
+    prefix: "/committee/completed",
+    roles: ["COMMITTEE"],
+  },
+  {
+    prefix: "/committee/drafts",
+    roles: ["COMMITTEE"],
+  },
+  {
+    prefix: "/president/completed",
+    roles: ["PRESIDENT"],
+  },
+  {
+    prefix: "/president/drafts",
+    roles: ["PRESIDENT"],
+  },
+  {
     prefix: "/hr/completed",
-    roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
+    roles: ["HR"],
   },
   {
     prefix: "/hr/drafts",
-    roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
+    roles: ["HR"],
   },
   { prefix: "/hr", roles: ["HR"], permission: "cycles.view" },
   { prefix: "/supervisor", roles: ["SUPERVISOR"], permission: "evaluations.view_step1" },
@@ -218,8 +250,8 @@ const NAV: Array<{
             permission: "evaluations.view_step1",
           },
           { to: "/hr/returned", label: "Returned" },
-          { to: "/hr/completed", label: "Completed" },
-          { to: "/hr/drafts", label: "Drafts" },
+          { to: "/supervisor/completed", label: "Completed" },
+          { to: "/supervisor/drafts", label: "Drafts" },
         ],
       },
     ],
@@ -245,8 +277,8 @@ const NAV: Array<{
             permission: "evaluations.review_step3",
           },
           { to: "/hr/returned", label: "Returned" },
-          { to: "/hr/completed", label: "Completed" },
-          { to: "/hr/drafts", label: "Drafts" },
+          { to: "/reviewing-supervisor/completed", label: "Completed" },
+          { to: "/reviewing-supervisor/drafts", label: "Drafts" },
         ],
       },
     ],
@@ -261,8 +293,8 @@ const NAV: Array<{
         children: [
           { to: "/committee/evaluations", label: "To Review", permission: "committee.review" },
           { to: "/hr/returned", label: "Returned" },
-          { to: "/hr/completed", label: "Completed" },
-          { to: "/hr/drafts", label: "Drafts" },
+          { to: "/committee/completed", label: "Completed" },
+          { to: "/committee/drafts", label: "Drafts" },
         ],
       },
     ],
@@ -278,8 +310,8 @@ const NAV: Array<{
         children: [
           { to: "/president/evaluations", label: "Pending", permission: "president.view" },
           { to: "/hr/returned", label: "Returned" },
-          { to: "/hr/completed", label: "Completed" },
-          { to: "/hr/drafts", label: "Drafts" },
+          { to: "/president/completed", label: "Completed" },
+          { to: "/president/drafts", label: "Drafts" },
         ],
       },
       {

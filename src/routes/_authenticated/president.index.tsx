@@ -125,13 +125,13 @@ function PresidentDashboard() {
             <StatCard
               label="Completed"
               value={query.data?.completed ?? 0}
-              to="/hr/completed"
+              to="/president/completed"
               hint="Submitted records"
             />
             <StatCard
               label="Drafts"
               value={query.data?.drafts ?? 0}
-              to="/hr/drafts"
+              to="/president/drafts"
               hint="In progress"
             />
           </div>

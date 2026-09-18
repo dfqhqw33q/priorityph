@@ -105,13 +105,13 @@ function ReviewingSupervisorDashboard() {
             <StatCard
               label="Completed"
               value={query.data?.completed ?? query.data?.finalized ?? 0}
-              to="/hr/completed"
+              to="/reviewing-supervisor/completed"
               hint="Submitted records"
             />
             <StatCard
               label="Drafts"
               value={query.data?.drafts ?? 0}
-              to="/hr/drafts"
+              to="/reviewing-supervisor/drafts"
               hint="In progress"
             />
           </div>
