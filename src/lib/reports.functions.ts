@@ -173,14 +173,62 @@ function averageFactor(
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 }
 
+function getRoleHistoryAccess(roleNames: string[]) {
+  if (roleNames.includes("HR") || roleNames.includes("ADMINISTRATOR")) {
+    return { permittedStatuses: null, supervisorOnly: false };
+  }
+
+  if (roleNames.includes("SUPERVISOR")) {
+    return { permittedStatuses: null, supervisorOnly: true };
+  }
+
+  if (roleNames.includes("REVIEWING_SUPERVISOR") || roleNames.includes("COMMITTEE")) {
+    return {
+      permittedStatuses: [
+        "FOR_REVIEW",
+        "FOR_PROCESSING",
+        "FOR_APPROVAL",
+        "RETURNED",
+        "FINALIZED",
+      ],
+      supervisorOnly: false,
+    };
+  }
+
+  if (roleNames.includes("PRESIDENT")) {
+    return { permittedStatuses: ["FOR_APPROVAL", "RETURNED", "FINALIZED"], supervisorOnly: false };
+  }
+
+  return { permittedStatuses: [], supervisorOnly: false };
+}
+
 export const getReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: Partial<ReportFilters>) => reportFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
-    const { requirePermission, getAdmin, writeAudit, getActorRoles, queueFilterOptions } =
-      await import("./server-core.server");
-    await requirePermission(context.userId, "evaluations.view_201", "Digital 201 File");
+    const {
+      requirePermissionAny,
+      getAdmin,
+      writeAudit,
+      getActorRoles,
+      queueFilterOptions,
+      AuthorizationError,
+    } = await import("./server-core.server");
+    await requirePermissionAny(
+      context.userId,
+      [
+        "cycles.view",
+        "evaluations.view_201",
+        "evaluations.view_step1",
+        "evaluations.review_step3",
+        "committee.review",
+        "president.view",
+      ],
+      "Evaluation History",
+    );
     const admin = await getAdmin();
+    const roles = await getActorRoles(context.userId);
+    const { permittedStatuses, supervisorOnly } = getRoleHistoryAccess(roles);
 
     let query = admin
       .from("evaluations")
@@ -197,7 +245,13 @@ export const getReport = createServerFn({ method: "POST" })
     }
     if (data.division.trim()) query = query.eq("division_snapshot", data.division.trim());
     if (data.section.trim()) query = query.eq("section_snapshot", data.section.trim());
-    if (data.status.trim()) query = query.eq("status", data.status.trim() as never);
+    if (permittedStatuses && permittedStatuses.length > 0) {
+      query = query.in("status", permittedStatuses as never);
+    }
+    if (data.status.trim() && (!permittedStatuses || permittedStatuses.length === 0 || permittedStatuses.includes(data.status.trim()))) {
+      query = query.eq("status", data.status.trim() as never);
+    }
+    if (supervisorOnly) query = query.eq("supervisor_user_id", context.userId);
     if (data.cycleId) query = query.eq("cycle_id", data.cycleId);
     if (data.year) query = query.eq("evaluation_cycles.year", data.year);
     if (data.finalRating.trim()) {
@@ -295,7 +349,6 @@ export const getReport = createServerFn({ method: "POST" })
       admin.from("evaluation_cycles").select("id, name, year").order("year", { ascending: false }),
     ]);
 
-    const roles = await getActorRoles(context.userId);
     await writeAudit({
       actorUserId: context.userId,
       actorRole: roles[0] ?? null,
@@ -323,11 +376,29 @@ export const getEvaluationHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { evaluationId: string }) => input)
   .handler(async ({ data, context }) => {
-    const { requirePermission, getAdmin, writeAudit, getActorRoles, loadEvaluationDetail } =
-      await import("./server-core.server");
+    const {
+      requirePermissionAny,
+      getAdmin,
+      writeAudit,
+      getActorRoles,
+      loadEvaluationDetail,
+      AuthorizationError,
+    } = await import("./server-core.server");
     const { loadScore } = await import("./scoring.server");
-    await requirePermission(context.userId, "evaluations.view_201", "Digital 201 File");
+    await requirePermissionAny(
+      context.userId,
+      [
+        "cycles.view",
+        "evaluations.view_201",
+        "evaluations.view_step1",
+        "evaluations.review_step3",
+        "committee.review",
+        "president.view",
+      ],
+      "Evaluation History",
+    );
     const admin = await getAdmin();
+    const roles = await getActorRoles(context.userId);
 
     const [detail, score, { data: events }, { data: logs }, { data: notifications }] =
       await Promise.all([
@@ -351,6 +422,28 @@ export const getEvaluationHistory = createServerFn({ method: "GET" })
           .order("occurred_at", { ascending: false }),
       ]);
 
+    if (!detail) return null;
+
+    if (roles.includes("SUPERVISOR") && detail.supervisor_user_id !== context.userId) {
+      throw new AuthorizationError();
+    }
+
+    if (roles.includes("REVIEWING_SUPERVISOR") || roles.includes("COMMITTEE")) {
+      const allowed = [
+        "FOR_REVIEW",
+        "FOR_PROCESSING",
+        "FOR_APPROVAL",
+        "RETURNED",
+        "FINALIZED",
+      ];
+      if (!allowed.includes(detail.status)) throw new AuthorizationError();
+    }
+
+    if (roles.includes("PRESIDENT")) {
+      const allowed = ["FOR_APPROVAL", "RETURNED", "FINALIZED"];
+      if (!allowed.includes(detail.status)) throw new AuthorizationError();
+    }
+
     const actorIds = Array.from(
       new Set((events ?? []).map((event) => event.actor_user_id).filter(Boolean) as string[]),
     );
@@ -363,7 +456,6 @@ export const getEvaluationHistory = createServerFn({ method: "GET" })
       for (const user of users ?? []) names.set(user.id, user.full_name);
     }
 
-    const roles = await getActorRoles(context.userId);
     await writeAudit({
       actorUserId: context.userId,
       actorRole: roles[0] ?? null,
