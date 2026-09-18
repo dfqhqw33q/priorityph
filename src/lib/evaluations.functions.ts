@@ -128,7 +128,7 @@ export const getSupervisorStats = createServerFn({ method: "GET" })
       await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.view_step1", "Supervisor Review");
     const [stats, activity] = await Promise.all([
-      supervisorStats(data.cycleId ?? null),
+      supervisorStats(context.userId, data.cycleId ?? null),
       recentActivity(["Supervisor Review"]),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
@@ -148,7 +148,7 @@ export const getReviewingSupervisorStats = createServerFn({ method: "GET" })
       "Reviewing Supervisor Review",
     );
     const [stats, activity] = await Promise.all([
-      reviewingSupervisorStats(data.cycleId ?? null),
+      reviewingSupervisorStats(context.userId, data.cycleId ?? null),
       recentActivity(["Reviewing Supervisor Review"]),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
@@ -164,7 +164,7 @@ export const getCommitteeStats = createServerFn({ method: "GET" })
       await import("./server-core.server");
     await requirePermission(context.userId, "committee.review", "Committee Review");
     const [stats, activity] = await Promise.all([
-      committeeStats(data.cycleId ?? null),
+      committeeStats(context.userId, data.cycleId ?? null),
       recentActivity(["Committee Review"]),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };

@@ -240,7 +240,7 @@ const NAV: Array<{
         icon: ClipboardList,
         children: [
           {
-            to: "/reviewing-supervisor",
+            to: "/reviewing-supervisor/evaluations",
             label: "To Review",
             permission: "evaluations.review_step3",
           },
@@ -259,7 +259,7 @@ const NAV: Array<{
         label: "Evaluations",
         icon: ClipboardList,
         children: [
-          { to: "/committee", label: "To Review", permission: "committee.review" },
+          { to: "/committee/evaluations", label: "To Review", permission: "committee.review" },
           { to: "/hr/returned", label: "Returned" },
           { to: "/hr/completed", label: "Completed" },
           { to: "/hr/drafts", label: "Drafts" },

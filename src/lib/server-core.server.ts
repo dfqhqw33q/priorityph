@@ -693,6 +693,89 @@ async function countEvaluations(statuses: string[], cycleId: string | null = nul
   return count ?? 0;
 }
 
+async function countAssignedEvaluationsForRole(
+  userId: string,
+  role: "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE" | "PRESIDENT",
+  statuses: string[],
+  cycleId: string | null = null,
+) {
+  const admin = await getAdmin();
+
+  if (statuses.length === 0) return 0;
+
+  if (role === "SUPERVISOR") {
+    let query = admin
+      .from("evaluations")
+      .select("id", { count: "exact", head: true })
+      .eq("supervisor_user_id", userId)
+      .in("status", statuses as never);
+    if (cycleId) query = query.eq("cycle_id", cycleId);
+    const { count } = await query;
+    return count ?? 0;
+  }
+
+  if (role === "REVIEWING_SUPERVISOR") {
+    const { data: rows } = await admin
+      .from("reviewing_supervisor_reviews")
+      .select("evaluation_id")
+      .eq("reviewer_user_id", userId);
+    const ids = Array.from(new Set((rows ?? []).map((row) => row.evaluation_id)));
+    if (!ids.length) return 0;
+
+    let query = admin
+      .from("evaluations")
+      .select("id", { count: "exact", head: true })
+      .in("id", ids)
+      .in("status", statuses as never);
+    if (cycleId) query = query.eq("cycle_id", cycleId);
+    const { count } = await query;
+    return count ?? 0;
+  }
+
+  if (role === "COMMITTEE") {
+    const { data: rows } = await admin
+      .from("committee_reviews")
+      .select("evaluation_id")
+      .eq("committee_user_id", userId);
+    const ids = Array.from(new Set((rows ?? []).map((row) => row.evaluation_id)));
+    if (!ids.length) return 0;
+
+    let query = admin
+      .from("evaluations")
+      .select("id", { count: "exact", head: true })
+      .in("id", ids)
+      .in("status", statuses as never);
+    if (cycleId) query = query.eq("cycle_id", cycleId);
+    const { count } = await query;
+    return count ?? 0;
+  }
+
+  let query = admin
+    .from("evaluations")
+    .select("id", { count: "exact", head: true })
+    .eq("president_user_id", userId)
+    .in("status", statuses as never);
+  if (cycleId) query = query.eq("cycle_id", cycleId);
+  const { count } = await query;
+  return count ?? 0;
+}
+
+async function assignedStatusCountsForRole(
+  userId: string,
+  role: "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE" | "PRESIDENT",
+  cycleId: string | null = null,
+) {
+  const counts = Object.fromEntries(
+    EVALUATION_STATUSES.map((status) => [status, 0]),
+  ) as Record<EvaluationStatus, number>;
+
+  for (const status of EVALUATION_STATUSES) {
+    counts[status] = await countAssignedEvaluationsForRole(userId, role, [status], cycleId);
+  }
+
+  return counts;
+}
+
 export async function statusCountsForCycle(cycleId: string | null = null) {
   const admin = await getAdmin();
   let query = admin.from("evaluations").select("status");
@@ -711,8 +794,8 @@ export async function statusCountsForCycle(cycleId: string | null = null) {
   return counts;
 }
 
-export async function supervisorStats(cycleId: string | null = null) {
-  const counts = await statusCountsForCycle(cycleId);
+export async function supervisorStats(userId: string, cycleId: string | null = null) {
+  const counts = await assignedStatusCountsForRole(userId, "SUPERVISOR", cycleId);
   const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
   const totalStep1 =
     counts.DRAFT +
@@ -736,8 +819,8 @@ export async function supervisorStats(cycleId: string | null = null) {
   };
 }
 
-export async function reviewingSupervisorStats(cycleId: string | null = null) {
-  const counts = await statusCountsForCycle(cycleId);
+export async function reviewingSupervisorStats(userId: string, cycleId: string | null = null) {
+  const counts = await assignedStatusCountsForRole(userId, "REVIEWING_SUPERVISOR", cycleId);
   const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
 
   return {
@@ -753,9 +836,9 @@ export async function reviewingSupervisorStats(cycleId: string | null = null) {
   };
 }
 
-export async function committeeStats(cycleId: string | null = null) {
+export async function committeeStats(userId: string, cycleId: string | null = null) {
   const admin = await getAdmin();
-  const counts = await statusCountsForCycle(cycleId);
+  const counts = await assignedStatusCountsForRole(userId, "COMMITTEE", cycleId);
   const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
   const { count: trainingRequiredCount } = await admin
     .from("evaluations")
@@ -796,25 +879,27 @@ export async function committeeStats(cycleId: string | null = null) {
   };
 }
 
-export async function presidentStats(cycleId: string | null = null) {
+export async function presidentStats(userId: string, cycleId: string | null = null) {
   const admin = await getAdmin();
-  const counts = await statusCountsForCycle(cycleId);
+  const counts = await assignedStatusCountsForRole(userId, "PRESIDENT", cycleId);
   const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
   const [awaiting, inReview, submitted, finalized] = await Promise.all([
-    countEvaluations(["FOR_REVIEW", "FOR_PROCESSING"], cycleId),
-    countEvaluations(["FOR_APPROVAL"], cycleId),
-    countEvaluations(["FINALIZED"], cycleId),
-    countEvaluations(["FINALIZED"], cycleId),
+    countAssignedEvaluationsForRole(userId, "PRESIDENT", ["FOR_REVIEW", "FOR_PROCESSING"], cycleId),
+    countAssignedEvaluationsForRole(userId, "PRESIDENT", ["FOR_APPROVAL"], cycleId),
+    countAssignedEvaluationsForRole(userId, "PRESIDENT", ["FINALIZED"], cycleId),
+    countAssignedEvaluationsForRole(userId, "PRESIDENT", ["FINALIZED"], cycleId),
   ]);
   const [step2, step3] = await Promise.all([
     admin
       .from("evaluations")
       .select("id", { count: "exact", head: true })
+      .eq("president_user_id", userId)
       .not("president_step2_submitted_at", "is", null)
       .then((result) => result.count ?? 0),
     admin
       .from("evaluations")
       .select("id", { count: "exact", head: true })
+      .eq("president_user_id", userId)
       .not("president_step3_submitted_at", "is", null)
       .then((result) => result.count ?? 0),
   ]);
