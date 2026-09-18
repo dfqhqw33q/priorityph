@@ -10,11 +10,13 @@ type Props = {
   disabled?: boolean;
   compact?: boolean;
   onChange: (value: SignatureValue | undefined) => void;
+  onSave?: () => Promise<void> | void;
 };
 
 export function SignatureField({ value, disabled = false, compact = false, onChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawing, setDrawing] = useState(false);
+  const [saved, setSaved] = useState(Boolean(value));
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -36,7 +38,7 @@ export function SignatureField({ value, disabled = false, compact = false, onCha
   }
 
   function start(event: React.PointerEvent<HTMLCanvasElement>) {
-    if (disabled) return;
+    if (disabled || saved) return;
     canvasRef.current?.setPointerCapture(event.pointerId);
     const context = canvasRef.current?.getContext("2d");
     if (!context) return;
@@ -61,6 +63,7 @@ export function SignatureField({ value, disabled = false, compact = false, onCha
   function end() {
     if (!drawing) return;
     setDrawing(false);
+    setSaved(false);
     const data = canvasRef.current?.toDataURL("image/png");
     if (data) onChange({ method: "DRAWN", data });
   }
@@ -70,6 +73,7 @@ export function SignatureField({ value, disabled = false, compact = false, onCha
     const context = canvas?.getContext("2d");
     if (canvas && context) context.clearRect(0, 0, canvas.width, canvas.height);
     onChange(undefined);
+    setSaved(false);
   }
 
   function upload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -78,7 +82,10 @@ export function SignatureField({ value, disabled = false, compact = false, onCha
     if (!["image/png", "image/jpeg"].includes(file.type)) return;
     if (file.size > 500_000) return;
     const reader = new FileReader();
-    reader.onload = () => onChange({ method: "UPLOAD", data: String(reader.result) });
+    reader.onload = () => {
+      setSaved(false);
+      onChange({ method: "UPLOAD", data: String(reader.result) });
+    };
     reader.readAsDataURL(file);
   }
 
@@ -112,6 +119,19 @@ export function SignatureField({ value, disabled = false, compact = false, onCha
         <Button type="button" variant="outline" size="sm" onClick={clear} disabled={disabled}>
           Clear
         </Button>
+        {onSave ? (
+          <Button
+            type="button"
+            size="sm"
+            disabled={disabled || !value || saved}
+            onClick={async () => {
+              await onSave();
+              setSaved(true);
+            }}
+          >
+            {saved ? "Signature saved" : "Save Signature"}
+          </Button>
+        ) : null}
         <Label
           htmlFor="signature-upload"
           className="cursor-pointer rounded-md border border-input px-3 py-2 text-sm"

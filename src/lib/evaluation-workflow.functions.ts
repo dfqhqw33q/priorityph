@@ -496,6 +496,43 @@ async function saveStageSignature(
   if (error) throw validationError(error.message);
 }
 
+export const saveEvaluationSignature = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        evaluationId: z.string().uuid(),
+        version: z.number().int().positive(),
+        stage: z.enum(["RATER_STEP2", "REVIEWING_SUPERVISOR_STEP3", "PERSONNEL", "COMMITTEE", "PRESIDENT"]),
+        signature: z.object({
+          method: z.enum(["DRAWN", "UPLOAD"]),
+          data: z.string().min(2).max(700_000),
+        }),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const permissionByStage = {
+      RATER_STEP2: "evaluations.rate_supervisor",
+      REVIEWING_SUPERVISOR_STEP3: "evaluations.review_step3",
+      PERSONNEL: "personnel.process",
+      COMMITTEE: "committee.review",
+      PRESIDENT: "president.approve",
+    } as const;
+    await requirePermission(context.userId, permissionByStage[data.stage], "Evaluation Signature");
+    const admin = await getAdmin();
+    const { data: evaluation } = await admin
+      .from("evaluations")
+      .select("version, is_finalized")
+      .eq("id", data.evaluationId)
+      .maybeSingle();
+    if (!evaluation || evaluation.version !== data.version || evaluation.is_finalized)
+      throw validationError("This evaluation can no longer be signed");
+    await saveStageSignature(data.evaluationId, data.stage, data.signature, context.userId, data.version);
+    return { ok: true, signedAt: new Date().toISOString() };
+  });
+
 export const saveRaterStep2 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => raterStep2Schema.parse(input))

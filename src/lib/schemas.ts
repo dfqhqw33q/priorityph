@@ -144,7 +144,7 @@ export const raterStep2Schema = z
     transferWhere: z.string().max(1000).default(""),
     transferQualified: z.string().max(1000).default(""),
     otherComments: z.string().max(4000).default(""),
-    date: z.string().max(20).default(""),
+    date: z.string().max(40).default(""),
     submit: z.boolean().default(false),
     signature: z
       .object({
@@ -200,7 +200,7 @@ export const reviewingSupervisorReviewSchema = z
     ratings: z.array(ratingEntrySchema).max(10).default([]),
     comments: z.string().max(4000).default(""),
     recommendations: z.string().max(4000).default(""),
-    date: z.string().max(20).default(""),
+    date: z.string().max(40).default(""),
     submit: z.boolean().default(false),
     signature: z
       .object({

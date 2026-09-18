@@ -1358,7 +1358,10 @@ export async function generateEvaluationData(
       developmentPotential: normalizeText(evaluation.supervisor_step2_development_potential),
       advancementOutlook: normalizeText(evaluation.supervisor_step2_advancement_outlook),
       growthSuggestions: normalizeText(evaluation.supervisor_step2_growth_suggestions),
-      transferInterest: normalizeText(evaluation.supervisor_step2_transfer_interest),
+      transferInterest:
+        normalizeText(evaluation.supervisor_step2_transfer_interest).toUpperCase() === "NOT_AWARE"
+          ? "NOT AWARE"
+          : normalizeText(evaluation.supervisor_step2_transfer_interest),
       transferJob: normalizeText(evaluation.supervisor_step2_transfer_job),
       transferWhere: normalizeText(evaluation.supervisor_step2_transfer_where),
       transferQualified: normalizeText(evaluation.supervisor_step2_transfer_qualified),

@@ -25,6 +25,7 @@ type EvaluationStageValues = {
 };
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,12 +43,14 @@ import {
   EvaluationStatusBadge,
   LoadingBlock,
   PageHeader,
+  formatDateTime,
 } from "@/components/shared/shared-ui";
 import { TextShimmer } from "@/components/loading-ui/text-shimmer";
 import {
   getEvaluationStage,
   approveEvaluation,
   saveRaterStep2,
+  saveEvaluationSignature,
   submitCommitteeReview,
   submitPersonnelProcessing,
   submitReviewingSupervisor,
@@ -95,6 +98,10 @@ function Field({ label, value }: { label: string; value: string }) {
       <p className="mt-0.5 font-medium text-foreground">{value || "-"}</p>
     </div>
   );
+}
+
+function transferInterestLabel(value: unknown) {
+  return String(value ?? "").toUpperCase() === "NOT_AWARE" ? "NOT AWARE" : String(value ?? "-");
 }
 
 function ReadOnlyField({
@@ -224,6 +231,7 @@ export function EvaluationStageDetail({
   const recordReviewingAction = useServerFn(recordReviewingSupervisorAiAction);
   const getCommitteeTrainingRecommendation = useServerFn(suggestCommitteeTrainingRecommendation);
   const recordCommitteeTrainingAction = useServerFn(recordCommitteeTrainingRecommendationAction);
+  const saveSignature = useServerFn(saveEvaluationSignature);
   const query = useQuery({
     queryKey: ["phase2-evaluation", evaluationId],
     queryFn: () => fetch({ data: { evaluationId, stage } }),
@@ -246,7 +254,7 @@ export function EvaluationStageDetail({
     useState<CommitteeTrainingRecommendation | null>(null);
   const [committeeTrainingBusy, setCommitteeTrainingBusy] = useState(false);
   const [committeeTrainingUnavailable, setCommitteeTrainingUnavailable] = useState("");
-  const workflowDate = () => new Date().toISOString().slice(0, 10);
+  const workflowDate = () => new Date().toISOString();
   const editableStatuses = {
     RATER: ["SUBMITTED", "DRAFT"],
     REVIEWING_SUPERVISOR: ["FOR_REVIEW"],
@@ -279,6 +287,21 @@ export function EvaluationStageDetail({
   const editable =
     editableStatuses.includes(detail?.status ?? "") ||
     (detail?.status === "RETURNED" && correctionTarget === correctionStageForView);
+  async function persistSignature() {
+    if (!detail || !signature) return;
+    const signatureStage =
+      stage === "REVIEWING_SUPERVISOR"
+        ? "REVIEWING_SUPERVISOR_STEP3"
+        : stage === "PERSONNEL"
+          ? "PERSONNEL"
+          : stage === "COMMITTEE"
+            ? "COMMITTEE"
+            : "PRESIDENT";
+    await saveSignature({
+      data: { evaluationId, version: detail.version, stage: signatureStage, signature },
+    });
+    await queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] });
+  }
   useEffect(() => {
     if (!detail) return;
     const record = (detail as typeof detail & { stageRecord?: Record<string, unknown> })
@@ -654,13 +677,28 @@ export function EvaluationStageDetail({
         <CardHeader>
           <CardTitle className="text-base">Employee information</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-x-5 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-6">
-          <Field label="Employee ID" value={detail.employee_number_snapshot} />
-          <Field label="Full name" value={detail.full_name_snapshot} />
-          <Field label="Job title" value={detail.job_title_snapshot} />
-          <Field label="Division / department" value={detail.division_snapshot} />
-          <Field label="Section / unit" value={detail.section_snapshot} />
-          <Field label="Evaluation cycle" value={`${detail.cycle_name} (${detail.cycle_year})`} />
+        <CardContent className="overflow-x-auto p-0">
+          <Table>
+            <TableBody>
+              {[
+                ["Employee Number", detail.employee_number_snapshot],
+                ["Full Name", detail.full_name_snapshot],
+                ["Job Title / Position", detail.job_title_snapshot],
+                ["Division / Department", detail.division_snapshot],
+                ["Section / Unit", detail.section_snapshot],
+                ["Evaluation Cycle", `${detail.cycle_name} (${detail.cycle_year})`],
+                ["Employment Status", String((detail as Record<string, unknown>).employment_status ?? "-")],
+                ["Employment Date", formatDateTime((detail as Record<string, unknown>).employment_date as string | null)],
+              ].map(([label, value]) => (
+                <TableRow key={label}>
+                  <TableCell className="w-1/3 bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {label}
+                  </TableCell>
+                  <TableCell className="text-sm font-medium text-foreground">{value || "-"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
       <Card>
@@ -771,7 +809,9 @@ export function EvaluationStageDetail({
                       <ReadOnlyField
                         label="Job / Transfer Interest"
                         value={
-                          (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]
+                          transferInterestLabel(
+                            (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"],
+                          )
                         }
                       />
                       {String(
@@ -918,7 +958,9 @@ export function EvaluationStageDetail({
                       <ReadOnlyField
                         label="Job / Transfer Interest"
                         value={
-                          (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"]
+                          transferInterestLabel(
+                            (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"],
+                          )
                         }
                       />
                       {String(
@@ -1163,11 +1205,11 @@ export function EvaluationStageDetail({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="phase2-date">Signature Date *</Label>
+                <Label htmlFor="phase2-date">Date &amp; Time *</Label>
                 <Input
                   id="phase2-date"
                   type="text"
-                  value={values.date ?? workflowDate()}
+                  value={formatDateTime(values.date ?? workflowDate())}
                   disabled={!editable}
                   readOnly
                   aria-readonly="true"
@@ -1385,6 +1427,7 @@ export function EvaluationStageDetail({
               <SignatureField
                 {...(signature ? { value: signature } : {})}
                 disabled={!editable}
+                onSave={persistSignature}
                 onChange={setSignature}
               />
             </div>
@@ -1392,6 +1435,7 @@ export function EvaluationStageDetail({
             <SignatureField
               {...(signature ? { value: signature } : {})}
               disabled={!editable}
+              onSave={persistSignature}
               onChange={setSignature}
             />
           )}

@@ -84,16 +84,19 @@ export function HistoryTablePage({
   const rows = (query.data?.rows ?? []) as ReportRow[];
   const cycleOptions = (query.data?.options.cycles ?? []).filter((cycle) => cycle.id && cycle.year);
   const currentRole = (useAccess()?.access?.roles ?? []) as Array<"HR" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE" | "PRESIDENT">;
+  const rolePrefix = currentRole.includes("SUPERVISOR")
+    ? "/supervisor"
+    : currentRole.includes("REVIEWING_SUPERVISOR")
+      ? "/reviewing-supervisor"
+      : currentRole.includes("COMMITTEE")
+        ? "/committee"
+        : currentRole.includes("PRESIDENT")
+          ? "/president"
+          : "/hr";
   const detailRoute =
-    currentRole.includes("SUPERVISOR")
-      ? "/supervisor/evaluations/$evaluationId"
-      : currentRole.includes("REVIEWING_SUPERVISOR")
-        ? "/reviewing-supervisor/evaluations/$evaluationId"
-        : currentRole.includes("COMMITTEE")
-          ? "/committee/evaluations/$evaluationId"
-          : currentRole.includes("PRESIDENT")
-            ? "/president/evaluations/$evaluationId"
-            : "/hr/evaluation-history/$evaluationId";
+    mode === "history"
+      ? "/hr/evaluation-history/$evaluationId"
+      : `${rolePrefix}/${mode}/$evaluationId`;
   const selectedCycle = useMemo(
     () => cycleOptions.find((cycle) => cycle.id === cycleId) ?? null,
     [cycleId, cycleOptions],

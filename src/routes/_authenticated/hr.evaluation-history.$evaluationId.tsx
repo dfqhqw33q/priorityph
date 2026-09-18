@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   EmptyState,
   EvaluationStatusBadge,
@@ -16,12 +17,13 @@ import { getEvaluationHistory } from "@/lib/reports.functions";
 import { humanizeToken } from "@/lib/domain";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
 import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
+import { ratingFor } from "@/features/performance-management/components/rating-matrix";
 
 export const Route = createFileRoute("/_authenticated/hr/evaluation-history/$evaluationId")({
   component: HistoryDetailPage,
 });
 
-function HistoryDetailPage() {
+export function HistoryDetailPage() {
   const { evaluationId } = Route.useParams();
   const fetch = useServerFn(getEvaluationHistory);
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
@@ -137,6 +139,36 @@ function HistoryDetailPage() {
           <Info label="Division / department" value={detail.division_snapshot} />
           <Info label="Section / unit" value={detail.section_snapshot} />
           <Info label="Supervisor" value={detail.supervisor_name ?? "-"} />
+        </CardContent>
+      </Card>
+
+      <Card className="border border-border bg-card shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base font-bold">Performance factor ratings</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Factor</TableHead>
+                <TableHead>Supervisor</TableHead>
+                <TableHead>Reviewing Supervisor</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {detail.criteria.map((criterion) => (
+                <TableRow key={criterion.id}>
+                  <TableCell className="min-w-[260px]">
+                    <span className="font-semibold">{criterion.letter}. {criterion.title}</span>
+                  </TableCell>
+                  <TableCell>{ratingFor(detail.ratings, criterion.id, "SUPERVISOR") ?? "-"}</TableCell>
+                  <TableCell>
+                    {ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR") ?? "-"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

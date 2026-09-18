@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -31,7 +32,7 @@ import {
 } from "@/features/performance-management/components/rating-matrix";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluation } from "@/lib/evaluations.functions";
-import { saveRaterStep2 } from "@/lib/evaluation-workflow.functions";
+import { saveEvaluationSignature, saveRaterStep2 } from "@/lib/evaluation-workflow.functions";
 import { recordRaterAiAction, suggestRaterFields } from "@/lib/ai.functions";
 import { SignatureField } from "@/features/performance-management/components/signature-field";
 import { TextShimmer } from "@/components/loading-ui/text-shimmer";
@@ -259,13 +260,14 @@ function Step2Choice({
   );
 }
 
-function SupervisorReviewPage() {
+export function SupervisorReviewPage() {
   const { evaluationId } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { can } = useAccess();
   const fetchEvaluation = useServerFn(getEvaluation);
   const submitStep2 = useServerFn(saveRaterStep2);
+  const saveSignature = useServerFn(saveEvaluationSignature);
   const getRaterSuggestions = useServerFn(suggestRaterFields);
   const recordRaterAction = useServerFn(recordRaterAiAction);
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
@@ -325,7 +327,10 @@ function SupervisorReviewPage() {
       developmentPotential: source["supervisor_step2_development_potential"] ?? "",
       advancementOutlook: source["supervisor_step2_advancement_outlook"] ?? "",
       growthSuggestions: source["supervisor_step2_growth_suggestions"] ?? "",
-      transferInterest: source["supervisor_step2_transfer_interest"] ?? "",
+      transferInterest:
+        source["supervisor_step2_transfer_interest"] === "not_aware"
+          ? "NOT_AWARE"
+          : source["supervisor_step2_transfer_interest"] ?? "",
       transferJob: source["supervisor_step2_transfer_job"] ?? "",
       transferWhere: source["supervisor_step2_transfer_where"] ?? "",
       transferQualified: source["supervisor_step2_transfer_qualified"] ?? "",
@@ -357,12 +362,20 @@ function SupervisorReviewPage() {
   }, [dirty]);
 
   const editable = detail?.status === "SUBMITTED" || detail?.status === "DRAFT";
-  const currentDate = new Date().toISOString().slice(0, 10);
+  const currentDate = new Date().toISOString();
 
   const ratingPayload = () =>
     Object.entries(ratings)
       .filter(([, value]) => typeof value === "number")
       .map(([criterionId, value]) => ({ criterionId, rating: value as number }));
+
+  async function persistSignature() {
+    if (!detail || !signature) return;
+    await saveSignature({
+      data: { evaluationId, version: detail.version, stage: "RATER_STEP2", signature },
+    });
+    await queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
+  }
 
   async function generateSuggestions() {
     if (!detail) return;
@@ -615,19 +628,29 @@ function SupervisorReviewPage() {
         <CardHeader>
           <CardTitle className="text-base">Employee information</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm">
-          <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-7">
-            <Field label="Employee ID" value={detail.employee_number_snapshot} />
-            <Field label="Full name" value={detail.full_name_snapshot} />
-            <Field label="Job title" value={detail.job_title_snapshot} />
-            <Field label="Division / department" value={detail.division_snapshot} />
-            <Field label="Section / unit" value={detail.section_snapshot} />
-            <Field label="Evaluation cycle" value={`${detail.cycle_name} (${detail.cycle_year})`} />
-            <Field
-              label="Self-assessment submitted"
-              value={formatDateTime(detail.employee_submitted_at)}
-            />
-          </div>
+        <CardContent className="overflow-x-auto p-0">
+          <Table>
+            <TableBody>
+              {[
+                ["Employee Number", detail.employee_number_snapshot],
+                ["Full Name", detail.full_name_snapshot],
+                ["Job Title / Position", detail.job_title_snapshot],
+                ["Division / Department", detail.division_snapshot],
+                ["Section / Unit", detail.section_snapshot],
+                ["Evaluation Cycle", `${detail.cycle_name} (${detail.cycle_year})`],
+                ["Self-assessment submitted", formatDateTime(detail.employee_submitted_at)],
+                ["Employment Status", String((detail as Record<string, unknown>).employment_status ?? "-")],
+                ["Employment Date", formatDateTime((detail as Record<string, unknown>).employment_date as string | null)],
+              ].map(([label, value]) => (
+                <TableRow key={label}>
+                  <TableCell className="w-1/3 bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {label}
+                  </TableCell>
+                  <TableCell className="text-sm font-medium text-foreground">{value || "-"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
@@ -903,6 +926,7 @@ function SupervisorReviewPage() {
                   {...(signature ? { value: signature } : {})}
                   compact
                   disabled={!editable}
+                  onSave={persistSignature}
                   onChange={(value) => {
                     setSignature(value);
                     setDirty(true);
@@ -910,12 +934,12 @@ function SupervisorReviewPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="step2-date">Date</Label>
+                  <Label htmlFor="step2-date">Date &amp; Time</Label>
                 <input
                   id="step2-date"
                   type="text"
                   className="h-8 w-auto min-w-0 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:outline-none"
-                  value={step2["date"] || currentDate}
+                  value={formatDateTime(step2["date"] || currentDate)}
                   readOnly
                   aria-readonly="true"
                 />
