@@ -42,15 +42,12 @@ function ReviewingSupervisorDashboard() {
 
   const chartData = useMemo(() => {
     const breakdown = query.data?.statusBreakdown ?? {};
-    const rows = [
+    return [
       { status: "FOR_REVIEW", label: "To Review", value: breakdown.FOR_REVIEW ?? 0 },
       { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
-      { status: "SUBMITTED", label: "Completed", value: breakdown.SUBMITTED ?? 0 },
+      { status: "FOR_PROCESSING", label: "Completed", value: breakdown.FOR_PROCESSING ?? 0 },
       { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
     ];
-    return rows.filter(
-      (row) => row.value > 0 || ["FOR_REVIEW", "RETURNED", "FINALIZED"].includes(row.status),
-    );
   }, [query.data?.statusBreakdown]);
 
   if (query.isError) {
@@ -93,13 +90,13 @@ function ReviewingSupervisorDashboard() {
             <StatCard
               label="To Review"
               value={query.data?.toReview ?? query.data?.awaiting ?? 0}
-              to="/reviewing-supervisor"
+              to="/reviewing-supervisor/evaluations"
               hint="Ready for input"
             />
             <StatCard
               label="Returned"
               value={query.data?.returned ?? 0}
-              to="/hr/returned"
+              to="/reviewing-supervisor/returned"
               hint="Needs correction"
             />
             <StatCard

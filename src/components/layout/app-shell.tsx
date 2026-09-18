@@ -85,8 +85,24 @@ const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permi
     roles: ["HR", "PRESIDENT"],
   },
   {
+    prefix: "/supervisor/returned",
+    roles: ["SUPERVISOR"],
+  },
+  {
+    prefix: "/reviewing-supervisor/returned",
+    roles: ["REVIEWING_SUPERVISOR"],
+  },
+  {
+    prefix: "/committee/returned",
+    roles: ["COMMITTEE"],
+  },
+  {
+    prefix: "/president/returned",
+    roles: ["PRESIDENT"],
+  },
+  {
     prefix: "/hr/returned",
-    roles: ["HR", "SUPERVISOR", "REVIEWING_SUPERVISOR", "COMMITTEE", "PRESIDENT"],
+    roles: ["HR"],
   },
   {
     prefix: "/supervisor/completed",
@@ -249,7 +265,7 @@ const NAV: Array<{
             label: "To Review",
             permission: "evaluations.view_step1",
           },
-          { to: "/hr/returned", label: "Returned" },
+          { to: "/supervisor/returned", label: "Returned" },
           { to: "/supervisor/completed", label: "Completed" },
           { to: "/supervisor/drafts", label: "Drafts" },
         ],
@@ -276,7 +292,7 @@ const NAV: Array<{
             label: "To Review",
             permission: "evaluations.review_step3",
           },
-          { to: "/hr/returned", label: "Returned" },
+          { to: "/reviewing-supervisor/returned", label: "Returned" },
           { to: "/reviewing-supervisor/completed", label: "Completed" },
           { to: "/reviewing-supervisor/drafts", label: "Drafts" },
         ],
@@ -292,7 +308,7 @@ const NAV: Array<{
         icon: ClipboardList,
         children: [
           { to: "/committee/evaluations", label: "To Review", permission: "committee.review" },
-          { to: "/hr/returned", label: "Returned" },
+          { to: "/committee/returned", label: "Returned" },
           { to: "/committee/completed", label: "Completed" },
           { to: "/committee/drafts", label: "Drafts" },
         ],
@@ -309,7 +325,7 @@ const NAV: Array<{
         icon: BadgeCheck,
         children: [
           { to: "/president/evaluations", label: "Pending", permission: "president.view" },
-          { to: "/hr/returned", label: "Returned" },
+          { to: "/president/returned", label: "Returned" },
           { to: "/president/completed", label: "Completed" },
           { to: "/president/drafts", label: "Drafts" },
         ],

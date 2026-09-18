@@ -16,7 +16,7 @@ export const getPresidentStats = createServerFn({ method: "GET" })
     await requirePermission(context.userId, "president.view", "President Review");
     const [stats, activity] = await Promise.all([
       presidentStats(context.userId, data.cycleId ?? null),
-      recentActivity(["President Review"]),
+      recentActivity(["President Review", "Evaluation Workflow"]),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
   });

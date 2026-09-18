@@ -56,15 +56,12 @@ function PresidentDashboard() {
 
   const chartData = useMemo(() => {
     const breakdown = query.data?.statusBreakdown ?? {};
-    const rows = [
+    return [
       { status: "FOR_APPROVAL", label: "To Review", value: breakdown.FOR_APPROVAL ?? 0 },
       { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
-      { status: "SUBMITTED", label: "Completed", value: breakdown.SUBMITTED ?? 0 },
+      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
       { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
     ];
-    return rows.filter(
-      (row) => row.value > 0 || ["FOR_APPROVAL", "RETURNED", "FINALIZED"].includes(row.status),
-    );
   }, [query.data?.statusBreakdown]);
 
   if (query.isError) {
@@ -119,7 +116,7 @@ function PresidentDashboard() {
             <StatCard
               label="Returned"
               value={query.data?.returned ?? 0}
-              to="/hr/returned"
+              to="/president/returned"
               hint="Needs correction"
             />
             <StatCard

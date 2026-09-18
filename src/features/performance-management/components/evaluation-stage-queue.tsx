@@ -1,13 +1,23 @@
 ﻿import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
+
 import { listEvaluationStageQueue } from "@/lib/evaluation-workflow.functions";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   EmptyState,
   EvaluationStatusBadge,
   LoadingBlock,
   PageHeader,
+  formatDateTime,
 } from "@/components/shared/shared-ui";
 import type { EvaluationStatus } from "@/lib/domain";
 
@@ -16,7 +26,12 @@ type QueueRow = {
   id: string;
   full_name_snapshot: string;
   employee_number_snapshot: string;
+  job_title_snapshot: string;
+  division_snapshot: string;
+  section_snapshot: string;
+  cycle_name: string;
   cycle_year: number;
+  employee_submitted_at: string | null;
   status: string;
 };
 const titles: Record<Stage, string> = {
@@ -40,7 +55,7 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
         ? "/personnel/evaluations/$evaluationId"
         : stage === "COMMITTEE"
           ? "/committee/evaluations/$evaluationId"
-          : "/president/approvals/$evaluationId";
+          : "/president/evaluations/$evaluationId";
   return (
     <div className="space-y-6">
       <PageHeader
@@ -70,38 +85,60 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
           description="New evaluations appear after the preceding stage is submitted."
         />
       ) : (
-        <div className="overflow-x-auto border border-border bg-card shadow-sm">
-          <table className="w-full min-w-[680px] text-left text-sm">
+        <div className="max-w-full border border-border bg-card shadow-sm">
+          <Table>
             <caption className="sr-only">{titles[stage]}</caption>
-            <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Employee</th>
-                <th className="px-4 py-3 font-semibold">Employee ID</th>
-                <th className="px-4 py-3 font-semibold">Cycle</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 text-right font-semibold">Action</th>
-              </tr>
-            </thead>
-            <tbody>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
+                <TableHead className="min-w-[190px]">Full Name</TableHead>
+                <TableHead className="min-w-[150px]">Job Title</TableHead>
+                <TableHead className="min-w-[170px]">Division / Department</TableHead>
+                <TableHead className="min-w-[150px]">Section / Unit</TableHead>
+                <TableHead className="min-w-[240px]">Cycle</TableHead>
+                <TableHead className="min-w-[190px] whitespace-nowrap">Date Submitted</TableHead>
+                <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {((query.data ?? []) as QueueRow[]).map((row) => (
-                <tr key={row.id} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-medium">{row.full_name_snapshot}</td>
-                  <td className="px-4 py-3 tabular-nums">{row.employee_number_snapshot}</td>
-                  <td className="px-4 py-3">{row.cycle_year}</td>
-                  <td className="px-4 py-3">
+                <TableRow key={row.id}>
+                  <TableCell className="whitespace-nowrap tabular-nums">
+                    {row.employee_number_snapshot}
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      to={detailPath as never}
+                      params={{ evaluationId: row.id } as never}
+                    >
+                      {row.full_name_snapshot}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{row.job_title_snapshot || "—"}</TableCell>
+                  <TableCell>{row.division_snapshot || "—"}</TableCell>
+                  <TableCell>{row.section_snapshot || "—"}</TableCell>
+                  <TableCell>
+                    {row.cycle_name ? `${row.cycle_name} (${row.cycle_year})` : row.cycle_year}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {row.employee_submitted_at ? formatDateTime(row.employee_submitted_at) : "—"}
+                  </TableCell>
+                  <TableCell>
                     <EvaluationStatusBadge status={row.status as EvaluationStatus} />
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                     <Button asChild variant="outline" size="sm">
                       <Link to={detailPath as never} params={{ evaluationId: row.id } as never}>
                         Open
                       </Link>
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

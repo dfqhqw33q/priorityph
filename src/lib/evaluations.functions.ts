@@ -94,7 +94,13 @@ export const getHRStats = createServerFn({ method: "GET" })
     await requirePermission(context.userId, "cycles.view", "HR Dashboard");
     const [counts, activity] = await Promise.all([
       statusCountsForCycle(data.cycleId ?? null),
-      recentActivity(["Supervisor Review", "Reviewing Supervisor Review", "Committee Review", "President Review"]),
+      recentActivity([
+        "Supervisor Review",
+        "Reviewing Supervisor Review",
+        "Committee Review",
+        "President Review",
+        "Evaluation Workflow",
+      ]),
     ]);
 
     const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
@@ -108,7 +114,7 @@ export const getHRStats = createServerFn({ method: "GET" })
 
     return {
       totalEvaluations,
-      awaitingReview: counts.SUBMITTED + counts.FOR_REVIEW,
+      awaitingReview: counts.FOR_PROCESSING,
       completed: counts.FOR_REVIEW,
       drafts: counts.DRAFT,
       pending,
@@ -129,7 +135,7 @@ export const getSupervisorStats = createServerFn({ method: "GET" })
     await requirePermission(context.userId, "evaluations.view_step1", "Supervisor Review");
     const [stats, activity] = await Promise.all([
       supervisorStats(context.userId, data.cycleId ?? null),
-      recentActivity(["Supervisor Review"]),
+      recentActivity(["Supervisor Review", "Evaluation Workflow"]),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
   });
@@ -149,7 +155,7 @@ export const getReviewingSupervisorStats = createServerFn({ method: "GET" })
     );
     const [stats, activity] = await Promise.all([
       reviewingSupervisorStats(context.userId, data.cycleId ?? null),
-      recentActivity(["Reviewing Supervisor Review"]),
+      recentActivity(["Reviewing Supervisor Review", "Evaluation Workflow"]),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
   });
@@ -165,7 +171,7 @@ export const getCommitteeStats = createServerFn({ method: "GET" })
     await requirePermission(context.userId, "committee.review", "Committee Review");
     const [stats, activity] = await Promise.all([
       committeeStats(context.userId, data.cycleId ?? null),
-      recentActivity(["Committee Review"]),
+      recentActivity(["Committee Review", "Evaluation Workflow"]),
     ]);
     return { ...stats, activity, cycleId: data.cycleId ?? null };
   });

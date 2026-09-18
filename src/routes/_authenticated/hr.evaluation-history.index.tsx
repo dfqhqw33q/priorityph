@@ -57,7 +57,7 @@ export function HistoryTablePage({
 
   const effectiveStatus =
     mode === "completed"
-      ? "FOR_REVIEW"
+      ? defaultStatus || "FOR_REVIEW"
       : mode === "drafts"
         ? "DRAFT"
         : mode === "returned"

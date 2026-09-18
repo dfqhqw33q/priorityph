@@ -14,7 +14,7 @@ import {
 } from "@/components/shared/shared-ui";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { getHRStats, listEvaluationCycleOptionsForUser } from "@/lib/evaluations.functions";
-import { humanizeToken } from "@/lib/domain";
+import { humanizeToken, type EvaluationStatus } from "@/lib/domain";
 
 export const Route = createFileRoute("/_authenticated/hr/")({
   component: HrDashboard,
@@ -38,16 +38,14 @@ function HrDashboard() {
   });
 
   const chartData = useMemo(() => {
-    const breakdown = query.data?.statusBreakdown ?? {};
-    const rows = [
-      { status: "SUBMITTED", label: "To Review", value: breakdown.SUBMITTED ?? 0 },
-      { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
-      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
-      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
+    const breakdown = query.data?.statusBreakdown ?? ({} as Record<EvaluationStatus, number>);
+    const count = (status: EvaluationStatus) => breakdown[status] ?? 0;
+    return [
+      { status: "FOR_PROCESSING", label: "To Review", value: count("FOR_PROCESSING") },
+      { status: "RETURNED", label: "Returned", value: count("RETURNED") },
+      { status: "FOR_REVIEW", label: "Completed", value: count("FOR_REVIEW") },
+      { status: "DRAFT", label: "Drafts", value: count("DRAFT") },
     ];
-    return rows.filter(
-      (row) => row.value > 0 || ["SUBMITTED", "RETURNED", "FINALIZED", "DRAFT"].includes(row.status),
-    );
   }, [query.data?.statusBreakdown]);
 
   if (query.isError) {
@@ -95,13 +93,13 @@ function HrDashboard() {
             />
             <StatCard
               label="To Review"
-              value={query.data?.toReview ?? query.data?.awaitingReview ?? 0}
+              value={query.data?.awaitingReview ?? 0}
               to="/personnel"
               hint="Open tasks"
             />
             <StatCard
               label="Returned"
-              value={query.data?.returned ?? 0}
+              value={query.data?.statusBreakdown.RETURNED ?? 0}
               to="/hr/returned"
               hint="Needs correction"
             />

@@ -45,13 +45,13 @@ function CommitteeDashboard() {
     const rows = [
       { status: "FOR_REVIEW", label: "To Review", value: breakdown.FOR_REVIEW ?? 0 },
       { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
-      { status: "SUBMITTED", label: "Completed", value: breakdown.SUBMITTED ?? 0 },
+      { status: "FOR_APPROVAL", label: "Completed", value: breakdown.FOR_APPROVAL ?? 0 },
       { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
       { status: "TRAINING_REQUIRED", label: "Training Required", value: query.data?.trainingRequired ?? 0 },
     ];
     return rows.filter(
       (row) =>
-        row.value > 0 || ["FOR_REVIEW", "RETURNED", "FINALIZED", "TRAINING_REQUIRED"].includes(row.status),
+        row.value > 0 || ["FOR_REVIEW", "RETURNED", "FOR_APPROVAL", "TRAINING_REQUIRED"].includes(row.status),
     );
   }, [query.data?.statusBreakdown, query.data?.trainingRequired]);
 
@@ -95,13 +95,13 @@ function CommitteeDashboard() {
             <StatCard
               label="To Review"
               value={query.data?.toReview ?? query.data?.awaiting ?? 0}
-              to="/committee"
+              to="/committee/evaluations"
               hint="Ready for recommendation"
             />
             <StatCard
               label="Returned"
               value={query.data?.returned ?? 0}
-              to="/hr/returned"
+              to="/committee/returned"
               hint="Needs correction"
             />
             <StatCard
