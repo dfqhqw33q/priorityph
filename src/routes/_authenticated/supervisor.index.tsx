@@ -58,16 +58,11 @@ function SupervisorDashboard() {
 
   const chartData = useMemo(() => {
     const breakdown = query.data?.statusBreakdown ?? {};
-    const rows = [
+    return [
       { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
       { status: "SUBMITTED", label: "To Review", value: breakdown.SUBMITTED ?? 0 },
-      { status: "FOR_REVIEW", label: "In Review", value: breakdown.FOR_REVIEW ?? 0 },
       { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
     ];
-
-    return rows.filter(
-      (row) => row.value > 0 || ["DRAFT", "SUBMITTED", "FINALIZED"].includes(row.status),
-    );
   }, [query.data?.statusBreakdown]);
 
   if (query.isError) {
@@ -134,7 +129,7 @@ function SupervisorDashboard() {
           </div>
 
           <Card className="border border-border bg-card shadow-sm">
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-base">Evaluation Status</CardTitle>
             </CardHeader>
             <CardContent className="h-[260px] p-3 pt-0">
@@ -148,16 +143,25 @@ function SupervisorDashboard() {
                   <BarChart
                     data={chartData}
                     layout="vertical"
-                    margin={{ top: 4, right: 12, left: 8, bottom: 4 }}
+                    margin={{ top: 6, right: 12, left: 8, bottom: 6 }}
+                    barGap={8}
                   >
-                    <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-                    <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      domain={[0, (dataMax: number) => Math.max(dataMax, 1)]}
+                    />
                     <YAxis
                       type="category"
                       dataKey="label"
                       tickLine={false}
                       axisLine={false}
-                      width={78}
+                      width={84}
+                      tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
                     />
                     <Tooltip
                       cursor={{ fill: "hsl(var(--muted))" }}
@@ -165,7 +169,19 @@ function SupervisorDashboard() {
                         <ChartTooltipContent hideLabel formatter={(value) => [value, "Evaluations"]} />
                       }
                     />
-                    <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
+                    <Bar
+                      dataKey="value"
+                      fill="hsl(var(--chart-1))"
+                      radius={[0, 6, 6, 0]}
+                      barSize={18}
+                      label={{
+                        position: "right",
+                        formatter: (value: number | string) => `${value}`,
+                        fill: "hsl(var(--foreground))",
+                        fontSize: 12,
+                        fontWeight: 600,
+                      }}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
