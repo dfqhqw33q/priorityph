@@ -86,7 +86,7 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
         />
       ) : (
         <div className="max-w-full border border-border bg-card shadow-sm">
-          <Table className="w-full min-w-[1180px] table-fixed">
+          <Table>
             <caption className="sr-only">{titles[stage]}</caption>
             <TableHeader>
               <TableRow>
