@@ -750,8 +750,31 @@ export async function reviewingSupervisorStats(cycleId: string | null = null) {
 }
 
 export async function committeeStats(cycleId: string | null = null) {
+  const admin = await getAdmin();
   const counts = await statusCountsForCycle(cycleId);
   const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  const { count: trainingRequiredCount } = await admin
+    .from("evaluations")
+    .select("id", { count: "exact", head: true })
+    .eq("final_action", "TRAINING_REQUIRED");
+
+  if (cycleId) {
+    const { count } = await admin
+      .from("evaluations")
+      .select("id", { count: "exact", head: true })
+      .eq("cycle_id", cycleId)
+      .eq("final_action", "TRAINING_REQUIRED");
+    return {
+      totalEvaluations,
+      awaiting: counts.FOR_REVIEW,
+      returned: counts.RETURNED,
+      inProgress: counts.FOR_PROCESSING + counts.FOR_APPROVAL,
+      completed: counts.FINALIZED,
+      finalized: counts.FINALIZED,
+      trainingRequired: count ?? 0,
+      statusBreakdown: counts,
+    };
+  }
 
   return {
     totalEvaluations,
@@ -760,6 +783,7 @@ export async function committeeStats(cycleId: string | null = null) {
     inProgress: counts.FOR_PROCESSING + counts.FOR_APPROVAL,
     completed: counts.FINALIZED,
     finalized: counts.FINALIZED,
+    trainingRequired: trainingRequiredCount ?? 0,
     statusBreakdown: counts,
   };
 }
@@ -797,6 +821,9 @@ export async function presidentStats(cycleId: string | null = null) {
     submitted,
     completed: finalized,
     finalized,
+    pendingApprovals: counts.FOR_APPROVAL,
+    returned: counts.RETURNED,
+    totalFinalized: finalized,
     step2Completed: step2 ?? 0,
     step3Completed: step3 ?? 0,
     activeYears: Array.from(new Set((cycles ?? []).map((c) => c.year))).sort((a, b) => b - a),
@@ -806,10 +833,12 @@ export async function presidentStats(cycleId: string | null = null) {
 
 export async function adminStats() {
   const admin = await getAdmin();
-  const [{ data: users }, { data: roleRows }, { data: permissionRows }] = await Promise.all([
+  const [{ data: users }, { data: roleRows }, { data: permissionRows }, { count: employeeRecords }, { count: auditEvents }] = await Promise.all([
     admin.from("internal_users").select("is_active, is_locked"),
     admin.from("user_roles").select("role"),
     admin.from("permissions").select("code"),
+    admin.from("employees").select("id", { count: "exact", head: true }),
+    admin.from("audit_logs").select("id", { count: "exact", head: true }),
   ]);
   const [activeCycles, evaluations] = await Promise.all([
     admin
@@ -834,6 +863,8 @@ export async function adminStats() {
     activeCycles,
     totalEvaluations: (evaluations.data ?? []).length,
     evaluationsByStatus: byStatus,
+    auditEvents: auditEvents ?? 0,
+    employeeRecords: employeeRecords ?? 0,
   };
 }
 

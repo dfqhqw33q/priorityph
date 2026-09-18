@@ -41,13 +41,18 @@ function CommitteeDashboard() {
   });
 
   const chartData = useMemo(() => {
+    const breakdown = query.data?.statusBreakdown ?? {};
     const rows = [
-      { status: "FOR_REVIEW", label: "To Review", value: query.data?.statusBreakdown?.FOR_REVIEW ?? 0 },
-      { status: "FOR_PROCESSING", label: "In Review", value: query.data?.statusBreakdown?.FOR_PROCESSING ?? 0 },
-      { status: "FINALIZED", label: "Completed", value: query.data?.statusBreakdown?.FINALIZED ?? 0 },
+      { status: "FOR_REVIEW", label: "To Review", value: breakdown.FOR_REVIEW ?? 0 },
+      { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
+      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
+      { status: "TRAINING_REQUIRED", label: "Training Required", value: query.data?.trainingRequired ?? 0 },
     ];
-    return rows;
-  }, [query.data?.statusBreakdown]);
+    return rows.filter(
+      (row) =>
+        row.value > 0 || ["FOR_REVIEW", "RETURNED", "FINALIZED", "TRAINING_REQUIRED"].includes(row.status),
+    );
+  }, [query.data?.statusBreakdown, query.data?.trainingRequired]);
 
   if (query.isError) {
     const message = query.error instanceof Error ? query.error.message : "Unavailable";
@@ -99,48 +104,44 @@ function CommitteeDashboard() {
               hint="Ready for recommendation"
             />
             <StatCard
-              label="Returned"
-              value={query.data?.returned ?? 0}
-              to="/committee"
-              hint="Needs revision"
-            />
-            <StatCard
               label="Completed"
               value={query.data?.finalized ?? 0}
               to="/hr/completed"
               hint="Closed"
             />
+            <StatCard
+              label="Training Required"
+              value={query.data?.trainingRequired ?? 0}
+              to="/hr/training"
+              hint="Committee final action"
+            />
           </div>
 
           <Card className="border border-border bg-card shadow-sm">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Evaluation Status</CardTitle>
             </CardHeader>
-            <CardContent className="h-72">
+            <CardContent className="h-[260px] p-3 pt-0">
               <ChartContainer
                 config={{ value: { color: "hsl(var(--chart-3))", label: "Evaluations" } }}
                 className="h-full w-full"
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 8 }}>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      interval={0}
-                      angle={-20}
-                      textAnchor="end"
-                      height={52}
-                    />
-                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
+                  <BarChart
+                    data={chartData}
+                    layout="vertical"
+                    margin={{ top: 4, right: 12, left: 8, bottom: 4 }}
+                  >
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                    <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="label" tickLine={false} axisLine={false} width={98} />
                     <Tooltip
                       cursor={{ fill: "hsl(var(--muted))" }}
                       content={
                         <ChartTooltipContent hideLabel formatter={(value) => [value, "Evaluations"]} />
                       }
                     />
-                    <Bar dataKey="value" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="value" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -148,16 +149,21 @@ function CommitteeDashboard() {
           </Card>
 
           <Card className="border border-border bg-card shadow-sm">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {(query.data?.activity ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
+                <div className="flex min-h-[80px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-3 py-4 text-center">
+                  <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
+                </div>
               ) : (
                 <ul className="space-y-2 text-sm">
                   {(query.data?.activity ?? []).map((event) => (
-                    <li key={event.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0">
+                    <li
+                      key={event.id}
+                      className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0"
+                    >
                       <span className="font-medium text-foreground">{humanizeToken(event.action)}</span>
                       <span className="text-xs text-muted-foreground">{formatDateTime(event.occurred_at)}</span>
                     </li>

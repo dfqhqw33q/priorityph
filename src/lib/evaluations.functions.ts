@@ -109,11 +109,20 @@ export const getHRStats = createServerFn({ method: "GET" })
     ]);
 
     const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
+    const pending =
+      counts.DRAFT +
+      counts.SUBMITTED +
+      counts.FOR_REVIEW +
+      counts.FOR_PROCESSING +
+      counts.FOR_APPROVAL +
+      counts.RETURNED;
+
     return {
       totalEvaluations,
       awaitingReview: counts.SUBMITTED + counts.FOR_REVIEW,
       completed: counts.FINALIZED,
       drafts: counts.DRAFT,
+      pending,
       statusBreakdown: counts,
       activity,
       cycleId: data.cycleId ?? null,

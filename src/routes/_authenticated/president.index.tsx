@@ -55,11 +55,15 @@ function PresidentDashboard() {
   });
 
   const chartData = useMemo(() => {
+    const breakdown = query.data?.statusBreakdown ?? {};
     const rows = [
-      { status: "FOR_APPROVAL", label: "Awaiting Review", value: query.data?.statusBreakdown?.FOR_APPROVAL ?? 0 },
-      { status: "FINALIZED", label: "Completed", value: query.data?.statusBreakdown?.FINALIZED ?? 0 },
+      { status: "FOR_APPROVAL", label: "Pending Approvals", value: breakdown.FOR_APPROVAL ?? 0 },
+      { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0 },
+      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
     ];
-    return rows;
+    return rows.filter(
+      (row) => row.value > 0 || ["FOR_APPROVAL", "RETURNED", "FINALIZED"].includes(row.status),
+    );
   }, [query.data?.statusBreakdown]);
 
   if (query.isError) {
@@ -100,60 +104,56 @@ function PresidentDashboard() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Total Evaluations Processed"
-              value={query.data?.totalEvaluations ?? 0}
-              to="/hr/evaluation-history"
-              hint={cycleId ? "Current cycle" : "All cycles"}
+              label="Pending Approvals"
+              value={query.data?.pendingApprovals ?? 0}
+              to="/president/evaluations"
+              hint="Ready for review"
             />
             <StatCard
-              label="Awaiting Your Review"
-              value={query.data?.awaiting ?? 0}
+              label="Returned"
+              value={query.data?.returned ?? 0}
               to="/president/evaluations"
-              hint="Ready for approval"
-            />
-            <StatCard
-              label="In Review"
-              value={query.data?.inReview ?? 0}
-              to="/president/evaluations"
-              hint="Current queue"
+              hint="Needs correction"
             />
             <StatCard
               label="Completed"
-              value={query.data?.finalized ?? 0}
+              value={query.data?.completed ?? 0}
               to="/hr/completed"
-              hint="Closed"
+              hint="Finalized"
+            />
+            <StatCard
+              label="Total Finalized"
+              value={query.data?.totalFinalized ?? query.data?.finalized ?? 0}
+              to="/hr/evaluation-history"
+              hint={cycleId ? "Current cycle" : "All cycles"}
             />
           </div>
 
           <Card className="border border-border bg-card shadow-sm">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Evaluation Status</CardTitle>
             </CardHeader>
-            <CardContent className="h-72">
+            <CardContent className="h-[260px] p-3 pt-0">
               <ChartContainer
                 config={{ value: { color: "hsl(var(--chart-4))", label: "Evaluations" } }}
                 className="h-full w-full"
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 8 }}>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      interval={0}
-                      angle={-20}
-                      textAnchor="end"
-                      height={52}
-                    />
-                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
+                  <BarChart
+                    data={chartData}
+                    layout="vertical"
+                    margin={{ top: 4, right: 12, left: 8, bottom: 4 }}
+                  >
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                    <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="label" tickLine={false} axisLine={false} width={100} />
                     <Tooltip
                       cursor={{ fill: "hsl(var(--muted))" }}
                       content={
                         <ChartTooltipContent hideLabel formatter={(value) => [value, "Evaluations"]} />
                       }
                     />
-                    <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -161,16 +161,21 @@ function PresidentDashboard() {
           </Card>
 
           <Card className="border border-border bg-card shadow-sm">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {(query.data?.activity ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
+                <div className="flex min-h-[80px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-3 py-4 text-center">
+                  <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
+                </div>
               ) : (
                 <ul className="space-y-2 text-sm">
                   {(query.data?.activity ?? []).map((event) => (
-                    <li key={event.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0">
+                    <li
+                      key={event.id}
+                      className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0"
+                    >
                       <span className="font-medium text-foreground">{humanizeToken(event.action)}</span>
                       <span className="text-xs text-muted-foreground">{formatDateTime(event.occurred_at)}</span>
                     </li>

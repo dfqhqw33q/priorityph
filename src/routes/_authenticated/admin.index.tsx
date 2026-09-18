@@ -1,10 +1,9 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   EmptyState,
@@ -63,19 +62,6 @@ function AdminOverview() {
       <PageHeader
         title="Administration"
         description="Oversee users, access, employee records, and system activity."
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
-              <Link to="/admin/users">Users</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/admin/roles">Roles</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/admin/audit-logs">Audit logs</Link>
-            </Button>
-          </div>
-        }
       />
 
       {query.isLoading ? (
@@ -83,41 +69,37 @@ function AdminOverview() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="User Accounts" value={stats?.totalUsers ?? 0} hint={`${stats?.activeUsers ?? 0} active`} />
-            <StatCard label="Locked Accounts" value={stats?.lockedUsers ?? 0} hint="Security review" />
-            <StatCard label="Active Cycles" value={stats?.activeCycles ?? 0} hint="Open workflows" />
-            <StatCard label="Evaluations Captured" value={stats?.totalEvaluations ?? 0} to="/hr/evaluation-history" hint="All records" />
+            <StatCard label="Total Users" value={stats?.totalUsers ?? 0} hint="Accounts" />
+            <StatCard label="Active Users" value={stats?.activeUsers ?? 0} hint="Active" />
+            <StatCard label="Audit Events" value={stats?.auditEvents ?? 0} to="/admin/audit-logs" hint="System log" />
+            <StatCard label="Employee Records" value={stats?.employeeRecords ?? 0} to="/admin/employees" hint="Profiles" />
           </div>
 
           <Card className="border border-border bg-card shadow-sm">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Evaluation Status</CardTitle>
             </CardHeader>
-            <CardContent className="h-72">
+            <CardContent className="h-[260px] p-3 pt-0">
               <ChartContainer
                 config={{ value: { color: "hsl(var(--chart-5))", label: "Evaluations" } }}
                 className="h-full w-full"
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 8 }}>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      interval={0}
-                      angle={-20}
-                      textAnchor="end"
-                      height={52}
-                    />
-                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
+                  <BarChart
+                    data={chartData}
+                    layout="vertical"
+                    margin={{ top: 4, right: 12, left: 8, bottom: 4 }}
+                  >
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                    <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="label" tickLine={false} axisLine={false} width={100} />
                     <Tooltip
                       cursor={{ fill: "hsl(var(--muted))" }}
                       content={
                         <ChartTooltipContent hideLabel formatter={(value) => [value, "Evaluations"]} />
                       }
                     />
-                    <Bar dataKey="value" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="value" fill="hsl(var(--chart-5))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -125,16 +107,21 @@ function AdminOverview() {
           </Card>
 
           <Card className="border border-border bg-card shadow-sm">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {(stats?.activity ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
+                <div className="flex min-h-[80px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-3 py-4 text-center">
+                  <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
+                </div>
               ) : (
                 <ul className="space-y-2 text-sm">
                   {(stats?.activity ?? []).map((event) => (
-                    <li key={event.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0">
+                    <li
+                      key={event.id}
+                      className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0"
+                    >
                       <span className="font-medium text-foreground">{humanizeToken(event.action)}</span>
                       <span className="text-xs text-muted-foreground">{formatDateTime(event.occurred_at)}</span>
                     </li>
