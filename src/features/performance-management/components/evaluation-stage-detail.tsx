@@ -42,7 +42,6 @@ import {
   EmptyState,
   EvaluationStatusBadge,
   LoadingBlock,
-  PageHeader,
   formatDateTime,
 } from "@/components/shared/shared-ui";
 import { TextShimmer } from "@/components/loading-ui/text-shimmer";
@@ -668,51 +667,56 @@ export function EvaluationStageDetail({
   );
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year})  -  Employee ID ${detail.employee_number_snapshot}`}
-        actions={<EvaluationStatusBadge status={detail.status} />}
-      />
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base">Employee information</CardTitle>
         </CardHeader>
-        <CardContent className="max-w-full overflow-x-auto p-0">
-          <Table>
-            <caption className="sr-only">Employee information</caption>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
-                <TableHead className="min-w-[190px]">Full Name</TableHead>
-                <TableHead className="min-w-[150px]">Job Title</TableHead>
-                <TableHead className="min-w-[170px]">Division / Department</TableHead>
-                <TableHead className="min-w-[150px]">Section / Unit</TableHead>
-                <TableHead className="min-w-[240px]">Cycle</TableHead>
-                <TableHead className="min-w-[190px] whitespace-nowrap">Date Submitted</TableHead>
-                <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell className="whitespace-nowrap tabular-nums">
-                  {detail.employee_number_snapshot}
-                </TableCell>
-                <TableCell className="font-medium">{detail.full_name_snapshot}</TableCell>
-                <TableCell>{detail.job_title_snapshot || "—"}</TableCell>
-                <TableCell>{detail.division_snapshot || "—"}</TableCell>
-                <TableCell>{detail.section_snapshot || "—"}</TableCell>
-                <TableCell>
-                  {detail.cycle_name} ({detail.cycle_year})
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                  {formatDateTime(detail.employee_submitted_at)}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <EvaluationStatusBadge status={detail.status} />
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+        <CardContent className="pt-0">
+          <div className="max-w-full overflow-hidden border border-border bg-card shadow-sm">
+            <Table className="w-full min-w-0 table-fixed">
+              <caption className="sr-only">Employee information</caption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[12%] whitespace-nowrap">Employee ID</TableHead>
+                  <TableHead className="w-[19%]">Full Name</TableHead>
+                  <TableHead className="w-[14%]">Job Title</TableHead>
+                  <TableHead className="w-[16%]">Division / Department</TableHead>
+                  <TableHead className="w-[14%]">Section / Unit</TableHead>
+                  <TableHead className="w-[18%]">Cycle</TableHead>
+                  <TableHead className="w-[17%] whitespace-nowrap">Date Submitted</TableHead>
+                  <TableHead className="w-[12%] whitespace-nowrap">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="whitespace-nowrap tabular-nums">
+                    {detail.employee_number_snapshot}
+                  </TableCell>
+                  <TableCell className="whitespace-normal break-words font-medium">
+                    {detail.full_name_snapshot}
+                  </TableCell>
+                  <TableCell className="whitespace-normal break-words">
+                    {detail.job_title_snapshot || "—"}
+                  </TableCell>
+                  <TableCell className="whitespace-normal break-words">
+                    {detail.division_snapshot || "—"}
+                  </TableCell>
+                  <TableCell className="whitespace-normal break-words">
+                    {detail.section_snapshot || "—"}
+                  </TableCell>
+                  <TableCell className="whitespace-normal break-words">
+                    {detail.cycle_name} ({detail.cycle_year})
+                  </TableCell>
+                  <TableCell className="whitespace-normal break-words text-xs text-muted-foreground">
+                    {formatDateTime(detail.employee_submitted_at)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <EvaluationStatusBadge status={detail.status} />
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
       <Card>
