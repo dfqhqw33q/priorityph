@@ -57,12 +57,17 @@ function SupervisorDashboard() {
   });
 
   const chartData = useMemo(() => {
+    const breakdown = query.data?.statusBreakdown ?? {};
     const rows = [
-      { status: "DRAFT", label: "Drafts", value: query.data?.statusBreakdown?.DRAFT ?? 0 },
-      { status: "SUBMITTED", label: "To Review", value: query.data?.statusBreakdown?.SUBMITTED ?? 0 },
-      { status: "FINALIZED", label: "Completed", value: query.data?.statusBreakdown?.FINALIZED ?? 0 },
+      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0 },
+      { status: "SUBMITTED", label: "To Review", value: breakdown.SUBMITTED ?? 0 },
+      { status: "FOR_REVIEW", label: "In Review", value: breakdown.FOR_REVIEW ?? 0 },
+      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0 },
     ];
-    return rows;
+
+    return rows.filter(
+      (row) => row.value > 0 || ["DRAFT", "SUBMITTED", "FINALIZED"].includes(row.status),
+    );
   }, [query.data?.statusBreakdown]);
 
   if (query.isError) {
@@ -129,10 +134,10 @@ function SupervisorDashboard() {
           </div>
 
           <Card className="border border-border bg-card shadow-sm">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Evaluation Status</CardTitle>
             </CardHeader>
-            <CardContent className="h-72">
+            <CardContent className="h-[260px] p-3 pt-0">
               <ChartContainer
                 config={{
                   value: { color: "hsl(var(--chart-1))", label: "Evaluations" },
@@ -140,25 +145,27 @@ function SupervisorDashboard() {
                 className="h-full w-full"
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 8 }}>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis
+                  <BarChart
+                    data={chartData}
+                    layout="vertical"
+                    margin={{ top: 4, right: 12, left: 8, bottom: 4 }}
+                  >
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                    <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                    <YAxis
+                      type="category"
                       dataKey="label"
                       tickLine={false}
                       axisLine={false}
-                      interval={0}
-                      angle={-20}
-                      textAnchor="end"
-                      height={52}
+                      width={78}
                     />
-                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
                     <Tooltip
                       cursor={{ fill: "hsl(var(--muted))" }}
                       content={
                         <ChartTooltipContent hideLabel formatter={(value) => [value, "Evaluations"]} />
                       }
                     />
-                    <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -166,16 +173,21 @@ function SupervisorDashboard() {
           </Card>
 
           <Card className="border border-border bg-card shadow-sm">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {(query.data?.activity ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
+                <div className="flex min-h-[80px] items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-3 py-4 text-center">
+                  <p className="text-sm text-muted-foreground">No recent evaluation activity.</p>
+                </div>
               ) : (
                 <ul className="space-y-2 text-sm">
                   {(query.data?.activity ?? []).map((event) => (
-                    <li key={event.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0">
+                    <li
+                      key={event.id}
+                      className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0"
+                    >
                       <span className="font-medium text-foreground">{humanizeToken(event.action)}</span>
                       <span className="text-xs text-muted-foreground">{formatDateTime(event.occurred_at)}</span>
                     </li>

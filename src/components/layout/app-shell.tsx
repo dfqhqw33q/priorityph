@@ -562,6 +562,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SidebarInset>
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+            <SidebarTrigger className="md:hidden" aria-label="Open sidebar" />
             <div className="ml-auto flex items-center gap-3">
               <NotificationCenter />
               <DropdownMenu>
