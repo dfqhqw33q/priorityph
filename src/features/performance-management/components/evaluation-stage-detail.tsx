@@ -672,19 +672,19 @@ export function EvaluationStageDetail({
           <CardTitle className="text-base">Employee information</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="max-w-full overflow-hidden border border-border bg-card shadow-sm">
-            <Table className="w-full min-w-0 table-fixed">
+          <div className="max-w-full border border-border bg-card shadow-sm">
+            <Table>
               <caption className="sr-only">Employee information</caption>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[12%] whitespace-nowrap">Employee ID</TableHead>
-                  <TableHead className="w-[19%]">Full Name</TableHead>
-                  <TableHead className="w-[14%]">Job Title</TableHead>
-                  <TableHead className="w-[16%]">Division / Department</TableHead>
-                  <TableHead className="w-[14%]">Section / Unit</TableHead>
-                  <TableHead className="w-[18%]">Cycle</TableHead>
-                  <TableHead className="w-[17%] whitespace-nowrap">Date Submitted</TableHead>
-                  <TableHead className="w-[12%] whitespace-nowrap">Status</TableHead>
+                  <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
+                  <TableHead className="min-w-[190px]">Full Name</TableHead>
+                  <TableHead className="min-w-[150px]">Job Title</TableHead>
+                  <TableHead className="min-w-[170px]">Division / Department</TableHead>
+                  <TableHead className="min-w-[150px]">Section / Unit</TableHead>
+                  <TableHead className="min-w-[240px]">Cycle</TableHead>
+                  <TableHead className="min-w-[190px] whitespace-nowrap">Date Submitted</TableHead>
+                  <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -692,22 +692,22 @@ export function EvaluationStageDetail({
                   <TableCell className="whitespace-nowrap tabular-nums">
                     {detail.employee_number_snapshot}
                   </TableCell>
-                  <TableCell className="whitespace-normal break-words font-medium">
+                  <TableCell className="font-medium">
                     {detail.full_name_snapshot}
                   </TableCell>
-                  <TableCell className="whitespace-normal break-words">
+                  <TableCell className="text-muted-foreground">
                     {detail.job_title_snapshot || "—"}
                   </TableCell>
-                  <TableCell className="whitespace-normal break-words">
+                  <TableCell className="text-muted-foreground">
                     {detail.division_snapshot || "—"}
                   </TableCell>
-                  <TableCell className="whitespace-normal break-words">
+                  <TableCell className="text-muted-foreground">
                     {detail.section_snapshot || "—"}
                   </TableCell>
-                  <TableCell className="whitespace-normal break-words">
+                  <TableCell className="text-foreground">
                     {detail.cycle_name} ({detail.cycle_year})
                   </TableCell>
-                  <TableCell className="whitespace-normal break-words text-xs text-muted-foreground">
+                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                     {formatDateTime(detail.employee_submitted_at)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
