@@ -90,7 +90,6 @@ function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <EvaluationStatusBadge status={detail.status} />
         {detail.status === "FINALIZED" ? (
           <>
             <Button

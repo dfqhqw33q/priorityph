@@ -218,6 +218,11 @@ function Step2Input(props: Step2Props) {
   );
 }
 
+function formatDisplayValue(value: string) {
+  if (!value) return value;
+  return value.replace(/_/g, " ");
+}
+
 function Step2Choice({
   field,
   label,
@@ -251,7 +256,7 @@ function Step2Choice({
                 props.setDirty(true);
               }}
             />
-            <span>{option}</span>
+            <span>{formatDisplayValue(option)}</span>
           </label>
         ))}
       </div>
@@ -338,6 +343,7 @@ function SupervisorReviewPageInner({
     setRatings(next);
     setRemarks(detail.supervisor_remarks);
     const source = detail as typeof detail & Record<string, string | null>;
+    const transferInterestValue = String(source["supervisor_step2_transfer_interest"] ?? "");
     setStep2({
       overallExplanation: source["supervisor_step2_overall_explanation"] ?? "",
       strengths: source["supervisor_step2_strengths"] ?? "",
@@ -347,9 +353,11 @@ function SupervisorReviewPageInner({
       advancementOutlook: source["supervisor_step2_advancement_outlook"] ?? "",
       growthSuggestions: source["supervisor_step2_growth_suggestions"] ?? "",
       transferInterest:
-        source["supervisor_step2_transfer_interest"] === "not_aware"
+        transferInterestValue === "not_aware" ||
+        transferInterestValue === "NOT AWARE" ||
+        transferInterestValue === "NOT_AWARE"
           ? "NOT_AWARE"
-          : (source["supervisor_step2_transfer_interest"] ?? ""),
+          : transferInterestValue,
       transferJob: source["supervisor_step2_transfer_job"] ?? "",
       transferWhere: source["supervisor_step2_transfer_where"] ?? "",
       transferQualified: source["supervisor_step2_transfer_qualified"] ?? "",
@@ -637,10 +645,6 @@ function SupervisorReviewPageInner({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <EvaluationStatusBadge status={detail.status} />
-      </div>
-
       <div className="max-w-full border border-border bg-card shadow-sm">
         <Table>
           <caption className="sr-only">Employee information</caption>

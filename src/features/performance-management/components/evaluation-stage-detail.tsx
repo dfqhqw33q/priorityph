@@ -107,7 +107,10 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 function transferInterestLabel(value: unknown) {
-  return String(value ?? "").toUpperCase() === "NOT_AWARE" ? "NOT AWARE" : String(value ?? "-");
+  const text = String(value ?? "").trim();
+  if (!text) return "-";
+  const normalized = text.replace(/_/g, " ").toUpperCase();
+  return normalized === "NOT AWARE" ? "NOT AWARE" : normalized;
 }
 
 function ReadOnlyField({
