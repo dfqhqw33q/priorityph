@@ -260,8 +260,13 @@ function Step2Choice({
   );
 }
 
-export function SupervisorReviewPage() {
-  const { evaluationId } = Route.useParams();
+export function SupervisorReviewPage({
+  evaluationId: evaluationIdOverride,
+}: {
+  evaluationId?: string;
+}) {
+  const { evaluationId: routeEvaluationId } = Route.useParams();
+  const evaluationId = evaluationIdOverride ?? routeEvaluationId;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { can } = useAccess();

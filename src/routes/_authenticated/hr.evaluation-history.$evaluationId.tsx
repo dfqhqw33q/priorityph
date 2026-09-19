@@ -30,8 +30,13 @@ export const Route = createFileRoute("/_authenticated/hr/evaluation-history/$eva
   component: HistoryDetailPage,
 });
 
-export function HistoryDetailPage() {
-  const { evaluationId } = Route.useParams();
+export function HistoryDetailPage({
+  evaluationId: evaluationIdOverride,
+}: {
+  evaluationId?: string;
+}) {
+  const { evaluationId: routeEvaluationId } = Route.useParams();
+  const evaluationId = evaluationIdOverride ?? routeEvaluationId;
   const fetch = useServerFn(getEvaluationHistory);
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const [documentAction, setDocumentAction] = useState<"preview" | "print" | null>(null);
