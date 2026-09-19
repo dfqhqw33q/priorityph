@@ -641,45 +641,57 @@ function SupervisorReviewPageInner({
         <EvaluationStatusBadge status={detail.status} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Employee information</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
-          <Table>
-            <TableBody>
-              {[
-                ["Employee Number", detail.employee_number_snapshot],
-                ["Full Name", detail.full_name_snapshot],
-                ["Job Title / Position", detail.job_title_snapshot],
-                ["Division / Department", detail.division_snapshot],
-                ["Section / Unit", detail.section_snapshot],
-                ["Evaluation Cycle", `${detail.cycle_name} (${detail.cycle_year})`],
-                ["Self-assessment submitted", formatDateTime(detail.employee_submitted_at)],
-                [
-                  "Employment Status",
-                  String((detail as Record<string, unknown>)["employment_status"] ?? "-"),
-                ],
-                [
-                  "Employment Date",
-                  formatDateTime(
-                    (detail as Record<string, unknown>)["employment_date"] as string | null,
-                  ),
-                ],
-              ].map(([label, value]) => (
-                <TableRow key={label}>
-                  <TableCell className="w-1/3 bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {label}
-                  </TableCell>
-                  <TableCell className="text-sm font-medium text-foreground">
-                    {value || "-"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="max-w-full border border-border bg-card shadow-sm">
+        <Table>
+          <caption className="sr-only">Employee information</caption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[120px] whitespace-nowrap bg-primary text-primary-foreground">
+                Employee ID
+              </TableHead>
+              <TableHead className="min-w-[190px] bg-primary text-primary-foreground">
+                Full Name
+              </TableHead>
+              <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
+                Job Title
+              </TableHead>
+              <TableHead className="min-w-[170px] bg-primary text-primary-foreground">
+                Division / Department
+              </TableHead>
+              <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
+                Section / Unit
+              </TableHead>
+              <TableHead className="min-w-[240px] bg-primary text-primary-foreground">Cycle</TableHead>
+              <TableHead className="min-w-[190px] whitespace-nowrap bg-primary text-primary-foreground">
+                Date Submitted
+              </TableHead>
+              <TableHead className="min-w-[120px] whitespace-nowrap bg-primary text-primary-foreground">
+                Status
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell className="whitespace-nowrap tabular-nums">
+                {detail.employee_number_snapshot}
+              </TableCell>
+              <TableCell className="font-medium">{detail.full_name_snapshot}</TableCell>
+              <TableCell className="text-muted-foreground">{detail.job_title_snapshot || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">{detail.division_snapshot || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">{detail.section_snapshot || "—"}</TableCell>
+              <TableCell className="text-foreground">
+                {detail.cycle_name} ({detail.cycle_year})
+              </TableCell>
+              <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                {formatDateTime(detail.employee_submitted_at)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                <EvaluationStatusBadge status={detail.status} />
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
 
       <Card>
         <CardHeader>

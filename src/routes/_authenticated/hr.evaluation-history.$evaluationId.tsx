@@ -144,19 +144,45 @@ function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
         <Info label="Final rating" value={score?.finalRatingLabel ?? "-"} />
       </div>
 
-      <Card className="border border-border bg-card shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base font-bold">Employee information</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          <Info label="Employee ID" value={detail.employee_number_snapshot} />
-          <Info label="Full name" value={detail.full_name_snapshot} />
-          <Info label="Job title" value={detail.job_title_snapshot} />
-          <Info label="Division / department" value={detail.division_snapshot} />
-          <Info label="Section / unit" value={detail.section_snapshot} />
-          <Info label="Supervisor" value={detail.supervisor_name ?? "-"} />
-        </CardContent>
-      </Card>
+      <div className="max-w-full border border-border bg-card shadow-sm">
+        <Table>
+          <caption className="sr-only">Employee information</caption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[120px] whitespace-nowrap bg-primary text-primary-foreground">
+                Employee ID
+              </TableHead>
+              <TableHead className="min-w-[190px] bg-primary text-primary-foreground">
+                Full Name
+              </TableHead>
+              <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
+                Job Title
+              </TableHead>
+              <TableHead className="min-w-[170px] bg-primary text-primary-foreground">
+                Division / Department
+              </TableHead>
+              <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
+                Section / Unit
+              </TableHead>
+              <TableHead className="min-w-[180px] bg-primary text-primary-foreground">
+                Supervisor
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell className="whitespace-nowrap tabular-nums">
+                {detail.employee_number_snapshot}
+              </TableCell>
+              <TableCell className="font-medium">{detail.full_name_snapshot}</TableCell>
+              <TableCell className="text-muted-foreground">{detail.job_title_snapshot || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">{detail.division_snapshot || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">{detail.section_snapshot || "—"}</TableCell>
+              <TableCell className="text-foreground">{detail.supervisor_name ?? "-"}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
 
       <Card className="border border-border bg-card shadow-sm">
         <CardHeader>
