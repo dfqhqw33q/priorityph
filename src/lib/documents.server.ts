@@ -196,8 +196,19 @@ export function generateEvaluationHTML(params: {
     .flex-row .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 12px; padding: 4px 8px; }
     .step-two { margin-top: 14px; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; }
     @media print {
-      .step-two { page-break-before: always; break-before: page; page-break-inside: avoid; break-inside: avoid; }
-      .step-three { page-break-before: auto; }
+      .step-two {
+        page-break-before: always;
+        break-before: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .step-three {
+        page-break-before: always;
+        break-before: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .step-two, .step-three { orphans: 3; widows: 3; }
     }
     .step-two-header { text-align: center; margin-bottom: 18px; }
     .step-two-header h1 { font-size: 16px; margin: 0 0 4px; text-transform: uppercase; }
