@@ -246,16 +246,16 @@ export function generateEvaluationHTML(params: {
     .workflow-signature .sig-date-label { font-weight: bold; }
     @media (max-width: 700px) { .step-two-grid { grid-template-columns: 1fr; } .step-two-footer { justify-content: flex-start; } }
 
-    .step-three { margin-top: 24px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.35; }
+    .step-three { margin-top: 18px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.35; }
     .step-three h2, .step-three h3 { font-weight: bold; text-transform: uppercase; }
-    .step-three-header { margin-bottom: 24px; }
-    .step-three-comments { margin-bottom: 28px; }
-    .step-three-comments-title { text-align: center; margin-bottom: 28px; }
-    .comment-lines { border-bottom: 1px solid #000; margin-bottom: 16px; padding-bottom: 16px; white-space: pre-wrap; }
-    .step-three-signature { display: flex; justify-content: flex-end; margin-top: 28px; }
-    .step-three-rule { border: 0; border-top: 1px solid #000; margin: 24px 0; }
-    .step-three-section { margin-bottom: 28px; page-break-inside: avoid; break-inside: avoid; }
-    .step-three-section-title { margin: 0 0 14px; }
+    .step-three-header { margin-bottom: 12px; }
+    .step-three-comments { margin-bottom: 10px; }
+    .step-three-comments-title { text-align: center; margin-bottom: 12px; }
+    .comment-lines { border-bottom: 1px solid #000; margin-bottom: 10px; padding-bottom: 8px; white-space: pre-wrap; line-height: 1.35; overflow-wrap: anywhere; }
+    .step-three-signature { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .step-three-rule { border: 0; border-top: 1px solid #000; margin: 14px 0; }
+    .step-three-section { margin-bottom: 14px; page-break-inside: avoid; break-inside: avoid; }
+    .step-three-section-title { margin: 0 0 10px; }
     .step-three-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; margin-bottom: 20px; }
     .step-three-field { display: flex; align-items: flex-end; gap: 8px; }
     .step-three-field-label { white-space: nowrap; }
@@ -284,6 +284,23 @@ export function generateEvaluationHTML(params: {
       .info-field .value, .period-covered .input { page-break-inside: avoid; }
       table { page-break-inside: auto; }
       tr { page-break-inside: avoid; break-inside: avoid; }
+      .step-three {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        orphans: 3;
+        widows: 3;
+      }
+      .step-three-comments,
+      .step-three-section,
+      .step-three-rule {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .comment-lines {
+        line-height: 1.28;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+      }
     }
   </style>
 </head>
