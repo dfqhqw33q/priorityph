@@ -143,45 +143,45 @@ export function generateEvaluationHTML(params: {
     @media print {
       * { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       html, body { margin: 0; padding: 0; background: white; height: auto; width: 100%; }
-      @page { size: A4 portrait; margin: 0.3in; orphans: 3; widows: 3; }
-      body { font-family: Arial, sans-serif; font-size: 11px; }
+      @page { size: A4 portrait; margin: 0.15in; orphans: 3; widows: 3; }
+      body { font-family: Arial, sans-serif; font-size: 10px; }
     }
     * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; color: #1a1a1a; background: white; margin: 0; padding: 12px; }
-    .container { max-width: 8.5in; margin: 0 auto; background: white; }
-    .header { margin-bottom: 14px; }
-    .company-name { text-align: left; font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
-    .company-address { text-align: left; font-size: 8px; margin-bottom: 12px; color: #666; }
-    .title { text-align: center; margin: 10px 0; }
-    .title h1 { font-size: 15px; font-weight: bold; text-transform: uppercase; margin: 0; }
-    .title h2 { font-size: 13px; font-weight: bold; text-transform: uppercase; margin: 4px 0 0 0; }
+    body { font-family: Arial, sans-serif; color: #1a1a1a; background: white; margin: 0; padding: 8px; }
+    .container { max-width: 8.3in; margin: 0 auto; background: white; }
+    .header { margin-bottom: 10px; }
+    .company-name { text-align: left; font-size: 8px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+    .company-address { text-align: left; font-size: 7px; margin-bottom: 10px; color: #666; }
+    .title { text-align: center; margin: 8px 0; }
+    .title h1 { font-size: 14px; font-weight: bold; text-transform: uppercase; margin: 0; }
+    .title h2 { font-size: 12px; font-weight: bold; text-transform: uppercase; margin: 3px 0 0 0; }
     
-    .period-covered { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-    .period-covered span { font-size: 10px; font-weight: 600; white-space: nowrap; }
-    .period-covered .input { flex: 1; min-width: 120px; border: none; border-bottom: 1px solid #000; text-align: center; font-size: 11px; padding: 4px 8px; }
+    .period-covered { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+    .period-covered span { font-size: 9px; font-weight: 600; white-space: nowrap; }
+    .period-covered .input { flex: 1; min-width: 120px; border: none; border-bottom: 1px solid #000; text-align: center; font-size: 10px; padding: 2px 6px; }
     
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin-bottom: 10px; }
-    .info-field { display: flex; align-items: center; gap: 8px; }
-    .info-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
-    .info-field .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 11px; padding: 3px 6px; word-wrap: break-word; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-bottom: 8px; }
+    .info-field { display: flex; align-items: center; gap: 6px; }
+    .info-field label { font-size: 9px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+    .info-field .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 10px; padding: 2px 4px; word-wrap: break-word; }
     
-    .rating-scale { border: 1px solid #000; padding: 6px 8px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 7px; font-weight: 600; font-size: 10px; }
+    .rating-scale { border: 1px solid #000; padding: 4px 6px; margin-bottom: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px; font-weight: 600; font-size: 9px; }
     
-    .table-container { margin-bottom: 10px; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .table-container { margin-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; line-height: 1.15; }
     thead tr { background-color: transparent; }
-    th { border: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 10px; color: #1a1a1a; background-color: transparent; }
-    td { padding: 6px 6px; }
+    th { border: 1px solid #000; padding: 4px 3px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 9px; color: #1a1a1a; background-color: transparent; }
+    td { padding: 4px 4px; }
     
-    .signatures { border-top: 1px solid #000; border-bottom: 1px solid #000; display: flex; margin-bottom: 10px; }
-    .sig-block { flex: 1; padding: 10px; border-left: 1px solid #000; text-align: center; }
+    .signatures { border-top: 1px solid #000; border-bottom: 1px solid #000; display: flex; margin-bottom: 8px; }
+    .sig-block { flex: 1; padding: 8px; border-left: 1px solid #000; text-align: center; }
     .sig-block:first-child { border-left: none; }
-    .sig-block h3 { font-size: 10px; font-weight: bold; text-transform: uppercase; margin: 0 0 10px 0; }
-    .sig-line { min-height: 28px; border-bottom: 2px solid #000; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
-    .sig-image { max-width: 100%; max-height: 30px; object-fit: contain; }
-    .sig-name { font-size: 10px; font-weight: bold; margin-bottom: 2px; }
-    .sig-title { font-size: 9px; margin-bottom: 6px; }
-    .sig-date { font-size: 9px; }
+    .sig-block h3 { font-size: 9px; font-weight: bold; text-transform: uppercase; margin: 0 0 8px 0; }
+    .sig-line { min-height: 22px; border-bottom: 2px solid #000; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; }
+    .sig-image { max-width: 100%; max-height: 22px; object-fit: contain; }
+    .sig-name { font-size: 9px; font-weight: bold; margin-bottom: 2px; }
+    .sig-title { font-size: 8px; margin-bottom: 4px; }
+    .sig-date { font-size: 8px; }
     
     .conclusions { border-top: 1px solid #000; padding-top: 12px; }
     .conclusions h3 { text-align: center; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
