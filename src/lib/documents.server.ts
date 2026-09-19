@@ -173,11 +173,11 @@ export function generateEvaluationHTML(params: {
     th { border: 1px solid #000; padding: 4px 3px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 9px; color: #1a1a1a; background-color: transparent; }
     td { padding: 4px 4px; }
     
-    .signatures { border-top: 1px solid #000; border-bottom: 1px solid #000; display: flex; margin-bottom: 10px; }
-    .sig-block { flex: 1; padding: 10px; border-left: 1px solid #000; text-align: center; }
+    .signatures { display: flex; margin-bottom: 10px; }
+    .sig-block { flex: 1; padding: 10px; text-align: center; }
     .sig-block:first-child { border-left: none; }
     .sig-block h3 { font-size: 10px; font-weight: bold; text-transform: uppercase; margin: 0 0 10px 0; }
-    .sig-line { min-height: 26px; border-bottom: 2px solid #000; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
+    .sig-line { min-height: 24px; border-bottom: 2px solid #000; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
     .sig-image { max-width: 100%; max-height: 28px; object-fit: contain; }
     .sig-name { font-size: 10px; font-weight: bold; margin-bottom: 2px; }
     .sig-title { font-size: 9px; margin-bottom: 6px; }
