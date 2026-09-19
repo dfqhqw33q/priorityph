@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 
 import { EvaluationStageQueuePage } from "@/features/performance-management/components/evaluation-stage-queue";
 
@@ -19,5 +19,16 @@ export const Route = createFileRoute("/_authenticated/president/evaluations/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <EvaluationStageQueuePage stage="PRESIDENT" />,
+  component: function PresidentQueueRoute() {
+    const location = useLocation();
+    const isDetailRoute =
+      location.pathname !== "/president/evaluations" &&
+      location.pathname.startsWith("/president/evaluations/");
+
+    if (isDetailRoute) {
+      return <Outlet />;
+    }
+
+    return <EvaluationStageQueuePage stage="PRESIDENT" />;
+  },
 });

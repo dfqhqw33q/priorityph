@@ -23,7 +23,6 @@ import {
   EmptyState,
   EvaluationStatusBadge,
   LoadingBlock,
-  PageHeader,
   formatDateTime,
 } from "@/components/shared/shared-ui";
 import {
@@ -265,8 +264,23 @@ export function SupervisorReviewPage({
 }: {
   evaluationId?: string;
 }) {
-  const { evaluationId: routeEvaluationId } = Route.useParams();
-  const evaluationId = evaluationIdOverride ?? routeEvaluationId;
+  if (evaluationIdOverride) {
+    return <SupervisorReviewPageInner evaluationId={evaluationIdOverride} />;
+  }
+
+  return <SupervisorReviewPageFromRoute />;
+}
+
+function SupervisorReviewPageFromRoute() {
+  const { evaluationId } = Route.useParams();
+  return <SupervisorReviewPageInner evaluationId={evaluationId} />;
+}
+
+function SupervisorReviewPageInner({
+  evaluationId,
+}: {
+  evaluationId?: string;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { can } = useAccess();
@@ -623,11 +637,9 @@ export function SupervisorReviewPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year}) - Employee ID ${detail.employee_number_snapshot}`}
-        actions={<EvaluationStatusBadge status={detail.status} />}
-      />
+      <div className="flex justify-end">
+        <EvaluationStatusBadge status={detail.status} />
+      </div>
 
       <Card>
         <CardHeader>

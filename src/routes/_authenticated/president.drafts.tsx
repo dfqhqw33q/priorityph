@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 
 import { HistoryTablePage } from "./hr.evaluation-history.index";
 
@@ -7,6 +7,15 @@ export const Route = createFileRoute("/_authenticated/president/drafts")({
 });
 
 function DraftsPage() {
+  const location = useLocation();
+  const isDetailRoute =
+    location.pathname !== "/president/drafts" &&
+    location.pathname.startsWith("/president/drafts/");
+
+  if (isDetailRoute) {
+    return <Outlet />;
+  }
+
   return (
     <HistoryTablePage
       title="Draft evaluations"

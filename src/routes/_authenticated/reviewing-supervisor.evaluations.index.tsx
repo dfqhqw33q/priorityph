@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 
 import { EvaluationStageQueuePage } from "@/features/performance-management/components/evaluation-stage-queue";
 
@@ -19,5 +19,16 @@ export const Route = createFileRoute("/_authenticated/reviewing-supervisor/evalu
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <EvaluationStageQueuePage stage="REVIEWING_SUPERVISOR" />,
+  component: function ReviewingSupervisorQueueRoute() {
+    const location = useLocation();
+    const isDetailRoute =
+      location.pathname !== "/reviewing-supervisor/evaluations" &&
+      location.pathname.startsWith("/reviewing-supervisor/evaluations/");
+
+    if (isDetailRoute) {
+      return <Outlet />;
+    }
+
+    return <EvaluationStageQueuePage stage="REVIEWING_SUPERVISOR" />;
+  },
 });

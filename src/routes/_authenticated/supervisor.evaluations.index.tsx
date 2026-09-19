@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 
 import { EvaluationQueue } from "@/features/performance-management/components/evaluation-queue";
@@ -26,6 +26,15 @@ export const Route = createFileRoute("/_authenticated/supervisor/evaluations/")(
 });
 
 function SupervisorQueuePage() {
+  const location = useLocation();
+  const isDetailRoute =
+    location.pathname !== "/supervisor/evaluations" &&
+    location.pathname.startsWith("/supervisor/evaluations/");
+
+  if (isDetailRoute) {
+    return <Outlet />;
+  }
+
   const fetchQueue = useServerFn(listSupervisorQueue);
 
   return (

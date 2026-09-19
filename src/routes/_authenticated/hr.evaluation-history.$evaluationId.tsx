@@ -17,7 +17,6 @@ import {
   EmptyState,
   EvaluationStatusBadge,
   LoadingBlock,
-  PageHeader,
   formatDateTime,
 } from "@/components/shared/shared-ui";
 import { getEvaluationHistory } from "@/lib/reports.functions";
@@ -35,8 +34,19 @@ export function HistoryDetailPage({
 }: {
   evaluationId?: string;
 }) {
-  const { evaluationId: routeEvaluationId } = Route.useParams();
-  const evaluationId = evaluationIdOverride ?? routeEvaluationId;
+  if (evaluationIdOverride) {
+    return <HistoryDetailPageInner evaluationId={evaluationIdOverride} />;
+  }
+
+  return <HistoryDetailPageFromRoute />;
+}
+
+function HistoryDetailPageFromRoute() {
+  const { evaluationId } = Route.useParams();
+  return <HistoryDetailPageInner evaluationId={evaluationId} />;
+}
+
+function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
   const fetch = useServerFn(getEvaluationHistory);
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const [documentAction, setDocumentAction] = useState<"preview" | "print" | null>(null);
@@ -79,43 +89,37 @@ export function HistoryDetailPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={detail.full_name_snapshot}
-        description={`${detail.cycle_name} (${detail.cycle_year}) - Employee ID ${detail.employee_number_snapshot}`}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <EvaluationStatusBadge status={detail.status} />
-            {detail.status === "FINALIZED" ? (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openFinalDocument("preview")}
-                  disabled={documentAction !== null}
-                >
-                  {documentAction === "preview" ? "Opening..." : "Preview"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openFinalDocument("print")}
-                  disabled={documentAction !== null}
-                >
-                  {documentAction === "print" ? "Opening..." : "Print"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => openFinalDocument("preview")}
-                  disabled={documentAction !== null}
-                >
-                  Refresh PDF
-                </Button>
-              </>
-            ) : null}
-          </div>
-        }
-      />
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <EvaluationStatusBadge status={detail.status} />
+        {detail.status === "FINALIZED" ? (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openFinalDocument("preview")}
+              disabled={documentAction !== null}
+            >
+              {documentAction === "preview" ? "Opening..." : "Preview"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openFinalDocument("print")}
+              disabled={documentAction !== null}
+            >
+              {documentAction === "print" ? "Opening..." : "Print"}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => openFinalDocument("preview")}
+              disabled={documentAction !== null}
+            >
+              Refresh PDF
+            </Button>
+          </>
+        ) : null}
+      </div>
 
       <EvaluationDocumentPreview
         html={documentHtml}

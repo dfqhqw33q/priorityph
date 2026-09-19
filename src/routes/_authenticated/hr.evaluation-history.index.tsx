@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -349,12 +349,23 @@ export const Route = createFileRoute("/_authenticated/hr/evaluation-history/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => (
-    <HistoryTablePage
-      title="Evaluation history"
-      description="Review finalized evaluation records across evaluation cycles."
-      defaultStatus="FINALIZED"
-      mode="history"
-    />
-  ),
+  component: function EvaluationHistoryRoute() {
+    const location = useLocation();
+    const isDetailRoute =
+      location.pathname !== "/hr/evaluation-history" &&
+      location.pathname.startsWith("/hr/evaluation-history/");
+
+    if (isDetailRoute) {
+      return <Outlet />;
+    }
+
+    return (
+      <HistoryTablePage
+        title="Evaluation history"
+        description="Review finalized evaluation records across evaluation cycles."
+        defaultStatus="FINALIZED"
+        mode="history"
+      />
+    );
+  },
 });
