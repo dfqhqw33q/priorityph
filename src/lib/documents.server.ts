@@ -85,10 +85,12 @@ export function generateEvaluationHTML(params: {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
   const text = (value: string) => escapeHtml(value || "");
-  const renderLines = (value: string, maxCharsPerLine = 105) => {
+  const renderLines = (value: string) => {
     const normalized = value.trim();
     if (!normalized) return "";
-    return wrapText(normalized, maxCharsPerLine)
+    return normalized
+      .split(/\n+/)
+      .filter(Boolean)
       .map((line) => `<div class="input-line">${escapeHtml(line)}</div>`)
       .join("");
   };
@@ -202,10 +204,10 @@ export function generateEvaluationHTML(params: {
     .step-two-header h2 { font-size: 13px; margin: 0; text-transform: uppercase; }
     .step-two-title { margin-bottom: 12px; }
     .step-two-section { display: flex; gap: 12px; margin-bottom: 16px; }
-    .step-two-number { font-weight: bold; }
-    .step-two-content { flex: 1; }
+    .step-two-number { font-weight: bold; flex: 0 0 auto; }
+    .step-two-content { flex: 1 1 auto; width: 100%; min-width: 0; max-width: none; }
     .step-two-content p { margin: 0 0 6px; }
-    .input-line { border-bottom: 1px solid #000; padding: 3px 6px; min-height: 18px; word-wrap: break-word; }
+    .input-line { display: block; width: 100%; max-width: none; border-bottom: 1px solid #000; padding: 3px 6px; min-height: 18px; word-wrap: break-word; overflow-wrap: anywhere; }
     .input-line + .input-line { margin-top: 6px; }
     .step-two-options { display: grid; gap: 6px; }
     .step-two-option { display: flex; align-items: flex-start; gap: 10px; }
