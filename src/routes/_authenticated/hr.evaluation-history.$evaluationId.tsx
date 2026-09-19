@@ -5,7 +5,14 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   EmptyState,
   EvaluationStatusBadge,
@@ -159,9 +166,13 @@ export function HistoryDetailPage() {
               {detail.criteria.map((criterion) => (
                 <TableRow key={criterion.id}>
                   <TableCell className="min-w-[260px]">
-                    <span className="font-semibold">{criterion.letter}. {criterion.title}</span>
+                    <span className="font-semibold">
+                      {criterion.letter}. {criterion.title}
+                    </span>
                   </TableCell>
-                  <TableCell>{ratingFor(detail.ratings, criterion.id, "SUPERVISOR") ?? "-"}</TableCell>
+                  <TableCell>
+                    {ratingFor(detail.ratings, criterion.id, "SUPERVISOR") ?? "-"}
+                  </TableCell>
                   <TableCell>
                     {ratingFor(detail.ratings, criterion.id, "REVIEWING_SUPERVISOR") ?? "-"}
                   </TableCell>

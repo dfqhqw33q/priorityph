@@ -40,7 +40,13 @@ export type DevelopmentRecord = {
 };
 
 function mapRecord(row: Record<string, unknown>): DevelopmentRecord {
-  const employee = row["employees"] as { full_name?: string; employee_number?: string; job_title?: string; division?: string; section?: string } | null;
+  const employee = row["employees"] as {
+    full_name?: string;
+    employee_number?: string;
+    job_title?: string;
+    division?: string;
+    section?: string;
+  } | null;
   const evaluation = row["evaluations"] as {
     id?: string;
     evaluation_cycles?: { name?: string; year?: number } | null;
@@ -67,7 +73,7 @@ function mapRecord(row: Record<string, unknown>): DevelopmentRecord {
 
 export const listDevelopmentRecords = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         search: z.string().max(200).default(""),
@@ -116,7 +122,7 @@ export const listDevelopmentEmployees = createServerFn({ method: "GET" })
 
 export const updateDevelopmentRecord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => recordFields.extend({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => recordFields.extend({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("../../lib/server-core.server");

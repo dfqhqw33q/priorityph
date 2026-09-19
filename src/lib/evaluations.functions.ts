@@ -15,7 +15,7 @@ const PRESIDENT_QUEUE_STATUSES = ["FOR_APPROVAL"];
  */
 export const listSupervisorQueue = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => queueFiltersSchema.parse(input ?? {}))
+  .validator((input: unknown) => queueFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }): Promise<EvaluationListItem[]> => {
     const { requirePermission, listEvaluations, writeAudit, getActorRoles } =
       await import("./server-core.server");
@@ -28,12 +28,14 @@ export const listSupervisorQueue = createServerFn({ method: "GET" })
       newValue: { filters: data },
     });
     const rows = await listEvaluations(SUPERVISOR_QUEUE_STATUSES, data);
-    return rows.filter((row) => !row.supervisor_user_id || row.supervisor_user_id === context.userId);
+    return rows.filter(
+      (row) => !row.supervisor_user_id || row.supervisor_user_id === context.userId,
+    );
   });
 
 export const listPresidentQueue = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => queueFiltersSchema.parse(input ?? {}))
+  .validator((input: unknown) => queueFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }): Promise<EvaluationListItem[]> => {
     const { requirePermission, listEvaluations, writeAudit, getActorRoles } =
       await import("./server-core.server");
@@ -66,7 +68,13 @@ export const listEvaluationCycleOptionsForUser = createServerFn({ method: "GET" 
     const { getAdmin, requirePermissionAny } = await import("./server-core.server");
     await requirePermissionAny(
       context.userId,
-      ["cycles.view", "evaluations.view_step1", "evaluations.review_step3", "committee.review", "president.view"],
+      [
+        "cycles.view",
+        "evaluations.view_step1",
+        "evaluations.review_step3",
+        "committee.review",
+        "president.view",
+      ],
       "Evaluation cycle selection",
     );
     const admin = await getAdmin();
@@ -85,7 +93,7 @@ export const listEvaluationCycleOptionsForUser = createServerFn({ method: "GET" 
 
 export const getHRStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -121,7 +129,7 @@ export const getHRStats = createServerFn({ method: "GET" })
 
 export const getSupervisorStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -138,7 +146,7 @@ export const getSupervisorStats = createServerFn({ method: "GET" })
 
 export const getReviewingSupervisorStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -159,7 +167,7 @@ export const getReviewingSupervisorStats = createServerFn({ method: "GET" })
 
 export const getCommitteeStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -176,7 +184,7 @@ export const getCommitteeStats = createServerFn({ method: "GET" })
 
 export const getEvaluation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<EvaluationDetail | null> => {
     const { requirePermission, loadEvaluationDetail, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
@@ -200,7 +208,7 @@ export const getEvaluation = createServerFn({ method: "GET" })
 
 export const saveSupervisorDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => supervisorDraftSchema.parse(input))
+  .validator((input: unknown) => supervisorDraftSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,

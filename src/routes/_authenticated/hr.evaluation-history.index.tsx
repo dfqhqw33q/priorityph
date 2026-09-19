@@ -65,7 +65,10 @@ export function HistoryTablePage({
           : status || defaultStatus;
 
   const query = useQuery({
-    queryKey: ["evaluation-history", { mode, search: debouncedSearch, status: effectiveStatus, cycleId, page }],
+    queryKey: [
+      "evaluation-history",
+      { mode, search: debouncedSearch, status: effectiveStatus, cycleId, page },
+    ],
     queryFn: () =>
       fetchReport({
         data: {
@@ -83,7 +86,9 @@ export function HistoryTablePage({
 
   const rows = (query.data?.rows ?? []) as ReportRow[];
   const cycleOptions = (query.data?.options.cycles ?? []).filter((cycle) => cycle.id && cycle.year);
-  const currentRole = (useAccess()?.access?.roles ?? []) as Array<"HR" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE" | "PRESIDENT">;
+  const currentRole = (useAccess()?.access?.roles ?? []) as Array<
+    "HR" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE" | "PRESIDENT"
+  >;
   const rolePrefix = currentRole.includes("SUPERVISOR")
     ? "/supervisor"
     : currentRole.includes("REVIEWING_SUPERVISOR")
@@ -102,18 +107,18 @@ export function HistoryTablePage({
     [cycleId, cycleOptions],
   );
   const hasActiveFilters =
-    search.trim().length > 0 ||
-    (showStatusFilter && status !== defaultStatus) ||
-    cycleId !== ALL;
+    search.trim().length > 0 || (showStatusFilter && status !== defaultStatus) || cycleId !== ALL;
 
-  const emptyTitle = search.trim() || (showStatusFilter && status !== defaultStatus) || cycleId !== ALL
-    ? "No evaluation records found"
-    : "No evaluation records found";
-  const emptyDescription = cycleId !== ALL
-    ? "There are no evaluations for the selected evaluation cycle."
-    : search.trim() || (showStatusFilter && status !== defaultStatus)
-      ? "There are no evaluations matching your current filters."
-      : "There are no evaluations for the selected evaluation cycle.";
+  const emptyTitle =
+    search.trim() || (showStatusFilter && status !== defaultStatus) || cycleId !== ALL
+      ? "No evaluation records found"
+      : "No evaluation records found";
+  const emptyDescription =
+    cycleId !== ALL
+      ? "There are no evaluations for the selected evaluation cycle."
+      : search.trim() || (showStatusFilter && status !== defaultStatus)
+        ? "There are no evaluations matching your current filters."
+        : "There are no evaluations for the selected evaluation cycle.";
 
   return (
     <div className="space-y-6">
@@ -132,14 +137,18 @@ export function HistoryTablePage({
       <Card className="border border-border bg-card shadow-sm">
         <CardContent
           className={`grid gap-4 pt-6 md:items-end ${
-            mode === "completed" ? "md:grid-cols-[1.2fr_1.2fr_auto]" : "md:grid-cols-[1.2fr_1fr_1.2fr_auto]"
+            mode === "completed"
+              ? "md:grid-cols-[1.2fr_1.2fr_auto]"
+              : "md:grid-cols-[1.2fr_1fr_1.2fr_auto]"
           }`}
         >
           <div className="space-y-1.5">
             <Label htmlFor="history-search">Employee ID or name</Label>
             <Input
               id="history-search"
-              placeholder={mode === "completed" ? "Search employee ID or name" : "Search employees..."}
+              placeholder={
+                mode === "completed" ? "Search employee ID or name" : "Search employees..."
+              }
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -181,7 +190,9 @@ export function HistoryTablePage({
                 setPage(0);
               }}
             >
-              <option value={ALL}>{mode === "completed" ? "All cycles" : "All evaluation cycles"}</option>
+              <option value={ALL}>
+                {mode === "completed" ? "All cycles" : "All evaluation cycles"}
+              </option>
               {cycleOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name ? `${option.name} (${option.year})` : `${option.year}`}
@@ -258,7 +269,9 @@ export function HistoryTablePage({
                         : row.status;
                 return (
                   <TableRow key={row.evaluationId}>
-                    <TableCell className="whitespace-nowrap tabular-nums">{row.employeeNumber}</TableCell>
+                    <TableCell className="whitespace-nowrap tabular-nums">
+                      {row.employeeNumber}
+                    </TableCell>
                     <TableCell>
                       <Link
                         className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

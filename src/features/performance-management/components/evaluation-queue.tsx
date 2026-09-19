@@ -236,10 +236,18 @@ export function EvaluationQueue({
                   <TableHead scope="col" className="min-w-[190px]">
                     <SortButton label="Full Name" sortKey="full_name_snapshot" />
                   </TableHead>
-                  <TableHead scope="col" className="min-w-[150px]">Job Title</TableHead>
-                  <TableHead scope="col" className="min-w-[170px]">Division / Department</TableHead>
-                  <TableHead scope="col" className="min-w-[150px]">Section / Unit</TableHead>
-                  <TableHead scope="col" className="min-w-[240px]">Cycle</TableHead>
+                  <TableHead scope="col" className="min-w-[150px]">
+                    Job Title
+                  </TableHead>
+                  <TableHead scope="col" className="min-w-[170px]">
+                    Division / Department
+                  </TableHead>
+                  <TableHead scope="col" className="min-w-[150px]">
+                    Section / Unit
+                  </TableHead>
+                  <TableHead scope="col" className="min-w-[240px]">
+                    Cycle
+                  </TableHead>
                   <TableHead scope="col" className="min-w-[190px] whitespace-nowrap">
                     <SortButton label="Date Submitted" sortKey="employee_submitted_at" />
                   </TableHead>
@@ -254,7 +262,9 @@ export function EvaluationQueue({
               <TableBody>
                 {visible.map((row) => {
                   const badgeStatus =
-                    queryKey === "supervisor-queue" ? getSupervisorDisplayStatus(row.status) : row.status;
+                    queryKey === "supervisor-queue"
+                      ? getSupervisorDisplayStatus(row.status)
+                      : row.status;
 
                   return (
                     <TableRow key={row.id}>

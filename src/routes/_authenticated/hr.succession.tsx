@@ -98,22 +98,60 @@ function SuccessionPage() {
           title="No succession profiles"
           description="Profiles appear after finalized evaluations contain Q3, Q4, or Q6 information."
         />
+      ) : selectedEmployeeId ? (
+        <SuccessionDetail
+          profile={query.data.find((item) => item.employeeId === selectedEmployeeId)}
+          onBack={() => setSelectedEmployeeId(null)}
+          onEdit={setEditing}
+        />
       ) : (
-        selectedEmployeeId ? (
-          <SuccessionDetail
-            profile={query.data.find((item) => item.employeeId === selectedEmployeeId)}
-            onBack={() => setSelectedEmployeeId(null)}
-            onEdit={setEditing}
-          />
-        ) : (
-          <div className="border border-border bg-card shadow-sm">
-            <Table>
-              <caption className="sr-only">Succession profiles by employee</caption>
-              <TableHeader><TableRow><TableHead>Employee ID</TableHead><TableHead>Full Name</TableHead><TableHead>Job Title</TableHead><TableHead>Division / Department</TableHead><TableHead>Section / Unit</TableHead><TableHead>Cycle</TableHead></TableRow></TableHeader>
-              <TableBody>{query.data.map((profile) => <TableRow key={profile.id}><TableCell className="whitespace-nowrap"><button type="button" className="font-normal text-foreground hover:text-primary hover:underline" onClick={() => setSelectedEmployeeId(profile.employeeId)}>{profile.employeeNumber}</button></TableCell><TableCell><button type="button" className="font-normal text-foreground hover:text-primary hover:underline" onClick={() => setSelectedEmployeeId(profile.employeeId)}>{profile.employeeName}</button></TableCell><TableCell>{profile.employeeJobTitle || "-"}</TableCell><TableCell>{profile.employeeDivision || "-"}</TableCell><TableCell>{profile.employeeSection || "-"}</TableCell><TableCell>{profile.sourceCycleName ? `${profile.sourceCycleName} (${profile.sourceCycleYear})` : "-"}</TableCell></TableRow>)}</TableBody>
-            </Table>
-          </div>
-        )
+        <div className="border border-border bg-card shadow-sm">
+          <Table>
+            <caption className="sr-only">Succession profiles by employee</caption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Employee ID</TableHead>
+                <TableHead>Full Name</TableHead>
+                <TableHead>Job Title</TableHead>
+                <TableHead>Division / Department</TableHead>
+                <TableHead>Section / Unit</TableHead>
+                <TableHead>Cycle</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {query.data.map((profile) => (
+                <TableRow key={profile.id}>
+                  <TableCell className="whitespace-nowrap">
+                    <button
+                      type="button"
+                      className="font-normal text-foreground hover:text-primary hover:underline"
+                      onClick={() => setSelectedEmployeeId(profile.employeeId)}
+                    >
+                      {profile.employeeNumber}
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      type="button"
+                      className="font-normal text-foreground hover:text-primary hover:underline"
+                      onClick={() => setSelectedEmployeeId(profile.employeeId)}
+                    >
+                      {profile.employeeName}
+                    </button>
+                  </TableCell>
+                  <TableCell>{profile.employeeJobTitle || "-"}</TableCell>
+                  <TableCell>{profile.employeeDivision || "-"}</TableCell>
+                  <TableCell>{profile.employeeSection || "-"}</TableCell>
+                  <TableCell>
+                    {profile.sourceCycleName
+                      ? `${profile.sourceCycleName} (${profile.sourceCycleYear})`
+                      : "-"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
       <NotesDialog
         profile={editing}
@@ -141,11 +179,95 @@ function SuccessionDetail({
   const decision = profile.committeeDecision;
   return (
     <div className="space-y-4">
-      <Button variant="outline" onClick={onBack}>Back to employees</Button>
-      <Card><CardContent className="pt-6"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Employee ID</p><h2 className="text-xl font-semibold">{profile.employeeName}</h2><p className="text-sm text-muted-foreground">{profile.employeeNumber}</p></div><Button variant="outline" size="sm" onClick={() => onEdit(profile)}>Edit notes</Button></div></CardContent></Card>
-      <Card><CardContent className="grid gap-4 pt-6 text-sm sm:grid-cols-2"><ProfileField label="Development Potential" value={profile.developmentPotential} className="sm:col-span-2" /><ProfileField label="Advancement Outlook" value={profile.advancementOutlook} className="sm:col-span-2" /><ProfileField label="Career Interest" value={profile.careerInterest} /><ProfileField label="Transfer Interest" value={profile.transferInterest} /><ProfileField label="Desired Job" value={profile.desiredJob} /><ProfileField label="Desired Location" value={profile.desiredLocation} /><ProfileField label="Qualification" value={profile.qualification} /><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Source Evaluation</p><Link className="text-primary hover:underline" to="/hr/evaluation-history/$evaluationId" params={{ evaluationId: profile.sourceEvaluationId }}>{profile.sourceCycleName ? `${profile.sourceCycleName} (${profile.sourceCycleYear})` : "View evaluation"}</Link></div></CardContent></Card>
-      <Card><CardContent className="space-y-3 pt-6"><h3 className="font-semibold">Committee Decision</h3>{decision ? <div className="grid gap-3 text-sm sm:grid-cols-2"><ProfileField label="Final Action" value={decision.finalAction === "PROMOTE" ? "Promote" : "Transfer"} /><ProfileField label="Status" value="Finalized" /><ProfileField label="Action Details" value={decision.actionDetails} className="whitespace-pre-wrap" /><ProfileField label="Committee Recommendation" value={decision.recommendation} className="whitespace-pre-wrap" /></div> : <p className="text-sm text-muted-foreground">No finalized Promote or Transfer decision is recorded for this profile.</p>}</CardContent></Card>
-      <Card><CardContent className="pt-6"><ProfileField label="Management Notes" value={profile.notes} className="whitespace-pre-wrap" /></CardContent></Card>
+      <Button variant="outline" onClick={onBack}>
+        Back to employees
+      </Button>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Employee ID
+              </p>
+              <h2 className="text-xl font-semibold">{profile.employeeName}</h2>
+              <p className="text-sm text-muted-foreground">{profile.employeeNumber}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => onEdit(profile)}>
+              Edit notes
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="grid gap-4 pt-6 text-sm sm:grid-cols-2">
+          <ProfileField
+            label="Development Potential"
+            value={profile.developmentPotential}
+            className="sm:col-span-2"
+          />
+          <ProfileField
+            label="Advancement Outlook"
+            value={profile.advancementOutlook}
+            className="sm:col-span-2"
+          />
+          <ProfileField label="Career Interest" value={profile.careerInterest} />
+          <ProfileField label="Transfer Interest" value={profile.transferInterest} />
+          <ProfileField label="Desired Job" value={profile.desiredJob} />
+          <ProfileField label="Desired Location" value={profile.desiredLocation} />
+          <ProfileField label="Qualification" value={profile.qualification} />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Source Evaluation
+            </p>
+            <Link
+              className="text-primary hover:underline"
+              to="/hr/evaluation-history/$evaluationId"
+              params={{ evaluationId: profile.sourceEvaluationId }}
+            >
+              {profile.sourceCycleName
+                ? `${profile.sourceCycleName} (${profile.sourceCycleYear})`
+                : "View evaluation"}
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="space-y-3 pt-6">
+          <h3 className="font-semibold">Committee Decision</h3>
+          {decision ? (
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              <ProfileField
+                label="Final Action"
+                value={decision.finalAction === "PROMOTE" ? "Promote" : "Transfer"}
+              />
+              <ProfileField label="Status" value="Finalized" />
+              <ProfileField
+                label="Action Details"
+                value={decision.actionDetails}
+                className="whitespace-pre-wrap"
+              />
+              <ProfileField
+                label="Committee Recommendation"
+                value={decision.recommendation}
+                className="whitespace-pre-wrap"
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No finalized Promote or Transfer decision is recorded for this profile.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-6">
+          <ProfileField
+            label="Management Notes"
+            value={profile.notes}
+            className="whitespace-pre-wrap"
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

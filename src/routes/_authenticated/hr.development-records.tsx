@@ -168,62 +168,60 @@ function DevelopmentRecordsPage() {
           title="No development records"
           description="No development needs have been recorded yet."
         />
+      ) : employeeId ? (
+        <DevelopmentDetail
+          group={recordsByEmployee[0]}
+          onBack={() => setEmployeeId("")}
+          onEdit={setEditing}
+        />
       ) : (
-        employeeId ? (
-          <DevelopmentDetail
-            group={recordsByEmployee[0]}
-            onBack={() => setEmployeeId("")}
-            onEdit={setEditing}
-          />
-        ) : (
-          <div className="border border-border bg-card shadow-sm">
-            <Table>
-              <caption className="sr-only">Development records by employee</caption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee ID</TableHead>
-                  <TableHead>Full Name</TableHead>
-                  <TableHead>Job Title</TableHead>
-                  <TableHead>Division / Department</TableHead>
-                  <TableHead>Section / Unit</TableHead>
-                  <TableHead>Cycle</TableHead>
+        <div className="border border-border bg-card shadow-sm">
+          <Table>
+            <caption className="sr-only">Development records by employee</caption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Employee ID</TableHead>
+                <TableHead>Full Name</TableHead>
+                <TableHead>Job Title</TableHead>
+                <TableHead>Division / Department</TableHead>
+                <TableHead>Section / Unit</TableHead>
+                <TableHead>Cycle</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recordsByEmployee.map((group) => (
+                <TableRow key={group.employeeId}>
+                  <TableCell className="whitespace-nowrap">
+                    <button
+                      type="button"
+                      className="font-normal text-foreground hover:text-primary hover:underline"
+                      onClick={() => setEmployeeId(group.employeeId)}
+                    >
+                      {group.employeeNumber}
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      type="button"
+                      className="font-normal text-foreground hover:text-primary hover:underline"
+                      onClick={() => setEmployeeId(group.employeeId)}
+                    >
+                      {group.employeeName}
+                    </button>
+                  </TableCell>
+                  <TableCell>{group.employeeJobTitle || "-"}</TableCell>
+                  <TableCell>{group.employeeDivision || "-"}</TableCell>
+                  <TableCell>{group.employeeSection || "-"}</TableCell>
+                  <TableCell>
+                    {group.records[0]?.sourceCycleName
+                      ? `${group.records[0].sourceCycleName} (${group.records[0].sourceCycleYear})`
+                      : "-"}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recordsByEmployee.map((group) => (
-                  <TableRow key={group.employeeId}>
-                    <TableCell className="whitespace-nowrap">
-                      <button
-                        type="button"
-                        className="font-normal text-foreground hover:text-primary hover:underline"
-                        onClick={() => setEmployeeId(group.employeeId)}
-                      >
-                        {group.employeeNumber}
-                      </button>
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        type="button"
-                        className="font-normal text-foreground hover:text-primary hover:underline"
-                        onClick={() => setEmployeeId(group.employeeId)}
-                      >
-                        {group.employeeName}
-                      </button>
-                    </TableCell>
-                    <TableCell>{group.employeeJobTitle || "-"}</TableCell>
-                    <TableCell>{group.employeeDivision || "-"}</TableCell>
-                    <TableCell>{group.employeeSection || "-"}</TableCell>
-                    <TableCell>
-                      {group.records[0]?.sourceCycleName
-                        ? `${group.records[0].sourceCycleName} (${group.records[0].sourceCycleYear})`
-                        : "-"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
       <RecordDialog
         open={Boolean(editing)}
@@ -283,7 +281,8 @@ function DevelopmentDetail({
                 <div>
                   <h3 className="font-semibold">{record.developmentNeed}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {record.developmentActivity} · {humanizeToken(record.status)} · {formatDateTime(record.recordDate)}
+                    {record.developmentActivity} · {humanizeToken(record.status)} ·{" "}
+                    {formatDateTime(record.recordDate)}
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => onEdit(record)}>

@@ -66,7 +66,16 @@ function CompetencyIndexPage() {
         <div className="border border-border bg-card shadow-sm">
           <Table>
             <caption className="sr-only">Employees with competency profiles</caption>
-            <TableHeader><TableRow><TableHead>Employee ID</TableHead><TableHead>Full Name</TableHead><TableHead>Job Title</TableHead><TableHead>Division / Department</TableHead><TableHead>Section / Unit</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Employee ID</TableHead>
+                <TableHead>Full Name</TableHead>
+                <TableHead>Job Title</TableHead>
+                <TableHead>Division / Department</TableHead>
+                <TableHead>Section / Unit</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {employees.map((employee) => (
                 <TableRow key={employee.id}>
@@ -91,7 +100,9 @@ function CompetencyIndexPage() {
                   <TableCell>{employee.job_title || "-"}</TableCell>
                   <TableCell>{employee.division || "-"}</TableCell>
                   <TableCell>{employee.section || "-"}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{employee.employment_status || "-"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {employee.employment_status || "-"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

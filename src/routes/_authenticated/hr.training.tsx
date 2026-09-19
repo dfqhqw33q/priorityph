@@ -198,7 +198,14 @@ function TrainingDirectory({
     new Map(
       [...recommendations, ...records].map((item) => [
         item.employeeId,
-        { employeeId: item.employeeId, employeeName: item.employeeName, employeeNumber: item.employeeNumber, employeeJobTitle: item.employeeJobTitle, employeeDivision: item.employeeDivision, employeeSection: item.employeeSection },
+        {
+          employeeId: item.employeeId,
+          employeeName: item.employeeName,
+          employeeNumber: item.employeeNumber,
+          employeeJobTitle: item.employeeJobTitle,
+          employeeDivision: item.employeeDivision,
+          employeeSection: item.employeeSection,
+        },
       ]),
     ).values(),
   );
@@ -240,12 +247,20 @@ function TrainingDirectory({
             return (
               <TableRow key={employee.employeeId}>
                 <TableCell className="whitespace-nowrap">
-                  <button type="button" className="font-normal text-foreground hover:text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>
+                  <button
+                    type="button"
+                    className="font-normal text-foreground hover:text-primary hover:underline"
+                    onClick={() => onSelect(employee.employeeId)}
+                  >
                     {employee.employeeNumber}
                   </button>
                 </TableCell>
                 <TableCell>
-                  <button type="button" className="font-normal text-foreground hover:text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>
+                  <button
+                    type="button"
+                    className="font-normal text-foreground hover:text-primary hover:underline"
+                    onClick={() => onSelect(employee.employeeId)}
+                  >
                     {employee.employeeName}
                   </button>
                 </TableCell>
@@ -253,7 +268,9 @@ function TrainingDirectory({
                 <TableCell>{employee.employeeDivision || "-"}</TableCell>
                 <TableCell>{employee.employeeSection || "-"}</TableCell>
                 <TableCell>
-                  {source?.sourceCycleName ? `${source.sourceCycleName} (${source.sourceCycleYear})` : "-"}
+                  {source?.sourceCycleName
+                    ? `${source.sourceCycleName} (${source.sourceCycleYear})`
+                    : "-"}
                 </TableCell>
               </TableRow>
             );
@@ -280,13 +297,82 @@ function TrainingDetail({
   if (!employee) return null;
   return (
     <div className="space-y-4">
-      <Button variant="outline" onClick={onBack}>Back to employees</Button>
-      <Card><CardContent className="pt-6"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Employee ID</p><h2 className="text-xl font-semibold">{employee.employeeName}</h2><p className="text-sm text-muted-foreground">{employee.employeeNumber}</p></CardContent></Card>
+      <Button variant="outline" onClick={onBack}>
+        Back to employees
+      </Button>
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Employee ID
+          </p>
+          <h2 className="text-xl font-semibold">{employee.employeeName}</h2>
+          <p className="text-sm text-muted-foreground">{employee.employeeNumber}</p>
+        </CardContent>
+      </Card>
       {recommendations.map((item) => (
-        <Card key={`recommendation-${item.id}`}><CardContent className="space-y-3 pt-6"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recommended</p><h3 className="font-semibold">{item.trainingTitle}</h3></div><p className="whitespace-pre-wrap text-sm">{item.recommendation}</p><p className="text-sm text-muted-foreground">Provider: - · Related Competency: {item.relatedCompetency || "-"}</p><Link className="text-primary hover:underline" to="/hr/evaluation-history/$evaluationId" params={{ evaluationId: item.sourceEvaluationId }}>{item.sourceCycleName ? `${item.sourceCycleName} (${item.sourceCycleYear})` : "View evaluation"}</Link></CardContent></Card>
+        <Card key={`recommendation-${item.id}`}>
+          <CardContent className="space-y-3 pt-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Recommended
+              </p>
+              <h3 className="font-semibold">{item.trainingTitle}</h3>
+            </div>
+            <p className="whitespace-pre-wrap text-sm">{item.recommendation}</p>
+            <p className="text-sm text-muted-foreground">
+              Provider: - · Related Competency: {item.relatedCompetency || "-"}
+            </p>
+            <Link
+              className="text-primary hover:underline"
+              to="/hr/evaluation-history/$evaluationId"
+              params={{ evaluationId: item.sourceEvaluationId }}
+            >
+              {item.sourceCycleName
+                ? `${item.sourceCycleName} (${item.sourceCycleYear})`
+                : "View evaluation"}
+            </Link>
+          </CardContent>
+        </Card>
       ))}
       {records.map((record) => (
-        <Card key={record.id}><CardContent className="space-y-3 pt-6"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{humanizeToken(record.status)}</p><h3 className="font-semibold">{record.trainingTitle}</h3></div><Button variant="outline" size="sm" onClick={() => onEdit(record)}>Edit</Button></div><div className="grid gap-3 text-sm sm:grid-cols-2"><p>Provider: {record.provider || "-"}</p><p>Training Date: {record.trainingDate ? formatDateTime(record.trainingDate) : "-"}</p><p>Source: {record.source}</p><p>Related Competency: {record.relatedCompetency || "-"}</p><p className="sm:col-span-2">Committee Recommendation: {record.committeeRecommendation || "-"}</p><p className="sm:col-span-2 whitespace-pre-wrap">Training Details: {record.notes || "-"}</p></div><Link className="text-primary hover:underline" to="/hr/evaluation-history/$evaluationId" params={{ evaluationId: record.sourceEvaluationId }}>{record.sourceCycleName ? `${record.sourceCycleName} (${record.sourceCycleYear})` : "View evaluation"}</Link></CardContent></Card>
+        <Card key={record.id}>
+          <CardContent className="space-y-3 pt-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {humanizeToken(record.status)}
+                </p>
+                <h3 className="font-semibold">{record.trainingTitle}</h3>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => onEdit(record)}>
+                Edit
+              </Button>
+            </div>
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              <p>Provider: {record.provider || "-"}</p>
+              <p>
+                Training Date: {record.trainingDate ? formatDateTime(record.trainingDate) : "-"}
+              </p>
+              <p>Source: {record.source}</p>
+              <p>Related Competency: {record.relatedCompetency || "-"}</p>
+              <p className="sm:col-span-2">
+                Committee Recommendation: {record.committeeRecommendation || "-"}
+              </p>
+              <p className="sm:col-span-2 whitespace-pre-wrap">
+                Training Details: {record.notes || "-"}
+              </p>
+            </div>
+            <Link
+              className="text-primary hover:underline"
+              to="/hr/evaluation-history/$evaluationId"
+              params={{ evaluationId: record.sourceEvaluationId }}
+            >
+              {record.sourceCycleName
+                ? `${record.sourceCycleName} (${record.sourceCycleYear})`
+                : "View evaluation"}
+            </Link>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

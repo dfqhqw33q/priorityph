@@ -42,7 +42,7 @@ export const listScoringRules = createServerFn({ method: "GET" })
 
 export const saveScoringRule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: ScoringRuleFormValues) => scoringRuleFormSchema.parse(input))
+  .validator((input: ScoringRuleFormValues) => scoringRuleFormSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { requirePermission, getAdmin, writeAudit, getActorRoles, validationError, safeMessage } =
       await import("./server-core.server");
@@ -160,7 +160,7 @@ export const saveScoringRule = createServerFn({ method: "POST" })
 
 export const activateScoringRule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { ruleId: string; reason: string }) => input)
+  .validator((input: { ruleId: string; reason: string }) => input)
   .handler(async ({ data, context }) => {
     const { requirePermission, getAdmin, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
@@ -212,7 +212,7 @@ export const activateScoringRule = createServerFn({ method: "POST" })
 
 export const getEvaluationScore = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { evaluationId: string }) => input)
+  .validator((input: { evaluationId: string }) => input)
   .handler(async ({ data, context }) => {
     const { requirePermissionAny } = await import("./server-core.server");
     const { loadScore, checkFinalizationEligibility, computeScore } =
@@ -238,7 +238,7 @@ export const getEvaluationScore = createServerFn({ method: "GET" })
 
 export const recalculateScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { evaluationId: string }) => input)
+  .validator((input: { evaluationId: string }) => input)
   .handler(async ({ data, context }) => {
     const { requirePermission, writeAudit, getActorRoles } = await import("./server-core.server");
     const { computeScore, persistScore, loadScore } = await import("./scoring.server");
@@ -282,7 +282,7 @@ export async function processFinalizedEvaluationSupportModules(
 
 export const reprocessFinalizedEvaluationSupportModules = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { requirePermission, getAdmin, validationError } = await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.finalize", "Evaluations");
@@ -301,7 +301,7 @@ export const reprocessFinalizedEvaluationSupportModules = createServerFn({ metho
 
 export const finalizeEvaluation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { evaluationId: string; version: number; reason: string }) =>
+  .validator((input: { evaluationId: string; version: number; reason: string }) =>
     finalizeSchema.parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -418,7 +418,7 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
 
 export const returnForCorrection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { evaluationId: string; version: number; reason: string }) =>
+  .validator((input: { evaluationId: string; version: number; reason: string }) =>
     correctionSchema.parse(input),
   )
   .handler(async ({ data, context }) => {

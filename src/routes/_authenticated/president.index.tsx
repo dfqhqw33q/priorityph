@@ -2,7 +2,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -57,10 +66,30 @@ function PresidentDashboard() {
   const chartData = useMemo(() => {
     const breakdown = query.data?.statusBreakdown ?? {};
     return [
-      { status: "FOR_APPROVAL", label: "To Review", value: breakdown.FOR_APPROVAL ?? 0, color: "var(--info)" },
-      { status: "RETURNED", label: "Returned", value: breakdown.RETURNED ?? 0, color: "var(--warning)" },
-      { status: "FINALIZED", label: "Completed", value: breakdown.FINALIZED ?? 0, color: "var(--success)" },
-      { status: "DRAFT", label: "Drafts", value: breakdown.DRAFT ?? 0, color: "var(--muted-foreground)" },
+      {
+        status: "FOR_APPROVAL",
+        label: "To Review",
+        value: breakdown.FOR_APPROVAL ?? 0,
+        color: "var(--info)",
+      },
+      {
+        status: "RETURNED",
+        label: "Returned",
+        value: breakdown.RETURNED ?? 0,
+        color: "var(--warning)",
+      },
+      {
+        status: "FINALIZED",
+        label: "Completed",
+        value: breakdown.FINALIZED ?? 0,
+        color: "var(--success)",
+      },
+      {
+        status: "DRAFT",
+        label: "Drafts",
+        value: breakdown.DRAFT ?? 0,
+        color: "var(--muted-foreground)",
+      },
     ];
   }, [query.data?.statusBreakdown]);
 
@@ -83,7 +112,9 @@ function PresidentDashboard() {
               id="president-cycle"
               className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               value={cycleId ?? "all"}
-              onChange={(event) => setCycleId(event.target.value === "all" ? null : event.target.value)}
+              onChange={(event) =>
+                setCycleId(event.target.value === "all" ? null : event.target.value)
+              }
             >
               <option value="all">All cycles</option>
               {(cycleOptionsQuery.data ?? []).map((cycle) => (
@@ -136,72 +167,81 @@ function PresidentDashboard() {
           <DashboardSummaryLayout
             status={
               <Card className="border border-border bg-card shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Evaluation Status</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[220px] p-3 pt-0">
-              <ChartContainer
-                config={{ value: { color: "var(--info)", label: "Evaluations" } }}
-                className="h-full w-full"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={chartData}
-                    layout="vertical"
-                    margin={{ top: 6, right: 12, left: 8, bottom: 6 }}
-                    barGap={8}
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Evaluation Status</CardTitle>
+                </CardHeader>
+                <CardContent className="h-[220px] p-3 pt-0">
+                  <ChartContainer
+                    config={{ value: { color: "var(--info)", label: "Evaluations" } }}
+                    className="h-full w-full"
                   >
-                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis
-                      type="number"
-                      allowDecimals={false}
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-                      domain={[0, (dataMax: number) => Math.max(dataMax, 1)]}
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      width={100}
-                      tick={{ fill: "var(--foreground)", fontSize: 12 }}
-                    />
-                    <Tooltip
-                      cursor={{ fill: "var(--muted)" }}
-                      content={
-                        <ChartTooltipContent hideLabel formatter={(value) => [value, "Evaluations"]} />
-                      }
-                    />
-                    <Bar
-                      dataKey="value"
-                      radius={[0, 6, 6, 0]}
-                      barSize={18}
-                      label={{
-                        position: "right",
-                        formatter: (value: number | string) => `${value}`,
-                        fill: "var(--foreground)",
-                        fontSize: 12,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {chartData.map((entry) => <Cell key={entry.status} fill={entry.color} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={chartData}
+                        layout="vertical"
+                        margin={{ top: 6, right: 12, left: 8, bottom: 6 }}
+                        barGap={8}
+                      >
+                        <CartesianGrid
+                          horizontal={false}
+                          strokeDasharray="3 3"
+                          stroke="var(--border)"
+                        />
+                        <XAxis
+                          type="number"
+                          allowDecimals={false}
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                          domain={[0, (dataMax: number) => Math.max(dataMax, 1)]}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="label"
+                          tickLine={false}
+                          axisLine={false}
+                          width={100}
+                          tick={{ fill: "var(--foreground)", fontSize: 12 }}
+                        />
+                        <Tooltip
+                          cursor={{ fill: "var(--muted)" }}
+                          content={
+                            <ChartTooltipContent
+                              hideLabel
+                              formatter={(value) => [value, "Evaluations"]}
+                            />
+                          }
+                        />
+                        <Bar
+                          dataKey="value"
+                          radius={[0, 6, 6, 0]}
+                          barSize={18}
+                          label={{
+                            position: "right",
+                            formatter: (value: number | string) => `${value}`,
+                            fill: "var(--foreground)",
+                            fontSize: 12,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {chartData.map((entry) => (
+                            <Cell key={entry.status} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
               </Card>
             }
             activity={
               <Card className="border border-border bg-card shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <AuditActivityTable rows={query.data?.activity ?? []} />
-            </CardContent>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <AuditActivityTable rows={query.data?.activity ?? []} />
+                </CardContent>
               </Card>
             }
           />

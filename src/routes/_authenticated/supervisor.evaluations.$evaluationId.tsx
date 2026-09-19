@@ -330,7 +330,7 @@ export function SupervisorReviewPage() {
       transferInterest:
         source["supervisor_step2_transfer_interest"] === "not_aware"
           ? "NOT_AWARE"
-          : source["supervisor_step2_transfer_interest"] ?? "",
+          : (source["supervisor_step2_transfer_interest"] ?? ""),
       transferJob: source["supervisor_step2_transfer_job"] ?? "",
       transferWhere: source["supervisor_step2_transfer_where"] ?? "",
       transferQualified: source["supervisor_step2_transfer_qualified"] ?? "",
@@ -639,14 +639,24 @@ export function SupervisorReviewPage() {
                 ["Section / Unit", detail.section_snapshot],
                 ["Evaluation Cycle", `${detail.cycle_name} (${detail.cycle_year})`],
                 ["Self-assessment submitted", formatDateTime(detail.employee_submitted_at)],
-                ["Employment Status", String((detail as Record<string, unknown>).employment_status ?? "-")],
-                ["Employment Date", formatDateTime((detail as Record<string, unknown>).employment_date as string | null)],
+                [
+                  "Employment Status",
+                  String((detail as Record<string, unknown>).employment_status ?? "-"),
+                ],
+                [
+                  "Employment Date",
+                  formatDateTime(
+                    (detail as Record<string, unknown>).employment_date as string | null,
+                  ),
+                ],
               ].map(([label, value]) => (
                 <TableRow key={label}>
                   <TableCell className="w-1/3 bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {label}
                   </TableCell>
-                  <TableCell className="text-sm font-medium text-foreground">{value || "-"}</TableCell>
+                  <TableCell className="text-sm font-medium text-foreground">
+                    {value || "-"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

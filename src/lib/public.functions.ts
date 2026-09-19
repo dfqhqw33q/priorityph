@@ -337,9 +337,7 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
 }
 
 export const getPublicCycle = createServerFn({ method: "GET" })
-  .inputValidator((input: unknown) =>
-    z.object({ cycleToken: z.string().min(16).max(128) }).parse(input),
-  )
+  .validator((input: unknown) => z.object({ cycleToken: z.string().min(16).max(128) }).parse(input))
   .handler(async ({ data }): Promise<PublicCycleResult> => {
     const { getAdmin } = await import("./server-core.server");
     const admin = await getAdmin();
@@ -379,7 +377,7 @@ export type ProfileVerificationResult =
   | { status: "NOT_FOUND" | "INACTIVE" | "DUPLICATE" };
 
 export const verifyEmployeeProfile = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     employeeProfileSchema
       .pick({ employeeNumber: true, firstName: true, lastName: true })
       .extend({ middleName: z.string().max(80).default("") })
@@ -472,7 +470,7 @@ export const verifyEmployeeProfile = createServerFn({ method: "POST" })
   });
 
 export const submitStep1 = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => step1SubmissionSchema.parse(input))
+  .validator((input: unknown) => step1SubmissionSchema.parse(input))
   .handler(async ({ data }): Promise<Step1Result> => {
     const { getAdmin, writeAudit, getRequestMeta, validationError } =
       await import("./server-core.server");

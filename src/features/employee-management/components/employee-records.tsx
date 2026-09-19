@@ -291,8 +291,12 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
                     </button>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{row.job_title}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{row.division || "-"}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{row.section || "-"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {row.division || "-"}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {row.section || "-"}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={row.employment_status === "ACTIVE" ? "secondary" : "outline"}>
                       {row.employment_status}

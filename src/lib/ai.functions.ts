@@ -142,7 +142,7 @@ export type RaterAiSuggestion = {
 
 export const suggestRaterFields = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => raterSuggestionSchema.parse(input))
+  .validator((input: unknown) => raterSuggestionSchema.parse(input))
   .handler(async ({ data, context }): Promise<RaterAiSuggestion> => {
     const {
       getAdmin,
@@ -395,7 +395,7 @@ export const suggestRaterFields = createServerFn({ method: "POST" })
 
 export const recordRaterAiAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => raterActionSchema.parse(input))
+  .validator((input: unknown) => raterActionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,
@@ -444,7 +444,7 @@ export const recordRaterAiAction = createServerFn({ method: "POST" })
 
 export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => reviewingSuggestionSchema.parse(input))
+  .validator((input: unknown) => reviewingSuggestionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,
@@ -605,7 +605,7 @@ export const suggestReviewingSupervisorFields = createServerFn({ method: "POST" 
 
 export const recordReviewingSupervisorAiAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => reviewingActionSchema.parse(input))
+  .validator((input: unknown) => reviewingActionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,
@@ -668,7 +668,7 @@ export type CommitteeTrainingRecommendation = {
 
 export const suggestCommitteeTrainingRecommendation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => committeeTrainingSuggestionSchema.parse(input))
+  .validator((input: unknown) => committeeTrainingSuggestionSchema.parse(input))
   .handler(async ({ data, context }): Promise<CommitteeTrainingRecommendation> => {
     const {
       getAdmin,
@@ -806,7 +806,7 @@ export const suggestCommitteeTrainingRecommendation = createServerFn({ method: "
 
 export const recordCommitteeTrainingRecommendationAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => committeeTrainingActionSchema.parse(input))
+  .validator((input: unknown) => committeeTrainingActionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { requirePermission, writeAudit, getActorRoles } = await import("./server-core.server");
     await requirePermission(context.userId, "committee.review", "Committee Review");
@@ -831,7 +831,7 @@ export const recordCommitteeTrainingRecommendationAction = createServerFn({ meth
 
 export const generateEvaluationAiAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => requestSchema.parse(input))
+  .validator((input: unknown) => requestSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,
@@ -919,7 +919,7 @@ export const generateEvaluationAiAnalysis = createServerFn({ method: "POST" })
  */
 export const suggestPresidentField = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => suggestionSchema.parse(input))
+  .validator((input: unknown) => suggestionSchema.parse(input))
   .handler(async ({ data, context }): Promise<AiSuggestionResult> => {
     const {
       getAdmin,
@@ -1061,14 +1061,14 @@ export const suggestPresidentField = createServerFn({ method: "POST" })
       evidence,
       disagreementWarning,
       generatedAt,
-      model: "lovable-ai",
+      model: "project-ai",
     };
   });
 
 /** Records that the President explicitly accepted or dismissed a suggestion. */
 export const recordAiSuggestionDecision = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => decisionSchema.parse(input))
+  .validator((input: unknown) => decisionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { requirePermission, writeAudit, getActorRoles } = await import("./server-core.server");
     await requirePermission(
@@ -1091,7 +1091,7 @@ export const recordAiSuggestionDecision = createServerFn({ method: "POST" })
 
 export const saveEvaluationAiAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => saveSchema.parse(input))
+  .validator((input: unknown) => saveSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");

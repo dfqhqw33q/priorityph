@@ -47,7 +47,7 @@ export const listUsers = createServerFn({ method: "GET" })
 
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => userFormSchema.parse(input))
+  .validator((input: unknown) => userFormSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,
@@ -100,7 +100,7 @@ export const createUser = createServerFn({ method: "POST" })
 
 export const updateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => userUpdateSchema.parse(input))
+  .validator((input: unknown) => userUpdateSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
@@ -131,7 +131,7 @@ export const updateUser = createServerFn({ method: "POST" })
 
 export const applyUserAccessAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => userAccessActionSchema.parse(input))
+  .validator((input: unknown) => userAccessActionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,
@@ -209,7 +209,7 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
 
 export const assignRoles = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => assignRolesSchema.parse(input))
+  .validator((input: unknown) => assignRolesSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError, safeMessage } =
       await import("./server-core.server");
@@ -271,7 +271,7 @@ export const listRoleMatrix = createServerFn({ method: "GET" })
 
 export const setRolePermissions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => rolePermissionsSchema.parse(input))
+  .validator((input: unknown) => rolePermissionsSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
@@ -311,7 +311,7 @@ export const setRolePermissions = createServerFn({ method: "POST" })
 
 export const listAuditLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         search: z.string().max(120).default(""),
@@ -354,7 +354,7 @@ export const listEmployees = createServerFn({ method: "GET" })
 
 export const createEmployeeProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => employeeProfileSchema.parse(input))
+  .validator((input: unknown) => employeeProfileSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
@@ -400,7 +400,7 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
 
 export const updateEmployeeProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     employeeProfileSchema.extend({ employeeId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -470,7 +470,7 @@ export const getAdminStats = createServerFn({ method: "GET" })
 /** Read-only, filterable audit trail. Access itself is audited. */
 export const listAuditEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => auditFiltersSchema.parse(input ?? {}))
+  .validator((input: unknown) => auditFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles } =
       await import("./server-core.server");
@@ -520,7 +520,7 @@ export const listAuditEvents = createServerFn({ method: "GET" })
 
 export const getEmployeeRecord = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ employeeId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ employeeId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission } = await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.view_201", "Digital 201 File");
@@ -560,7 +560,7 @@ export const getEmployeeRecord = createServerFn({ method: "GET" })
 
 export const getUserSecurityDetail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ userId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission } = await import("./server-core.server");
     await requirePermission(context.userId, "users.view", "User Management");

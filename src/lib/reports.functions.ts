@@ -47,7 +47,7 @@ export const listDigital201Employees = createServerFn({ method: "GET" })
 
 export const getCompetencyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ employeeId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ employeeId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError, writeAudit, getActorRoles } =
       await import("./server-core.server");
@@ -184,13 +184,7 @@ function getRoleHistoryAccess(roleNames: string[]) {
 
   if (roleNames.includes("REVIEWING_SUPERVISOR") || roleNames.includes("COMMITTEE")) {
     return {
-      permittedStatuses: [
-        "FOR_REVIEW",
-        "FOR_PROCESSING",
-        "FOR_APPROVAL",
-        "RETURNED",
-        "FINALIZED",
-      ],
+      permittedStatuses: ["FOR_REVIEW", "FOR_PROCESSING", "FOR_APPROVAL", "RETURNED", "FINALIZED"],
       supervisorOnly: false,
     };
   }
@@ -283,7 +277,7 @@ function getRoleReturnedAccess(roleNames: string[]) {
 
 export const getReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: Partial<ReportFilters>) => reportFiltersSchema.parse(input ?? {}))
+  .validator((input: Partial<ReportFilters>) => reportFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
     const {
       requirePermissionAny,
@@ -342,7 +336,13 @@ export const getReport = createServerFn({ method: "POST" })
     if (effectivePermittedStatuses && effectivePermittedStatuses.length > 0) {
       query = query.in("status", effectivePermittedStatuses as never);
     }
-    if (!isCompletedView && data.status.trim() && (!permittedStatuses || permittedStatuses.length === 0 || permittedStatuses.includes(data.status.trim()))) {
+    if (
+      !isCompletedView &&
+      data.status.trim() &&
+      (!permittedStatuses ||
+        permittedStatuses.length === 0 ||
+        permittedStatuses.includes(data.status.trim()))
+    ) {
       query = query.eq("status", data.status.trim() as never);
     }
     if (supervisorOnly) query = query.eq("supervisor_user_id", context.userId);
@@ -556,7 +556,7 @@ export const getReport = createServerFn({ method: "POST" })
 /** Full permanent history for one evaluation: workflow events plus audit trail. */
 export const getEvaluationHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { evaluationId: string }) => input)
+  .validator((input: { evaluationId: string }) => input)
   .handler(async ({ data, context }) => {
     const {
       requirePermissionAny,
@@ -611,13 +611,7 @@ export const getEvaluationHistory = createServerFn({ method: "GET" })
     }
 
     if (roles.includes("REVIEWING_SUPERVISOR") || roles.includes("COMMITTEE")) {
-      const allowed = [
-        "FOR_REVIEW",
-        "FOR_PROCESSING",
-        "FOR_APPROVAL",
-        "RETURNED",
-        "FINALIZED",
-      ];
+      const allowed = ["FOR_REVIEW", "FOR_PROCESSING", "FOR_APPROVAL", "RETURNED", "FINALIZED"];
       if (!allowed.includes(detail.status)) throw new AuthorizationError();
     }
 
@@ -665,7 +659,7 @@ export const getEvaluationHistory = createServerFn({ method: "GET" })
 /** Paginated employee 201-file data and two evaluation periods for comparison. */
 export const getDigital201File = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => digital201FileInputSchema.parse(input))
+  .validator((input: unknown) => digital201FileInputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");

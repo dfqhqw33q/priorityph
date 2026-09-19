@@ -7,7 +7,7 @@ import type { PresidentStepData } from "./domain";
 
 export const getPresidentStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -24,7 +24,7 @@ export const getPresidentStats = createServerFn({ method: "GET" })
 
 export const getPresidentSteps = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ evaluationId: z.string().uuid() }).parse(input))
   .handler(
     async ({
       data,
@@ -45,7 +45,7 @@ export const getPresidentSteps = createServerFn({ method: "GET" })
 
 export const savePresidentRatings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => presidentRatingSaveSchema.parse(input))
+  .validator((input: unknown) => presidentRatingSaveSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,
@@ -105,7 +105,7 @@ export const savePresidentRatings = createServerFn({ method: "POST" })
  */
 export const savePresidentStepAnswers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => presidentStepSaveSchema.parse(input))
+  .validator((input: unknown) => presidentStepSaveSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,

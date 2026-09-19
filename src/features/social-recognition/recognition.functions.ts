@@ -52,7 +52,13 @@ export type RecognitionRecord = {
 };
 
 function related(row: Record<string, unknown>) {
-  const employee = row["employees"] as { full_name?: string; employee_number?: string; job_title?: string; division?: string; section?: string } | null;
+  const employee = row["employees"] as {
+    full_name?: string;
+    employee_number?: string;
+    job_title?: string;
+    division?: string;
+    section?: string;
+  } | null;
   const evaluation = row["evaluations"] as {
     evaluation_cycles?: { name?: string; year?: number } | null;
   } | null;
@@ -95,7 +101,7 @@ function mapRecord(row: Record<string, unknown>): RecognitionRecord {
 
 export const listRecognitionData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => filterSchema.parse(input))
+  .validator((input: unknown) => filterSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "recognition.view", "Social Recognition");
@@ -175,7 +181,7 @@ export const listFinalizedEvaluationsForRecognition = createServerFn({ method: "
 
 export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         id: z.string().uuid(),
@@ -265,7 +271,7 @@ export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
 
 export const createOtherRecognitionCandidate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         employeeId: z.string().uuid(),
@@ -323,7 +329,7 @@ export const createOtherRecognitionCandidate = createServerFn({ method: "POST" }
 
 export const generateRecognitionCertificate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ recordId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ recordId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError } =
       await import("../../lib/server-core.server");

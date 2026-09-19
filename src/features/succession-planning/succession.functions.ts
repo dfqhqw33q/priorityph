@@ -38,7 +38,13 @@ export type SuccessionProfile = {
 };
 
 function mapProfile(row: Record<string, unknown>): SuccessionProfile {
-  const employee = row["employees"] as { full_name?: string; employee_number?: string; job_title?: string; division?: string; section?: string } | null;
+  const employee = row["employees"] as {
+    full_name?: string;
+    employee_number?: string;
+    job_title?: string;
+    division?: string;
+    section?: string;
+  } | null;
   const evaluation = row["evaluations"] as {
     id?: string;
     is_finalized?: boolean;
@@ -90,7 +96,7 @@ function mapProfile(row: Record<string, unknown>): SuccessionProfile {
 
 export const listSuccessionProfiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         search: z.string().max(200).default(""),
@@ -141,7 +147,7 @@ export const listSuccessionProfiles = createServerFn({ method: "GET" })
 
 export const updateSuccessionProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => profileFields.extend({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => profileFields.extend({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError, writeAudit, getActorRoles } =
       await import("../../lib/server-core.server");

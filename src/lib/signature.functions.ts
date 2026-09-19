@@ -28,7 +28,7 @@ export type InternalUserSignatureInput = z.infer<typeof internalUserSignatureSch
  */
 export const submitInternalUserSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => internalUserSignatureSchema.parse(input))
+  .validator((input: unknown) => internalUserSignatureSchema.parse(input))
   .handler(async ({ data, context }) => {
     await requirePermissionAny(
       context.userId,

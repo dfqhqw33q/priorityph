@@ -61,7 +61,7 @@ export const getMyAccess = createServerFn({ method: "GET" })
 
 export const recordLoginEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { event: "LOGIN" | "LOGOUT" | "PASSWORD_CHANGED" }) => input)
+  .validator((input: { event: "LOGIN" | "LOGOUT" | "PASSWORD_CHANGED" }) => input)
   .handler(async ({ data, context }) => {
     const { getAdmin, writeAudit, getRequestMeta, getActorRoles } =
       await import("./server-core.server");
@@ -124,12 +124,10 @@ export const recordLoginEvent = createServerFn({ method: "POST" })
   });
 
 export const recordAuthFailure = createServerFn({ method: "POST" })
-  .inputValidator(
-    (input: { email: string; event: "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" }) => ({
-      email: String(input.email).slice(0, 200),
-      event: input.event,
-    }),
-  )
+  .validator((input: { email: string; event: "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" }) => ({
+    email: String(input.email).slice(0, 200),
+    event: input.event,
+  }))
   .handler(async ({ data }) => {
     const { getAdmin, writeAudit, getRequestMeta } = await import("./server-core.server");
     const admin = await getAdmin();
@@ -172,7 +170,7 @@ export const needsBootstrap = createServerFn({ method: "GET" }).handler(async ()
 
 /** One-time creation of the first Administrator. Refuses once any internal user exists. */
 export const bootstrapAdministrator = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => bootstrapAdminSchema.parse(input))
+  .validator((input: unknown) => bootstrapAdminSchema.parse(input))
   .handler(async ({ data }) => {
     const { getAdmin, writeAudit, validationError, safeMessage } =
       await import("./server-core.server");

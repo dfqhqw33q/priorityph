@@ -727,8 +727,12 @@ async function countAssignedEvaluationsForRole(
       .from("reviewing_supervisor_reviews")
       .select("evaluation_id, reviewer_user_id")
       .in("evaluation_id", evaluationIds);
-    const assignments = new Map((rows ?? []).map((row) => [row.evaluation_id, row.reviewer_user_id]));
-    const eligibleIds = evaluationIds.filter((id) => !assignments.get(id) || assignments.get(id) === userId);
+    const assignments = new Map(
+      (rows ?? []).map((row) => [row.evaluation_id, row.reviewer_user_id]),
+    );
+    const eligibleIds = evaluationIds.filter(
+      (id) => !assignments.get(id) || assignments.get(id) === userId,
+    );
     if (!eligibleIds.length) return 0;
     const { data: personnelRows } = await admin
       .from("personnel_processing")
@@ -755,8 +759,12 @@ async function countAssignedEvaluationsForRole(
       .from("committee_reviews")
       .select("evaluation_id, committee_user_id")
       .in("evaluation_id", evaluationIds);
-    const assignments = new Map((rows ?? []).map((row) => [row.evaluation_id, row.committee_user_id]));
-    const eligibleIds = evaluationIds.filter((id) => !assignments.get(id) || assignments.get(id) === userId);
+    const assignments = new Map(
+      (rows ?? []).map((row) => [row.evaluation_id, row.committee_user_id]),
+    );
+    const eligibleIds = evaluationIds.filter(
+      (id) => !assignments.get(id) || assignments.get(id) === userId,
+    );
     if (!eligibleIds.length) return 0;
     const { data: personnelRows } = await admin
       .from("personnel_processing")
@@ -785,9 +793,10 @@ async function assignedStatusCountsForRole(
   role: "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE" | "PRESIDENT",
   cycleId: string | null = null,
 ) {
-  const counts = Object.fromEntries(
-    EVALUATION_STATUSES.map((status) => [status, 0]),
-  ) as Record<EvaluationStatus, number>;
+  const counts = Object.fromEntries(EVALUATION_STATUSES.map((status) => [status, 0])) as Record<
+    EvaluationStatus,
+    number
+  >;
 
   for (const status of EVALUATION_STATUSES) {
     counts[status] = await countAssignedEvaluationsForRole(userId, role, [status], cycleId);
@@ -802,9 +811,10 @@ export async function statusCountsForCycle(cycleId: string | null = null) {
   if (cycleId) query = query.eq("cycle_id", cycleId);
 
   const { data = [] } = await query;
-  const counts = Object.fromEntries(
-    EVALUATION_STATUSES.map((status) => [status, 0]),
-  ) as Record<EvaluationStatus, number>;
+  const counts = Object.fromEntries(EVALUATION_STATUSES.map((status) => [status, 0])) as Record<
+    EvaluationStatus,
+    number
+  >;
 
   for (const row of data) {
     const status = row.status as EvaluationStatus | undefined;
@@ -948,7 +958,13 @@ export async function presidentStats(userId: string, cycleId: string | null = nu
 
 export async function adminStats() {
   const admin = await getAdmin();
-  const [{ data: users }, { data: roleRows }, { data: permissionRows }, { count: employeeRecords }, { count: auditEvents }] = await Promise.all([
+  const [
+    { data: users },
+    { data: roleRows },
+    { data: permissionRows },
+    { count: employeeRecords },
+    { count: auditEvents },
+  ] = await Promise.all([
     admin.from("internal_users").select("is_active, is_locked"),
     admin.from("user_roles").select("role"),
     admin.from("permissions").select("code"),
@@ -1006,7 +1022,9 @@ export async function recentActivity(
   ];
   const { data: auditRows } = await admin
     .from("audit_logs")
-    .select("id, evaluation_id, action, module, actor_user_id, actor_role, reason, occurred_at, result")
+    .select(
+      "id, evaluation_id, action, module, actor_user_id, actor_role, reason, occurred_at, result",
+    )
     .in("module", [
       "Step 1 Submission",
       "Evaluation Workflow",
@@ -1023,17 +1041,19 @@ export async function recentActivity(
     .order("occurred_at", { ascending: false })
     .limit(limit * 8);
 
-  const eventRows = (auditRows ?? []).filter(
-    (event) => event.evaluation_id,
+  const eventRows = (auditRows ?? []).filter((event) => event.evaluation_id);
+  const evaluationIds = Array.from(
+    new Set(eventRows.map((event) => event.evaluation_id as string)),
   );
-  const evaluationIds = Array.from(new Set(eventRows.map((event) => event.evaluation_id as string)));
   if (evaluationIds.length === 0) return [];
 
   const [{ data: evaluations }, { data: reviewingAssignments }, { data: committeeAssignments }] =
     await Promise.all([
       admin
         .from("evaluations")
-        .select("id, cycle_id, full_name_snapshot, employee_number_snapshot, supervisor_user_id, president_user_id")
+        .select(
+          "id, cycle_id, full_name_snapshot, employee_number_snapshot, supervisor_user_id, president_user_id",
+        )
         .in("id", evaluationIds),
       roles.includes("REVIEWING_SUPERVISOR")
         ? admin
@@ -1042,19 +1062,20 @@ export async function recentActivity(
             .eq("reviewer_user_id", userId)
         : Promise.resolve({ data: [] }),
       roles.includes("COMMITTEE")
-        ? admin
-            .from("committee_reviews")
-            .select("evaluation_id")
-            .eq("committee_user_id", userId)
+        ? admin.from("committee_reviews").select("evaluation_id").eq("committee_user_id", userId)
         : Promise.resolve({ data: [] }),
     ]);
 
-  const evaluationById = new Map((evaluations ?? []).map((evaluation) => [evaluation.id, evaluation]));
+  const evaluationById = new Map(
+    (evaluations ?? []).map((evaluation) => [evaluation.id, evaluation]),
+  );
   const reviewingIds = new Set((reviewingAssignments ?? []).map((row) => row.evaluation_id));
   const committeeIds = new Set((committeeAssignments ?? []).map((row) => row.evaluation_id));
   const isHr = roles.includes("HR") || roles.includes("ADMINISTRATOR");
   const actorIds = Array.from(
-    new Set(eventRows.map((event) => event.actor_user_id).filter((id): id is string => Boolean(id))),
+    new Set(
+      eventRows.map((event) => event.actor_user_id).filter((id): id is string => Boolean(id)),
+    ),
   );
   const { data: actors } = actorIds.length
     ? await admin.from("internal_users").select("id, full_name").in("id", actorIds)
@@ -1068,10 +1089,12 @@ export async function recentActivity(
     if (isHr) return true;
     if (event.actor_user_id === userId || evaluation.president_user_id === userId) return true;
     if (roles.includes("SUPERVISOR") && evaluation.supervisor_user_id === userId) return true;
-    if (roles.includes("REVIEWING_SUPERVISOR") && reviewingIds.has(event.evaluation_id)) return true;
+    if (roles.includes("REVIEWING_SUPERVISOR") && reviewingIds.has(event.evaluation_id))
+      return true;
     if (roles.includes("COMMITTEE") && committeeIds.has(event.evaluation_id)) return true;
     if (roles.includes("SUPERVISOR") && event.action === "STEP1_SUBMITTED") return true;
-    if (roles.includes("REVIEWING_SUPERVISOR") && event.action === "RATER_STEP2_SUBMITTED") return true;
+    if (roles.includes("REVIEWING_SUPERVISOR") && event.action === "RATER_STEP2_SUBMITTED")
+      return true;
     if (roles.includes("COMMITTEE") && event.action === "PERSONNEL_SUBMITTED") return true;
     if (roles.includes("PRESIDENT") && event.action === "COMMITTEE_SUBMITTED") return true;
     return false;

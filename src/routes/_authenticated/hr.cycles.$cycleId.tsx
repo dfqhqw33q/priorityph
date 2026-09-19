@@ -16,11 +16,7 @@ import {
   StatCard,
   formatDateTime,
 } from "@/components/shared/shared-ui";
-import {
-  changeCycleStatus,
-  getCycle,
-  regenerateCycleToken,
-} from "@/lib/cycles.functions";
+import { changeCycleStatus, getCycle, regenerateCycleToken } from "@/lib/cycles.functions";
 import { useAccess } from "@/hooks/use-access";
 import type { CycleStatus } from "@/lib/domain";
 
@@ -220,16 +216,10 @@ function CycleDetailPage() {
         open={action !== null}
         onOpenChange={(open) => !open && setAction(null)}
         title={
-          action?.kind === "regenerate"
-            ? "Regenerate shared link"
-            : (action?.title ?? "Confirm")
+          action?.kind === "regenerate" ? "Regenerate shared link" : (action?.title ?? "Confirm")
         }
         description="Please give a short reason. This is kept in the activity history."
-        confirmLabel={
-          action?.kind === "regenerate"
-            ? "Regenerate"
-            : (action?.label ?? "Confirm")
-        }
+        confirmLabel={action?.kind === "regenerate" ? "Regenerate" : (action?.label ?? "Confirm")}
         destructive={action?.kind === "status" && action.destructive}
         pending={mutation.isPending}
         onConfirm={(reason) => mutation.mutate(reason)}

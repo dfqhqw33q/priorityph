@@ -223,20 +223,85 @@ function RecognitionDirectory({
     new Map(
       [...candidates, ...records].map((item) => [
         item.employeeId,
-        { employeeId: item.employeeId, employeeName: item.employeeName, employeeNumber: item.employeeNumber, employeeJobTitle: item.employeeJobTitle, employeeDivision: item.employeeDivision, employeeSection: item.employeeSection },
+        {
+          employeeId: item.employeeId,
+          employeeName: item.employeeName,
+          employeeNumber: item.employeeNumber,
+          employeeJobTitle: item.employeeJobTitle,
+          employeeDivision: item.employeeDivision,
+          employeeSection: item.employeeSection,
+        },
       ]),
     ).values(),
   );
   if (selectedEmployeeId) {
     const employee = employees.find((item) => item.employeeId === selectedEmployeeId);
-    return <RecognitionDetail employee={employee} candidates={candidates.filter((item) => item.employeeId === selectedEmployeeId)} records={records.filter((item) => item.employeeId === selectedEmployeeId)} onBack={onBack} onReview={onReview} onCertificate={onCertificate} />;
+    return (
+      <RecognitionDetail
+        employee={employee}
+        candidates={candidates.filter((item) => item.employeeId === selectedEmployeeId)}
+        records={records.filter((item) => item.employeeId === selectedEmployeeId)}
+        onBack={onBack}
+        onReview={onReview}
+        onCertificate={onCertificate}
+      />
+    );
   }
   return (
     <div className="border border-border bg-card shadow-sm">
       <Table>
         <caption className="sr-only">Recognition records by employee</caption>
-        <TableHeader><TableRow><TableHead>Employee ID</TableHead><TableHead>Full Name</TableHead><TableHead>Job Title</TableHead><TableHead>Division / Department</TableHead><TableHead>Section / Unit</TableHead><TableHead>Recognition Type</TableHead><TableHead>Status</TableHead><TableHead>Recognition Date</TableHead></TableRow></TableHeader>
-        <TableBody>{employees.map((employee) => { const source = [...candidates, ...records].find((item) => item.employeeId === employee.employeeId); return <TableRow key={employee.employeeId}><TableCell className="whitespace-nowrap"><button type="button" className="font-normal text-foreground hover:text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>{employee.employeeNumber}</button></TableCell><TableCell><button type="button" className="font-normal text-foreground hover:text-primary hover:underline" onClick={() => onSelect(employee.employeeId)}>{employee.employeeName}</button></TableCell><TableCell>{employee.employeeJobTitle || "-"}</TableCell><TableCell>{employee.employeeDivision || "-"}</TableCell><TableCell>{employee.employeeSection || "-"}</TableCell><TableCell>{source?.recognitionType ?? "-"}</TableCell><TableCell>{source ? humanizeToken(source.status) : "-"}</TableCell><TableCell>{"recognitionDate" in (source ?? {}) ? formatDateTime((source as RecognitionRecord).recognitionDate) : "-"}</TableCell></TableRow>; })}</TableBody>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Employee ID</TableHead>
+            <TableHead>Full Name</TableHead>
+            <TableHead>Job Title</TableHead>
+            <TableHead>Division / Department</TableHead>
+            <TableHead>Section / Unit</TableHead>
+            <TableHead>Recognition Type</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Recognition Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {employees.map((employee) => {
+            const source = [...candidates, ...records].find(
+              (item) => item.employeeId === employee.employeeId,
+            );
+            return (
+              <TableRow key={employee.employeeId}>
+                <TableCell className="whitespace-nowrap">
+                  <button
+                    type="button"
+                    className="font-normal text-foreground hover:text-primary hover:underline"
+                    onClick={() => onSelect(employee.employeeId)}
+                  >
+                    {employee.employeeNumber}
+                  </button>
+                </TableCell>
+                <TableCell>
+                  <button
+                    type="button"
+                    className="font-normal text-foreground hover:text-primary hover:underline"
+                    onClick={() => onSelect(employee.employeeId)}
+                  >
+                    {employee.employeeName}
+                  </button>
+                </TableCell>
+                <TableCell>{employee.employeeJobTitle || "-"}</TableCell>
+                <TableCell>{employee.employeeDivision || "-"}</TableCell>
+                <TableCell>{employee.employeeSection || "-"}</TableCell>
+                <TableCell>{source?.recognitionType ?? "-"}</TableCell>
+                <TableCell>{source ? humanizeToken(source.status) : "-"}</TableCell>
+                <TableCell>
+                  {"recognitionDate" in (source ?? {})
+                    ? formatDateTime((source as RecognitionRecord).recognitionDate)
+                    : "-"}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
       </Table>
     </div>
   );
@@ -260,10 +325,78 @@ function RecognitionDetail({
   if (!employee) return null;
   return (
     <div className="space-y-4">
-      <Button variant="outline" onClick={onBack}>Back to employees</Button>
-      <Card><CardContent className="pt-6"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Employee ID</p><h2 className="text-xl font-semibold">{employee.employeeName}</h2><p className="text-sm text-muted-foreground">{employee.employeeNumber}</p></CardContent></Card>
-      {candidates.map((candidate) => <Card key={candidate.id}><CardContent className="space-y-3 pt-6"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{humanizeToken(candidate.status)}</p><h3 className="font-semibold">{candidate.recognitionType}</h3></div>{candidate.status === "PENDING" ? <Button variant="outline" size="sm" onClick={() => onReview(candidate)}>Review</Button> : null}</div><p className="whitespace-pre-wrap text-sm">{candidate.reason}</p><Link className="text-primary hover:underline" to="/hr/evaluation-history/$evaluationId" params={{ evaluationId: candidate.sourceEvaluationId }}>{candidate.sourceCycleName ? `${candidate.sourceCycleName} (${candidate.sourceCycleYear})` : "View evaluation"}</Link></CardContent></Card>)}
-      {records.map((record) => <Card key={record.id}><CardContent className="space-y-3 pt-6"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Approved Recognition</p><h3 className="font-semibold">{record.recognitionType}</h3></div><Button variant="outline" size="sm" onClick={() => onCertificate(record)}>Certificate</Button></div><p className="whitespace-pre-wrap text-sm">{record.reason}</p><p className="text-sm text-muted-foreground">Recognition Date: {formatDateTime(record.recognitionDate)} · Approved: {formatDateTime(record.approvedAt)}</p><Link className="text-primary hover:underline" to="/hr/evaluation-history/$evaluationId" params={{ evaluationId: record.sourceEvaluationId }}>{record.sourceCycleName ? `${record.sourceCycleName} (${record.sourceCycleYear})` : "View evaluation"}</Link></CardContent></Card>)}
+      <Button variant="outline" onClick={onBack}>
+        Back to employees
+      </Button>
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Employee ID
+          </p>
+          <h2 className="text-xl font-semibold">{employee.employeeName}</h2>
+          <p className="text-sm text-muted-foreground">{employee.employeeNumber}</p>
+        </CardContent>
+      </Card>
+      {candidates.map((candidate) => (
+        <Card key={candidate.id}>
+          <CardContent className="space-y-3 pt-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {humanizeToken(candidate.status)}
+                </p>
+                <h3 className="font-semibold">{candidate.recognitionType}</h3>
+              </div>
+              {candidate.status === "PENDING" ? (
+                <Button variant="outline" size="sm" onClick={() => onReview(candidate)}>
+                  Review
+                </Button>
+              ) : null}
+            </div>
+            <p className="whitespace-pre-wrap text-sm">{candidate.reason}</p>
+            <Link
+              className="text-primary hover:underline"
+              to="/hr/evaluation-history/$evaluationId"
+              params={{ evaluationId: candidate.sourceEvaluationId }}
+            >
+              {candidate.sourceCycleName
+                ? `${candidate.sourceCycleName} (${candidate.sourceCycleYear})`
+                : "View evaluation"}
+            </Link>
+          </CardContent>
+        </Card>
+      ))}
+      {records.map((record) => (
+        <Card key={record.id}>
+          <CardContent className="space-y-3 pt-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Approved Recognition
+                </p>
+                <h3 className="font-semibold">{record.recognitionType}</h3>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => onCertificate(record)}>
+                Certificate
+              </Button>
+            </div>
+            <p className="whitespace-pre-wrap text-sm">{record.reason}</p>
+            <p className="text-sm text-muted-foreground">
+              Recognition Date: {formatDateTime(record.recognitionDate)} · Approved:{" "}
+              {formatDateTime(record.approvedAt)}
+            </p>
+            <Link
+              className="text-primary hover:underline"
+              to="/hr/evaluation-history/$evaluationId"
+              params={{ evaluationId: record.sourceEvaluationId }}
+            >
+              {record.sourceCycleName
+                ? `${record.sourceCycleName} (${record.sourceCycleYear})`
+                : "View evaluation"}
+            </Link>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

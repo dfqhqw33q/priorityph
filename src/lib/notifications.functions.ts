@@ -111,7 +111,7 @@ function mapNotification(row: Record<string, unknown>): AppNotification {
 
 export const listMyNotifications = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         limit: z.number().int().min(1).max(100).default(50),
@@ -137,7 +137,7 @@ export const listMyNotifications = createServerFn({ method: "GET" })
 
 export const markNotificationRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin } = await import("./server-core.server");
     const admin = await getAdmin();

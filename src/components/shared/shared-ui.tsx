@@ -15,7 +15,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   EVALUATION_STATUS_LABELS,
   humanizeToken,
@@ -122,8 +129,7 @@ const AUDIT_ACTIVITY_LABELS: Record<string, string> = {
 
 export function auditActivityLabel(action: string) {
   return (
-    AUDIT_ACTIVITY_LABELS[action] ??
-    humanizeToken(action).replace(/^Evaluation Workflow /i, "")
+    AUDIT_ACTIVITY_LABELS[action] ?? humanizeToken(action).replace(/^Evaluation Workflow /i, "")
   );
 }
 

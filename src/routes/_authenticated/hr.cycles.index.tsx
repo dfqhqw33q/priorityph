@@ -101,9 +101,10 @@ function CyclesPage() {
       toast.error(error instanceof Error ? error.message : "Could not save the cycle"),
   });
 
-  const rows = (cyclesQuery.data ?? []).filter((cycle) =>
-    `${cycle.name} ${cycle.year} ${cycle.status}`.toLowerCase().includes(search.toLowerCase()) &&
-    (status === "ALL" || cycle.status === status),
+  const rows = (cyclesQuery.data ?? []).filter(
+    (cycle) =>
+      `${cycle.name} ${cycle.year} ${cycle.status}`.toLowerCase().includes(search.toLowerCase()) &&
+      (status === "ALL" || cycle.status === status),
   );
 
   const shareUrl =
@@ -213,7 +214,12 @@ function CyclesPage() {
             <option value="DISABLED">Archived</option>
           </select>
         </div>
-        {can("cycles.manage") ? <Button onClick={() => setOpen(true)}><Plus />New Cycle</Button> : null}
+        {can("cycles.manage") ? (
+          <Button onClick={() => setOpen(true)}>
+            <Plus />
+            New Cycle
+          </Button>
+        ) : null}
       </div>
 
       {cyclesQuery.isLoading ? (
@@ -265,7 +271,11 @@ function CyclesPage() {
                         </Button>
                       )}
                       {can("cycles.manage") && cycle.status !== "DISABLED" ? (
-                        <Button variant="ghost" size="sm" onClick={() => setArchiveCycleId(cycle.id)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setArchiveCycleId(cycle.id)}
+                        >
                           <Archive />
                           Archive
                         </Button>
@@ -371,7 +381,10 @@ function CyclesPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={selectedCycle !== null} onOpenChange={(isOpen) => !isOpen && setSelectedCycle(null)}>
+      <Dialog
+        open={selectedCycle !== null}
+        onOpenChange={(isOpen) => !isOpen && setSelectedCycle(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Performance Evaluation {selectedCycle?.year}</DialogTitle>

@@ -23,7 +23,7 @@ type SerializableRecord = Record<string, string | number | boolean | null>;
 
 export const getEvaluationStage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         evaluationId: z.string().uuid(),
@@ -213,7 +213,7 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
 
 export const listEvaluationStageQueue = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({ stage: z.enum(["REVIEWING_SUPERVISOR", "PERSONNEL", "COMMITTEE", "PRESIDENT"]) })
       .parse(input),
@@ -498,12 +498,18 @@ async function saveStageSignature(
 
 export const saveEvaluationSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         evaluationId: z.string().uuid(),
         version: z.number().int().positive(),
-        stage: z.enum(["RATER_STEP2", "REVIEWING_SUPERVISOR_STEP3", "PERSONNEL", "COMMITTEE", "PRESIDENT"]),
+        stage: z.enum([
+          "RATER_STEP2",
+          "REVIEWING_SUPERVISOR_STEP3",
+          "PERSONNEL",
+          "COMMITTEE",
+          "PRESIDENT",
+        ]),
         signature: z.object({
           method: z.enum(["DRAWN", "UPLOAD"]),
           data: z.string().min(2).max(700_000),
@@ -529,13 +535,19 @@ export const saveEvaluationSignature = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!evaluation || evaluation.version !== data.version || evaluation.is_finalized)
       throw validationError("This evaluation can no longer be signed");
-    await saveStageSignature(data.evaluationId, data.stage, data.signature, context.userId, data.version);
+    await saveStageSignature(
+      data.evaluationId,
+      data.stage,
+      data.signature,
+      context.userId,
+      data.version,
+    );
     return { ok: true, signedAt: new Date().toISOString() };
   });
 
 export const saveRaterStep2 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => raterStep2Schema.parse(input))
+  .validator((input: unknown) => raterStep2Schema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError, writeAudit, getActorRoles } =
       await import("./server-core.server");
@@ -635,7 +647,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
 
 export const enterReviewingSupervisorStage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({ evaluationId: z.string().uuid(), version: z.number().int().positive() })
       .parse(input),
@@ -654,7 +666,7 @@ export const enterReviewingSupervisorStage = createServerFn({ method: "POST" })
 
 export const submitReviewingSupervisor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => reviewingSupervisorReviewSchema.parse(input))
+  .validator((input: unknown) => reviewingSupervisorReviewSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError, upsertReviewingSupervisorRatings } =
       await import("./server-core.server");
@@ -721,7 +733,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
 
 export const submitPersonnelProcessing = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => personnelProcessingSchema.parse(input))
+  .validator((input: unknown) => personnelProcessingSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
     const { computeScore } = await import("./scoring.server");
@@ -792,7 +804,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
 
 export const submitCommitteeReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => committeeReviewSchema.parse(input))
+  .validator((input: unknown) => committeeReviewSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
     await requirePermission(context.userId, "committee.review", "Committee Review");
@@ -845,7 +857,7 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
 
 export const approveEvaluation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => presidentApprovalSchema.parse(input))
+  .validator((input: unknown) => presidentApprovalSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
     await requirePermission(context.userId, "president.approve", "President Approval");
@@ -884,7 +896,7 @@ export const approveEvaluation = createServerFn({ method: "POST" })
 
 export const resubmitForCorrection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         evaluationId: z.string().uuid(),

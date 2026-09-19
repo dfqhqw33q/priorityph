@@ -40,7 +40,7 @@ export const listCycles = createServerFn({ method: "GET" })
 
 export const getCycle = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ cycleId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ cycleId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<CycleSummary | null> => {
     const { getAdmin, requirePermission, cycleCounts } = await import("./server-core.server");
     await requirePermission(context.userId, "cycles.view", "Evaluation Cycles");
@@ -58,7 +58,7 @@ export const getCycle = createServerFn({ method: "GET" })
 
 export const saveCycle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     cycleFormSchema.and(z.object({ cycleId: z.string().uuid().optional() })).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -123,7 +123,7 @@ export const saveCycle = createServerFn({ method: "POST" })
 
 export const changeCycleStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => cycleStatusActionSchema.parse(input))
+  .validator((input: unknown) => cycleStatusActionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const {
       getAdmin,
@@ -191,7 +191,7 @@ export const changeCycleStatus = createServerFn({ method: "POST" })
 
 export const regenerateCycleToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ cycleId: z.string().uuid(), reason: reasonSchema }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -236,7 +236,7 @@ export const regenerateCycleToken = createServerFn({ method: "POST" })
 
 export const deleteDraftCycle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ cycleId: z.string().uuid(), reason: reasonSchema }).parse(input),
   )
   .handler(async ({ data, context }) => {

@@ -25,7 +25,14 @@ type EvaluationStageValues = {
 };
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableHead,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -132,7 +139,9 @@ function ReadOnlyGroup({
   className?: string;
 }) {
   return (
-    <section className={`space-y-4 border-t border-border/60 pt-4 first:border-t-0 first:pt-0 ${className}`}>
+    <section
+      className={`space-y-4 border-t border-border/60 pt-4 first:border-t-0 first:pt-0 ${className}`}
+    >
       <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
       {children}
     </section>
@@ -692,9 +701,7 @@ export function EvaluationStageDetail({
                   <TableCell className="whitespace-nowrap tabular-nums">
                     {detail.employee_number_snapshot}
                   </TableCell>
-                  <TableCell className="font-medium">
-                    {detail.full_name_snapshot}
-                  </TableCell>
+                  <TableCell className="font-medium">{detail.full_name_snapshot}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {detail.job_title_snapshot || "—"}
                   </TableCell>
@@ -826,11 +833,9 @@ export function EvaluationStageDetail({
                     <div className="grid items-start gap-4 lg:grid-cols-4">
                       <ReadOnlyField
                         label="Job / Transfer Interest"
-                        value={
-                          transferInterestLabel(
-                            (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"],
-                          )
-                        }
+                        value={transferInterestLabel(
+                          (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"],
+                        )}
                       />
                       {String(
                         (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ??
@@ -975,11 +980,9 @@ export function EvaluationStageDetail({
                     <div className="grid items-start gap-4 lg:grid-cols-4">
                       <ReadOnlyField
                         label="Job / Transfer Interest"
-                        value={
-                          transferInterestLabel(
-                            (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"],
-                          )
-                        }
+                        value={transferInterestLabel(
+                          (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"],
+                        )}
                       />
                       {String(
                         (detail as Record<string, unknown>)["supervisor_step2_transfer_interest"] ??

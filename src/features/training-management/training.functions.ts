@@ -52,7 +52,13 @@ export type TrainingRecord = {
 };
 
 function sourceInfo(row: Record<string, unknown>) {
-  const employee = row["employees"] as { full_name?: string; employee_number?: string; job_title?: string; division?: string; section?: string } | null;
+  const employee = row["employees"] as {
+    full_name?: string;
+    employee_number?: string;
+    job_title?: string;
+    division?: string;
+    section?: string;
+  } | null;
   const evaluation = row["evaluations"] as {
     evaluation_cycles?: { name?: string; year?: number } | null;
   } | null;
@@ -110,7 +116,7 @@ const filterSchema = z.object({
 
 export const listTrainingData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => filterSchema.parse(input))
+  .validator((input: unknown) => filterSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
     await requirePermission(context.userId, "training.view", "Training Management");
@@ -181,7 +187,7 @@ export const listTrainingEmployees = createServerFn({ method: "GET" })
 
 export const updateTrainingRecord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => recordFields.extend({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => recordFields.extend({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, validationError, writeAudit, getActorRoles } =
       await import("../../lib/server-core.server");

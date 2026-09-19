@@ -269,7 +269,10 @@ function AdminUsersPage() {
         description="Manage system accounts, roles, and access for authorized users."
         actions={
           can("users.manage") ? (
-            <Button onClick={() => setCreateOpen(true)}><Plus />Create user</Button>
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus />
+              Create user
+            </Button>
           ) : null
         }
       />

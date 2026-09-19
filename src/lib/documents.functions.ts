@@ -19,7 +19,7 @@ const uploadSchema = z.object({
 
 export const listEmployeeDocuments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => idSchema.parse(input))
+  .validator((input: unknown) => idSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles } =
       await import("./server-core.server");
@@ -46,7 +46,7 @@ export const listEmployeeDocuments = createServerFn({ method: "GET" })
 
 export const getEmployeeDocumentUrl = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ documentId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ documentId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
@@ -77,7 +77,7 @@ export const getEmployeeDocumentUrl = createServerFn({ method: "GET" })
 
 export const uploadEmployeeDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => uploadSchema.parse(input))
+  .validator((input: unknown) => uploadSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
@@ -120,7 +120,7 @@ export const uploadEmployeeDocument = createServerFn({ method: "POST" })
 
 export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         evaluationId: z.string().uuid(),
@@ -194,7 +194,7 @@ export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
 
 export const getEvaluationDocumentUrl = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         evaluationId: z.string().uuid(),
