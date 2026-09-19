@@ -246,36 +246,36 @@ export function generateEvaluationHTML(params: {
     .workflow-signature .sig-date-label { font-weight: bold; }
     @media (max-width: 700px) { .step-two-grid { grid-template-columns: 1fr; } .step-two-footer { justify-content: flex-start; } }
 
-    .step-three { margin-top: 18px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.35; }
+    .step-three { margin-top: 14px; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.22; }
     .step-three h2, .step-three h3 { font-weight: bold; text-transform: uppercase; }
-    .step-three-header { margin-bottom: 12px; }
-    .step-three-comments { margin-bottom: 10px; }
-    .step-three-comments-title { text-align: center; margin-bottom: 12px; }
-    .comment-lines { border-bottom: 1px solid #000; margin-bottom: 10px; padding-bottom: 8px; white-space: pre-wrap; line-height: 1.35; overflow-wrap: anywhere; }
-    .step-three-signature { display: flex; justify-content: flex-end; margin-top: 10px; }
-    .step-three-rule { border: 0; border-top: 1px solid #000; margin: 14px 0; }
-    .step-three-section { margin-bottom: 14px; page-break-inside: avoid; break-inside: avoid; }
-    .step-three-section-title { margin: 0 0 10px; }
-    .step-three-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; margin-bottom: 20px; }
+    .step-three-header { margin-bottom: 8px; }
+    .step-three-comments { margin-bottom: 8px; }
+    .step-three-comments-title { text-align: center; margin-bottom: 8px; }
+    .comment-lines { border-bottom: 1px solid #000; margin-bottom: 8px; padding-bottom: 6px; white-space: pre-wrap; line-height: 1.22; overflow-wrap: anywhere; }
+    .step-three-signature { display: flex; justify-content: flex-end; margin-top: 8px; }
+    .step-three-rule { border: 0; border-top: 1px solid #000; margin: 10px 0; }
+    .step-three-section { margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
+    .step-three-section-title { margin: 0 0 8px; }
+    .step-three-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 12px; margin-bottom: 8px; }
     .step-three-field { display: flex; align-items: flex-end; gap: 8px; }
     .step-three-field-label { white-space: nowrap; }
-    .step-three-field-value { flex: 1; min-height: 20px; border-bottom: 1px solid #000; word-wrap: break-word; }
-    .step-three-result-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+    .step-three-field-value { flex: 1; min-height: 18px; border-bottom: 1px solid #000; word-wrap: break-word; }
+    .step-three-result-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
     .step-three-result-field { display: flex; align-items: flex-end; gap: 8px; }
-    .step-three-result-field.total { flex: 1; min-width: 200px; }
-    .step-three-result-field.rating { flex: 1; min-width: 300px; }
-    .step-three-result-value { min-width: 96px; flex: 1; min-height: 20px; border-bottom: 1px solid #000; }
-    .step-three-result-field.total .step-three-result-value { max-width: 96px; }
-    .step-three-result-field.rating .step-three-result-value { max-width: 128px; }
+    .step-three-result-field.total { flex: 1; min-width: 180px; }
+    .step-three-result-field.rating { flex: 1; min-width: 250px; }
+    .step-three-result-value { min-width: 86px; flex: 1; min-height: 18px; border-bottom: 1px solid #000; }
+    .step-three-result-field.total .step-three-result-value { max-width: 90px; }
+    .step-three-result-field.rating .step-three-result-value { max-width: 120px; }
     .step-three-prepared { display: flex; justify-content: flex-end; }
-    .step-three-action-list { display: grid; gap: 10px; margin: 0 0 28px 16px; }
+    .step-three-action-list { display: grid; gap: 7px; margin: 0 0 12px 12px; }
     .step-three-action { display: flex; align-items: flex-end; gap: 8px; }
-    .step-three-action-mark { width: 22px; flex: 0 0 22px; }
-    .step-three-action-value { width: 300px; max-width: 100%; min-height: 20px; border-bottom: 1px solid #000; }
-    .step-three-approval { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    .step-three-approval-block { width: 45%; min-width: 260px; }
-    .step-three-approval-block .workflow-signature { margin: 0; width: 256px; }
-    .step-three-note { margin-top: 32px; font-size: 10px; }
+    .step-three-action-mark { width: 18px; flex: 0 0 18px; }
+    .step-three-action-value { width: 280px; max-width: 100%; min-height: 18px; border-bottom: 1px solid #000; }
+    .step-three-approval { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .step-three-approval-block { width: 45%; min-width: 220px; }
+    .step-three-approval-block .workflow-signature { margin: 0; width: 220px; }
+    .step-three-note { margin-top: 16px; font-size: 10px; }
     @media (max-width: 700px) { .step-three-fields { grid-template-columns: 1fr; } .step-three-signature { justify-content: flex-start; } .step-three-approval { grid-template-columns: 1fr; } .step-three-approval-block { width: 100%; min-width: 0; } }
     
     @media print {
@@ -297,9 +297,9 @@ export function generateEvaluationHTML(params: {
         break-inside: avoid;
       }
       .comment-lines {
-        line-height: 1.28;
-        margin-bottom: 8px;
-        padding-bottom: 6px;
+        line-height: 1.18;
+        margin-bottom: 6px;
+        padding-bottom: 4px;
       }
     }
   </style>
