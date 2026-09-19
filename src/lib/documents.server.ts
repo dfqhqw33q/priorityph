@@ -144,44 +144,44 @@ export function generateEvaluationHTML(params: {
       * { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       html, body { margin: 0; padding: 0; background: white; height: auto; width: 100%; }
       @page { size: A4 portrait; margin: 0.5in; orphans: 3; widows: 3; }
-      body { font-family: Arial, sans-serif; font-size: 12px; }
+      body { font-family: Arial, sans-serif; font-size: 12px; zoom: 0.92; }
     }
     * { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; color: #1a1a1a; background: white; margin: 0; padding: 20px; }
     .container { max-width: 8.5in; margin: 0 auto; background: white; }
-    .header { margin-bottom: 20px; }
-    .company-name { text-align: left; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
-    .company-address { text-align: left; font-size: 9px; margin-bottom: 16px; color: #666; }
-    .title { text-align: center; margin: 16px 0; }
-    .title h1 { font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 0; }
-    .title h2 { font-size: 14px; font-weight: bold; text-transform: uppercase; margin: 4px 0 0 0; }
+    .header { margin-bottom: 16px; }
+    .company-name { text-align: left; font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+    .company-address { text-align: left; font-size: 8px; margin-bottom: 12px; color: #666; }
+    .title { text-align: center; margin: 12px 0; }
+    .title h1 { font-size: 14px; font-weight: bold; text-transform: uppercase; margin: 0; }
+    .title h2 { font-size: 12px; font-weight: bold; text-transform: uppercase; margin: 4px 0 0 0; }
     
-    .period-covered { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    .period-covered span { font-size: 11px; font-weight: 600; white-space: nowrap; }
-    .period-covered .input { flex: 1; min-width: 120px; border: none; border-bottom: 1px solid #000; text-align: center; font-size: 12px; padding: 4px 8px; }
+    .period-covered { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .period-covered span { font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .period-covered .input { flex: 1; min-width: 120px; border: none; border-bottom: 1px solid #000; text-align: center; font-size: 11px; padding: 3px 6px; }
     
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-bottom: 12px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin-bottom: 10px; }
     .info-field { display: flex; align-items: center; gap: 8px; }
-    .info-field label { font-size: 11px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
-    .info-field .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 12px; padding: 4px 8px; word-wrap: break-word; }
+    .info-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+    .info-field .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 11px; padding: 3px 6px; word-wrap: break-word; }
     
-    .rating-scale { border: 1px solid #000; padding: 8px; margin-bottom: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-weight: 600; font-size: 11px; }
+    .rating-scale { border: 1px solid #000; padding: 6px 8px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 7px; font-weight: 600; font-size: 10px; }
     
-    .table-container { margin-bottom: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .table-container { margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
     thead tr { background-color: transparent; }
-    th { border: 1px solid #000; padding: 7px 4px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 10px; color: #1a1a1a; background-color: transparent; }
-    td { padding: 6px 6px; }
+    th { border: 1px solid #000; padding: 4px 3px; text-align: center; font-weight: bold; text-transform: uppercase; font-size: 9px; color: #1a1a1a; background-color: transparent; }
+    td { padding: 4px 4px; }
     
-    .signatures { border-top: 1px solid #000; border-bottom: 1px solid #000; display: flex; margin-bottom: 12px; }
-    .sig-block { flex: 1; padding: 12px; border-left: 1px solid #000; text-align: center; }
+    .signatures { border-top: 1px solid #000; border-bottom: 1px solid #000; display: flex; margin-bottom: 10px; }
+    .sig-block { flex: 1; padding: 10px; border-left: 1px solid #000; text-align: center; }
     .sig-block:first-child { border-left: none; }
-    .sig-block h3 { font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 0 0 12px 0; }
-    .sig-line { min-height: 32px; border-bottom: 2px solid #000; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
-    .sig-image { max-width: 100%; max-height: 34px; object-fit: contain; }
-    .sig-name { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
-    .sig-title { font-size: 10px; margin-bottom: 8px; }
-    .sig-date { font-size: 10px; }
+    .sig-block h3 { font-size: 10px; font-weight: bold; text-transform: uppercase; margin: 0 0 10px 0; }
+    .sig-line { min-height: 26px; border-bottom: 2px solid #000; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
+    .sig-image { max-width: 100%; max-height: 28px; object-fit: contain; }
+    .sig-name { font-size: 10px; font-weight: bold; margin-bottom: 2px; }
+    .sig-title { font-size: 9px; margin-bottom: 6px; }
+    .sig-date { font-size: 9px; }
     
     .conclusions { border-top: 1px solid #000; padding-top: 12px; }
     .conclusions h3 { text-align: center; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
@@ -192,37 +192,37 @@ export function generateEvaluationHTML(params: {
     .flex-row { display: flex; gap: 8px; margin-bottom: 8px; }
     .flex-row label { font-weight: 600; font-size: 12px; white-space: nowrap; }
     .flex-row .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 12px; padding: 4px 8px; }
-    .step-two { margin-top: 24px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5; }
+    .step-two { margin-top: 14px; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; }
     @media print {
       .step-two { page-break-before: always; break-before: page; }
       .step-three { page-break-before: auto; }
     }
-    .step-two-header { text-align: center; margin-bottom: 32px; }
-    .step-two-header h1 { font-size: 20px; margin: 0 0 4px; text-transform: uppercase; }
-    .step-two-header h2 { font-size: 18px; margin: 0; text-transform: uppercase; }
-    .step-two-title { margin-bottom: 16px; }
-    .step-two-section { display: flex; gap: 16px; margin-bottom: 24px; }
+    .step-two-header { text-align: center; margin-bottom: 18px; }
+    .step-two-header h1 { font-size: 16px; margin: 0 0 4px; text-transform: uppercase; }
+    .step-two-header h2 { font-size: 13px; margin: 0; text-transform: uppercase; }
+    .step-two-title { margin-bottom: 12px; }
+    .step-two-section { display: flex; gap: 12px; margin-bottom: 16px; }
     .step-two-number { font-weight: bold; }
     .step-two-content { flex: 1; }
-    .step-two-content p { margin: 0 0 8px; }
-    .input-line { border-bottom: 1px solid #000; padding: 4px 8px; min-height: 24px; word-wrap: break-word; }
-    .input-line + .input-line { margin-top: 8px; }
-    .step-two-options { display: grid; gap: 8px; }
-    .step-two-option { display: flex; align-items: flex-start; gap: 12px; }
-    .step-two-option-marker { flex: 0 0 auto; width: 22px; }
-    .step-two-option input, .step-two-transfer input { appearance: none; width: 13px; height: 13px; margin: 4px 0 0; border: 1.5px solid #000; border-radius: 50%; background: #fff; opacity: 1; flex: 0 0 auto; }
+    .step-two-content p { margin: 0 0 6px; }
+    .input-line { border-bottom: 1px solid #000; padding: 3px 6px; min-height: 18px; word-wrap: break-word; }
+    .input-line + .input-line { margin-top: 6px; }
+    .step-two-options { display: grid; gap: 6px; }
+    .step-two-option { display: flex; align-items: flex-start; gap: 10px; }
+    .step-two-option-marker { flex: 0 0 auto; width: 18px; }
+    .step-two-option input, .step-two-transfer input { appearance: none; width: 11px; height: 11px; margin: 4px 0 0; border: 1.5px solid #000; border-radius: 50%; background: #fff; opacity: 1; flex: 0 0 auto; }
     .step-two-option input:checked, .step-two-transfer input:checked { background: radial-gradient(circle, #000 0 45%, #fff 48% 100%); }
     .step-two-transfer { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    .step-two-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    .step-two-footer { margin-top: 64px; display: flex; justify-content: flex-end; }
-    .step-two-footer .sig-block { width: 256px; flex: 0 0 256px; padding: 12px; text-align: center; }
-    .step-two-footer .sig-line { min-height: 40px; border-bottom: 2px solid #000; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
-    .step-two-footer .sig-image { max-width: 100%; max-height: 40px; object-fit: contain; }
-    .step-two-footer .sig-name { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
-    .step-two-footer .sig-title { font-size: 10px; margin-bottom: 8px; }
-    .workflow-signature-heading { font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 0 0 12px; }
-    .workflow-signature { width: 256px; flex: 0 0 256px; padding: 12px; text-align: center; }
-    .workflow-signature .sig-date { font-size: 10px; margin-top: 8px; }
+    .step-two-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .step-two-footer { margin-top: 26px; display: flex; justify-content: flex-end; }
+    .step-two-footer .sig-block { width: 200px; flex: 0 0 200px; padding: 10px; text-align: center; }
+    .step-two-footer .sig-line { min-height: 26px; border-bottom: 2px solid #000; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
+    .step-two-footer .sig-image { max-width: 100%; max-height: 26px; object-fit: contain; }
+    .step-two-footer .sig-name { font-size: 10px; font-weight: bold; margin-bottom: 2px; }
+    .step-two-footer .sig-title { font-size: 9px; margin-bottom: 6px; }
+    .workflow-signature-heading { font-size: 10px; font-weight: bold; text-transform: uppercase; margin: 0 0 10px; }
+    .workflow-signature { width: 200px; flex: 0 0 200px; padding: 10px; text-align: center; }
+    .workflow-signature .sig-date { font-size: 9px; margin-top: 6px; }
     .workflow-signature .sig-date-label { font-weight: bold; }
     @media (max-width: 700px) { .step-two-grid { grid-template-columns: 1fr; } .step-two-footer { justify-content: flex-start; } }
 
