@@ -196,20 +196,27 @@ export function generateEvaluationHTML(params: {
     .flex-row .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 12px; padding: 4px 8px; }
     .step-two { margin-top: 14px; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; }
     @media print {
-      .step-two { page-break-before: always; break-before: page; }
+      .step-two { page-break-before: always; break-before: page; page-break-inside: avoid; break-inside: avoid; }
       .step-three { page-break-before: auto; }
     }
     .step-two-header { text-align: center; margin-bottom: 18px; }
     .step-two-header h1 { font-size: 16px; margin: 0 0 4px; text-transform: uppercase; }
     .step-two-header h2 { font-size: 13px; margin: 0; text-transform: uppercase; }
     .step-two-title { margin-bottom: 12px; }
-    .step-two-section { display: flex; gap: 12px; margin-bottom: 16px; }
+    .step-two-section { display: flex; gap: 12px; margin-bottom: 12px; }
     .step-two-number { font-weight: bold; flex: 0 0 auto; }
     .step-two-content { flex: 1 1 auto; width: 100%; min-width: 0; max-width: none; }
-    .step-two-content p { margin: 0 0 6px; }
+    .step-two-content p { margin: 0 0 8px; }
+    .step-two-content > p + .input-line,
+    .step-two-content > .input-line + p,
+    .step-two-content > .step-two-options,
+    .step-two-content > .step-two-options + .input-line,
+    .step-two-content > p + .step-two-options,
+    .step-two-content > .input-line + .input-line { margin-top: 8px; }
+    .step-two-content > .input-line + .input-line { margin-top: 6px; }
     .input-line { display: block; width: 100%; max-width: none; border-bottom: 1px solid #000; padding: 3px 6px; min-height: 18px; word-wrap: break-word; overflow-wrap: anywhere; }
     .input-line + .input-line { margin-top: 6px; }
-    .step-two-options { display: grid; gap: 6px; }
+    .step-two-options { display: grid; gap: 6px; margin-top: 6px; }
     .step-two-option { display: flex; align-items: flex-start; gap: 10px; }
     .step-two-option-marker { flex: 0 0 auto; width: 18px; }
     .step-two-option input, .step-two-transfer input { appearance: none; width: 11px; height: 11px; margin: 4px 0 0; border: 1.5px solid #000; border-radius: 50%; background: #fff; opacity: 1; flex: 0 0 auto; }
