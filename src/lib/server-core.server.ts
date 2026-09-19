@@ -1102,7 +1102,8 @@ export async function recentActivity(
 
   return eventRows
     .filter(
-      (event) => !cycleId || evaluationById.get(event.evaluation_id as string)?.cycle_id === cycleId,
+      (event) =>
+        !cycleId || evaluationById.get(event.evaluation_id as string)?.cycle_id === cycleId,
     )
     .filter(isVisible)
     .slice(0, limit)
