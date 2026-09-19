@@ -816,8 +816,8 @@ export async function statusCountsForCycle(cycleId: string | null = null) {
     number
   >;
 
-  for (const row of data) {
-    const status = row.status as EvaluationStatus | undefined;
+  for (const row of data ?? []) {
+    const status = row?.status as EvaluationStatus | undefined;
     if (status && status in counts) counts[status] += 1;
   }
 
@@ -873,14 +873,14 @@ export async function committeeStats(userId: string, cycleId: string | null = nu
   const { count: trainingRequiredCount } = await admin
     .from("evaluations")
     .select("id", { count: "exact", head: true })
-    .eq("final_action", "TRAINING_REQUIRED");
+    .filter("final_action", "eq", "TRAINING_REQUIRED");
 
   if (cycleId) {
     const { count } = await admin
       .from("evaluations")
       .select("id", { count: "exact", head: true })
       .eq("cycle_id", cycleId)
-      .eq("final_action", "TRAINING_REQUIRED");
+      .filter("final_action", "eq", "TRAINING_REQUIRED");
     return {
       totalEvaluations,
       awaiting: counts.FOR_REVIEW,
@@ -1041,7 +1041,7 @@ export async function recentActivity(
     .order("occurred_at", { ascending: false })
     .limit(limit * 8);
 
-  const eventRows = (auditRows ?? []).filter((event) => event.evaluation_id);
+  const eventRows = (auditRows ?? []).filter((event) => event.evaluation_id !== null);
   const evaluationIds = Array.from(
     new Set(eventRows.map((event) => event.evaluation_id as string)),
   );
@@ -1083,15 +1083,15 @@ export async function recentActivity(
   const actorById = new Map((actors ?? []).map((actor) => [actor.id, actor.full_name]));
 
   const isVisible = (event: (typeof eventRows)[number]) => {
-    const evaluation = evaluationById.get(event.evaluation_id);
+    const evaluation = evaluationById.get(event.evaluation_id as string);
     if (!evaluation) return false;
     if (cycleId && evaluation.cycle_id !== cycleId) return false;
     if (isHr) return true;
     if (event.actor_user_id === userId || evaluation.president_user_id === userId) return true;
     if (roles.includes("SUPERVISOR") && evaluation.supervisor_user_id === userId) return true;
-    if (roles.includes("REVIEWING_SUPERVISOR") && reviewingIds.has(event.evaluation_id))
+    if (roles.includes("REVIEWING_SUPERVISOR") && reviewingIds.has(event.evaluation_id as string))
       return true;
-    if (roles.includes("COMMITTEE") && committeeIds.has(event.evaluation_id)) return true;
+    if (roles.includes("COMMITTEE") && committeeIds.has(event.evaluation_id as string)) return true;
     if (roles.includes("SUPERVISOR") && event.action === "STEP1_SUBMITTED") return true;
     if (roles.includes("REVIEWING_SUPERVISOR") && event.action === "RATER_STEP2_SUBMITTED")
       return true;
@@ -1101,11 +1101,13 @@ export async function recentActivity(
   };
 
   return eventRows
-    .filter((event) => !cycleId || evaluationById.get(event.evaluation_id)?.cycle_id === cycleId)
+    .filter(
+      (event) => !cycleId || evaluationById.get(event.evaluation_id as string)?.cycle_id === cycleId,
+    )
     .filter(isVisible)
     .slice(0, limit)
     .map((event) => {
-      const evaluation = evaluationById.get(event.evaluation_id);
+      const evaluation = evaluationById.get(event.evaluation_id as string);
       return {
         id: event.id,
         action: event.action,

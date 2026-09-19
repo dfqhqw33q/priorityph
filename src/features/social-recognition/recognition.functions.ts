@@ -41,6 +41,9 @@ export type RecognitionRecord = {
   employeeId: string;
   employeeName: string;
   employeeNumber: string;
+  employeeJobTitle: string;
+  employeeDivision: string;
+  employeeSection: string;
   sourceEvaluationId: string;
   sourceCycleName: string | null;
   sourceCycleYear: number | null;
@@ -49,6 +52,7 @@ export type RecognitionRecord = {
   recognitionDate: string;
   approvedAt: string;
   certificateGeneratedAt: string | null;
+  status?: z.infer<typeof candidateStatus>;
 };
 
 function related(row: Record<string, unknown>) {

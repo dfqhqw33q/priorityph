@@ -641,12 +641,12 @@ export function SupervisorReviewPage() {
                 ["Self-assessment submitted", formatDateTime(detail.employee_submitted_at)],
                 [
                   "Employment Status",
-                  String((detail as Record<string, unknown>).employment_status ?? "-"),
+                  String((detail as Record<string, unknown>)["employment_status"] ?? "-"),
                 ],
                 [
                   "Employment Date",
                   formatDateTime(
-                    (detail as Record<string, unknown>).employment_date as string | null,
+                    (detail as Record<string, unknown>)["employment_date"] as string | null,
                   ),
                 ],
               ].map(([label, value]) => (

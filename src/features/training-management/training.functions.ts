@@ -38,6 +38,9 @@ export type TrainingRecord = {
   employeeId: string;
   employeeName: string;
   employeeNumber: string;
+  employeeJobTitle: string;
+  employeeDivision: string;
+  employeeSection: string;
   sourceEvaluationId: string;
   sourceCycleName: string | null;
   sourceCycleYear: number | null;

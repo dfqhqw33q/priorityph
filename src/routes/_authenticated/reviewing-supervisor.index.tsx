@@ -50,30 +50,30 @@ function ReviewingSupervisorDashboard() {
   });
 
   const chartData = useMemo(() => {
-    const breakdown = query.data?.statusBreakdown ?? {};
+    const breakdown = (query.data?.statusBreakdown ?? {}) as Record<string, number>;
     return [
       {
         status: "FOR_REVIEW",
         label: "To Review",
-        value: breakdown.FOR_REVIEW ?? 0,
+        value: breakdown["FOR_REVIEW"] ?? 0,
         color: "var(--info)",
       },
       {
         status: "RETURNED",
         label: "Returned",
-        value: breakdown.RETURNED ?? 0,
+        value: breakdown["RETURNED"] ?? 0,
         color: "var(--warning)",
       },
       {
         status: "FOR_PROCESSING",
         label: "Completed",
-        value: breakdown.FOR_PROCESSING ?? 0,
+        value: breakdown["FOR_PROCESSING"] ?? 0,
         color: "var(--success)",
       },
       {
         status: "DRAFT",
         label: "Drafts",
-        value: breakdown.DRAFT ?? 0,
+        value: breakdown["DRAFT"] ?? 0,
         color: "var(--muted-foreground)",
       },
     ];

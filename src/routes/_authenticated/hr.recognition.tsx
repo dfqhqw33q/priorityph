@@ -292,7 +292,9 @@ function RecognitionDirectory({
                 <TableCell>{employee.employeeDivision || "-"}</TableCell>
                 <TableCell>{employee.employeeSection || "-"}</TableCell>
                 <TableCell>{source?.recognitionType ?? "-"}</TableCell>
-                <TableCell>{source ? humanizeToken(source.status) : "-"}</TableCell>
+                <TableCell>
+                  {source && "status" in source ? humanizeToken(source.status) : "-"}
+                </TableCell>
                 <TableCell>
                   {"recognitionDate" in (source ?? {})
                     ? formatDateTime((source as RecognitionRecord).recognitionDate)
