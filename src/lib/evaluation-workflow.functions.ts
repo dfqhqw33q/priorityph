@@ -603,13 +603,6 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
       .eq("id", data.evaluationId)
       .eq("version", data.version);
     if (error) throw validationError(error.message);
-    await admin.from("evaluation_events").insert({
-      evaluation_id: data.evaluationId,
-      event_type: data.submit ? "RATER_STEP2_SUBMITTED" : "RATER_STEP2_DRAFT_SAVED",
-      from_status: evaluation.status,
-      to_status: nextStatus,
-      actor_user_id: context.userId,
-    });
     const eventWrite = admin.from("evaluation_events").insert({
       evaluation_id: data.evaluationId,
       event_type: data.submit ? "RATER_STEP2_SUBMITTED" : "RATER_STEP2_DRAFT_SAVED",
@@ -619,26 +612,26 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
     });
     const auditWrite = getActorRoles(context.userId).then((roles) =>
       writeAudit({
-      actorUserId: context.userId,
-      actorRole: roles.join(","),
-      action: data.submit ? "RATER_STEP2_SUBMITTED" : "RATER_STEP2_DRAFT_SAVED",
-      module: "Evaluation Workflow",
-      entityType: "evaluation",
-      entityId: data.evaluationId,
-      evaluationId: data.evaluationId,
-      previousValue: { status: evaluation.status },
-      newValue: { status: nextStatus },
+        actorUserId: context.userId,
+        actorRole: roles.join(","),
+        action: data.submit ? "RATER_STEP2_SUBMITTED" : "RATER_STEP2_DRAFT_SAVED",
+        module: "Evaluation Workflow",
+        entityType: "evaluation",
+        entityId: data.evaluationId,
+        evaluationId: data.evaluationId,
+        previousValue: { status: evaluation.status },
+        newValue: { status: nextStatus },
       }),
     );
     const notificationWrite = data.submit
       ? admin.from("notification_events").insert({
-        evaluation_id: data.evaluationId,
-        event_type: "RATER_STEP2_SUBMITTED",
-        audience_permission: "evaluations.review_step3",
-        title: "New Evaluation Submitted",
-        body: "A performance evaluation has been submitted to you for review and assessment.",
-        dedupe_key: `${data.evaluationId}:RATER_STEP2_SUBMITTED:${data.version}`,
-      } as never);
+          evaluation_id: data.evaluationId,
+          event_type: "RATER_STEP2_SUBMITTED",
+          audience_permission: "evaluations.review_step3",
+          title: "New Evaluation Submitted",
+          body: "A performance evaluation has been submitted to you for review and assessment.",
+          dedupe_key: `${data.evaluationId}:RATER_STEP2_SUBMITTED:${data.version}`,
+        } as never)
       : Promise.resolve({ error: null });
     const signatureWrite = data.signature
       ? saveStageSignature(

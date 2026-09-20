@@ -254,7 +254,7 @@ export function EvaluationStageDetail({
   const historyQuery = useQuery({
     queryKey: ["evaluation-progress", evaluationId],
     queryFn: () => fetchHistory({ data: { evaluationId } }),
-    enabled: stage === "PRESIDENT",
+    enabled: true,
     retry: false,
   });
   const detail = query.data as StageDetail | null | undefined;
@@ -1417,29 +1417,36 @@ export function EvaluationStageDetail({
               ) : null}
             </>
           )}
-          {stage === "REVIEWING_SUPERVISOR" ? (
-            <div className="max-w-2xl space-y-2">
-              <p className="text-sm font-semibold">Signature</p>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Signature Image
-              </p>
-              <SignatureField
-                {...(signature ? { value: signature } : {})}
-                disabled={!editable}
-                onSave={persistSignature}
-                onChange={setSignature}
-              />
-            </div>
-          ) : stage === "PRESIDENT" ? (
+          {stage === "REVIEWING_SUPERVISOR" ||
+          stage === "PERSONNEL" ||
+          stage === "COMMITTEE" ||
+          stage === "PRESIDENT" ? (
             <div className="grid min-h-0 items-stretch gap-4 lg:h-[22rem] lg:grid-cols-2">
               <Card className="h-full border border-border bg-card shadow-sm">
                 <CardContent className="h-full p-4">
-                  <SignatureField
-                    {...(signature ? { value: signature } : {})}
-                    disabled={!editable}
-                    onSave={persistSignature}
-                    onChange={setSignature}
-                  />
+                  {stage === "REVIEWING_SUPERVISOR" ? (
+                    <div className="max-w-2xl space-y-2">
+                      <p className="text-sm font-semibold">Signature</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Signature Image
+                      </p>
+                      <SignatureField
+                        {...(signature ? { value: signature } : {})}
+                        disabled={!editable}
+                        onSave={persistSignature}
+                        onChange={setSignature}
+                      />
+                    </div>
+                  ) : (
+                    <div className="max-w-2xl">
+                      <SignatureField
+                        {...(signature ? { value: signature } : {})}
+                        disabled={!editable}
+                        onSave={persistSignature}
+                        onChange={setSignature}
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               <EvaluationProgressStepper
@@ -1448,16 +1455,13 @@ export function EvaluationStageDetail({
                 employeeName={detail.full_name_snapshot}
               />
             </div>
-          ) : (
-            <div className="max-w-2xl">
-              <SignatureField
-                {...(signature ? { value: signature } : {})}
-                disabled={!editable}
-                onSave={persistSignature}
-                onChange={setSignature}
-              />
-            </div>
-          )}
+          ) : stage === "RATER" ? (
+            <EvaluationProgressStepper
+              events={historyQuery.data?.events ?? []}
+              currentStatus={detail.status}
+              employeeName={detail.full_name_snapshot}
+            />
+          ) : null}
           {stage === "PRESIDENT" ? (
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={openDocument}>
