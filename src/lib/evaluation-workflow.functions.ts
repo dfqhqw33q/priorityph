@@ -901,6 +901,7 @@ export const approveEvaluation = createServerFn({ method: "POST" })
       data.approve ? "PRESIDENT_APPROVED" : "PRESIDENT_RETURNED",
       data.reason,
       data.correctionStage ?? null,
+      !data.approve,
     );
   });
 
