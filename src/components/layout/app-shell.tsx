@@ -534,29 +534,29 @@ export function AppShell({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-screen bg-background">
         <aside className="hidden w-64 shrink-0 border-r border-border bg-card p-4 md:block">
-          <Skeleton className="h-10 w-44" />
+          <Skeleton className="h-10 w-40" />
           <div className="mt-8 space-y-3">
-            {Array.from({ length: 7 }).map((_, index) => (
+            {Array.from({ length: 5 }).map((_, index) => (
               <Skeleton key={index} className="h-9 w-full rounded-md" />
             ))}
           </div>
         </aside>
         <main className="min-w-0 flex-1 p-6">
           <div className="flex items-center justify-between border-b border-border pb-5">
-            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-8 w-40" />
             <div className="flex gap-3">
               <Skeleton className="size-9 rounded-full" />
               <Skeleton className="size-9 rounded-full" />
             </div>
           </div>
           <div className="mt-6 space-y-4">
-            <Skeleton className="h-5 w-64" />
-            <Skeleton className="h-3 w-96 max-w-full" />
+            <Skeleton className="h-5 w-52" />
+            <Skeleton className="h-3 w-72 max-w-full" />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, index) => (
+              {Array.from({ length: 2 }).map((_, index) => (
                 <div key={index} className="rounded-xl border border-border bg-card p-6 shadow-sm">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="mt-3 h-8 w-20" />
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="mt-3 h-8 w-16" />
                 </div>
               ))}
             </div>
