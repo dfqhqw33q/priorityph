@@ -270,7 +270,7 @@ function RecognitionDirectory({
             );
             return (
               <TableRow key={employee.employeeId}>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <button
                     type="button"
                     className="font-normal text-foreground hover:text-primary hover:underline"
@@ -421,7 +421,7 @@ function Candidates({
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full table-fixed text-left text-sm break-words">
+            <table className="w-full min-w-[950px] text-left text-sm">
               <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
                 <tr>
                   {["Employee", "Type", "Reason", "Source Evaluation", "Status", "Actions"].map(
@@ -497,7 +497,7 @@ function History({
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full table-fixed text-left text-sm break-words">
+            <table className="w-full min-w-[900px] text-left text-sm">
               <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
                 <tr>
                   {[

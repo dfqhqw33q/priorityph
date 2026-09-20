@@ -7,10 +7,7 @@ const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableE
     <div className="relative w-full max-w-full overflow-x-auto overscroll-x-contain">
       <table
         ref={ref}
-        className={cn(
-          "w-full min-w-0 table-fixed caption-bottom text-sm [&_td]:break-words [&_td]:whitespace-normal [&_th]:break-words [&_th]:whitespace-normal",
-          className,
-        )}
+        className={cn("w-max min-w-full table-auto caption-bottom text-sm", className)}
         {...props}
       />
     </div>
@@ -74,7 +71,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-10 px-2 text-left align-middle font-medium text-primary-foreground dark:text-muted-foreground break-words whitespace-normal [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      "h-10 px-2 text-left align-middle font-medium text-primary-foreground dark:text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
       className,
     )}
     {...props}
@@ -89,7 +86,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "p-2 align-middle break-words whitespace-normal [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      "p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
       className,
     )}
     {...props}

@@ -121,7 +121,7 @@ function SuccessionPage() {
             <TableBody>
               {query.data.map((profile) => (
                 <TableRow key={profile.id}>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <button
                       type="button"
                       className="font-normal text-foreground hover:text-primary hover:underline"

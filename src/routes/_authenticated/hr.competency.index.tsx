@@ -79,7 +79,7 @@ function CompetencyIndexPage() {
             <TableBody>
               {employees.map((employee) => (
                 <TableRow key={employee.id}>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <Link
                       className="font-normal text-foreground hover:text-primary hover:underline"
                       to="/hr/competency/$employeeId"

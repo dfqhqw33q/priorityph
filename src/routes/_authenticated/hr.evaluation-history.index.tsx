@@ -292,14 +292,14 @@ export function HistoryTablePage({
             <caption className="sr-only">{title}</caption>
             <TableHeader>
               <TableRow>
-                <TableHead>Employee ID</TableHead>
-                <TableHead>Full Name</TableHead>
-                <TableHead>Job Title</TableHead>
-                <TableHead>Division / Department</TableHead>
-                <TableHead>Section / Unit</TableHead>
-                <TableHead>Cycle</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date Submitted</TableHead>
+                <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
+                <TableHead className="min-w-[190px]">Full Name</TableHead>
+                <TableHead className="min-w-[150px]">Job Title</TableHead>
+                <TableHead className="min-w-[170px]">Division / Department</TableHead>
+                <TableHead className="min-w-[150px]">Section / Unit</TableHead>
+                <TableHead className="min-w-[240px]">Cycle</TableHead>
+                <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
+                <TableHead className="min-w-[190px] whitespace-nowrap">Date Submitted</TableHead>
                 {mode === "history" ? <TableHead className="w-[60px] text-right">Activity</TableHead> : null}
               </TableRow>
             </TableHeader>
@@ -317,7 +317,7 @@ export function HistoryTablePage({
                         : row.status;
                 return (
                   <TableRow key={row.evaluationId}>
-                    <TableCell className="tabular-nums">
+                    <TableCell className="whitespace-nowrap tabular-nums">
                       {row.employeeNumber}
                     </TableCell>
                     <TableCell>
@@ -340,22 +340,22 @@ export function HistoryTablePage({
                         </Link>
                       )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="min-w-[150px] text-muted-foreground">
                       {row.jobTitle || "—"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="min-w-[170px] text-muted-foreground">
                       {row.division || "—"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="min-w-[150px] text-muted-foreground">
                       {row.section || "—"}
                     </TableCell>
-                    <TableCell className="text-foreground">
+                    <TableCell className="min-w-[240px] text-foreground">
                       {row.cycleName} ({row.cycleYear})
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
                       <EvaluationStatusBadge status={visibleStatus as never} />
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                       {formatDateTime(row.submittedAt ?? row.finalizedAt)}
                     </TableCell>
                     {mode === "history" ? (
