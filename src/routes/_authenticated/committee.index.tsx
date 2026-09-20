@@ -95,8 +95,8 @@ function CommitteeDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Committee dashboard"
-        description="Review evaluations and decide the final recommendation for each employee."
+        title="Dashboard"
+        description="Review evaluations and record final recommendations."
         actions={
           <div className="flex items-center gap-2">
             <label htmlFor="committee-cycle" className="text-sm font-medium text-foreground">

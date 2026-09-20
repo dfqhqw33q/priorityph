@@ -87,8 +87,8 @@ function ReviewingSupervisorDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reviewing Supervisor dashboard"
-        description="Review employee evaluations after supervisor ratings are submitted."
+        title="Dashboard"
+        description="Review evaluations submitted for the next stage."
         actions={
           <div className="flex items-center gap-2">
             <label

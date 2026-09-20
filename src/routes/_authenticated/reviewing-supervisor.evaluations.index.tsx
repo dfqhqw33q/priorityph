@@ -5,15 +5,15 @@ import { EvaluationStageQueuePage } from "@/features/performance-management/comp
 export const Route = createFileRoute("/_authenticated/reviewing-supervisor/evaluations/")({
   head: () => ({
     meta: [
-      { title: "Reviewing Supervisor review queue | Priority Handling Logistics, Inc." },
+      { title: "Evaluations for Review | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Evaluations awaiting the reviewing supervisor's review and decision.",
+        content: "Review evaluations submitted for the next stage.",
       },
-      { property: "og:title", content: "Reviewing Supervisor review queue" },
+      { property: "og:title", content: "Evaluations for Review" },
       {
         property: "og:description",
-        content: "Assess employee evaluations before committee review.",
+        content: "Review evaluations before the next workflow stage.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

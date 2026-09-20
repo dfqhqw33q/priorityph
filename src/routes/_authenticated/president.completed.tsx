@@ -18,8 +18,8 @@ function CompletedPage() {
 
   return (
     <HistoryTablePage
-      title="Completed evaluations"
-      description="View finalized and completed evaluation records."
+      title="Completed Evaluations"
+      description="View finalized evaluation records."
       defaultStatus="FINALIZED"
       mode="completed"
       showStatusFilter={false}

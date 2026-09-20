@@ -18,8 +18,8 @@ function ReturnedPage() {
 
   return (
     <HistoryTablePage
-      title="Returned evaluations"
-      description="Review evaluations that were returned for correction and resubmission."
+      title="Returned Evaluations"
+      description="Review evaluations returned for correction."
       defaultStatus="RETURNED"
       mode="returned"
       showStatusFilter={false}

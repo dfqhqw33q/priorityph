@@ -40,16 +40,16 @@ import { userErrorMessage } from "@/lib/validation";
 export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$evaluationId")({
   head: () => ({
     meta: [
-      { title: "Supervisor review | Priority Handling Logistics, Inc." },
+      { title: "Evaluation Review | Priority Handling Logistics, Inc." },
       {
         name: "description",
         content:
-          "Review an employee Step 1 assessment, rate all ten factors and submit to the Reviewing Supervisor.",
+          "Review an employee evaluation, rate all ten factors, and submit it for the next stage.",
       },
-      { property: "og:title", content: "Supervisor review" },
+      { property: "og:title", content: "Evaluation Review" },
       {
         property: "og:description",
-        content: "Rate performance factors A-J and submit to the Reviewing Supervisor.",
+        content: "Rate performance factors A-J and submit the evaluation.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

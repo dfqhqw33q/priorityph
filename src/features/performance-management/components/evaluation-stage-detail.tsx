@@ -746,12 +746,12 @@ export function EvaluationStageDetail({
             {stage === "RATER"
               ? "DEVELOP CONCLUSION AND COMMENTS"
               : stage === "REVIEWING_SUPERVISOR"
-                ? "Step 3 - Review"
+                ? "EVALUATION REVIEW"
                 : stage === "PERSONNEL"
-                  ? "Complete evaluation file (for review)"
+                  ? "EVALUATION REVIEW"
                   : stage === "COMMITTEE"
-                    ? "Complete evaluation file (for review)"
-                    : "Complete evaluation file (for review)"}
+                    ? "EVALUATION REVIEW"
+                    : "FINAL APPROVAL"}
           </CardTitle>
           {stage === "REVIEWING_SUPERVISOR" ? (
             <div className="flex shrink-0 flex-col items-end gap-1 text-right">

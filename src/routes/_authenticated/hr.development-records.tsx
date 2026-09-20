@@ -119,7 +119,7 @@ function DevelopmentRecordsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Development Records"
+        title="Employee Development"
         description="Record development needs and follow-up activities for employees."
       />
       <Card>

@@ -28,15 +28,15 @@ import { getSupervisorStats, listEvaluationCycleOptionsForUser } from "@/lib/eva
 export const Route = createFileRoute("/_authenticated/supervisor/")({
   head: () => ({
     meta: [
-      { title: "Supervisor dashboard | Priority Handling Logistics, Inc." },
+      { title: "Dashboard | Priority Handling Logistics, Inc." },
       {
         name: "description",
         content: "Review employee self-assessments and track evaluation status by cycle.",
       },
-      { property: "og:title", content: "Supervisor dashboard" },
+      { property: "og:title", content: "Dashboard" },
       {
         property: "og:description",
-        content: "Cycle-based supervisor evaluation dashboard.",
+        content: "Track assigned evaluations and pending work.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -100,8 +100,8 @@ function SupervisorDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Supervisor dashboard"
-        description="Review and track your assigned employee evaluations."
+        title="Dashboard"
+        description="Track assigned evaluations and pending work."
         actions={
           <div className="flex items-center gap-2">
             <label htmlFor="supervisor-cycle" className="text-sm font-medium text-foreground">

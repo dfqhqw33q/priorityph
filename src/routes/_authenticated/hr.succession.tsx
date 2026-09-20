@@ -61,7 +61,7 @@ function SuccessionPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Succession Planning"
+        title="Succession Profiles"
         description="Review career interests and succession information for employees."
       />
       <Card>

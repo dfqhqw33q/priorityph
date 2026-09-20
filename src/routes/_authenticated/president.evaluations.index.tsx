@@ -5,15 +5,15 @@ import { EvaluationStageQueuePage } from "@/features/performance-management/comp
 export const Route = createFileRoute("/_authenticated/president/evaluations/")({
   head: () => ({
     meta: [
-      { title: "President review queue | Priority Handling Logistics, Inc." },
+      { title: "Pending Approvals | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Final approval queue for evaluations after the committee review stage.",
+        content: "Complete final approval for submitted evaluations.",
       },
-      { property: "og:title", content: "President approval queue" },
+      { property: "og:title", content: "Pending Approvals" },
       {
         property: "og:description",
-        content: "Evaluations awaiting the President's final approval.",
+        content: "Evaluations ready for final approval.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -35,10 +35,10 @@ type QueueRow = {
   status: string;
 };
 const titles: Record<Stage, string> = {
-  REVIEWING_SUPERVISOR: "Reviewing Supervisor queue",
-  PERSONNEL: "Personnel processing queue",
-  COMMITTEE: "Committee review queue",
-  PRESIDENT: "President approval queue",
+  REVIEWING_SUPERVISOR: "Evaluations for Review",
+  PERSONNEL: "Personnel Processing",
+  COMMITTEE: "Evaluations for Recommendation",
+  PRESIDENT: "Pending Approvals",
 };
 
 export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
@@ -62,12 +62,12 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
         title={titles[stage]}
         description={
           stage === "REVIEWING_SUPERVISOR"
-            ? "Complete the division-level review for submitted evaluations."
+            ? "Review evaluations submitted for the next stage."
             : stage === "PERSONNEL"
               ? "Complete the personnel details before committee review."
               : stage === "COMMITTEE"
                 ? "Review evaluations and recommend the appropriate action."
-                : "Review evaluations and make the final approval decision."
+                : "Complete final approval for submitted evaluations."
         }
       />
       {query.isLoading ? (

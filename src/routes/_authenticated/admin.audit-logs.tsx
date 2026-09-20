@@ -146,7 +146,7 @@ function AuditLogsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Audit logs"
+        title="Activity Log"
         description="Review important system activity and investigate changes when needed."
       />
 

@@ -76,8 +76,8 @@ function HrDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="HR dashboard"
-        description="Monitor organization-wide evaluation progress and cycle activity."
+        title="Dashboard"
+        description="Monitor evaluation progress and cycle activity."
         actions={
           <div className="flex items-center gap-2">
             <label htmlFor="hr-cycle" className="text-sm font-medium text-foreground">

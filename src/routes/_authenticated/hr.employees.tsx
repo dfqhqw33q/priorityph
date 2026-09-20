@@ -5,7 +5,7 @@ import { EmployeeRecordsPage } from "@/features/employee-management/components/e
 export const Route = createFileRoute("/_authenticated/hr/employees")({
   head: () => ({
     meta: [
-      { title: "Digital 201 files | Priority Handling Logistics, Inc." },
+      { title: "Employee Records | Priority Handling Logistics, Inc." },
       {
         name: "description",
         content: "Review employee records and evaluation history.",

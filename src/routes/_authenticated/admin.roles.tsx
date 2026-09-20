@@ -120,7 +120,7 @@ function AdminRolesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Roles & permissions"
+        title="Access & Permissions"
         description="Set the access granted to each role across the system."
       />
 

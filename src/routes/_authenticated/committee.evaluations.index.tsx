@@ -5,12 +5,12 @@ import { EvaluationStageQueuePage } from "@/features/performance-management/comp
 export const Route = createFileRoute("/_authenticated/committee/evaluations/")({
   head: () => ({
     meta: [
-      { title: "Committee review queue | Priority Handling Logistics, Inc." },
+      { title: "Evaluations for Recommendation | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Evaluations awaiting committee recommendation and final action.",
+        content: "Record recommendations and final actions for evaluations.",
       },
-      { property: "og:title", content: "Committee review queue" },
+      { property: "og:title", content: "Evaluations for Recommendation" },
       {
         property: "og:description",
         content: "Review evaluations and decide the recommended action.",

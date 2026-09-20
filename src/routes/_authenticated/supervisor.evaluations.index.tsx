@@ -8,15 +8,15 @@ import { listSupervisorQueue } from "@/lib/evaluations.functions";
 export const Route = createFileRoute("/_authenticated/supervisor/evaluations/")({
   head: () => ({
     meta: [
-      { title: "Supervisor review queue | Priority Handling Logistics, Inc." },
+      { title: "Employee Evaluations | Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "All employee Step 1 assessments available for supervisor rating and submission.",
+        content: "Review submitted evaluations and complete ratings.",
       },
-      { property: "og:title", content: "Supervisor review queue" },
+      { property: "og:title", content: "Employee Evaluations" },
       {
         property: "og:description",
-        content: "Search, filter and open employee Step 1 assessments.",
+        content: "Search, filter, and review employee evaluations.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -40,8 +40,8 @@ function SupervisorQueuePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Supervisor review queue"
-        description="Review submitted self-assessments and complete your ratings."
+        title="Employee Evaluations"
+        description="Review submitted evaluations and complete ratings."
       />
       <EvaluationQueue
         queryKey="supervisor-queue"

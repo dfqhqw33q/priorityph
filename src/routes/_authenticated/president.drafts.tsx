@@ -18,8 +18,8 @@ function DraftsPage() {
 
   return (
     <HistoryTablePage
-      title="Draft evaluations"
-      description="Review in-progress evaluations that have not yet been submitted for review."
+      title="Draft Evaluations"
+      description="Continue evaluations saved as drafts."
       defaultStatus="DRAFT"
       mode="drafts"
       showStatusFilter={false}

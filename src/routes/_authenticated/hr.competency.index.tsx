@@ -37,7 +37,7 @@ function CompetencyIndexPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Competency Management"
+        title="Competency Profiles"
         description="Review employee strengths and development areas from completed evaluations."
       />
       <Card>

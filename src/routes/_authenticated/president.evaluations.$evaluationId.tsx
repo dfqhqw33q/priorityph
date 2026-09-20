@@ -5,12 +5,12 @@ import { EvaluationStageDetail } from "@/features/performance-management/compone
 export const Route = createFileRoute("/_authenticated/president/evaluations/$evaluationId")({
   head: () => ({
     meta: [
-      { title: "President approval | Priority Handling Logistics, Inc." },
+      { title: "Final Approval | Priority Handling Logistics, Inc." },
       {
         name: "description",
         content: "Review the complete accumulated evaluation and make the final approval decision.",
       },
-      { property: "og:title", content: "President final approval" },
+      { property: "og:title", content: "Final Approval" },
       {
         property: "og:description",
         content: "Final approval for the canonical evaluation workflow.",

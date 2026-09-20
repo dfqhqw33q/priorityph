@@ -98,7 +98,7 @@ function TrainingPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Training Management"
+        title="Training & Development"
         description="Review training recommendations and record required learning."
       />
       <Card>

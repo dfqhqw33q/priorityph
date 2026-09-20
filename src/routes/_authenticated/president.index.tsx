@@ -29,12 +29,12 @@ import { listEvaluationCycleOptionsForUser } from "@/lib/evaluations.functions";
 export const Route = createFileRoute("/_authenticated/president/")({
   head: () => ({
     meta: [
-      { title: "President dashboard | Priority Handling Logistics, Inc." },
+      { title: "Dashboard | Priority Handling Logistics, Inc." },
       {
         name: "description",
         content: "Track completion and approval status across evaluation cycles.",
       },
-      { property: "og:title", content: "President dashboard" },
+      { property: "og:title", content: "Dashboard" },
       {
         property: "og:description",
         content: "Evaluations awaiting presidential review and sign-off.",
@@ -101,8 +101,8 @@ function PresidentDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="President dashboard"
-        description="Review completed evaluations and make the final approval decision."
+        title="Dashboard"
+        description="Review evaluations and complete final approvals."
         actions={
           <div className="flex items-center gap-2">
             <label htmlFor="president-cycle" className="text-sm font-medium text-foreground">
