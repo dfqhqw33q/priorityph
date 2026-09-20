@@ -436,15 +436,6 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
   );
 }
 
-function FileCategory({ label, count = 0 }: { label: string; count?: number }) {
-  return (
-    <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-      <span>{label}</span>
-      <span className="text-xs text-muted-foreground">{count} records</span>
-    </div>
-  );
-}
-
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -615,39 +606,57 @@ function DocumentSections({
   ];
   return (
     <div className="space-y-2">
-      <FileCategory label="Performance Evaluations" count={evaluationCount} />
-      {categories.map(([label, category]) => {
-        const records = documents.filter((document) => document.category === category);
-        return (
-          <details key={category} className="rounded-md border border-border px-4 py-3">
-            <summary className="cursor-pointer list-none font-medium">
-              {label}
-              <span className="ml-2 text-xs font-normal text-muted-foreground">
-                {records.length} records
-              </span>
-            </summary>
-            <div className="mt-3 space-y-2">
-              {loading ? (
-                <LoadingBlock rows={1} />
-              ) : records.length ? (
-                records.map((document) => (
-                  <button
-                    key={document.id}
-                    type="button"
-                    className="flex w-full justify-between rounded border border-border px-3 py-2 text-left text-sm hover:bg-muted"
-                    onClick={() => onOpenDocument(document.id)}
-                  >
-                    <span>{document.file_name}</span>
-                    <span className="text-xs text-muted-foreground">Open</span>
-                  </button>
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground">No records available.</p>
-              )}
-            </div>
-          </details>
-        );
-      })}
+      <div className="max-w-full overflow-x-auto border border-border bg-card shadow-sm">
+        <Table>
+          <caption className="sr-only">Employee file categories</caption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Category</TableHead>
+              <TableHead className="w-[120px] whitespace-nowrap bg-primary text-primary-foreground">Records</TableHead>
+              <TableHead className="min-w-[280px] bg-primary text-primary-foreground">Files / Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell className="font-medium">Performance Evaluations</TableCell>
+              <TableCell>{evaluationCount}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                View evaluation records above
+              </TableCell>
+            </TableRow>
+            {categories.map(([label, category]) => {
+              const records = documents.filter((document) => document.category === category);
+              return (
+                <TableRow key={category}>
+                  <TableCell className="font-medium">{label}</TableCell>
+                  <TableCell>{loading ? "-" : records.length}</TableCell>
+                  <TableCell>
+                    {loading ? (
+                      <LoadingBlock rows={1} />
+                    ) : records.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {records.map((document) => (
+                          <Button
+                            key={document.id}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onOpenDocument(document.id)}
+                          >
+                            {document.file_name}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No records available</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
       <div className="flex flex-wrap gap-2 pt-2">
         <select
           className="h-9 rounded-md border border-input bg-background px-3 text-sm"
