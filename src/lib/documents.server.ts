@@ -249,6 +249,7 @@ export function generateEvaluationHTML(params: {
     .step-three { margin-top: 14px; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.22; }
     .step-three h2, .step-three h3 { font-weight: bold; text-transform: uppercase; }
     .step-three-header { margin-bottom: 8px; }
+    .step-three-header h2 { font-size: 11px; font-weight: normal; text-transform: none; margin: 0; }
     .step-three-comments { margin-bottom: 8px; }
     .step-three-comments-title { text-align: center; margin-bottom: 8px; }
     .comment-lines { border-bottom: 1px solid #000; margin-bottom: 8px; padding-bottom: 6px; white-space: pre-wrap; line-height: 1.22; overflow-wrap: anywhere; }
@@ -256,7 +257,7 @@ export function generateEvaluationHTML(params: {
     .step-three-rule { border: 0; border-top: 1px solid #000; margin: 10px 0; }
     .step-three-section { margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
     .step-three-section-title { margin: 0 0 8px; }
-    .step-three-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 12px; margin-bottom: 8px; }
+    .step-three-fields { display: grid; grid-template-columns: 1fr; gap: 9px 12px; max-width: 70%; margin-bottom: 8px; }
     .step-three-field { display: flex; align-items: baseline; gap: 8px; min-height: 26px; }
     .step-three-field-label { white-space: nowrap; line-height: 1.2; display: inline-flex; align-items: baseline; }
     .step-three-field-value { flex: 1; min-height: 18px; padding-bottom: 2px; border-bottom: 1px solid #000; word-wrap: break-word; line-height: 1; display: inline-block; vertical-align: baseline; }
@@ -277,7 +278,7 @@ export function generateEvaluationHTML(params: {
     .step-three-approval-block:last-child { margin-left: auto; }
     .step-three-approval-block .workflow-signature { margin: 0; width: 220px; }
     .step-three-note { margin-top: 16px; font-size: 10px; }
-    @media (max-width: 700px) { .step-three-fields { grid-template-columns: 1fr; } .step-three-signature { justify-content: flex-start; } .step-three-approval { display: grid; grid-template-columns: 1fr; } .step-three-approval-block { width: 100%; min-width: 0; margin-left: 0; } }
+    @media (max-width: 700px) { .step-three-fields { grid-template-columns: 1fr; max-width: 100%; } .step-three-signature { justify-content: flex-start; } .step-three-approval { display: grid; grid-template-columns: 1fr; } .step-three-approval-block { width: 100%; min-width: 0; margin-left: 0; } }
     
     @media print {
       .container { max-width: 100%; padding: 0; }
@@ -482,7 +483,7 @@ export function generateEvaluationHTML(params: {
 
     <div class="step-three">
       <div class="step-three-header">
-        <h2>STEP THREE: Reviewed by the Reviewing Supervisor</h2>
+        <h2><strong>STEP THREE:</strong> Reviewed by the Reviewing Supervisor</h2>
       </div>
 
       <section class="step-three-comments step-three-section">
@@ -513,6 +514,10 @@ export function generateEvaluationHTML(params: {
 
       <section class="step-three-section">
         <h3 class="step-three-section-title">PERFORMANCE EVALUATION RESULT FOR THIS PERIOD</h3>
+        <div class="step-three-result-row">
+          <div class="step-three-result-field total"><strong>TOTAL POINTS:</strong><span class="step-three-result-value">${text(params.totalPoints)}</span></div>
+          <div class="step-three-result-field rating"><strong>ADJECTIVE RATING:</strong><span class="step-three-result-value">${text(params.adjectiveRating)}</span></div>
+        </div>
         <div class="step-three-field" style="margin-bottom:20px;"><span class="step-three-field-label">Recommended Increase / Bonus :</span><span class="step-three-field-value">${text(params.recommendedIncreaseBonus)}</span></div>
         <div class="step-three-prepared">
           <div class="workflow-signature">
