@@ -253,7 +253,6 @@ function AuditLogsPage() {
                   <TableHead scope="col">User</TableHead>
                   <TableHead scope="col">Action</TableHead>
                   <TableHead scope="col">Area</TableHead>
-                  <TableHead scope="col">Record</TableHead>
                   <TableHead scope="col">Result</TableHead>
                   <TableHead scope="col" className="text-right">
                     Detail
@@ -278,9 +277,6 @@ function AuditLogsPage() {
                       {humanizeToken(row.action)}
                     </TableCell>
                     <TableCell className="text-sm">{row.module}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {row.entity_type ?? "-"}
-                    </TableCell>
                     <TableCell>
                       <Badge variant={row.result === "SUCCESS" ? "secondary" : "destructive"}>
                         {row.result}
