@@ -1,8 +1,9 @@
 ﻿import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { RefObject } from "react";
 import { toast } from "sonner";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +33,7 @@ import {
   formatDateTime,
 } from "@/components/shared/shared-ui";
 import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
-import { listDigital201Employees } from "@/lib/reports.functions";
+import { listDigital201EmployeesPage } from "@/lib/reports.functions";
 import {
   getEvaluationDocumentUrl,
   getEmployeeDocumentUrl,
@@ -91,7 +92,7 @@ type HistoryEvaluation = {
 type EvaluationPeriodOption = Pick<HistoryEvaluation, "id" | "cycleName" | "cycleYear">;
 
 export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean }) {
-  const fetchEmployees = useServerFn(listDigital201Employees);
+  const fetchEmployeesPage = useServerFn(listDigital201EmployeesPage);
   const fetch201File = useServerFn(getDigital201File);
   const fetchDocuments = useServerFn(listEmployeeDocuments);
   const getDocumentUrl = useServerFn(getEmployeeDocumentUrl);
@@ -99,6 +100,8 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const uploadDocument = useServerFn(uploadEmployeeDocument);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [selectedEvaluationId, setSelectedEvaluationId] = useState<string | null>(null);
   const [comparisonEvaluationId, setComparisonEvaluationId] = useState<string | null>(null);
@@ -113,8 +116,8 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
   const fileInput = useRef<HTMLInputElement>(null);
 
   const query = useQuery({
-    queryKey: ["employees"],
-    queryFn: () => fetchEmployees(),
+    queryKey: ["employees", { search: debouncedSearch, page }],
+    queryFn: () => fetchEmployeesPage({ data: { search: debouncedSearch, page, pageSize: 25 } }),
     retry: false,
   });
 
@@ -205,18 +208,9 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
     }
   }
 
-  const rows = useMemo(() => {
-    const list = (query.data ?? []) as EmployeeRow[];
-    const term = search.trim().toLowerCase();
-    if (!term) return list;
-    return list.filter(
-      (row) =>
-        row.employee_number.toLowerCase().includes(term) ||
-        row.full_name.toLowerCase().includes(term) ||
-        row.division.toLowerCase().includes(term) ||
-        row.section.toLowerCase().includes(term),
-    );
-  }, [query.data, search]);
+  const rows = (query.data?.rows ?? []) as EmployeeRow[];
+  const total = query.data?.total ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / 25));
 
   if (query.isError) {
     const message = query.error instanceof Error ? query.error.message : "Unavailable";
@@ -236,7 +230,10 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
           id="employee-search"
           placeholder="Number, name, division or section"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(0);
+          }}
         />
       </div>
 
@@ -309,6 +306,30 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
               ))}
             </TableBody>
           </Table>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground">
+              Showing {total === 0 ? 0 : page * 25 + 1}-{Math.min(total, (page + 1) * 25)} of{" "}
+              {total}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage((value) => Math.max(0, value - 1))}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= pageCount - 1}
+                onClick={() => setPage((value) => value + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -471,13 +492,27 @@ function EmployeeFileContent({
           <caption className="sr-only">Employee profile information</caption>
           <TableHeader>
             <TableRow>
-              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Employee ID</TableHead>
-              <TableHead className="min-w-[180px] bg-primary text-primary-foreground">Full Name</TableHead>
-              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">Job Title</TableHead>
-              <TableHead className="min-w-[170px] bg-primary text-primary-foreground">Division / Department</TableHead>
-              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">Section / Unit</TableHead>
-              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Status</TableHead>
-              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Created</TableHead>
+              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+                Employee ID
+              </TableHead>
+              <TableHead className="min-w-[180px] bg-primary text-primary-foreground">
+                Full Name
+              </TableHead>
+              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">
+                Job Title
+              </TableHead>
+              <TableHead className="min-w-[170px] bg-primary text-primary-foreground">
+                Division / Department
+              </TableHead>
+              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">
+                Section / Unit
+              </TableHead>
+              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+                Status
+              </TableHead>
+              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+                Created
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -523,16 +558,26 @@ function EmployeeFileContent({
             <caption className="sr-only">Performance evaluations</caption>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Evaluation Cycle</TableHead>
-                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Status</TableHead>
-                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Finalized</TableHead>
-                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Actions</TableHead>
+                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">
+                  Evaluation Cycle
+                </TableHead>
+                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+                  Status
+                </TableHead>
+                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+                  Finalized
+                </TableHead>
+                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {history.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.cycleName} ({item.cycleYear})</TableCell>
+                  <TableCell className="font-medium">
+                    {item.cycleName} ({item.cycleYear})
+                  </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <EvaluationStatusBadge status={item.status as EvaluationStatus} />
                   </TableCell>
@@ -542,10 +587,24 @@ function EmployeeFileContent({
                   <TableCell>
                     {item.status === "FINALIZED" ? (
                       <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" onClick={() => onOpenDocument(item.id, "preview")}>Preview</Button>
-                        <Button variant="outline" size="sm" onClick={() => onOpenDocument(item.id, "print")}>Print</Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onOpenDocument(item.id, "preview")}
+                        >
+                          Preview
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onOpenDocument(item.id, "print")}
+                        >
+                          Print
+                        </Button>
                       </div>
-                    ) : <span className="text-sm text-muted-foreground">-</span>}
+                    ) : (
+                      <span className="text-sm text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -588,9 +647,15 @@ function DocumentSections({
           <caption className="sr-only">Employee file categories</caption>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Category</TableHead>
-              <TableHead className="w-[120px] whitespace-nowrap bg-primary text-primary-foreground">Records</TableHead>
-              <TableHead className="min-w-[280px] bg-primary text-primary-foreground">Files / Actions</TableHead>
+              <TableHead className="min-w-[220px] bg-primary text-primary-foreground">
+                Category
+              </TableHead>
+              <TableHead className="w-[120px] whitespace-nowrap bg-primary text-primary-foreground">
+                Records
+              </TableHead>
+              <TableHead className="min-w-[280px] bg-primary text-primary-foreground">
+                Files / Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -807,7 +872,6 @@ function printComparison(content: string) {
   printWindow.focus();
   printWindow.print();
 }
-
 
 function EvaluationInformationTable({
   selected,

@@ -648,7 +648,8 @@ export function EvaluationStageDetail({
         queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] }),
         queryClient.invalidateQueries({ queryKey: ["phase2-queue"] }),
       ];
-      if (stage === "RATER") invalidations.push(queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] }));
+      if (stage === "RATER")
+        invalidations.push(queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] }));
       await Promise.all(invalidations);
       navigate({
         to:
@@ -712,7 +713,9 @@ export function EvaluationStageDetail({
               <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
                 Section / Unit
               </TableHead>
-              <TableHead className="min-w-[240px] bg-primary text-primary-foreground">Cycle</TableHead>
+              <TableHead className="min-w-[240px] bg-primary text-primary-foreground">
+                Cycle
+              </TableHead>
               <TableHead className="min-w-[190px] whitespace-nowrap bg-primary text-primary-foreground">
                 Date Submitted
               </TableHead>
@@ -727,9 +730,15 @@ export function EvaluationStageDetail({
                 {detail.employee_number_snapshot}
               </TableCell>
               <TableCell className="font-medium">{detail.full_name_snapshot}</TableCell>
-              <TableCell className="text-muted-foreground">{detail.job_title_snapshot || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{detail.division_snapshot || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{detail.section_snapshot || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {detail.job_title_snapshot || "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {detail.division_snapshot || "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {detail.section_snapshot || "—"}
+              </TableCell>
               <TableCell className="text-foreground">
                 {detail.cycle_name} ({detail.cycle_year})
               </TableCell>
@@ -1077,7 +1086,9 @@ export function EvaluationStageDetail({
                     Record<string, unknown> | undefined;
                   return personnel && detail.status !== "FOR_PROCESSING" ? (
                     <div className="space-y-4 border-t border-border/60 pt-4">
-                      <h3 className="font-semibold uppercase">TO BE FILLED UP BY THE PERSONNEL OFFICE</h3>
+                      <h3 className="font-semibold uppercase">
+                        TO BE FILLED UP BY THE PERSONNEL OFFICE
+                      </h3>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         <ReadOnlyField label="Present Salary" value={personnel["present_salary"]} />
                         <ReadOnlyField
@@ -1119,15 +1130,14 @@ export function EvaluationStageDetail({
                     Record<string, unknown> | undefined;
                   return committee && detail.status !== "FOR_REVIEW" ? (
                     <div className="space-y-4 border-t border-border/60 pt-4">
-                      <h3 className="font-semibold uppercase">FINAL ACTION RECOMMENDED BY THE PERFORMANCE EVALUATION COMMITTEE:</h3>
+                      <h3 className="font-semibold uppercase">
+                        FINAL ACTION RECOMMENDED BY THE PERFORMANCE EVALUATION COMMITTEE:
+                      </h3>
                       <div className="grid gap-4">
                         <ReadOnlyField label="Final Action" value={committee["final_action"]} />
                       </div>
                       <div className="grid gap-4 lg:grid-cols-2">
-                        <ReadOnlyField
-                          label="Action Details"
-                          value={committee["action_details"]}
-                        />
+                        <ReadOnlyField label="Action Details" value={committee["action_details"]} />
                         <ReadOnlyField
                           label="RECOMMENDATION DETAILS"
                           value={committee["recommendation"]}
@@ -1204,7 +1214,9 @@ export function EvaluationStageDetail({
             </>
           ) : stage === "PERSONNEL" ? (
             <>
-              <h3 className="text-sm font-semibold uppercase">TO BE FILLED UP BY THE PERSONNEL OFFICE</h3>
+              <h3 className="text-sm font-semibold uppercase">
+                TO BE FILLED UP BY THE PERSONNEL OFFICE
+              </h3>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <Label>PRESENT SALARY</Label>
@@ -1241,13 +1253,8 @@ export function EvaluationStageDetail({
                       : String(detail.score.finalScore)
                   }
                 />
-                <div>
-                  {field("lastIncreaseNature", "NATURE OF LAST INCREASE", false)}
-                </div>
-                <Field
-                  label="ADJECTIVE RATING"
-                  value={detail.score?.finalRatingLabel ?? "-"}
-                />
+                <div>{field("lastIncreaseNature", "NATURE OF LAST INCREASE", false)}</div>
+                <Field label="ADJECTIVE RATING" value={detail.score?.finalRatingLabel ?? "-"} />
                 <div className="md:col-span-2 lg:col-span-3">
                   {field("recommendedIncreaseBonus", "RECOMMENDED INCREASE / BONUS")}
                 </div>

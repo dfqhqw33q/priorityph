@@ -6,7 +6,14 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -281,11 +288,7 @@ function SupervisorReviewPageFromRoute() {
   return <SupervisorReviewPageInner evaluationId={evaluationId} />;
 }
 
-function SupervisorReviewPageInner({
-  evaluationId,
-}: {
-  evaluationId?: string;
-}) {
+function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { can } = useAccess();
@@ -667,7 +670,9 @@ function SupervisorReviewPageInner({
               <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
                 Section / Unit
               </TableHead>
-              <TableHead className="min-w-[240px] bg-primary text-primary-foreground">Cycle</TableHead>
+              <TableHead className="min-w-[240px] bg-primary text-primary-foreground">
+                Cycle
+              </TableHead>
               <TableHead className="min-w-[190px] whitespace-nowrap bg-primary text-primary-foreground">
                 Date Submitted
               </TableHead>
@@ -682,9 +687,15 @@ function SupervisorReviewPageInner({
                 {detail.employee_number_snapshot}
               </TableCell>
               <TableCell className="font-medium">{detail.full_name_snapshot}</TableCell>
-              <TableCell className="text-muted-foreground">{detail.job_title_snapshot || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{detail.division_snapshot || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{detail.section_snapshot || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {detail.job_title_snapshot || "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {detail.division_snapshot || "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {detail.section_snapshot || "—"}
+              </TableCell>
               <TableCell className="text-foreground">
                 {detail.cycle_name} ({detail.cycle_year})
               </TableCell>

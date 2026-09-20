@@ -174,9 +174,15 @@ function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
                 {detail.employee_number_snapshot}
               </TableCell>
               <TableCell className="font-medium">{detail.full_name_snapshot}</TableCell>
-              <TableCell className="text-muted-foreground">{detail.job_title_snapshot || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{detail.division_snapshot || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{detail.section_snapshot || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {detail.job_title_snapshot || "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {detail.division_snapshot || "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {detail.section_snapshot || "—"}
+              </TableCell>
               <TableCell className="text-foreground">{detail.supervisor_name ?? "-"}</TableCell>
             </TableRow>
           </TableBody>

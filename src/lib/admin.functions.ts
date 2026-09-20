@@ -53,6 +53,71 @@ export const listUsers = createServerFn({ method: "GET" })
     }));
   });
 
+export const listUsersPage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z
+      .object({
+        search: z.string().max(120).default(""),
+        role: z.string().max(40).default(""),
+        status: z.enum(["", "ACTIVE", "INACTIVE", "LOCKED", "PASSWORD_RESET"]).default(""),
+        page: z.number().int().min(0).default(0),
+        pageSize: z.number().int().min(1).max(100).default(25),
+        sortDir: z.enum(["asc", "desc"]).default("asc"),
+      })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { getAdmin, requirePermission } = await import("./server-core.server");
+    await requirePermission(context.userId, "users.view", "User Management");
+    const admin = await getAdmin();
+    let roleUserIds: string[] | null = null;
+    if (data.role) {
+      const { data: roleRows } = await admin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", data.role as never);
+      roleUserIds = Array.from(new Set((roleRows ?? []).map((row) => row.user_id)));
+      if (roleUserIds.length === 0) return { rows: [], total: 0 };
+    }
+
+    let query = admin
+      .from("internal_users")
+      .select(
+        "id, email, full_name, job_title, is_active, is_locked, must_change_password, last_login_at, created_at",
+        { count: "exact" },
+      )
+      .order("full_name", { ascending: data.sortDir === "asc" });
+    const search = data.search.trim().replace(/[%,()]/g, "");
+    if (search)
+      query = query.or(
+        `full_name.ilike.%${search}%,email.ilike.%${search}%,job_title.ilike.%${search}%`,
+      );
+    if (roleUserIds) query = query.in("id", roleUserIds);
+    if (data.status === "ACTIVE") query = query.eq("is_active", true).eq("is_locked", false);
+    if (data.status === "INACTIVE") query = query.eq("is_active", false);
+    if (data.status === "LOCKED") query = query.eq("is_locked", true);
+    if (data.status === "PASSWORD_RESET") query = query.eq("must_change_password", true);
+    const { data: users, count } = await query.range(
+      data.page * data.pageSize,
+      data.page * data.pageSize + data.pageSize - 1,
+    );
+    const userIds = (users ?? []).map((user) => user.id);
+    const { data: roles } = userIds.length
+      ? await admin.from("user_roles").select("user_id, role").in("user_id", userIds)
+      : { data: [] };
+    const rolesByUser = new Map<string, AppRole[]>();
+    for (const row of roles ?? []) {
+      const userRoles = rolesByUser.get(row.user_id) ?? [];
+      userRoles.push(row.role as AppRole);
+      rolesByUser.set(row.user_id, userRoles);
+    }
+    return {
+      rows: (users ?? []).map((user) => ({ ...user, roles: rolesByUser.get(user.id) ?? [] })),
+      total: count ?? 0,
+    };
+  });
+
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => userFormSchema.parse(input))

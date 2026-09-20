@@ -9,8 +9,7 @@ export const Route = createFileRoute("/_authenticated/committee/drafts")({
 function DraftsPage() {
   const location = useLocation();
   const isDetailRoute =
-    location.pathname !== "/committee/drafts" &&
-    location.pathname.startsWith("/committee/drafts/");
+    location.pathname !== "/committee/drafts" && location.pathname.startsWith("/committee/drafts/");
 
   if (isDetailRoute) {
     return <Outlet />;

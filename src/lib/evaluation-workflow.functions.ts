@@ -45,10 +45,7 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
     await requirePermission(context.userId, permission, `${data.stage} Review`);
     const detail = await loadEvaluationDetail(data.evaluationId);
     if (!detail) return null;
-    const [score, admin] = await Promise.all([
-      computeScore(data.evaluationId),
-      getAdmin(),
-    ]);
+    const [score, admin] = await Promise.all([computeScore(data.evaluationId), getAdmin()]);
     const allowedStatus = {
       RATER: ["SUBMITTED", "DRAFT", "RETURNED"],
       REVIEWING_SUPERVISOR: ["FOR_REVIEW", "RETURNED"],

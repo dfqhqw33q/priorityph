@@ -315,8 +315,8 @@ export function EvaluationQueue({
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {total === 0 ? 0 : current * PAGE_SIZE + 1}-{Math.min(total, (current + 1) * PAGE_SIZE)}{" "}
-              of {total}
+              Showing {total === 0 ? 0 : current * PAGE_SIZE + 1}-
+              {Math.min(total, (current + 1) * PAGE_SIZE)} of {total}
             </p>
             <div className="flex gap-2">
               <Button

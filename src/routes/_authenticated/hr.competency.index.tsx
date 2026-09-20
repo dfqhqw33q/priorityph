@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,25 +15,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EmptyState, LoadingBlock, PageHeader } from "@/components/shared/shared-ui";
-import { listDigital201Employees } from "@/lib/reports.functions";
+import { listDigital201EmployeesPage } from "@/lib/reports.functions";
 
 export const Route = createFileRoute("/_authenticated/hr/competency/")({
   component: CompetencyIndexPage,
 });
 
 function CompetencyIndexPage() {
-  const fetchEmployees = useServerFn(listDigital201Employees);
+  const fetchEmployees = useServerFn(listDigital201EmployeesPage);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const [page, setPage] = useState(0);
   const query = useQuery({
-    queryKey: ["competency-employees"],
-    queryFn: () => fetchEmployees({}),
+    queryKey: ["competency-employees", { search: debouncedSearch, page }],
+    queryFn: () => fetchEmployees({ data: { search: debouncedSearch, page, pageSize: 25 } }),
     retry: false,
   });
-  const employees = (query.data ?? []).filter((employee) =>
-    `${employee.full_name} ${employee.employee_number} ${employee.division ?? ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
+  const employees = query.data?.rows ?? [];
+  const total = query.data?.total ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / 25));
 
   return (
     <div className="space-y-6">
@@ -46,7 +47,10 @@ function CompetencyIndexPage() {
             aria-label="Search employees"
             placeholder="Search employee name or number"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(0);
+            }}
           />
         </CardContent>
       </Card>
@@ -107,6 +111,30 @@ function CompetencyIndexPage() {
               ))}
             </TableBody>
           </Table>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground">
+              Showing {total === 0 ? 0 : page * 25 + 1}-{Math.min(total, (page + 1) * 25)} of{" "}
+              {total}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-border px-3 py-1.5 text-xs disabled:opacity-50"
+                disabled={page === 0}
+                onClick={() => setPage((value) => Math.max(0, value - 1))}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-border px-3 py-1.5 text-xs disabled:opacity-50"
+                disabled={page >= pageCount - 1}
+                onClick={() => setPage((value) => value + 1)}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

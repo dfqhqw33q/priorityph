@@ -728,10 +728,7 @@ export function buildEvaluationDocumentFileName(nameOfRatee: string, periodTo?: 
 export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): string {
   const fullDocument = generateEvaluationHTML(data);
   const title = buildEvaluationDocumentFileName(data.nameOfRatee, data.periodTo);
-  const fullDocumentWithTitle = fullDocument.replace(
-    "<title></title>",
-    `<title>${title}</title>`,
-  );
+  const fullDocumentWithTitle = fullDocument.replace("<title></title>", `<title>${title}</title>`);
 
   const singlePageOverride = `
     <style>
@@ -753,9 +750,9 @@ export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): str
     </style>
   `;
 
-  const ratingInserted = fullDocumentWithTitle.includes("<div class=\"rating-scale\">")
+  const ratingInserted = fullDocumentWithTitle.includes('<div class="rating-scale">')
     ? fullDocumentWithTitle.replace(
-        "<div class=\"rating-scale\">",
+        '<div class="rating-scale">',
         `
     <div class="info-grid summary-metrics">
       <div class="info-field">
@@ -772,7 +769,8 @@ export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): str
     : fullDocumentWithTitle;
 
   const stepTwoStart = ratingInserted.indexOf('<div class="step-two">');
-  const trimmedDocument = stepTwoStart >= 0 ? ratingInserted.slice(0, stepTwoStart) : ratingInserted;
+  const trimmedDocument =
+    stepTwoStart >= 0 ? ratingInserted.slice(0, stepTwoStart) : ratingInserted;
   const withSinglePageCss = trimmedDocument.replace("</head>", `${singlePageOverride}</head>`);
   return `${withSinglePageCss}\n</body>\n</html>`;
 }

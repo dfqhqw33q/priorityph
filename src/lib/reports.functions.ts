@@ -45,6 +45,41 @@ export const listDigital201Employees = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+export const listDigital201EmployeesPage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z
+      .object({
+        search: z.string().max(120).default(""),
+        page: z.number().int().min(0).default(0),
+        pageSize: z.number().int().min(1).max(100).default(25),
+      })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { getAdmin, requirePermission } = await import("./server-core.server");
+    await requirePermission(context.userId, "evaluations.view_201", "Digital 201 File");
+    const admin = await getAdmin();
+    let query = admin
+      .from("employees")
+      .select(
+        "id, employee_number, full_name, job_title, division, section, employment_status, created_at",
+        { count: "exact" },
+      )
+      .order("employee_number");
+    const search = data.search.trim().replace(/[%,()]/g, "");
+    if (search) {
+      query = query.or(
+        `employee_number.ilike.%${search}%,full_name.ilike.%${search}%,division.ilike.%${search}%,section.ilike.%${search}%`,
+      );
+    }
+    const { data: rows, count } = await query.range(
+      data.page * data.pageSize,
+      data.page * data.pageSize + data.pageSize - 1,
+    );
+    return { rows: rows ?? [], total: count ?? 0 };
+  });
+
 export const getCompetencyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => z.object({ employeeId: z.string().uuid() }).parse(input))

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 import { userErrorMessage } from "@/lib/validation";
 import { ArrowDown, ArrowUp, Plus } from "lucide-react";
@@ -56,7 +57,7 @@ import {
   assignRoles,
   createUser,
   getUserSecurityDetail,
-  listUsers,
+  listUsersPage,
   updateUser,
 } from "@/lib/admin.functions";
 import { APP_ROLES, ROLE_LABELS, humanizeToken, permissionLabel, type AppRole } from "@/lib/domain";
@@ -122,7 +123,7 @@ function AdminUsersPage() {
   const queryClient = useQueryClient();
   const { can, access } = useAccess();
 
-  const fetchUsers = useServerFn(listUsers);
+  const fetchUsersPage = useServerFn(listUsersPage);
   const create = useServerFn(createUser);
   const update = useServerFn(updateUser);
   const applyAction = useServerFn(applyUserAccessAction);
@@ -132,6 +133,7 @@ function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState(ALL);
   const [statusFilter, setStatusFilter] = useState(ALL);
+  const debouncedSearch = useDebouncedValue(search);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(0);
 
@@ -143,14 +145,25 @@ function AdminUsersPage() {
   const [profileDraft, setProfileDraft] = useState({ fullName: "", jobTitle: "" });
 
   const usersQuery = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: () => fetchUsers(),
+    queryKey: ["admin-users", { search: debouncedSearch, roleFilter, statusFilter, page, sortDir }],
+    queryFn: () =>
+      fetchUsersPage({
+        data: {
+          search: debouncedSearch,
+          role: roleFilter === ALL ? "" : roleFilter,
+          status: statusFilter === ALL ? "" : (statusFilter as never),
+          page,
+          pageSize: PAGE_SIZE,
+          sortDir,
+        },
+      }),
     retry: false,
   });
 
   const selected = useMemo(
-    () => ((usersQuery.data ?? []) as UserRow[]).find((user) => user.id === selectedId) ?? null,
-    [usersQuery.data, selectedId],
+    () =>
+      ((usersQuery.data?.rows ?? []) as UserRow[]).find((user) => user.id === selectedId) ?? null,
+    [usersQuery.data?.rows, selectedId],
   );
 
   const securityQuery = useQuery({
@@ -160,32 +173,11 @@ function AdminUsersPage() {
     retry: false,
   });
 
-  const rows = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    let list = ((usersQuery.data ?? []) as UserRow[]).filter((user) => {
-      if (
-        term &&
-        !`${user.full_name} ${user.email} ${user.job_title ?? ""}`.toLowerCase().includes(term)
-      )
-        return false;
-      if (roleFilter !== ALL && !user.roles.includes(roleFilter as AppRole)) return false;
-      if (statusFilter === "ACTIVE" && (!user.is_active || user.is_locked)) return false;
-      if (statusFilter === "INACTIVE" && user.is_active) return false;
-      if (statusFilter === "LOCKED" && !user.is_locked) return false;
-      if (statusFilter === "PASSWORD_RESET" && !user.must_change_password) return false;
-      return true;
-    });
-    list = [...list].sort((a, b) =>
-      sortDir === "asc"
-        ? a.full_name.localeCompare(b.full_name)
-        : b.full_name.localeCompare(a.full_name),
-    );
-    return list;
-  }, [usersQuery.data, search, roleFilter, statusFilter, sortDir]);
-
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const rows = (usersQuery.data?.rows ?? []) as UserRow[];
+  const total = usersQuery.data?.total ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const current = Math.min(page, pageCount - 1);
-  const visible = rows.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
+  const visible = rows;
 
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -431,8 +423,8 @@ function AdminUsersPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {current * PAGE_SIZE + 1}-{Math.min(rows.length, (current + 1) * PAGE_SIZE)}{" "}
-              of {rows.length}
+              Showing {total === 0 ? 0 : current * PAGE_SIZE + 1}-
+              {Math.min(total, (current + 1) * PAGE_SIZE)} of {total}
             </p>
             <div className="flex gap-2">
               <Button

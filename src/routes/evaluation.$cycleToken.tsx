@@ -357,7 +357,10 @@ function PublicEvaluationPage() {
                 type="button"
                 className="flex w-full items-center justify-center gap-3 rounded-md border border-slate-300 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-sm transition-colors hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 onClick={async () => {
-                  const redirectTo = new URL(`/evaluation/${cycleToken}`, window.location.origin).toString();
+                  const redirectTo = new URL(
+                    `/evaluation/${cycleToken}`,
+                    window.location.origin,
+                  ).toString();
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: "google",
                     options: {

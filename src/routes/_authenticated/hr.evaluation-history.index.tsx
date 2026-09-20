@@ -300,7 +300,9 @@ export function HistoryTablePage({
                 <TableHead className="min-w-[240px]">Cycle</TableHead>
                 <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
                 <TableHead className="min-w-[190px] whitespace-nowrap">Date Submitted</TableHead>
-                {mode === "history" ? <TableHead className="w-[60px] text-right">Activity</TableHead> : null}
+                {mode === "history" ? (
+                  <TableHead className="w-[60px] text-right">Activity</TableHead>
+                ) : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -422,9 +424,7 @@ export function HistoryTablePage({
         <DialogContent className="flex h-[82vh] max-w-xl flex-col gap-3 p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Evaluation Activity</DialogTitle>
-            <DialogDescription>
-              Complete workflow history for this evaluation.
-            </DialogDescription>
+            <DialogDescription>Complete workflow history for this evaluation.</DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1">
             {timelineQuery.isLoading ? (

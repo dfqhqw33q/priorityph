@@ -331,9 +331,7 @@ function applyEvaluationQueueFilters(
   if (filters.year) next = next.eq("evaluation_cycles.year", filters.year);
   if (filters.correctionStage) next = next.eq("correction_stage", filters.correctionStage);
   if (filters.supervisorUserId)
-    next = next.or(
-      `supervisor_user_id.is.null,supervisor_user_id.eq.${filters.supervisorUserId}`,
-    );
+    next = next.or(`supervisor_user_id.is.null,supervisor_user_id.eq.${filters.supervisorUserId}`);
   return next;
 }
 
@@ -361,8 +359,11 @@ export async function listEvaluationsPage(
   filters: EvaluationQueueFilters = {},
   page = 0,
   pageSize = 20,
-  sort: "full_name_snapshot" | "employee_number_snapshot" | "employee_submitted_at" | "status" =
-    "employee_submitted_at",
+  sort:
+    | "full_name_snapshot"
+    | "employee_number_snapshot"
+    | "employee_submitted_at"
+    | "status" = "employee_submitted_at",
   sortDir: "asc" | "desc" = "desc",
   supervisorUserId?: string,
 ): Promise<EvaluationQueuePage> {
