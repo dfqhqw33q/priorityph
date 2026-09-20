@@ -368,10 +368,11 @@ export async function listEvaluationsPage(
   supervisorUserId?: string,
 ): Promise<EvaluationQueuePage> {
   const admin = await getAdmin();
+  const queueFilters = supervisorUserId === undefined ? filters : { ...filters, supervisorUserId };
   const query = applyEvaluationQueueFilters(
     admin.from("evaluations").select(evaluationQueueSelect, { count: "exact" }),
     statuses,
-    { ...filters, supervisorUserId },
+    queueFilters,
   ).order(sort, { ascending: sortDir === "asc" });
   const { data, count } = await query.range(page * pageSize, page * pageSize + pageSize - 1);
   return { rows: (data ?? []).map(mapEvaluationListRow), total: count ?? 0 };

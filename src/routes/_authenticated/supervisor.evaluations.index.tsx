@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/supervisor/evaluations/")(
 
 function SupervisorQueuePage() {
   const location = useLocation();
+  const fetchQueue = useServerFn(listSupervisorQueue);
   const isDetailRoute =
     location.pathname !== "/supervisor/evaluations" &&
     location.pathname.startsWith("/supervisor/evaluations/");
@@ -34,8 +35,6 @@ function SupervisorQueuePage() {
   if (isDetailRoute) {
     return <Outlet />;
   }
-
-  const fetchQueue = useServerFn(listSupervisorQueue);
 
   return (
     <div className="space-y-6">

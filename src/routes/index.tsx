@@ -39,7 +39,7 @@ function Index() {
     (async () => {
       const { data } = await getAuthSession();
       if (cancelled) return;
-      if (!data.user) {
+      if (!data.session?.user) {
         navigate({ to: "/login", replace: true });
         return;
       }

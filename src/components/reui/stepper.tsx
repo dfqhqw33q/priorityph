@@ -136,7 +136,19 @@ function Stepper({
       triggerNodes,
       indicators,
     }),
-    [currentStep, handleSetActiveStep, children, orientation, registerTrigger, triggerNodes],
+    [
+      currentStep,
+      handleSetActiveStep,
+      children,
+      orientation,
+      registerTrigger,
+      focusNext,
+      focusPrev,
+      focusFirst,
+      focusLast,
+      triggerNodes,
+      indicators,
+    ],
   );
 
   return (
@@ -222,12 +234,12 @@ function StepperTrigger({ className, children, tabIndex, render, ...props }: Ste
     if (btnRef.current) {
       registerTrigger(btnRef.current);
     }
-  }, [btnRef.current]);
+  }, [registerTrigger]);
 
   // Find our index among triggers for navigation
   const myIdx = useMemo(
     () => triggerNodes.findIndex((n: HTMLButtonElement) => n === btnRef.current),
-    [triggerNodes, btnRef.current],
+    [triggerNodes],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {

@@ -31,7 +31,7 @@ function ensureAuthSubscription() {
     publishAuthSnapshot({ userId: data.session?.user.id ?? null, ready: true });
   });
   supabase.auth.onAuthStateChange((_event, session) => {
-    initialSessionPromise = Promise.resolve({ data: { session }, error: null });
+    initialSessionPromise = null;
     publishAuthSnapshot({ userId: session?.user.id ?? null, ready: true });
   });
 }

@@ -710,7 +710,7 @@ export function buildEvaluationDocumentFileName(nameOfRatee: string, periodTo?: 
 
   if (!normalizedName) return `EMPLOYEE - EVALUATION ${year}`;
   if (normalizedName.includes(",")) {
-    const [lastName, firstName = ""] = normalizedName.split(",");
+    const [lastName = "", firstName = ""] = normalizedName.split(",");
     const cleanLast = lastName.trim().toUpperCase();
     const cleanFirst = firstName.trim().toUpperCase();
     if (!cleanFirst) return `${cleanLast} - EVALUATION ${year}`;
@@ -718,9 +718,10 @@ export function buildEvaluationDocumentFileName(nameOfRatee: string, periodTo?: 
   }
 
   const parts = normalizedName.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return `${parts[0].toUpperCase()} - EVALUATION ${year}`;
+  const firstPart = parts[0] ?? "EMPLOYEE";
+  if (parts.length === 1) return `${firstPart.toUpperCase()} - EVALUATION ${year}`;
 
-  const lastName = parts[parts.length - 1].toUpperCase();
+  const lastName = (parts[parts.length - 1] ?? firstPart).toUpperCase();
   const firstName = parts.slice(0, -1).join(" ").toUpperCase();
   return `${lastName}, ${firstName} - EVALUATION ${year}`;
 }

@@ -54,7 +54,8 @@ function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
   const [documentOpen, setDocumentOpen] = useState(false);
   const query = useQuery({
     queryKey: ["evaluation-history-detail", evaluationId],
-    queryFn: () => fetch({ data: { evaluationId } }),
+    queryFn: () => fetch({ data: { evaluationId: evaluationId as string } }),
+    enabled: evaluationId !== undefined,
     retry: false,
   });
 

@@ -90,7 +90,7 @@ export function HistoryTablePage({
         data: {
           search: debouncedSearch,
           status: effectiveStatus,
-          cycleId: (cycleId ?? ALL) === ALL ? null : cycleId,
+          cycleId: (cycleId ?? ALL) === ALL ? null : (cycleId ?? null),
           year: null,
           recordType: mode,
           page,
@@ -108,7 +108,7 @@ export function HistoryTablePage({
 
   useEffect(() => {
     if (cycleId !== undefined || !query.data) return;
-    setCycleId(query.data.options.cycles.find((cycle) => cycle.status === "ACTIVE")?.id ?? ALL);
+    setCycleId(query.data.options.cycles[0]?.id ?? ALL);
   }, [cycleId, query.data]);
 
   const rows = (query.data?.rows ?? []) as ReportRow[];
