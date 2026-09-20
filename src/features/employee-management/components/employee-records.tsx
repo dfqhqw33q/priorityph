@@ -360,10 +360,6 @@ export function EmployeeRecordsPage({ allow201 = true }: { allow201?: boolean })
               uploading={uploading}
               onUpload={handleUpload}
               onOpenDocument={openDocument}
-              evaluationCount={
-                (detailQuery.data?.history ?? []).filter((item) => item.status === "FINALIZED")
-                  .length
-              }
             />
           </div>
         </DialogContent>
@@ -511,10 +507,10 @@ function EmployeeFileContent({
           <div>
             <h3 id="performance-evaluations-heading" className="font-semibold">
               Performance Evaluations
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {totalCount} records
+              </span>
             </h3>
-            <p className="text-xs text-muted-foreground">
-              {totalCount} historical record{totalCount === 1 ? "" : "s"}
-            </p>
           </div>
           {history.length > 1 ? (
             <Button size="sm" onClick={onCompare}>
@@ -522,55 +518,44 @@ function EmployeeFileContent({
             </Button>
           ) : null}
         </div>
-        <div className="divide-y divide-border rounded-md border border-border">
-          {history.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="font-medium">
-                  {item.cycleName} ({item.cycleYear})
-                </p>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <EvaluationStatusBadge status={item.status as EvaluationStatus} />
-                  <span>{item.jobTitle}</span>
-                  <span> - </span>
-                  <span>{item.division}</span>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Finalized {formatDateTime(item.finalizedAt)}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {item.status === "FINALIZED" ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onOpenDocument(item.id, "preview")}
-                    >
-                      Preview
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onOpenDocument(item.id, "print")}
-                    >
-                      Print
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onOpenDocument(item.id, "export")}
-                    >
-                      Export
-                    </Button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          ))}
+        <div className="max-w-full overflow-x-auto border border-border bg-card shadow-sm">
+          <Table>
+            <caption className="sr-only">Performance evaluations</caption>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Evaluation Cycle</TableHead>
+                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Status</TableHead>
+                <TableHead className="min-w-[140px] bg-primary text-primary-foreground">Job Title</TableHead>
+                <TableHead className="min-w-[160px] bg-primary text-primary-foreground">Division / Department</TableHead>
+                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Finalized</TableHead>
+                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {history.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.cycleName} ({item.cycleYear})</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <EvaluationStatusBadge status={item.status as EvaluationStatus} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{item.jobTitle || "-"}</TableCell>
+                  <TableCell className="text-muted-foreground">{item.division || "-"}</TableCell>
+                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                    {formatDateTime(item.finalizedAt)}
+                  </TableCell>
+                  <TableCell>
+                    {item.status === "FINALIZED" ? (
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={() => onOpenDocument(item.id, "preview")}>Preview</Button>
+                        <Button variant="outline" size="sm" onClick={() => onOpenDocument(item.id, "print")}>Print</Button>
+                        <Button variant="outline" size="sm" onClick={() => onOpenDocument(item.id, "export")}>Export</Button>
+                      </div>
+                    ) : <span className="text-sm text-muted-foreground">-</span>}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </section>
     </div>
@@ -586,7 +571,6 @@ function DocumentSections({
   uploading,
   onUpload,
   onOpenDocument,
-  evaluationCount,
 }: {
   documents: Array<{ id: string; file_name: string; category: string }>;
   loading: boolean;
@@ -596,7 +580,6 @@ function DocumentSections({
   uploading: boolean;
   onUpload: (file: File) => void;
   onOpenDocument: (id: string) => void;
-  evaluationCount: number;
 }) {
   const categories = [
     ["Awards and Recognition", "AWARDS_RECOGNITION"],
@@ -617,13 +600,6 @@ function DocumentSections({
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell className="font-medium">Performance Evaluations</TableCell>
-              <TableCell>{evaluationCount}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                View evaluation records above
-              </TableCell>
-            </TableRow>
             {categories.map(([label, category]) => {
               const records = documents.filter((document) => document.category === category);
               return (
