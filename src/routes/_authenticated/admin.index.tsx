@@ -48,8 +48,18 @@ function AdminOverview() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Total Users" value={stats?.totalUsers ?? 0} to="/admin/users" hint="Accounts" />
-            <StatCard label="Active Users" value={stats?.activeUsers ?? 0} to="/admin/users" hint="Active" />
+            <StatCard
+              label="Total Users"
+              value={stats?.totalUsers ?? 0}
+              to="/admin/users"
+              hint="Accounts"
+            />
+            <StatCard
+              label="Active Users"
+              value={stats?.activeUsers ?? 0}
+              to="/admin/users"
+              hint="Active"
+            />
             <StatCard
               label="Audit Events"
               value={stats?.auditEvents ?? 0}

@@ -361,7 +361,9 @@ const NAV: Array<{
       {
         label: "Employees",
         icon: Users,
-        children: [{ to: "/admin/employee-profiles", label: "Profiles", permission: "employees.manage" }],
+        children: [
+          { to: "/admin/employee-profiles", label: "Profiles", permission: "employees.manage" },
+        ],
       },
     ],
   },

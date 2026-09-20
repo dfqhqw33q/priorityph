@@ -722,11 +722,11 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
     );
     const signatureWrite = data.signature
       ? saveStageSignature(
-        data.evaluationId,
-        "REVIEWING_SUPERVISOR_STEP3",
-        data.signature,
-        context.userId,
-        data.version,
+          data.evaluationId,
+          "REVIEWING_SUPERVISOR_STEP3",
+          data.signature,
+          context.userId,
+          data.version,
         )
       : Promise.resolve();
     const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);
@@ -793,11 +793,11 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
     );
     const signatureWrite = data.submit
       ? saveStageSignature(
-        data.evaluationId,
-        "PERSONNEL",
-        data.signature,
-        context.userId,
-        data.version,
+          data.evaluationId,
+          "PERSONNEL",
+          data.signature,
+          context.userId,
+          data.version,
         )
       : Promise.resolve();
     const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);
@@ -846,11 +846,11 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
     );
     const signatureWrite = data.submit
       ? saveStageSignature(
-        data.evaluationId,
-        "COMMITTEE",
-        data.signature,
-        context.userId,
-        data.version,
+          data.evaluationId,
+          "COMMITTEE",
+          data.signature,
+          context.userId,
+          data.version,
         )
       : Promise.resolve();
     const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);

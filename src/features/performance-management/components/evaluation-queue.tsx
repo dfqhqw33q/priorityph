@@ -277,7 +277,9 @@ export function EvaluationQueue({
                         <button
                           type="button"
                           className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                          onClick={() => navigate({ to: detailPath, params: { evaluationId: row.id } })}
+                          onClick={() =>
+                            navigate({ to: detailPath, params: { evaluationId: row.id } })
+                          }
                         >
                           {row.full_name_snapshot}
                         </button>
@@ -305,7 +307,9 @@ export function EvaluationQueue({
                           variant="outline"
                           size="sm"
                           type="button"
-                          onClick={() => navigate({ to: detailPath, params: { evaluationId: row.id } })}
+                          onClick={() =>
+                            navigate({ to: detailPath, params: { evaluationId: row.id } })
+                          }
                         >
                           Open
                         </Button>

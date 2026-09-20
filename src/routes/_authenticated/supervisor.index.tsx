@@ -55,7 +55,8 @@ function SupervisorDashboard() {
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });
-  const activeCycleId = cycleOptionsQuery.data?.find((cycle) => cycle.status === "ACTIVE")?.id ?? null;
+  const activeCycleId =
+    cycleOptionsQuery.data?.find((cycle) => cycle.status === "ACTIVE")?.id ?? null;
   const selectedCycleId = cycleId === undefined ? activeCycleId : cycleId;
 
   const query = useQuery({

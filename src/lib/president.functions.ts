@@ -183,11 +183,11 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
           : Promise.resolve();
       const eventWrite = data.submit
         ? admin.from("evaluation_events").insert({
-          evaluation_id: data.evaluationId,
-          event_type: `PRESIDENT_STEP${data.step}_SUBMITTED`,
-          from_status: evaluation.status,
-          to_status: patch.status ?? evaluation.status,
-          actor_user_id: context.userId,
+            evaluation_id: data.evaluationId,
+            event_type: `PRESIDENT_STEP${data.step}_SUBMITTED`,
+            from_status: evaluation.status,
+            to_status: patch.status ?? evaluation.status,
+            actor_user_id: context.userId,
           })
         : Promise.resolve({ error: null });
       const auditWrite = getActorRoles(context.userId).then((roles) =>

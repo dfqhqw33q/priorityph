@@ -113,7 +113,10 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
                       type="button"
                       className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       onClick={() =>
-                        navigate({ to: detailPath as never, params: { evaluationId: row.id } as never })
+                        navigate({
+                          to: detailPath as never,
+                          params: { evaluationId: row.id } as never,
+                        })
                       }
                     >
                       {row.full_name_snapshot}
@@ -137,7 +140,10 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
                       size="sm"
                       type="button"
                       onClick={() =>
-                        navigate({ to: detailPath as never, params: { evaluationId: row.id } as never })
+                        navigate({
+                          to: detailPath as never,
+                          params: { evaluationId: row.id } as never,
+                        })
                       }
                     >
                       Open

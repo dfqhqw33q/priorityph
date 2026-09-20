@@ -1269,7 +1269,9 @@ export function EvaluationStageDetail({
               </div>
 
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="min-w-0">{field("lastIncreaseNature", "NATURE OF LAST INCREASE", false)}</div>
+                <div className="min-w-0">
+                  {field("lastIncreaseNature", "NATURE OF LAST INCREASE", false)}
+                </div>
                 <div className="min-w-0">
                   {field("recommendedIncreaseBonus", "RECOMMENDED INCREASE / BONUS")}
                 </div>
