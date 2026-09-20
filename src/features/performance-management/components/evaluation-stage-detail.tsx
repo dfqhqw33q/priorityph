@@ -743,7 +743,7 @@ export function EvaluationStageDetail({
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <CardTitle className="text-base">
             {stage === "RATER"
-              ? "CONCLUSIONS AND COMMENTS"
+              ? "DEVELOP CONCLUSION AND COMMENTS"
               : stage === "REVIEWING_SUPERVISOR"
                 ? "Step 3 - Review"
                 : stage === "PERSONNEL"
@@ -796,7 +796,7 @@ export function EvaluationStageDetail({
                 />
               </div>
               <div className="rounded-md bg-muted/20 p-4">
-                <ReadOnlyGroup title="CONCLUSIONS AND COMMENTS">
+                <ReadOnlyGroup title="DEVELOP CONCLUSION AND COMMENTS">
                   <div className="space-y-4">
                     <ReadOnlyField
                       label="Overall rating explanation"
@@ -943,7 +943,7 @@ export function EvaluationStageDetail({
                 />
               </div>
               <div className="rounded-md bg-muted/20 p-4">
-                <ReadOnlyGroup title="CONCLUSIONS AND COMMENTS">
+                <ReadOnlyGroup title="DEVELOP CONCLUSION AND COMMENTS">
                   <div className="space-y-4">
                     <ReadOnlyField
                       label="Overall rating explanation"
@@ -1038,7 +1038,7 @@ export function EvaluationStageDetail({
                 </ReadOnlyGroup>
               </div>
               <div className="space-y-4 border-t border-border/60 pt-4">
-                <h3 className="font-semibold uppercase">REVIEWING SUPERVISOR REVIEW</h3>
+                <h3 className="font-semibold uppercase">REVIEWED BY THE REVIEWING SUPERVISOR</h3>
                 {(() => {
                   const accStages = (
                     detail as Record<string, unknown> & {
@@ -1054,11 +1054,6 @@ export function EvaluationStageDetail({
                         label="Recommendations"
                         value={revSupReview["recommendations"]}
                       />
-                      <ReadOnlyField
-                        label="Date & Time"
-                        value={revSupReview["reviewing_supervisor_date"]}
-                      />
-                      <ReadOnlyField label="Submitted At" value={revSupReview["submitted_at"]} />
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
@@ -1078,8 +1073,8 @@ export function EvaluationStageDetail({
                     Record<string, unknown> | undefined;
                   return personnel && detail.status !== "FOR_PROCESSING" ? (
                     <div className="space-y-4 border-t border-border/60 pt-4">
-                      <h3 className="font-semibold uppercase">PERSONNEL OFFICE PROCESSING</h3>
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      <h3 className="font-semibold uppercase">TO BE FILLED UP BY THE PERSONNEL OFFICE</h3>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         <ReadOnlyField label="Present Salary" value={personnel["present_salary"]} />
                         <ReadOnlyField
                           label="Last Increase Date"
@@ -1091,7 +1086,6 @@ export function EvaluationStageDetail({
                         />
                         <ReadOnlyField label="Total Points" value={personnel["total_points"]} />
                         <ReadOnlyField
-                          className="sm:col-span-2"
                           label="Nature of Last Increase"
                           value={personnel["last_increase_nature"]}
                         />
@@ -1099,11 +1093,13 @@ export function EvaluationStageDetail({
                           label="Adjective Rating"
                           value={personnel["adjective_rating"]}
                         />
-                        <ReadOnlyField
-                          label="Recommended Increase / Bonus"
-                          value={personnel["recommended_increase_bonus"]}
-                        />
-                        <ReadOnlyField label="Submitted At" value={personnel["submitted_at"]} />
+                        {personnel["recommended_increase_bonus"] ? (
+                          <ReadOnlyField
+                            className="md:col-span-2 lg:col-span-3"
+                            label="Recommended Increase / Bonus"
+                            value={personnel["recommended_increase_bonus"]}
+                          />
+                        ) : null}
                       </div>
                     </div>
                   ) : null;
@@ -1119,20 +1115,19 @@ export function EvaluationStageDetail({
                     Record<string, unknown> | undefined;
                   return committee && detail.status !== "FOR_REVIEW" ? (
                     <div className="space-y-4 border-t border-border/60 pt-4">
-                      <h3 className="font-semibold uppercase">COMMITTEE RECOMMENDATION</h3>
-                      <div className="grid gap-4 lg:grid-cols-2">
+                      <h3 className="font-semibold uppercase">FINAL ACTION RECOMMENDED BY THE PERFORMANCE EVALUATION COMMITTEE:</h3>
+                      <div className="grid gap-4">
                         <ReadOnlyField label="Final Action" value={committee["final_action"]} />
+                      </div>
+                      <div className="grid gap-4 lg:grid-cols-2">
                         <ReadOnlyField
-                          className="lg:col-span-2"
                           label="Action Details"
                           value={committee["action_details"]}
                         />
                         <ReadOnlyField
-                          className="lg:col-span-2"
-                          label="Committee Recommendation"
+                          label="RECOMMENDATION DETAILS"
                           value={committee["recommendation"]}
                         />
-                        <ReadOnlyField label="Submitted At" value={committee["submitted_at"]} />
                       </div>
                     </div>
                   ) : null;
@@ -1202,19 +1197,13 @@ export function EvaluationStageDetail({
                   onDiscard={() => discardReviewSuggestion("recommendations")}
                 />
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-semibold text-foreground">Date &amp; Time:</span>
-                <span className="text-muted-foreground">
-                  {formatDateTime(values.date ?? workflowDate())}
-                </span>
-              </div>
             </>
           ) : stage === "PERSONNEL" ? (
             <>
-              <h3 className="text-sm font-semibold">Personnel Office section - editable</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <h3 className="text-sm font-semibold uppercase">TO BE FILLED UP BY THE PERSONNEL OFFICE</h3>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <Label>Present salary</Label>
+                  <Label>PRESENT SALARY</Label>
                   <Input
                     type="number"
                     value={values.presentSalary ?? ""}
@@ -1223,7 +1212,7 @@ export function EvaluationStageDetail({
                   />
                 </div>
                 <div>
-                  <Label>Last increase date</Label>
+                  <Label>LAST INCREASE DATE</Label>
                   <Input
                     type="date"
                     value={values.lastIncreaseDate ?? ""}
@@ -1232,7 +1221,7 @@ export function EvaluationStageDetail({
                   />
                 </div>
                 <div>
-                  <Label>Last increase amount</Label>
+                  <Label>LAST INCREASE AMOUNT</Label>
                   <Input
                     type="number"
                     value={values.lastIncreaseAmount ?? ""}
@@ -1240,24 +1229,24 @@ export function EvaluationStageDetail({
                     disabled={!editable}
                   />
                 </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
                 <Field
-                  label="Total points (calculated)"
+                  label="TOTAL POINTS"
                   value={
                     detail.score?.finalScore === null || detail.score?.finalScore === undefined
                       ? "-"
                       : String(detail.score.finalScore)
                   }
                 />
+                <div>
+                  {field("lastIncreaseNature", "NATURE OF LAST INCREASE", false)}
+                </div>
                 <Field
-                  label="Adjective rating (calculated)"
+                  label="ADJECTIVE RATING"
                   value={detail.score?.finalRatingLabel ?? "-"}
                 />
-              </div>
-              <div className="grid gap-4 lg:grid-cols-2">
-                {field("lastIncreaseNature", "Nature of last increase", false)}
-                {field("recommendedIncreaseBonus", "Recommended increase / bonus")}
+                <div className="md:col-span-2 lg:col-span-3">
+                  {field("recommendedIncreaseBonus", "RECOMMENDED INCREASE / BONUS")}
+                </div>
               </div>
             </>
           ) : stage === "COMMITTEE" ? (
@@ -1347,7 +1336,7 @@ export function EvaluationStageDetail({
                 ) : null}
               </div>
               <h3 className="text-sm font-semibold uppercase">
-                COMMITTEE RECOMMENDATION
+                FINAL ACTION RECOMMENDED BY THE PERFORMANCE EVALUATION COMMITTEE:
               </h3>
               <div>
                 <Label>Final action *</Label>
@@ -1373,7 +1362,7 @@ export function EvaluationStageDetail({
               </div>
               <div className="grid gap-4 lg:grid-cols-2">
                 {field("actionDetails", "Action details", false)}
-                {field("recommendations", "Committee recommendation")}
+                {field("recommendations", "COMMITTEE RECOMMENDATION")}
               </div>
             </>
           ) : (

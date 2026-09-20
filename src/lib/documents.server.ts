@@ -210,7 +210,7 @@ export function generateEvaluationHTML(params: {
       }
       .step-two, .step-three { orphans: 3; widows: 3; }
     }
-    .step-two-header { text-align: center; margin-bottom: 18px; }
+    .step-two-header { text-align: left; margin-bottom: 18px; }
     .step-two-header h1 { font-size: 16px; margin: 0 0 4px; text-transform: uppercase; }
     .step-two-header h2 { font-size: 13px; margin: 0; text-transform: uppercase; }
     .step-two-title { margin-bottom: 12px; }
@@ -402,10 +402,9 @@ export function generateEvaluationHTML(params: {
     
     <div class="step-two">
       <header class="step-two-header">
-        <h1>Conclusions and Comments</h1>
+        <h1>DEVELOP CONCLUSION AND COMMENTS</h1>
         <h2>(Confidential: Not to be shown to ratee)</h2>
       </header>
-      <div class="step-two-title"><strong>STEP TWO:</strong> Develop conclusion and comments</div>
       <div>
         <section class="step-two-section">
           <div class="step-two-number">1.</div>
@@ -482,7 +481,7 @@ export function generateEvaluationHTML(params: {
 
     <div class="step-three">
       <div class="step-three-header">
-        <h2>STEP THREE: Reviewed by the Reviewing Supervisor</h2>
+        <h2>REVIEWED BY THE REVIEWING SUPERVISOR</h2>
       </div>
 
       <section class="step-three-comments step-three-section">
