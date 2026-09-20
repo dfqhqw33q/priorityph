@@ -257,7 +257,7 @@ function CyclesPage() {
                       {formatCompactDateTime(cycle.ends_at)}
                     </ResponsiveTableValue>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell>
                     <div className="flex justify-start gap-2">
                       {cycle.status === "DRAFT" && can("cycles.manage") ? (
                         <Button size="sm" onClick={() => setActivateCycleId(cycle.id)}>

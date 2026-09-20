@@ -471,18 +471,18 @@ function EmployeeFileContent({
           <caption className="sr-only">Employee profile information</caption>
           <TableHeader>
             <TableRow>
-              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Employee ID</TableHead>
-              <TableHead className="min-w-[180px] bg-primary text-primary-foreground">Full Name</TableHead>
-              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">Job Title</TableHead>
-              <TableHead className="min-w-[170px] bg-primary text-primary-foreground">Division / Department</TableHead>
-              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">Section / Unit</TableHead>
-              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Status</TableHead>
-              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Created</TableHead>
+              <TableHead className="bg-primary text-primary-foreground">Employee ID</TableHead>
+              <TableHead className="bg-primary text-primary-foreground">Full Name</TableHead>
+              <TableHead className="bg-primary text-primary-foreground">Job Title</TableHead>
+              <TableHead className="bg-primary text-primary-foreground">Division / Department</TableHead>
+              <TableHead className="bg-primary text-primary-foreground">Section / Unit</TableHead>
+              <TableHead className="bg-primary text-primary-foreground">Status</TableHead>
+              <TableHead className="bg-primary text-primary-foreground">Created</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableCell className="whitespace-nowrap tabular-nums">
+              <TableCell className="tabular-nums">
                 {employee?.employee_number ?? "-"}
               </TableCell>
               <TableCell className="font-medium">{employee?.full_name ?? "-"}</TableCell>
@@ -494,7 +494,7 @@ function EmployeeFileContent({
                   {employee?.employment_status ?? "-"}
                 </Badge>
               </TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+              <TableCell className="text-xs text-muted-foreground">
                 {formatDateTime(employee?.created_at)}
               </TableCell>
             </TableRow>
@@ -523,20 +523,20 @@ function EmployeeFileContent({
             <caption className="sr-only">Performance evaluations</caption>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Evaluation Cycle</TableHead>
-                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Status</TableHead>
-                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Finalized</TableHead>
-                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Actions</TableHead>
+                <TableHead className="bg-primary text-primary-foreground">Evaluation Cycle</TableHead>
+                <TableHead className="bg-primary text-primary-foreground">Status</TableHead>
+                <TableHead className="bg-primary text-primary-foreground">Finalized</TableHead>
+                <TableHead className="bg-primary text-primary-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {history.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.cycleName} ({item.cycleYear})</TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell>
                     <EvaluationStatusBadge status={item.status as EvaluationStatus} />
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                  <TableCell className="text-xs text-muted-foreground">
                     {formatDateTime(item.finalizedAt)}
                   </TableCell>
                   <TableCell>
@@ -588,9 +588,9 @@ function DocumentSections({
           <caption className="sr-only">Employee file categories</caption>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Category</TableHead>
-              <TableHead className="w-[120px] whitespace-nowrap bg-primary text-primary-foreground">Records</TableHead>
-              <TableHead className="min-w-[280px] bg-primary text-primary-foreground">Files / Actions</TableHead>
+              <TableHead className="bg-primary text-primary-foreground">Category</TableHead>
+              <TableHead className="w-[120px] bg-primary text-primary-foreground">Records</TableHead>
+              <TableHead className="bg-primary text-primary-foreground">Files / Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -722,7 +722,7 @@ function ComparisonResults({
       <EvaluationInformationTable selected={selected} comparison={comparison} />
       <h3 className="text-lg font-semibold">A-J Performance Comparison</h3>
       <div className="overflow-x-auto border border-border">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full table-fixed text-left text-sm break-words">
           <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/50 dark:text-foreground">
             <tr>
               <th className="px-3 py-2">Criterion</th>
@@ -861,7 +861,7 @@ function EvaluationInformationTable({
   ];
   return (
     <div className="overflow-x-auto border border-border">
-      <table className="w-full min-w-[680px] text-left text-sm">
+      <table className="w-full table-fixed text-left text-sm break-words">
         <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/50 dark:text-foreground">
           <tr>
             <th className="px-3 py-2">Evaluation Information</th>

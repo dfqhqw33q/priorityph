@@ -215,7 +215,7 @@ export function RadioRatingMatrix({
 }) {
   return (
     <div className="overflow-x-auto border border-border bg-card shadow-sm">
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full table-fixed border-collapse text-sm break-words">
         <caption className="sr-only">
           Performance evaluation factors A to J, rated from 1 (poor) to 5 (excellent)
         </caption>
@@ -225,17 +225,17 @@ export function RadioRatingMatrix({
               Performance evaluation factor
             </th>
             {employeeValues ? (
-              <th scope="col" className="p-3.5 text-center font-semibold whitespace-nowrap">
+              <th scope="col" className="p-3.5 text-center font-semibold break-words">
                 Employee
               </th>
             ) : null}
             {supervisorValues ? (
-              <th scope="col" className="p-3.5 text-center font-semibold whitespace-nowrap">
+              <th scope="col" className="p-3.5 text-center font-semibold break-words">
                 Supervisor
               </th>
             ) : null}
             {reviewingValues ? (
-              <th scope="col" className="p-3.5 text-center font-semibold whitespace-nowrap">
+              <th scope="col" className="p-3.5 text-center font-semibold break-words">
                 Reviewing Supervisor
               </th>
             ) : null}
@@ -248,7 +248,7 @@ export function RadioRatingMatrix({
               </th>
             ))}
             {finalScore !== undefined ? (
-              <th scope="col" className="p-3.5 text-center font-semibold whitespace-nowrap">
+              <th scope="col" className="p-3.5 text-center font-semibold break-words">
                 Final Score
               </th>
             ) : null}

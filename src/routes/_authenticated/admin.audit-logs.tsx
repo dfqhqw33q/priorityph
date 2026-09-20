@@ -263,7 +263,7 @@ function AuditLogsPage() {
               <TableBody>
                 {visible.map((row) => (
                   <TableRow key={row.id}>
-                    <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                    <TableCell className="text-xs text-muted-foreground">
                       {formatDateTime(row.occurred_at)}
                     </TableCell>
                     <TableCell className="text-sm">

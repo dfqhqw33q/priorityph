@@ -191,7 +191,7 @@ function DevelopmentRecordsPage() {
             <TableBody>
               {recordsByEmployee.map((group) => (
                 <TableRow key={group.employeeId}>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell>
                     <button
                       type="button"
                       className="font-normal text-foreground hover:text-primary hover:underline"

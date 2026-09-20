@@ -165,7 +165,7 @@ export function EmployeeProfileManagementPage() {
         />
       ) : (
         <div className="overflow-x-auto border border-border bg-card shadow-sm">
-          <table className="w-full min-w-[760px] text-left text-sm">
+          <table className="w-full table-fixed text-left text-sm break-words">
             <caption className="sr-only">Employee profile management</caption>
             <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
               <tr>

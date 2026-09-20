@@ -148,29 +148,29 @@ function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
           <caption className="sr-only">Employee information</caption>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[120px] whitespace-nowrap bg-primary text-primary-foreground">
+              <TableHead className="bg-primary text-primary-foreground">
                 Employee ID
               </TableHead>
-              <TableHead className="min-w-[190px] bg-primary text-primary-foreground">
+              <TableHead className="bg-primary text-primary-foreground">
                 Full Name
               </TableHead>
-              <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
+              <TableHead className="bg-primary text-primary-foreground">
                 Job Title
               </TableHead>
-              <TableHead className="min-w-[170px] bg-primary text-primary-foreground">
+              <TableHead className="bg-primary text-primary-foreground">
                 Division / Department
               </TableHead>
-              <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
+              <TableHead className="bg-primary text-primary-foreground">
                 Section / Unit
               </TableHead>
-              <TableHead className="min-w-[180px] bg-primary text-primary-foreground">
+              <TableHead className="bg-primary text-primary-foreground">
                 Supervisor
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableCell className="whitespace-nowrap tabular-nums">
+              <TableCell className="tabular-nums">
                 {detail.employee_number_snapshot}
               </TableCell>
               <TableCell className="font-medium">{detail.full_name_snapshot}</TableCell>
@@ -199,7 +199,7 @@ function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
             <TableBody>
               {detail.criteria.map((criterion) => (
                 <TableRow key={criterion.id}>
-                  <TableCell className="min-w-[260px]">
+                  <TableCell>
                     <span className="font-semibold">
                       {criterion.letter}. {criterion.title}
                     </span>

@@ -87,7 +87,7 @@ function CompetencyProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full table-fixed text-left text-sm break-words">
                   <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
                     <tr>
                       {[

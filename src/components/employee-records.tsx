@@ -711,7 +711,7 @@ function ComparisonResults({
       <EvaluationInformationTable selected={selected} comparison={comparison} />
       <h3 className="text-lg font-semibold">A-J Performance Comparison</h3>
       <div className="overflow-x-auto border border-border">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full table-fixed text-left text-sm break-words">
           <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/50 dark:text-foreground">
             <tr>
               <th className="px-3 py-2">Criterion</th>
@@ -850,7 +850,7 @@ function EvaluationInformationTable({
   ];
   return (
     <div className="overflow-x-auto border border-border">
-      <table className="w-full min-w-[680px] text-left text-sm">
+      <table className="w-full table-fixed text-left text-sm break-words">
         <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/50 dark:text-foreground">
           <tr>
             <th className="px-3 py-2">Evaluation Information</th>
