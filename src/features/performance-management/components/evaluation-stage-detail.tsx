@@ -1253,9 +1253,12 @@ export function EvaluationStageDetail({
                       : String(detail.score.finalScore)
                   }
                 />
-                <div>{field("lastIncreaseNature", "NATURE OF LAST INCREASE", false)}</div>
                 <Field label="ADJECTIVE RATING" value={detail.score?.finalRatingLabel ?? "-"} />
-                <div className="md:col-span-2 lg:col-span-3">
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="min-w-0">{field("lastIncreaseNature", "NATURE OF LAST INCREASE", false)}</div>
+                <div className="min-w-0">
                   {field("recommendedIncreaseBonus", "RECOMMENDED INCREASE / BONUS")}
                 </div>
               </div>
@@ -1423,30 +1426,32 @@ export function EvaluationStageDetail({
           stage === "PRESIDENT" ? (
             <div className="grid min-h-0 items-stretch gap-4 lg:h-[22rem] lg:grid-cols-2">
               <Card className="h-full border border-border bg-card shadow-sm">
-                <CardContent className="h-full p-4">
-                  {stage === "REVIEWING_SUPERVISOR" ? (
-                    <div className="max-w-2xl space-y-2">
-                      <p className="text-sm font-semibold">Signature</p>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Signature Image
-                      </p>
-                      <SignatureField
-                        {...(signature ? { value: signature } : {})}
-                        disabled={!editable}
-                        onSave={persistSignature}
-                        onChange={setSignature}
-                      />
-                    </div>
-                  ) : (
-                    <div className="max-w-2xl">
-                      <SignatureField
-                        {...(signature ? { value: signature } : {})}
-                        disabled={!editable}
-                        onSave={persistSignature}
-                        onChange={setSignature}
-                      />
-                    </div>
-                  )}
+                <CardContent className="flex h-full items-center p-3 sm:p-4">
+                  <div className="w-full">
+                    {stage === "REVIEWING_SUPERVISOR" ? (
+                      <div className="max-w-2xl space-y-2">
+                        <p className="text-sm font-semibold">Signature</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Signature Image
+                        </p>
+                        <SignatureField
+                          {...(signature ? { value: signature } : {})}
+                          disabled={!editable}
+                          onSave={persistSignature}
+                          onChange={setSignature}
+                        />
+                      </div>
+                    ) : (
+                      <div className="max-w-2xl">
+                        <SignatureField
+                          {...(signature ? { value: signature } : {})}
+                          disabled={!editable}
+                          onSave={persistSignature}
+                          onChange={setSignature}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
               <EvaluationProgressStepper

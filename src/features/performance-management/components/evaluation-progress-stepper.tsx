@@ -156,20 +156,20 @@ export function EvaluationProgressStepper({
 
   return (
     <Card className="flex h-full min-h-0 flex-col overflow-hidden border border-border bg-card shadow-sm">
-      <CardHeader className="shrink-0 pb-3">
+      <CardHeader className="shrink-0 pb-2">
         <CardTitle className="text-base">Evaluation Progress / Activity</CardTitle>
         <p className="text-xs text-muted-foreground">
           {completedStageCount} of {stages.length} workflow stages recorded
         </p>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-y-auto pr-4">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto p-3 pt-0 pr-3">
         <Stepper
           value={activeStep}
           orientation="vertical"
           className="flex flex-col items-stretch"
           indicators={{ completed: <CheckIcon className="size-3.5" /> }}
         >
-          <StepperNav className="items-stretch">
+          <StepperNav className="items-stretch gap-0">
             {stages.map((stage, index) => {
               const completed = stage.events.length > 0;
               return (
@@ -179,34 +179,36 @@ export function EvaluationProgressStepper({
                   completed={completed}
                   className="relative items-start not-last:flex-1"
                 >
-                  <StepperTrigger className="items-start gap-2.5 pb-5 last:pb-0">
+                  <StepperTrigger className="items-start gap-2.5 pb-3 last:pb-0">
                     <StepperIndicator className="data-[state=completed]:bg-primary data-[state=completed]:text-primary-foreground">
                       {index + 1}
                     </StepperIndicator>
-                    <div className="mt-0.5 min-w-0 text-left">
-                      <StepperTitle>
+                    <div className="mt-0.5 min-w-0 space-y-1 text-left">
+                      <StepperTitle className="leading-tight">
                         {stage.label}
                         {stage.key === currentStage ? " - CURRENT" : ""}
                       </StepperTitle>
                       {stage.events.length === 0 ? (
-                        <StepperDescription>Pending</StepperDescription>
+                        <StepperDescription className="text-[11px] leading-tight">
+                          Pending
+                        </StepperDescription>
                       ) : (
                         stage.events.map((event) => (
                           <div
                             key={event.id}
-                            className="mt-1.5 rounded-md border border-border/70 bg-muted/20 px-2.5 py-2"
+                            className="rounded-md border border-border/70 bg-muted/20 px-2 py-1.5"
                           >
-                            <p className="break-words text-xs font-semibold text-foreground">
+                            <p className="break-words text-[11px] font-semibold text-foreground leading-snug">
                               {eventLabel(event.event_type)}
                             </p>
-                            <p className="mt-0.5 break-words text-xs text-muted-foreground">
+                            <p className="mt-0.5 break-words text-[11px] text-muted-foreground">
                               {event.actorName}
                             </p>
-                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            <p className="mt-0.5 text-[10px] text-muted-foreground">
                               {formatDateTime(event.occurred_at)}
                             </p>
                             {event.reason ? (
-                              <p className="mt-1 break-words text-[11px] text-muted-foreground">
+                              <p className="mt-1 break-words text-[10px] text-muted-foreground leading-snug">
                                 {event.reason}
                               </p>
                             ) : null}
@@ -216,7 +218,7 @@ export function EvaluationProgressStepper({
                     </div>
                   </StepperTrigger>
                   {index < stages.length - 1 ? (
-                    <StepperSeparator className="group-data-[state=completed]/step:bg-primary absolute inset-y-0 top-7 left-3 -order-1 m-0 -translate-x-1/2 group-data-[orientation=vertical]/stepper-nav:h-[calc(100%-1.25rem)]" />
+                    <StepperSeparator className="group-data-[state=completed]/step:bg-primary absolute inset-y-0 top-6 left-3 -order-1 m-0 -translate-x-1/2 group-data-[orientation=vertical]/stepper-nav:h-[calc(100%-1rem)]" />
                   ) : null}
                 </StepperItem>
               );
