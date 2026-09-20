@@ -1267,31 +1267,25 @@ export function EvaluationStageDetail({
             <>
               <div className="space-y-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-semibold uppercase">
-                      PERSONALIZED TRAINING RECOMMENDATION
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Advisory input only. The Committee decides the official action.
-                    </p>
+                  <div className="w-full">
+                    {action === "TRAINING_REQUIRED" ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={committeeTrainingBusy || !editable}
+                        onClick={generateCommitteeTrainingRecommendation}
+                      >
+                        {committeeTrainingBusy ? (
+                          <TextShimmer>Generating...</TextShimmer>
+                        ) : committeeTrainingRecommendation ? (
+                          "Regenerate"
+                        ) : (
+                          "Personalized Training Recommendation"
+                        )}
+                      </Button>
+                    ) : null}
                   </div>
-                  {action === "TRAINING_REQUIRED" ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={committeeTrainingBusy || !editable}
-                      onClick={generateCommitteeTrainingRecommendation}
-                    >
-                      {committeeTrainingBusy ? (
-                        <TextShimmer>Generating...</TextShimmer>
-                      ) : committeeTrainingRecommendation ? (
-                        "Regenerate"
-                      ) : (
-                        "Personalized Training Recommendation"
-                      )}
-                    </Button>
-                  ) : null}
                 </div>
                 {committeeTrainingUnavailable ? (
                   <p className="text-sm text-muted-foreground">{committeeTrainingUnavailable}</p>
