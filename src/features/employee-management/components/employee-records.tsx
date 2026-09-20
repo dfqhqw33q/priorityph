@@ -469,6 +469,7 @@ function EmployeeFileContent({
         division?: string;
         section?: string;
         employment_status?: string;
+        created_at?: string;
       }
     | undefined;
   history: HistoryEvaluation[];
@@ -478,21 +479,40 @@ function EmployeeFileContent({
 }) {
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 border-b border-border pb-4 sm:grid-cols-[1fr_auto]">
-        <div>
-          <p className="text-lg font-semibold">{employee?.full_name ?? "Employee"}</p>
-          <p className="text-sm text-muted-foreground">
-            Employee ID {employee?.employee_number ?? "-"}
-          </p>
-          <p className="mt-1 text-sm text-foreground">
-            {employee?.job_title ?? "-"} - {employee?.division ?? "-"}
-            {employee?.section ? `  -  ${employee.section}` : ""}
-          </p>
-        </div>
-        <div className="text-left text-sm sm:text-right">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Employment status</p>
-          <p className="mt-1 font-medium">{employee?.employment_status ?? "-"}</p>
-        </div>
+      <div className="max-w-full overflow-x-auto border border-border bg-card shadow-sm">
+        <Table>
+          <caption className="sr-only">Employee profile information</caption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Employee ID</TableHead>
+              <TableHead className="min-w-[180px] bg-primary text-primary-foreground">Full Name</TableHead>
+              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">Job Title</TableHead>
+              <TableHead className="min-w-[170px] bg-primary text-primary-foreground">Division / Department</TableHead>
+              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">Section / Unit</TableHead>
+              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Status</TableHead>
+              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Created</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell className="whitespace-nowrap tabular-nums">
+                {employee?.employee_number ?? "-"}
+              </TableCell>
+              <TableCell className="font-medium">{employee?.full_name ?? "-"}</TableCell>
+              <TableCell className="text-muted-foreground">{employee?.job_title || "-"}</TableCell>
+              <TableCell className="text-muted-foreground">{employee?.division || "-"}</TableCell>
+              <TableCell className="text-muted-foreground">{employee?.section || "-"}</TableCell>
+              <TableCell>
+                <Badge variant={employee?.employment_status === "ACTIVE" ? "secondary" : "outline"}>
+                  {employee?.employment_status ?? "-"}
+                </Badge>
+              </TableCell>
+              <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                {formatDateTime(employee?.created_at)}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </div>
 
       <section aria-labelledby="performance-evaluations-heading">

@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, History as HistoryIcon, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,12 +24,20 @@ import {
   StatCard,
   formatDateTime,
 } from "@/components/shared/shared-ui";
-import { getReport, type ReportRow } from "@/lib/reports.functions";
+import { getEvaluationHistory, getReport, type ReportRow } from "@/lib/reports.functions";
 import { EVALUATION_STATUS_LABELS, EVALUATION_STATUSES } from "@/lib/domain";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
 import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
+import { EvaluationProgressStepper } from "@/features/performance-management/components/evaluation-progress-stepper";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const ALL = "";
 const PAGE_SIZE = 25;
@@ -52,6 +60,7 @@ export function HistoryTablePage({
 }: HistoryPageProps) {
   const fetchReport = useServerFn(getReport);
   const fetchSheetHtml = useServerFn(getEvaluationSheetHtml);
+  const fetchEvaluationHistory = useServerFn(getEvaluationHistory);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [status, setStatus] = useState(defaultStatus);
@@ -60,6 +69,7 @@ export function HistoryTablePage({
   const [previewEvaluationId, setPreviewEvaluationId] = useState<string | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [timelineEvaluationId, setTimelineEvaluationId] = useState<string | null>(null);
 
   const effectiveStatus =
     mode === "completed"
@@ -87,6 +97,12 @@ export function HistoryTablePage({
           pageSize: PAGE_SIZE,
         },
       }),
+    retry: false,
+  });
+  const timelineQuery = useQuery({
+    queryKey: ["evaluation-history-timeline", timelineEvaluationId],
+    queryFn: () => fetchEvaluationHistory({ data: { evaluationId: timelineEvaluationId! } }),
+    enabled: timelineEvaluationId !== null,
     retry: false,
   });
 
@@ -284,6 +300,7 @@ export function HistoryTablePage({
                 <TableHead className="min-w-[240px]">Cycle</TableHead>
                 <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
                 <TableHead className="min-w-[190px] whitespace-nowrap">Date Submitted</TableHead>
+                {mode === "history" ? <TableHead className="w-[60px] text-right">Activity</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -341,6 +358,20 @@ export function HistoryTablePage({
                     <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                       {formatDateTime(row.submittedAt ?? row.finalizedAt)}
                     </TableCell>
+                    {mode === "history" ? (
+                      <TableCell className="text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          title="View evaluation activity"
+                          aria-label={`View activity for ${row.fullName}`}
+                          onClick={() => setTimelineEvaluationId(row.evaluationId)}
+                        >
+                          <HistoryIcon />
+                        </Button>
+                      </TableCell>
+                    ) : null}
                   </TableRow>
                 );
               })}
@@ -381,6 +412,42 @@ export function HistoryTablePage({
           }
         }}
       />
+
+      <Dialog
+        open={timelineEvaluationId !== null}
+        onOpenChange={(open) => {
+          if (!open) setTimelineEvaluationId(null);
+        }}
+      >
+        <DialogContent className="flex h-[82vh] max-w-xl flex-col gap-3 p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Evaluation Activity</DialogTitle>
+            <DialogDescription>
+              Complete workflow history for this evaluation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1">
+            {timelineQuery.isLoading ? (
+              <LoadingBlock rows={6} variant="detail" />
+            ) : timelineQuery.isError || !timelineQuery.data?.detail ? (
+              <EmptyState
+                title="Activity could not be loaded"
+                description={
+                  timelineQuery.error instanceof Error
+                    ? timelineQuery.error.message
+                    : "Evaluation history is unavailable."
+                }
+              />
+            ) : (
+              <EvaluationProgressStepper
+                events={timelineQuery.data.events}
+                currentStatus={timelineQuery.data.detail.status}
+                employeeName={timelineQuery.data.detail.full_name_snapshot}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
