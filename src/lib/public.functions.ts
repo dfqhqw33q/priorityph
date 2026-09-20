@@ -122,6 +122,10 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   const subject = "Your Step 1 performance evaluation is finalized";
   const evaluationData = await generateEvaluationData(evaluationId);
   const documentPdf = await generateEmployeeFinalizedBrowserPDF(evaluationData);
+  const fileName = `${(await import("./documents.server")).buildEvaluationDocumentFileName(
+    evaluationData.nameOfRatee,
+    evaluationData.periodTo,
+  )}.pdf`;
   const base64Pdf = Buffer.from(documentPdf).toString("base64");
   const html = `
     <p>Hello,</p>
@@ -151,7 +155,7 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
         attachment: [
           {
             content: base64Pdf,
-            name: "Performance_Evaluation_Step1_Finalized.pdf",
+            name: fileName,
           },
         ],
       }),
@@ -270,6 +274,10 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
   try {
     const evaluationData = await generateEvaluationData(evaluationId);
     const documentPdf = await generateEmployeeFinalizedBrowserPDF(evaluationData);
+    const fileName = `${(await import("./documents.server")).buildEvaluationDocumentFileName(
+      evaluationData.nameOfRatee,
+      evaluationData.periodTo,
+    )}.pdf`;
     const base64Pdf = Buffer.from(documentPdf).toString("base64");
 
     const subject = "Your Performance Evaluation Has Been Finalized";
@@ -306,7 +314,7 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
         attachment: [
           {
             content: base64Pdf,
-            name: "Performance_Evaluation_Finalized.pdf",
+            name: fileName,
           },
         ],
       }),

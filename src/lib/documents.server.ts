@@ -167,6 +167,9 @@ export function generateEvaluationHTML(params: {
     .info-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
     .info-field .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 11px; padding: 3px 6px; word-wrap: break-word; }
     
+    .info-grid.summary-metrics { margin-top: 6px; margin-bottom: 10px; }
+    .info-grid.summary-metrics .info-field { min-height: 22px; }
+    
     .rating-scale { border: 1px solid #000; padding: 6px 8px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 7px; font-weight: 600; font-size: 10px; }
     
     .table-container { margin-bottom: 10px; }
@@ -257,26 +260,27 @@ export function generateEvaluationHTML(params: {
     .step-three-section { margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
     .step-three-section-title { margin: 0 0 8px; }
     .step-three-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 12px; margin-bottom: 8px; }
-    .step-three-field { display: flex; align-items: flex-end; gap: 8px; }
-    .step-three-field-label { white-space: nowrap; }
-    .step-three-field-value { flex: 1; min-height: 18px; border-bottom: 1px solid #000; word-wrap: break-word; }
+    .step-three-field { display: flex; align-items: flex-end; gap: 8px; min-height: 26px; }
+    .step-three-field-label { white-space: nowrap; line-height: 1.2; display: inline-flex; align-items: flex-end; }
+    .step-three-field-value { flex: 1; min-height: 18px; padding-bottom: 2px; border-bottom: 1px solid #000; word-wrap: break-word; line-height: 1; display: inline-block; vertical-align: bottom; }
     .step-three-result-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
-    .step-three-result-field { display: flex; align-items: flex-end; gap: 8px; }
+    .step-three-result-field { display: flex; align-items: flex-end; gap: 8px; min-height: 26px; }
     .step-three-result-field.total { flex: 1; min-width: 180px; }
     .step-three-result-field.rating { flex: 1; min-width: 250px; }
-    .step-three-result-value { min-width: 86px; flex: 1; min-height: 18px; border-bottom: 1px solid #000; }
+    .step-three-result-value { min-width: 86px; flex: 1; min-height: 18px; padding-bottom: 2px; border-bottom: 1px solid #000; line-height: 1; display: inline-block; vertical-align: bottom; }
     .step-three-result-field.total .step-three-result-value { max-width: 90px; }
     .step-three-result-field.rating .step-three-result-value { max-width: 120px; }
     .step-three-prepared { display: flex; justify-content: flex-end; }
     .step-three-action-list { display: grid; gap: 7px; margin: 0 0 12px 12px; }
-    .step-three-action { display: flex; align-items: flex-end; gap: 8px; }
+    .step-three-action { display: flex; align-items: flex-end; gap: 8px; min-height: 22px; }
     .step-three-action-mark { width: 18px; flex: 0 0 18px; }
-    .step-three-action-value { width: 280px; max-width: 100%; min-height: 18px; border-bottom: 1px solid #000; }
-    .step-three-approval { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .step-three-approval-block { width: 45%; min-width: 220px; }
+    .step-three-action-value { width: 280px; max-width: 100%; min-height: 18px; padding-bottom: 2px; border-bottom: 1px solid #000; line-height: 1; display: inline-block; vertical-align: bottom; }
+    .step-three-approval { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; width: 100%; }
+    .step-three-approval-block { width: 220px; min-width: 220px; }
+    .step-three-approval-block:last-child { margin-left: auto; }
     .step-three-approval-block .workflow-signature { margin: 0; width: 220px; }
     .step-three-note { margin-top: 16px; font-size: 10px; }
-    @media (max-width: 700px) { .step-three-fields { grid-template-columns: 1fr; } .step-three-signature { justify-content: flex-start; } .step-three-approval { grid-template-columns: 1fr; } .step-three-approval-block { width: 100%; min-width: 0; } }
+    @media (max-width: 700px) { .step-three-fields { grid-template-columns: 1fr; } .step-three-signature { justify-content: flex-start; } .step-three-approval { display: grid; grid-template-columns: 1fr; } .step-three-approval-block { width: 100%; min-width: 0; margin-left: 0; } }
     
     @media print {
       .container { max-width: 100%; padding: 0; }
@@ -347,6 +351,17 @@ export function generateEvaluationHTML(params: {
       <div class="info-field">
         <label>JOB TITLE OF RATER:</label>
         <div class="value">${params.jobTitleOfRater || " "}</div>
+      </div>
+    </div>
+
+    <div class="info-grid summary-metrics">
+      <div class="info-field">
+        <label>FINAL SCORE:</label>
+        <div class="value">${params.totalPoints || " "}</div>
+      </div>
+      <div class="info-field">
+        <label>ADJECTIVE RATING:</label>
+        <div class="value">${params.adjectiveRating || " "}</div>
       </div>
     </div>
     
@@ -701,11 +716,38 @@ type EvaluationDocumentRow = {
 
 type EvaluationDocumentData = Parameters<typeof generateEvaluationHTML>[0];
 
+export function buildEvaluationDocumentFileName(nameOfRatee: string, periodTo?: string) {
+  const normalizedName = (nameOfRatee ?? "").trim();
+  const yearMatch = (periodTo ?? "").match(/(\d{4})/);
+  const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
+
+  if (!normalizedName) return `EMPLOYEE - EVALUATION ${year}`;
+  if (normalizedName.includes(",")) {
+    const [lastName, firstName = ""] = normalizedName.split(",");
+    const cleanLast = lastName.trim().toUpperCase();
+    const cleanFirst = firstName.trim().toUpperCase();
+    if (!cleanFirst) return `${cleanLast} - EVALUATION ${year}`;
+    return `${cleanLast}, ${cleanFirst} - EVALUATION ${year}`;
+  }
+
+  const parts = normalizedName.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return `${parts[0].toUpperCase()} - EVALUATION ${year}`;
+
+  const lastName = parts[parts.length - 1].toUpperCase();
+  const firstName = parts.slice(0, -1).join(" ").toUpperCase();
+  return `${lastName}, ${firstName} - EVALUATION ${year}`;
+}
+
 export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): string {
   const fullDocument = generateEvaluationHTML(data);
-  const stepTwoStart = fullDocument.indexOf('\n    <div class="step-two">');
+  const title = buildEvaluationDocumentFileName(data.nameOfRatee, data.periodTo);
+  const fullDocumentWithTitle = fullDocument.replace(
+    "<title></title>",
+    `<title>${title}</title>`,
+  );
+  const stepTwoStart = fullDocumentWithTitle.indexOf('\n    <div class="step-two">');
   if (stepTwoStart < 0) throw new Error("Step 2 marker not found in evaluation document");
-  return `${fullDocument.slice(0, stepTwoStart)}\n  </div>\n</body>\n</html>`;
+  return `${fullDocumentWithTitle.slice(0, stepTwoStart)}\n  </div>\n</body>\n</html>`;
 }
 
 export async function generateEmployeeFinalizedBrowserPDF(
