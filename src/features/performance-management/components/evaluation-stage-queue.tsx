@@ -86,25 +86,25 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
         />
       ) : (
         <div className="max-w-full border border-border bg-card shadow-sm">
-          <Table>
+          <Table className="w-full table-fixed text-xs sm:text-sm">
             <caption className="sr-only">{titles[stage]}</caption>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
-                <TableHead className="min-w-[190px]">Full Name</TableHead>
-                <TableHead className="min-w-[150px]">Job Title</TableHead>
-                <TableHead className="min-w-[170px]">Division / Department</TableHead>
-                <TableHead className="min-w-[150px]">Section / Unit</TableHead>
-                <TableHead className="min-w-[240px]">Cycle</TableHead>
-                <TableHead className="min-w-[190px] whitespace-nowrap">Date Submitted</TableHead>
-                <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead className="w-[11%]">Employee ID</TableHead>
+                <TableHead className="w-[14%]">Full Name</TableHead>
+                <TableHead className="w-[11%]">Job Title</TableHead>
+                <TableHead className="w-[13%]">Division / Department</TableHead>
+                <TableHead className="w-[11%]">Section / Unit</TableHead>
+                <TableHead className="w-[17%]">Cycle</TableHead>
+                <TableHead className="w-[13%]">Date Submitted</TableHead>
+                <TableHead className="w-[10%]">Status</TableHead>
+                <TableHead className="w-[70px] text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {((query.data ?? []) as QueueRow[]).map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="whitespace-nowrap tabular-nums">
+                  <TableCell className="break-words tabular-nums">
                     {row.employee_number_snapshot}
                   </TableCell>
                   <TableCell>
@@ -122,7 +122,7 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
                   <TableCell>
                     {row.cycle_name ? `${row.cycle_name} (${row.cycle_year})` : row.cycle_year}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className="break-words">
                     {row.employee_submitted_at ? formatDateTime(row.employee_submitted_at) : "—"}
                   </TableCell>
                   <TableCell>
