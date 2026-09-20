@@ -226,32 +226,32 @@ export function EvaluationQueue({
       ) : (
         <>
           <div className="border border-border bg-card shadow-sm">
-            <Table className="w-full table-fixed text-xs sm:text-sm">
+            <Table>
               <caption className="sr-only">Employee evaluations available for review</caption>
               <TableHeader>
                 <TableRow>
-                  <TableHead scope="col" className="w-[11%]">
+                  <TableHead scope="col" className="min-w-[120px] whitespace-nowrap">
                     <SortButton label="Employee ID" sortKey="employee_number_snapshot" />
                   </TableHead>
-                  <TableHead scope="col" className="w-[14%]">
+                  <TableHead scope="col" className="min-w-[190px]">
                     <SortButton label="Full Name" sortKey="full_name_snapshot" />
                   </TableHead>
-                  <TableHead scope="col" className="w-[11%]">
+                  <TableHead scope="col" className="min-w-[150px]">
                     Job Title
                   </TableHead>
-                  <TableHead scope="col" className="w-[13%]">
+                  <TableHead scope="col" className="min-w-[170px]">
                     Division / Department
                   </TableHead>
-                  <TableHead scope="col" className="w-[11%]">
+                  <TableHead scope="col" className="min-w-[150px]">
                     Section / Unit
                   </TableHead>
-                  <TableHead scope="col" className="w-[17%]">
+                  <TableHead scope="col" className="min-w-[240px]">
                     Cycle
                   </TableHead>
-                  <TableHead scope="col" className="w-[13%]">
+                  <TableHead scope="col" className="min-w-[190px] whitespace-nowrap">
                     <SortButton label="Date Submitted" sortKey="employee_submitted_at" />
                   </TableHead>
-                  <TableHead scope="col" className="w-[10%]">
+                  <TableHead scope="col" className="min-w-[120px] whitespace-nowrap">
                     <SortButton label="Status" sortKey="status" />
                   </TableHead>
                   <TableHead scope="col" className="text-right">
@@ -268,7 +268,7 @@ export function EvaluationQueue({
 
                   return (
                     <TableRow key={row.id}>
-                      <TableCell className="break-words tabular-nums">
+                      <TableCell className="whitespace-nowrap tabular-nums">
                         {row.employee_number_snapshot}
                       </TableCell>
                       <TableCell>
@@ -280,22 +280,22 @@ export function EvaluationQueue({
                           {row.full_name_snapshot}
                         </Link>
                       </TableCell>
-                      <TableCell className="break-words text-muted-foreground">
+                      <TableCell className="min-w-[150px] text-muted-foreground">
                         {row.job_title_snapshot || "—"}
                       </TableCell>
-                      <TableCell className="break-words text-muted-foreground">
+                      <TableCell className="min-w-[170px] text-muted-foreground">
                         {row.division_snapshot || "—"}
                       </TableCell>
-                      <TableCell className="break-words text-muted-foreground">
+                      <TableCell className="min-w-[150px] text-muted-foreground">
                         {row.section_snapshot || "—"}
                       </TableCell>
-                      <TableCell className="break-words text-foreground">
+                      <TableCell className="min-w-[240px] text-foreground">
                         {row.cycle_name} ({row.cycle_year})
                       </TableCell>
-                      <TableCell className="break-words text-xs text-muted-foreground">
+                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                         {formatDateTime(row.employee_submitted_at)}
                       </TableCell>
-                      <TableCell className="break-words">
+                      <TableCell className="whitespace-nowrap">
                         <EvaluationStatusBadge status={badgeStatus} />
                       </TableCell>
                       <TableCell className="text-right">
