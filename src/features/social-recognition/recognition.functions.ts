@@ -389,12 +389,51 @@ export const generateRecognitionCertificate = createServerFn({ method: "POST" })
       font,
     });
     const bytes = await pdf.save();
+    const employeeId = String(row.employee_id ?? "");
+    if (!employeeId) throw validationError("Recognition record has no employee assigned");
+    const fileName = `Recognition_${(employee?.full_name ?? "Employee").replace(/[^a-z0-9]+/gi, "_")}_${data.recordId}.pdf`;
+    const storagePath = `employees/${employeeId}/documents/recognition-${data.recordId}.pdf`;
+    const { error: uploadError } = await admin.storage.from("employee-files").upload(storagePath, bytes, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
+    if (uploadError) throw validationError(uploadError.message);
+    const { data: existingDocument } = await admin
+      .from("employee_documents")
+      .select("id")
+      .eq("storage_path", storagePath)
+      .maybeSingle();
+    if (existingDocument?.id) {
+      await admin
+        .from("employee_documents")
+        .update({
+          employee_id: employeeId,
+          category: "AWARDS_RECOGNITION",
+          file_name: fileName,
+          content_type: "application/pdf",
+          file_size: bytes.length,
+          created_by: context.userId,
+        })
+        .eq("id", existingDocument.id);
+    } else {
+      const { error: documentError } = await admin.from("employee_documents").insert({
+        employee_id: employeeId,
+        evaluation_id: row.source_evaluation_id ?? null,
+        category: "AWARDS_RECOGNITION",
+        file_name: fileName,
+        storage_path: storagePath,
+        content_type: "application/pdf",
+        file_size: bytes.length,
+        created_by: context.userId,
+      });
+      if (documentError) throw validationError(documentError.message);
+    }
     await admin
       .from("recognition_records")
       .update({ certificate_generated_at: new Date().toISOString() })
       .eq("id", data.recordId);
     return {
-      fileName: `Recognition_${(employee?.full_name ?? "Employee").replace(/[^a-z0-9]+/gi, "_")}.pdf`,
+      fileName,
       base64: Buffer.from(bytes).toString("base64"),
     };
   });

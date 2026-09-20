@@ -583,7 +583,6 @@ function DocumentSections({
 }) {
   const categories = [
     ["Awards and Recognition", "AWARDS_RECOGNITION"],
-    ["Training and Certificates", "TRAINING_CERTIFICATES"],
     ["Supporting Documents", "SUPPORTING_DOCUMENTS"],
     ["Other Documents", "OTHER_DOCUMENTS"],
   ];
