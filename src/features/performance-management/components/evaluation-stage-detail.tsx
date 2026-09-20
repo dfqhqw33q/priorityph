@@ -650,7 +650,6 @@ export function EvaluationStageDetail({
       ];
       if (stage === "RATER")
         invalidations.push(queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] }));
-      await Promise.all(invalidations);
       navigate({
         to:
           stage === "RATER"
@@ -663,6 +662,7 @@ export function EvaluationStageDetail({
                   ? "/committee"
                   : "/president/evaluations",
       });
+                      void Promise.all(invalidations);
     },
     onError: (error: Error) =>
       toast.error(userErrorMessage(error, "Could not save this workflow stage.")),

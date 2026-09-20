@@ -1,7 +1,7 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -55,15 +55,13 @@ function SupervisorDashboard() {
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });
-  useEffect(() => {
-    if (cycleId !== undefined || !cycleOptionsQuery.isSuccess) return;
-    setCycleId(cycleOptionsQuery.data.find((cycle) => cycle.status === "ACTIVE")?.id ?? null);
-  }, [cycleId, cycleOptionsQuery.data, cycleOptionsQuery.isSuccess]);
+  const activeCycleId = cycleOptionsQuery.data?.find((cycle) => cycle.status === "ACTIVE")?.id ?? null;
+  const selectedCycleId = cycleId === undefined ? activeCycleId : cycleId;
 
   const query = useQuery({
-    queryKey: ["supervisor-stats", cycleId ?? "initializing"],
-    queryFn: () => fetchStats({ data: { cycleId: cycleId ?? null } }),
-    enabled: cycleId !== undefined,
+    queryKey: ["supervisor-stats", selectedCycleId ?? "all"],
+    queryFn: () => fetchStats({ data: { cycleId: selectedCycleId } }),
+    enabled: cycleOptionsQuery.isSuccess,
     retry: false,
   });
 
@@ -115,7 +113,7 @@ function SupervisorDashboard() {
             <select
               id="supervisor-cycle"
               className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              value={cycleId ?? "all"}
+              value={selectedCycleId ?? "all"}
               onChange={(event) =>
                 setCycleId(event.target.value === "all" ? null : event.target.value)
               }

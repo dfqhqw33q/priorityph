@@ -43,9 +43,12 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
       PRESIDENT: "president.approve",
     }[data.stage] as never;
     await requirePermission(context.userId, permission, `${data.stage} Review`);
-    const detail = await loadEvaluationDetail(data.evaluationId);
+    const [detail, score] = await Promise.all([
+      loadEvaluationDetail(data.evaluationId),
+      computeScore(data.evaluationId),
+    ]);
     if (!detail) return null;
-    const [score, admin] = await Promise.all([computeScore(data.evaluationId), getAdmin()]);
+    const admin = await getAdmin();
     const allowedStatus = {
       RATER: ["SUBMITTED", "DRAFT", "RETURNED"],
       REVIEWING_SUPERVISOR: ["FOR_REVIEW", "RETURNED"],
@@ -406,18 +409,20 @@ async function transition(
         dedupe_key: `${evaluationId}:${action}:${expectedVersion}`,
       } as never)
     : Promise.resolve({ error: null });
-  await Promise.all([eventWrite, notificationWrite]);
-  await writeAudit({
-    actorUserId,
-    actorRole: (await getActorRoles(actorUserId)).join(","),
-    action,
-    module: "Evaluation Workflow",
-    entityType: "evaluation",
-    entityId: evaluationId,
-    evaluationId,
-    previousValue: { status: current.status },
-    newValue: { status: next },
-  });
+  const auditWrite = getActorRoles(actorUserId).then((roles) =>
+    writeAudit({
+      actorUserId,
+      actorRole: roles.join(","),
+      action,
+      module: "Evaluation Workflow",
+      entityType: "evaluation",
+      entityId: evaluationId,
+      evaluationId,
+      previousValue: { status: current.status },
+      newValue: { status: next },
+    }),
+  );
+  await Promise.all([eventWrite, notificationWrite, auditWrite]);
   if (next === "FINALIZED") {
     void (async () => {
       const { ensureDevelopmentRecordsForEvaluation } =
@@ -605,9 +610,17 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
       to_status: nextStatus,
       actor_user_id: context.userId,
     });
-    await writeAudit({
+    const eventWrite = admin.from("evaluation_events").insert({
+      evaluation_id: data.evaluationId,
+      event_type: data.submit ? "RATER_STEP2_SUBMITTED" : "RATER_STEP2_DRAFT_SAVED",
+      from_status: evaluation.status,
+      to_status: nextStatus,
+      actor_user_id: context.userId,
+    });
+    const auditWrite = getActorRoles(context.userId).then((roles) =>
+      writeAudit({
       actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
+      actorRole: roles.join(","),
       action: data.submit ? "RATER_STEP2_SUBMITTED" : "RATER_STEP2_DRAFT_SAVED",
       module: "Evaluation Workflow",
       entityType: "evaluation",
@@ -615,9 +628,10 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
       evaluationId: data.evaluationId,
       previousValue: { status: evaluation.status },
       newValue: { status: nextStatus },
-    });
-    if (data.submit)
-      await admin.from("notification_events").insert({
+      }),
+    );
+    const notificationWrite = data.submit
+      ? admin.from("notification_events").insert({
         evaluation_id: data.evaluationId,
         event_type: "RATER_STEP2_SUBMITTED",
         audience_permission: "evaluations.review_step3",
@@ -625,14 +639,17 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
         body: "A performance evaluation has been submitted to you for review and assessment.",
         dedupe_key: `${data.evaluationId}:RATER_STEP2_SUBMITTED:${data.version}`,
       } as never);
-    if (data.signature)
-      await saveStageSignature(
-        data.evaluationId,
-        "RATER_STEP2",
-        data.signature!,
-        context.userId,
-        data.version,
-      );
+      : Promise.resolve({ error: null });
+    const signatureWrite = data.signature
+      ? saveStageSignature(
+          data.evaluationId,
+          "RATER_STEP2",
+          data.signature,
+          context.userId,
+          data.version,
+        )
+      : Promise.resolve();
+    await Promise.all([eventWrite, auditWrite, notificationWrite, signatureWrite]);
     return { ok: true, submitted: data.submit };
   });
 
@@ -697,7 +714,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       null,
       data.submit,
     );
-    const { error: stageError } = await admin.from("reviewing_supervisor_reviews").upsert(
+    const stageWrite = admin.from("reviewing_supervisor_reviews").upsert(
       {
         evaluation_id: data.evaluationId,
         reviewer_user_id: context.userId,
@@ -710,15 +727,17 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       } as never,
       { onConflict: "evaluation_id" },
     );
-    if (stageError) throw validationError(stageError.message);
-    if (data.signature)
-      await saveStageSignature(
+    const signatureWrite = data.signature
+      ? saveStageSignature(
         data.evaluationId,
         "REVIEWING_SUPERVISOR_STEP3",
         data.signature,
         context.userId,
         data.version,
-      );
+        )
+      : Promise.resolve();
+    const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);
+    if (stageError) throw validationError(stageError.message);
     return result;
   });
 
@@ -762,7 +781,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       null,
       data.submit,
     );
-    const { error: stageError } = await admin.from("personnel_processing").upsert(
+    const stageWrite = admin.from("personnel_processing").upsert(
       {
         evaluation_id: data.evaluationId,
         personnel_user_id: context.userId,
@@ -779,17 +798,17 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       } as never,
       { onConflict: "evaluation_id" },
     );
-    if (stageError) throw validationError(stageError.message);
-    if (data.submit) {
-      if (!data.signature) throw validationError("A signature is required before submitting");
-      await saveStageSignature(
+    const signatureWrite = data.submit
+      ? saveStageSignature(
         data.evaluationId,
         "PERSONNEL",
         data.signature,
         context.userId,
         data.version,
-      );
-    }
+        )
+      : Promise.resolve();
+    const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);
+    if (stageError) throw validationError(stageError.message);
     return result;
   });
 
@@ -819,7 +838,7 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       null,
       data.submit,
     );
-    const { error: stageError } = await admin.from("committee_reviews").upsert(
+    const stageWrite = admin.from("committee_reviews").upsert(
       {
         evaluation_id: data.evaluationId,
         committee_user_id: context.userId,
@@ -832,17 +851,17 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       } as never,
       { onConflict: "evaluation_id" },
     );
-    if (stageError) throw validationError(stageError.message);
-    if (data.submit) {
-      if (!data.signature) throw validationError("A signature is required before submitting");
-      await saveStageSignature(
+    const signatureWrite = data.submit
+      ? saveStageSignature(
         data.evaluationId,
         "COMMITTEE",
         data.signature,
         context.userId,
         data.version,
-      );
-    }
+        )
+      : Promise.resolve();
+    const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);
+    if (stageError) throw validationError(stageError.message);
     return result;
   });
 

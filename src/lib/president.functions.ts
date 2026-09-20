@@ -173,35 +173,39 @@ export const savePresidentStepAnswers = createServerFn({ method: "POST" })
         .eq("version", data.version);
       if (error) throw validationError(error.message);
 
-      if (data.submit && data.step === 3) {
-        const { computeScore, persistScore } = await import("./scoring.server");
-        const score = await computeScore(data.evaluationId);
-        await persistScore(data.evaluationId, score, context.userId);
-      }
-
-      if (data.submit) {
-        await admin.from("evaluation_events").insert({
+      const scoreWrite =
+        data.submit && data.step === 3
+          ? (async () => {
+              const { computeScore, persistScore } = await import("./scoring.server");
+              const score = await computeScore(data.evaluationId);
+              await persistScore(data.evaluationId, score, context.userId);
+            })()
+          : Promise.resolve();
+      const eventWrite = data.submit
+        ? admin.from("evaluation_events").insert({
           evaluation_id: data.evaluationId,
           event_type: `PRESIDENT_STEP${data.step}_SUBMITTED`,
           from_status: evaluation.status,
           to_status: patch.status ?? evaluation.status,
           actor_user_id: context.userId,
-        });
-      }
-
-      await writeAudit({
-        actorUserId: context.userId,
-        actorRole: (await getActorRoles(context.userId)).join(","),
-        action: data.submit
-          ? `PRESIDENT_STEP${data.step}_SUBMITTED`
-          : `PRESIDENT_STEP${data.step}_DRAFT_SAVED`,
-        module: "President Review",
-        entityType: "evaluation",
-        entityId: data.evaluationId,
-        evaluationId: data.evaluationId,
-        previousValue: { status: evaluation.status },
-        newValue: { status: patch.status ?? evaluation.status, answers: data.answers.length },
-      });
+          })
+        : Promise.resolve({ error: null });
+      const auditWrite = getActorRoles(context.userId).then((roles) =>
+        writeAudit({
+          actorUserId: context.userId,
+          actorRole: roles.join(","),
+          action: data.submit
+            ? `PRESIDENT_STEP${data.step}_SUBMITTED`
+            : `PRESIDENT_STEP${data.step}_DRAFT_SAVED`,
+          module: "President Review",
+          entityType: "evaluation",
+          entityId: data.evaluationId,
+          evaluationId: data.evaluationId,
+          previousValue: { status: evaluation.status },
+          newValue: { status: patch.status ?? evaluation.status, answers: data.answers.length },
+        }),
+      );
+      await Promise.all([scoreWrite, eventWrite, auditWrite]);
 
       return { ok: true, submitted: data.submit };
     } catch (error) {

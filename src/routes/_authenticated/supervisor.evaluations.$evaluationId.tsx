@@ -615,7 +615,7 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
     onSuccess: async () => {
       toast.success("Step 2 submitted for Reviewing Supervisor review");
       setDirty(false);
-      await Promise.all([
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] }),
         queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] }),
       ]);
