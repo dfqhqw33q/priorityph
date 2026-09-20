@@ -167,9 +167,6 @@ export function generateEvaluationHTML(params: {
     .info-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
     .info-field .value { flex: 1; border: none; border-bottom: 1px solid #000; font-size: 11px; padding: 3px 6px; word-wrap: break-word; }
     
-    .info-grid.summary-metrics { margin-top: 6px; margin-bottom: 10px; }
-    .info-grid.summary-metrics .info-field { min-height: 22px; }
-    
     .rating-scale { border: 1px solid #000; padding: 6px 8px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 7px; font-weight: 600; font-size: 10px; }
     
     .table-container { margin-bottom: 10px; }
@@ -354,17 +351,6 @@ export function generateEvaluationHTML(params: {
       </div>
     </div>
 
-    <div class="info-grid summary-metrics">
-      <div class="info-field">
-        <label>FINAL SCORE:</label>
-        <div class="value">${params.totalPoints || " "}</div>
-      </div>
-      <div class="info-field">
-        <label>ADJECTIVE RATING:</label>
-        <div class="value">${params.adjectiveRating || " "}</div>
-      </div>
-    </div>
-    
     <div class="rating-scale">
       <span>RATING:</span>
       <span>1 - Poor</span>
@@ -741,19 +727,28 @@ export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): str
     "<title></title>",
     `<title>${title}</title>`,
   );
-  const performanceHeading =
-    '<h3 class="step-three-section-title">PERFORMANCE EVALUATION RESULT FOR THIS PERIOD</h3>';
-  const performanceSummary = `
-        <div class="step-three-result-row">
-          <div class="step-three-result-field total"><strong>TOTAL POINTS:</strong><span class="step-three-result-value">${data.totalPoints || " "}</span></div>
-          <div class="step-three-result-field rating"><strong>ADJECTIVE RATING:</strong><span class="step-three-result-value">${data.adjectiveRating || " "}</span></div>
-        </div>`;
-  const injectedDocument = fullDocumentWithTitle.includes(performanceHeading)
-    ? fullDocumentWithTitle.replace(performanceHeading, `${performanceHeading}${performanceSummary}`)
+
+  const ratingInserted = fullDocumentWithTitle.includes("<div class=\"rating-scale\">")
+    ? fullDocumentWithTitle.replace(
+        "<div class=\"rating-scale\">",
+        `
+    <div class="info-grid summary-metrics">
+      <div class="info-field">
+        <label>FINAL SCORE:</label>
+        <div class="value">${data.totalPoints || " "}</div>
+      </div>
+      <div class="info-field">
+        <label>ADJECTIVE RATING:</label>
+        <div class="value">${data.adjectiveRating || " "}</div>
+      </div>
+    </div>
+    <div class="rating-scale">`,
+      )
     : fullDocumentWithTitle;
-  const stepTwoStart = injectedDocument.indexOf('\n    <div class="step-two">');
+
+  const stepTwoStart = ratingInserted.indexOf('\n    <div class="step-two">');
   if (stepTwoStart < 0) throw new Error("Step 2 marker not found in evaluation document");
-  return `${injectedDocument.slice(0, stepTwoStart)}\n  </div>\n</body>\n</html>`;
+  return `${ratingInserted.slice(0, stepTwoStart)}\n  </div>\n</body>\n</html>`;
 }
 
 export async function generateEmployeeFinalizedBrowserPDF(
