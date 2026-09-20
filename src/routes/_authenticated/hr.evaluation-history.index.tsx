@@ -28,6 +28,8 @@ import { getReport, type ReportRow } from "@/lib/reports.functions";
 import { EVALUATION_STATUS_LABELS, EVALUATION_STATUSES } from "@/lib/domain";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAccess } from "@/hooks/use-access";
+import { getEvaluationSheetHtml } from "@/lib/documents.functions";
+import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
 
 const ALL = "";
 const PAGE_SIZE = 25;
@@ -49,11 +51,15 @@ export function HistoryTablePage({
   showStatusFilter = mode === "history",
 }: HistoryPageProps) {
   const fetchReport = useServerFn(getReport);
+  const fetchSheetHtml = useServerFn(getEvaluationSheetHtml);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [status, setStatus] = useState(defaultStatus);
   const [cycleId, setCycleId] = useState(ALL);
   const [page, setPage] = useState(0);
+  const [previewEvaluationId, setPreviewEvaluationId] = useState<string | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const effectiveStatus =
     mode === "completed"
@@ -102,6 +108,23 @@ export function HistoryTablePage({
     mode === "history"
       ? "/hr/evaluation-history/$evaluationId"
       : `${rolePrefix}/${mode}/$evaluationId`;
+
+  async function openEvaluationPreview(evaluationId: string) {
+    setPreviewEvaluationId(evaluationId);
+    setPreviewHtml(null);
+    setPreviewLoading(true);
+    try {
+      const result = await fetchSheetHtml({ data: { evaluationId } });
+      setPreviewHtml(result.html);
+    } catch (error) {
+      setPreviewEvaluationId(null);
+      window.alert(
+        error instanceof Error ? error.message : "The evaluation document is not available yet.",
+      );
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
   const selectedCycle = useMemo(
     () => cycleOptions.find((cycle) => cycle.id === cycleId) ?? null,
     [cycleId, cycleOptions],
@@ -273,13 +296,24 @@ export function HistoryTablePage({
                       {row.employeeNumber}
                     </TableCell>
                     <TableCell>
-                      <Link
-                        className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        to={detailRoute as never}
-                        params={{ evaluationId: row.evaluationId } as never}
-                      >
-                        {row.fullName}
-                      </Link>
+                      {mode === "history" ? (
+                        <button
+                          type="button"
+                          aria-label={`Preview ${row.fullName}'s evaluation document`}
+                          className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          onClick={() => openEvaluationPreview(row.evaluationId)}
+                        >
+                          {row.fullName}
+                        </button>
+                      ) : (
+                        <Link
+                          className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          to={detailRoute as never}
+                          params={{ evaluationId: row.evaluationId } as never}
+                        >
+                          {row.fullName}
+                        </Link>
+                      )}
                     </TableCell>
                     <TableCell className="min-w-[150px] text-muted-foreground">
                       {row.jobTitle || "—"}
@@ -327,6 +361,18 @@ export function HistoryTablePage({
           </Button>
         </div>
       ) : null}
+
+      <EvaluationDocumentPreview
+        html={previewHtml}
+        open={previewEvaluationId !== null}
+        loading={previewLoading}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewEvaluationId(null);
+            setPreviewHtml(null);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -361,7 +407,7 @@ export const Route = createFileRoute("/_authenticated/hr/evaluation-history/")({
 
     return (
       <HistoryTablePage
-        title="Evaluation history"
+        title="Evaluation History"
         description="Review finalized evaluation records across evaluation cycles."
         defaultStatus="FINALIZED"
         mode="history"
