@@ -59,7 +59,7 @@ function AdminOverview() {
             <StatCard
               label="Employee Records"
               value={stats?.employeeRecords ?? 0}
-              to="/admin/employees"
+              to="/admin/employee-profiles"
               hint="Profiles"
             />
           </div>
