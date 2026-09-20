@@ -1,7 +1,7 @@
 ﻿import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,7 @@ export function HistoryTablePage({
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [status, setStatus] = useState(defaultStatus);
-  const [cycleId, setCycleId] = useState(ALL);
+  const [cycleId, setCycleId] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(0);
   const [previewEvaluationId, setPreviewEvaluationId] = useState<string | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
@@ -73,14 +73,14 @@ export function HistoryTablePage({
   const query = useQuery({
     queryKey: [
       "evaluation-history",
-      { mode, search: debouncedSearch, status: effectiveStatus, cycleId, page },
+      { mode, search: debouncedSearch, status: effectiveStatus, cycleId: cycleId ?? ALL, page },
     ],
     queryFn: () =>
       fetchReport({
         data: {
           search: debouncedSearch,
           status: effectiveStatus,
-          cycleId: cycleId === ALL ? null : cycleId,
+          cycleId: (cycleId ?? ALL) === ALL ? null : cycleId,
           year: null,
           recordType: mode,
           page,
@@ -90,7 +90,13 @@ export function HistoryTablePage({
     retry: false,
   });
 
+  useEffect(() => {
+    if (cycleId !== undefined || !query.data) return;
+    setCycleId(query.data.options.cycles.find((cycle) => cycle.status === "ACTIVE")?.id ?? ALL);
+  }, [cycleId, query.data]);
+
   const rows = (query.data?.rows ?? []) as ReportRow[];
+  const effectiveCycleId = cycleId ?? ALL;
   const cycleOptions = (query.data?.options.cycles ?? []).filter((cycle) => cycle.id && cycle.year);
   const currentRole = (useAccess()?.access?.roles ?? []) as Array<
     "HR" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE" | "PRESIDENT"
@@ -126,18 +132,20 @@ export function HistoryTablePage({
     }
   }
   const selectedCycle = useMemo(
-    () => cycleOptions.find((cycle) => cycle.id === cycleId) ?? null,
-    [cycleId, cycleOptions],
+    () => cycleOptions.find((cycle) => cycle.id === effectiveCycleId) ?? null,
+    [effectiveCycleId, cycleOptions],
   );
   const hasActiveFilters =
-    search.trim().length > 0 || (showStatusFilter && status !== defaultStatus) || cycleId !== ALL;
+    search.trim().length > 0 ||
+    (showStatusFilter && status !== defaultStatus) ||
+    effectiveCycleId !== ALL;
 
   const emptyTitle =
-    search.trim() || (showStatusFilter && status !== defaultStatus) || cycleId !== ALL
+    search.trim() || (showStatusFilter && status !== defaultStatus) || effectiveCycleId !== ALL
       ? "No evaluation records found"
       : "No evaluation records found";
   const emptyDescription =
-    cycleId !== ALL
+    effectiveCycleId !== ALL
       ? "There are no evaluations for the selected evaluation cycle."
       : search.trim() || (showStatusFilter && status !== defaultStatus)
         ? "There are no evaluations matching your current filters."
@@ -207,7 +215,7 @@ export function HistoryTablePage({
             <select
               id="history-cycle"
               className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              value={cycleId}
+              value={effectiveCycleId}
               onChange={(e) => {
                 setCycleId(e.target.value);
                 setPage(0);

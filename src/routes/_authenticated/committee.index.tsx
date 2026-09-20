@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { type EvaluationStatus } from "@/lib/domain";
 import {
   Bar,
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/committee/")({
 });
 
 function CommitteeDashboard() {
-  const [cycleId, setCycleId] = useState<string | null>(null);
+  const [cycleId, setCycleId] = useState<string | null | undefined>(undefined);
   const fetchStats = useServerFn(getCommitteeStats);
   const fetchCycleOptions = useServerFn(listEvaluationCycleOptionsForUser);
 
@@ -40,10 +40,15 @@ function CommitteeDashboard() {
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });
+  useEffect(() => {
+    if (cycleId !== undefined || !cycleOptionsQuery.isSuccess) return;
+    setCycleId(cycleOptionsQuery.data.find((cycle) => cycle.status === "ACTIVE")?.id ?? null);
+  }, [cycleId, cycleOptionsQuery.data, cycleOptionsQuery.isSuccess]);
 
   const query = useQuery({
-    queryKey: ["committee-stats", cycleId],
-    queryFn: () => fetchStats({ data: { cycleId } }),
+    queryKey: ["committee-stats", cycleId ?? "initializing"],
+    queryFn: () => fetchStats({ data: { cycleId: cycleId ?? null } }),
+    enabled: cycleId !== undefined,
     retry: false,
   });
 

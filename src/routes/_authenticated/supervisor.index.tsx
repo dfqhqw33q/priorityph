@@ -1,7 +1,7 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_authenticated/supervisor/")({
 });
 
 function SupervisorDashboard() {
-  const [cycleId, setCycleId] = useState<string | null>(null);
+  const [cycleId, setCycleId] = useState<string | null | undefined>(undefined);
   const fetchStats = useServerFn(getSupervisorStats);
   const fetchCycleOptions = useServerFn(listEvaluationCycleOptionsForUser);
 
@@ -55,10 +55,15 @@ function SupervisorDashboard() {
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });
+  useEffect(() => {
+    if (cycleId !== undefined || !cycleOptionsQuery.isSuccess) return;
+    setCycleId(cycleOptionsQuery.data.find((cycle) => cycle.status === "ACTIVE")?.id ?? null);
+  }, [cycleId, cycleOptionsQuery.data, cycleOptionsQuery.isSuccess]);
 
   const query = useQuery({
-    queryKey: ["supervisor-stats", cycleId],
-    queryFn: () => fetchStats({ data: { cycleId } }),
+    queryKey: ["supervisor-stats", cycleId ?? "initializing"],
+    queryFn: () => fetchStats({ data: { cycleId: cycleId ?? null } }),
+    enabled: cycleId !== undefined,
     retry: false,
   });
 
