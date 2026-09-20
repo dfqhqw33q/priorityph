@@ -119,8 +119,10 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
     return { status: "FAILED" as const };
   }
 
-  const subject = "Your Step 1 performance evaluation is finalized";
   const evaluationData = await generateEvaluationData(evaluationId);
+  const employeeFirstName =
+    evaluationData.nameOfRatee?.split(/\s+/).filter(Boolean)[0] ?? "Employee";
+  const subject = "Finalized Performance Evaluation Result";
   const documentPdf = await generateEmployeeFinalizedBrowserPDF(evaluationData);
   const fileName = `${(await import("./documents.server")).buildEvaluationDocumentFileName(
     evaluationData.nameOfRatee,
@@ -128,12 +130,15 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   )}.pdf`;
   const base64Pdf = Buffer.from(documentPdf).toString("base64");
   const html = `
-    <p>Dear Employee,</p>
-    <p><strong>This is to inform you that your performance evaluation result has been finalized.</strong></p>
-    <p>Please find attached the <strong>finalized evaluation document</strong> containing your official evaluation result for the current period, including the <strong>final score</strong> and <strong>corresponding adjective rating</strong>.</p>
-    <p>This document is provided for your <strong>personal record only</strong>.</p>
-    <p>Thank you for your continued dedication and service to the Company.</p>
-    <p><strong>Priority Handling Logistics, Inc.</strong><br>Personnel Office</p>
+    <p style="margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #111827;">Finalized Performance Evaluation Result</p>
+    <p style="margin: 0 0 12px;">Dear ${employeeFirstName},</p>
+    <p style="margin: 0 0 12px;"><strong>This is to inform you that your performance evaluation result has been finalized.</strong></p>
+    <p style="margin: 0 0 12px;">Please find attached the <strong>finalized evaluation document</strong> containing your official evaluation result for the current period, including the <strong>final score</strong> and <strong>corresponding adjective rating</strong>.</p>
+    <p style="margin: 0 0 12px;">This document is provided for your <strong>personal record only</strong>.</p>
+    <p style="margin: 0 0 12px;">Thank you for your continued dedication and service to the Company.</p>
+    <p style="margin: 0 0 12px;">Sincerely,</p>
+    <p style="margin: 0; font-weight: 600;">Priority Handling Logistics, Inc.</p>
+    <p style="margin: 0;">Personnel Office</p>
   `;
 
   try {
@@ -275,6 +280,8 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
 
   try {
     const evaluationData = await generateEvaluationData(evaluationId);
+    const employeeFirstName =
+      evaluationData.nameOfRatee?.split(/\s+/).filter(Boolean)[0] ?? "Employee";
     const documentPdf = await generateEmployeeFinalizedBrowserPDF(evaluationData);
     const fileName = `${(await import("./documents.server")).buildEvaluationDocumentFileName(
       evaluationData.nameOfRatee,
@@ -282,14 +289,17 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
     )}.pdf`;
     const base64Pdf = Buffer.from(documentPdf).toString("base64");
 
-    const subject = "Your Performance Evaluation Has Been Finalized";
+    const subject = "Finalized Performance Evaluation Result";
     const htmlContent = `
-      <p>Dear Employee,</p>
-      <p><strong>This is to inform you that your performance evaluation result has been finalized.</strong></p>
-      <p>Please find attached the <strong>finalized evaluation document</strong> containing your official evaluation result for the current period, including the <strong>final score</strong> and <strong>corresponding adjective rating</strong>.</p>
-      <p>This document is provided for your <strong>personal record only</strong>.</p>
-      <p>Thank you for your continued dedication and service to the Company.</p>
-      <p><strong>Priority Handling Logistics, Inc.</strong><br>Personnel Office</p>
+      <p style="margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #111827;">Finalized Performance Evaluation Result</p>
+      <p style="margin: 0 0 12px;">Dear ${employeeFirstName},</p>
+      <p style="margin: 0 0 12px;"><strong>This is to inform you that your performance evaluation result has been finalized.</strong></p>
+      <p style="margin: 0 0 12px;">Please find attached the <strong>finalized evaluation document</strong> containing your official evaluation result for the current period, including the <strong>final score</strong> and <strong>corresponding adjective rating</strong>.</p>
+      <p style="margin: 0 0 12px;">This document is provided for your <strong>personal record only</strong>.</p>
+      <p style="margin: 0 0 12px;">Thank you for your continued dedication and service to the Company.</p>
+      <p style="margin: 0 0 12px;">Sincerely,</p>
+      <p style="margin: 0; font-weight: 600;">Priority Handling Logistics, Inc.</p>
+      <p style="margin: 0;">Personnel Office</p>
     `;
 
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {

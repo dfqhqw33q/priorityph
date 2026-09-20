@@ -734,7 +734,7 @@ export function EvaluationStageDetail({
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <CardTitle className="text-base">
             {stage === "RATER"
-              ? "Step 2 - Conclusions and comments"
+              ? "CONCLUSIONS AND COMMENTS"
               : stage === "REVIEWING_SUPERVISOR"
                 ? "Step 3 - Review"
                 : stage === "PERSONNEL"
@@ -764,7 +764,7 @@ export function EvaluationStageDetail({
           {stage === "REVIEWING_SUPERVISOR" ? (
             <>
               <div>
-                <h3 className="mb-3 text-sm font-semibold">STEP 1 - Performance Evaluation</h3>
+                <h3 className="mb-3 text-center text-sm font-semibold uppercase">PERFORMANCE EVALUATION</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={ratings}
@@ -787,7 +787,7 @@ export function EvaluationStageDetail({
                 />
               </div>
               <div className="rounded-md bg-muted/20 p-4">
-                <ReadOnlyGroup title="STEP 2 - Conclusions and comments (read-only)">
+                <ReadOnlyGroup title="CONCLUSIONS AND COMMENTS">
                   <div className="space-y-4">
                     <ReadOnlyField
                       label="Overall rating explanation"
@@ -905,7 +905,7 @@ export function EvaluationStageDetail({
           {["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(stage) ? (
             <>
               <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="font-semibold">STEP 1 - Performance Evaluation (read-only)</h3>
+                <h3 className="text-center font-semibold uppercase">PERFORMANCE EVALUATION</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={Object.fromEntries(
@@ -934,7 +934,7 @@ export function EvaluationStageDetail({
                 />
               </div>
               <div className="rounded-md bg-muted/20 p-4">
-                <ReadOnlyGroup title="STEP 2 - Supervisor conclusions and comments (read-only)">
+                <ReadOnlyGroup title="CONCLUSIONS AND COMMENTS">
                   <div className="space-y-4">
                     <ReadOnlyField
                       label="Overall rating explanation"
@@ -1029,7 +1029,7 @@ export function EvaluationStageDetail({
                 </ReadOnlyGroup>
               </div>
               <div className="space-y-4 border-t border-border/60 pt-4">
-                <h3 className="font-semibold">STEP 3 - Reviewing Supervisor review (read-only)</h3>
+                <h3 className="text-center font-semibold uppercase">REVIEWING SUPERVISOR REVIEW</h3>
                 {(() => {
                   const accStages = (
                     detail as Record<string, unknown> & {
@@ -1069,7 +1069,7 @@ export function EvaluationStageDetail({
                     Record<string, unknown> | undefined;
                   return personnel && detail.status !== "FOR_PROCESSING" ? (
                     <div className="space-y-4 border-t border-border/60 pt-4">
-                      <h3 className="font-semibold">Personnel Office processing (read-only)</h3>
+                      <h3 className="text-center font-semibold uppercase">PERSONNEL OFFICE PROCESSING</h3>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <ReadOnlyField label="Present Salary" value={personnel["present_salary"]} />
                         <ReadOnlyField
@@ -1110,7 +1110,7 @@ export function EvaluationStageDetail({
                     Record<string, unknown> | undefined;
                   return committee && detail.status !== "FOR_REVIEW" ? (
                     <div className="space-y-4 border-t border-border/60 pt-4">
-                      <h3 className="font-semibold">Committee recommendation (read-only)</h3>
+                      <h3 className="text-center font-semibold uppercase">COMMITTEE RECOMMENDATION</h3>
                       <div className="grid gap-4 lg:grid-cols-2">
                         <ReadOnlyField label="Final Action" value={committee["final_action"]} />
                         <ReadOnlyField
@@ -1256,26 +1256,30 @@ export function EvaluationStageDetail({
               <div className="space-y-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold">AI Training Recommendation</h3>
+                    <h3 className="text-center text-sm font-semibold uppercase">
+                      PERSONALIZED TRAINING RECOMMENDATION
+                    </h3>
                     <p className="text-xs text-muted-foreground">
                       Advisory input only. The Committee decides the official action.
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={committeeTrainingBusy || !editable}
-                    onClick={generateCommitteeTrainingRecommendation}
-                  >
-                    {committeeTrainingBusy ? (
-                      <TextShimmer>Generating...</TextShimmer>
-                    ) : committeeTrainingRecommendation ? (
-                      "Regenerate"
-                    ) : (
-                      "Generate recommendation"
-                    )}
-                  </Button>
+                  {action === "TRAINING_REQUIRED" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={committeeTrainingBusy || !editable}
+                      onClick={generateCommitteeTrainingRecommendation}
+                    >
+                      {committeeTrainingBusy ? (
+                        <TextShimmer>Generating...</TextShimmer>
+                      ) : committeeTrainingRecommendation ? (
+                        "Regenerate"
+                      ) : (
+                        "Personalized Training Recommendation"
+                      )}
+                    </Button>
+                  ) : null}
                 </div>
                 {committeeTrainingUnavailable ? (
                   <p className="text-sm text-muted-foreground">{committeeTrainingUnavailable}</p>
@@ -1333,7 +1337,9 @@ export function EvaluationStageDetail({
                   </div>
                 ) : null}
               </div>
-              <h3 className="text-sm font-semibold">Committee recommendation - editable</h3>
+              <h3 className="text-center text-sm font-semibold uppercase">
+                COMMITTEE RECOMMENDATION
+              </h3>
               <div>
                 <Label>Final action *</Label>
                 <select

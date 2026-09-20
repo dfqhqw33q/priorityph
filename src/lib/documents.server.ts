@@ -728,6 +728,26 @@ export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): str
     `<title>${title}</title>`,
   );
 
+  const singlePageOverride = `
+    <style>
+      @page { size: A4 portrait; margin: 0.35in 0.38in; }
+      html, body { height: auto; background: #fff; }
+      body { margin: 0; padding: 0; }
+      .container {
+        max-width: 7.5in;
+        width: 100%;
+        margin: 0 auto;
+        padding: 0;
+      }
+      .title h1 { font-size: 13px; }
+      .title h2 { font-size: 11px; }
+      .period-covered, .info-grid, .rating-scale, table, .signatures { zoom: 0.98; }
+      .table-container { margin-bottom: 6px; }
+      .sig-block { padding: 6px 6px 0; }
+      .sig-line { min-height: 20px; }
+    </style>
+  `;
+
   const ratingInserted = fullDocumentWithTitle.includes("<div class=\"rating-scale\">")
     ? fullDocumentWithTitle.replace(
         "<div class=\"rating-scale\">",
@@ -746,9 +766,10 @@ export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): str
       )
     : fullDocumentWithTitle;
 
-  const stepTwoStart = ratingInserted.indexOf('\n    <div class="step-two">');
-  if (stepTwoStart < 0) throw new Error("Step 2 marker not found in evaluation document");
-  return `${ratingInserted.slice(0, stepTwoStart)}\n  </div>\n</body>\n</html>`;
+  const stepTwoStart = ratingInserted.indexOf('<div class="step-two">');
+  const trimmedDocument = stepTwoStart >= 0 ? ratingInserted.slice(0, stepTwoStart) : ratingInserted;
+  const withSinglePageCss = trimmedDocument.replace("</head>", `${singlePageOverride}</head>`);
+  return `${withSinglePageCss}\n</body>\n</html>`;
 }
 
 export async function generateEmployeeFinalizedBrowserPDF(

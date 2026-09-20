@@ -205,7 +205,7 @@ function getRoleCompletedAccess(roleNames: string[]) {
   }
 
   if (roleNames.includes("PRESIDENT")) {
-    return { statusSet: ["FINALIZED"], assignment: "president" as const };
+    return { statusSet: ["FINALIZED"], assignment: "all" as const };
   }
 
   if (roleNames.includes("HR")) {
@@ -245,7 +245,7 @@ function getRoleDraftsAccess(roleNames: string[]) {
   }
 
   if (roleNames.includes("PRESIDENT")) {
-    return { statusSet: ["DRAFT"], assignment: "president" as const };
+    return { statusSet: ["DRAFT"], assignment: "all" as const };
   }
 
   return { statusSet: [], assignment: "all" as const };
@@ -269,7 +269,7 @@ function getRoleReturnedAccess(roleNames: string[]) {
   }
 
   if (roleNames.includes("PRESIDENT")) {
-    return { statusSet: ["RETURNED"], assignment: "president" as const };
+    return { statusSet: ["RETURNED"], assignment: "all" as const };
   }
 
   return { statusSet: [], assignment: "all" as const };

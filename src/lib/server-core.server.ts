@@ -693,6 +693,20 @@ async function countEvaluations(statuses: string[], cycleId: string | null = nul
   return count ?? 0;
 }
 
+async function countEvaluationsWithSubmission(
+  submittedColumn: "president_step2_submitted_at" | "president_step3_submitted_at",
+  cycleId: string | null,
+) {
+  const admin = await getAdmin();
+  let query = admin
+    .from("evaluations")
+    .select("id", { count: "exact", head: true })
+    .not(submittedColumn, "is", null);
+  if (cycleId) query = query.eq("cycle_id", cycleId);
+  const { count } = await query;
+  return count ?? 0;
+}
+
 async function countAssignedEvaluationsForRole(
   userId: string,
   role: "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE" | "PRESIDENT",
@@ -781,7 +795,6 @@ async function countAssignedEvaluationsForRole(
   let query = admin
     .from("evaluations")
     .select("id", { count: "exact", head: true })
-    .eq("president_user_id", userId)
     .in("status", statuses as never);
   if (cycleId) query = query.eq("cycle_id", cycleId);
   const { count } = await query;
@@ -920,18 +933,8 @@ export async function presidentStats(userId: string, cycleId: string | null = nu
     countAssignedEvaluationsForRole(userId, "PRESIDENT", ["FINALIZED"], cycleId),
   ]);
   const [step2, step3] = await Promise.all([
-    admin
-      .from("evaluations")
-      .select("id", { count: "exact", head: true })
-      .eq("president_user_id", userId)
-      .not("president_step2_submitted_at", "is", null)
-      .then((result) => result.count ?? 0),
-    admin
-      .from("evaluations")
-      .select("id", { count: "exact", head: true })
-      .eq("president_user_id", userId)
-      .not("president_step3_submitted_at", "is", null)
-      .then((result) => result.count ?? 0),
+    countEvaluationsWithSubmission("president_step2_submitted_at", cycleId),
+    countEvaluationsWithSubmission("president_step3_submitted_at", cycleId),
   ]);
   const { data: cycles } = await admin
     .from("evaluation_cycles")
