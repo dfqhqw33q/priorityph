@@ -774,6 +774,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       null,
       data.submit,
     );
+    const signature = data.signature;
     const stageWrite = admin.from("personnel_processing").upsert(
       {
         evaluation_id: data.evaluationId,
@@ -791,14 +792,8 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       } as never,
       { onConflict: "evaluation_id" },
     );
-    const signatureWrite = data.submit
-      ? saveStageSignature(
-          data.evaluationId,
-          "PERSONNEL",
-          data.signature,
-          context.userId,
-          data.version,
-        )
+    const signatureWrite = data.submit && signature
+      ? saveStageSignature(data.evaluationId, "PERSONNEL", signature, context.userId, data.version)
       : Promise.resolve();
     const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);
     if (stageError) throw validationError(stageError.message);
@@ -831,6 +826,7 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       null,
       data.submit,
     );
+    const signature = data.signature;
     const stageWrite = admin.from("committee_reviews").upsert(
       {
         evaluation_id: data.evaluationId,
@@ -844,14 +840,8 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       } as never,
       { onConflict: "evaluation_id" },
     );
-    const signatureWrite = data.submit
-      ? saveStageSignature(
-          data.evaluationId,
-          "COMMITTEE",
-          data.signature,
-          context.userId,
-          data.version,
-        )
+    const signatureWrite = data.submit && signature
+      ? saveStageSignature(data.evaluationId, "COMMITTEE", signature, context.userId, data.version)
       : Promise.resolve();
     const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);
     if (stageError) throw validationError(stageError.message);
