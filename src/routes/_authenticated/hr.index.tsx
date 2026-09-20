@@ -76,6 +76,8 @@ function HrDashboard() {
     return <EmptyState title="You do not have HR access" description={message} />;
   }
 
+  const isLoading = query.isLoading || !query.data;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -105,7 +107,7 @@ function HrDashboard() {
         }
       />
 
-      {query.isLoading ? (
+      {isLoading ? (
         <LoadingBlock rows={4} variant="cards" />
       ) : (
         <>

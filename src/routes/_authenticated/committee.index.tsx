@@ -95,6 +95,8 @@ function CommitteeDashboard() {
     return <EmptyState title="You do not have access to committee review" description={message} />;
   }
 
+  const isLoading = query.isLoading || !query.data;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -124,7 +126,7 @@ function CommitteeDashboard() {
         }
       />
 
-      {query.isLoading ? (
+      {isLoading ? (
         <LoadingBlock rows={4} variant="cards" />
       ) : (
         <>
