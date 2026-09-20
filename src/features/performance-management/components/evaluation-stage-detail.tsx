@@ -51,6 +51,7 @@ import {
   LoadingBlock,
   formatDateTime,
 } from "@/components/shared/shared-ui";
+import { EvaluationProgressStepper } from "@/features/performance-management/components/evaluation-progress-stepper";
 import { TextShimmer } from "@/components/loading-ui/text-shimmer";
 import {
   getEvaluationStage,
@@ -62,6 +63,7 @@ import {
   submitReviewingSupervisor,
 } from "@/lib/evaluation-workflow.functions";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
+import { getEvaluationHistory } from "@/lib/reports.functions";
 import { userErrorMessage } from "@/lib/validation";
 import {
   recordReviewingSupervisorAiAction,
@@ -237,6 +239,7 @@ export function EvaluationStageDetail({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetch = useServerFn(getEvaluationStage);
+  const fetchHistory = useServerFn(getEvaluationHistory);
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
   const getReviewingSuggestions = useServerFn(suggestReviewingSupervisorFields);
   const recordReviewingAction = useServerFn(recordReviewingSupervisorAiAction);
@@ -246,6 +249,12 @@ export function EvaluationStageDetail({
   const query = useQuery({
     queryKey: ["phase2-evaluation", evaluationId],
     queryFn: () => fetch({ data: { evaluationId, stage } }),
+    retry: false,
+  });
+  const historyQuery = useQuery({
+    queryKey: ["evaluation-progress", evaluationId],
+    queryFn: () => fetchHistory({ data: { evaluationId } }),
+    enabled: stage === "PRESIDENT",
     retry: false,
   });
   const detail = query.data as StageDetail | null | undefined;
@@ -764,7 +773,7 @@ export function EvaluationStageDetail({
           {stage === "REVIEWING_SUPERVISOR" ? (
             <>
               <div>
-                <h3 className="mb-3 text-center text-sm font-semibold uppercase">PERFORMANCE EVALUATION</h3>
+                <h3 className="mb-3 text-sm font-semibold uppercase">PERFORMANCE EVALUATION</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={ratings}
@@ -905,7 +914,7 @@ export function EvaluationStageDetail({
           {["PERSONNEL", "COMMITTEE", "PRESIDENT"].includes(stage) ? (
             <>
               <div className="space-y-2 rounded-md border border-border p-4">
-                <h3 className="text-center font-semibold uppercase">PERFORMANCE EVALUATION</h3>
+                <h3 className="font-semibold uppercase">PERFORMANCE EVALUATION</h3>
                 <EvaluationRatingCards
                   criteria={detail.criteria}
                   values={Object.fromEntries(
@@ -1029,7 +1038,7 @@ export function EvaluationStageDetail({
                 </ReadOnlyGroup>
               </div>
               <div className="space-y-4 border-t border-border/60 pt-4">
-                <h3 className="text-center font-semibold uppercase">REVIEWING SUPERVISOR REVIEW</h3>
+                <h3 className="font-semibold uppercase">REVIEWING SUPERVISOR REVIEW</h3>
                 {(() => {
                   const accStages = (
                     detail as Record<string, unknown> & {
@@ -1069,7 +1078,7 @@ export function EvaluationStageDetail({
                     Record<string, unknown> | undefined;
                   return personnel && detail.status !== "FOR_PROCESSING" ? (
                     <div className="space-y-4 border-t border-border/60 pt-4">
-                      <h3 className="text-center font-semibold uppercase">PERSONNEL OFFICE PROCESSING</h3>
+                      <h3 className="font-semibold uppercase">PERSONNEL OFFICE PROCESSING</h3>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <ReadOnlyField label="Present Salary" value={personnel["present_salary"]} />
                         <ReadOnlyField
@@ -1110,7 +1119,7 @@ export function EvaluationStageDetail({
                     Record<string, unknown> | undefined;
                   return committee && detail.status !== "FOR_REVIEW" ? (
                     <div className="space-y-4 border-t border-border/60 pt-4">
-                      <h3 className="text-center font-semibold uppercase">COMMITTEE RECOMMENDATION</h3>
+                      <h3 className="font-semibold uppercase">COMMITTEE RECOMMENDATION</h3>
                       <div className="grid gap-4 lg:grid-cols-2">
                         <ReadOnlyField label="Final Action" value={committee["final_action"]} />
                         <ReadOnlyField
@@ -1256,7 +1265,7 @@ export function EvaluationStageDetail({
               <div className="space-y-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-center text-sm font-semibold uppercase">
+                    <h3 className="text-sm font-semibold uppercase">
                       PERSONALIZED TRAINING RECOMMENDATION
                     </h3>
                     <p className="text-xs text-muted-foreground">
@@ -1337,7 +1346,7 @@ export function EvaluationStageDetail({
                   </div>
                 ) : null}
               </div>
-              <h3 className="text-center text-sm font-semibold uppercase">
+              <h3 className="text-sm font-semibold uppercase">
                 COMMITTEE RECOMMENDATION
               </h3>
               <div>
@@ -1419,6 +1428,24 @@ export function EvaluationStageDetail({
                 disabled={!editable}
                 onSave={persistSignature}
                 onChange={setSignature}
+              />
+            </div>
+          ) : stage === "PRESIDENT" ? (
+            <div className="grid min-h-0 items-stretch gap-4 lg:h-[22rem] lg:grid-cols-2">
+              <Card className="h-full border border-border bg-card shadow-sm">
+                <CardContent className="h-full p-4">
+                  <SignatureField
+                    {...(signature ? { value: signature } : {})}
+                    disabled={!editable}
+                    onSave={persistSignature}
+                    onChange={setSignature}
+                  />
+                </CardContent>
+              </Card>
+              <EvaluationProgressStepper
+                events={historyQuery.data?.events ?? []}
+                currentStatus={detail.status}
+                employeeName={detail.full_name_snapshot}
               />
             </div>
           ) : (

@@ -186,7 +186,7 @@ export function generateEvaluationHTML(params: {
     .sig-date { font-size: 9px; }
     
     .conclusions { border-top: 1px solid #000; padding-top: 12px; }
-    .conclusions h3 { text-align: center; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+    .conclusions h3 { text-align: left; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
     .conclusions h4 { font-size: 12px; font-weight: bold; margin: 8px 0; }
     .conclusions p { font-size: 12px; margin: 4px 0; }
     .conclusions .question { margin-bottom: 8px; }
@@ -250,7 +250,7 @@ export function generateEvaluationHTML(params: {
     .step-three h2, .step-three h3 { font-weight: bold; text-transform: uppercase; }
     .step-three-header { margin-bottom: 8px; }
     .step-three-comments { margin-bottom: 8px; }
-    .step-three-comments-title { text-align: center; margin-bottom: 8px; }
+    .step-three-comments-title { text-align: left; margin-bottom: 8px; }
     .comment-lines { border-bottom: 1px solid #000; margin-bottom: 8px; padding-bottom: 6px; white-space: pre-wrap; line-height: 1.22; overflow-wrap: anywhere; }
     .step-three-signature { display: flex; justify-content: flex-end; margin-top: 8px; }
     .step-three-rule { border: 0; border-top: 1px solid #000; margin: 10px 0; }
@@ -502,7 +502,7 @@ export function generateEvaluationHTML(params: {
       <hr class="step-three-rule">
 
       <section class="step-three-section">
-        <h3 class="step-three-section-title" style="text-align:center;">TO BE FILLED UP BY THE PERSONNEL OFFICE</h3>
+        <h3 class="step-three-section-title">TO BE FILLED UP BY THE PERSONNEL OFFICE</h3>
         <div class="step-three-fields">
           <div class="step-three-field"><span class="step-three-field-label">Employee's Present Salary :</span><span class="step-three-field-value">${text(params.presentSalary)}</span></div>
           <div class="step-three-field"><span class="step-three-field-label">Date of Last Increase :</span><span class="step-three-field-value">${text(params.lastIncreaseDate)}</span></div>
