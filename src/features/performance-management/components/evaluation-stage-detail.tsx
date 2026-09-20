@@ -630,6 +630,12 @@ export function EvaluationStageDetail({
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] }),
           queryClient.invalidateQueries({ queryKey: ["phase2-queue"] }),
+          queryClient.invalidateQueries({ queryKey: ["supervisor-stats"] }),
+          queryClient.invalidateQueries({ queryKey: ["reviewing-supervisor-stats"] }),
+          queryClient.invalidateQueries({ queryKey: ["committee-stats"] }),
+          queryClient.invalidateQueries({ queryKey: ["president-stats"] }),
+          queryClient.invalidateQueries({ queryKey: ["hr-stats"] }),
+          queryClient.invalidateQueries({ queryKey: ["admin-stats"] }),
         ]);
         return;
       }
@@ -647,9 +653,16 @@ export function EvaluationStageDetail({
       const invalidations = [
         queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] }),
         queryClient.invalidateQueries({ queryKey: ["phase2-queue"] }),
+        queryClient.invalidateQueries({ queryKey: ["supervisor-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["reviewing-supervisor-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["committee-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["president-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["hr-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-stats"] }),
       ];
       if (stage === "RATER")
         invalidations.push(queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] }));
+      await Promise.all(invalidations);
       navigate({
         to:
           stage === "RATER"
@@ -662,7 +675,6 @@ export function EvaluationStageDetail({
                   ? "/committee"
                   : "/president/evaluations",
       });
-                      void Promise.all(invalidations);
     },
     onError: (error: Error) =>
       toast.error(userErrorMessage(error, "Could not save this workflow stage.")),

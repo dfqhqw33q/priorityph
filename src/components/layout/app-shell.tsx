@@ -348,7 +348,6 @@ const NAV: Array<{
     direct: [
       { to: "/admin", label: "Dashboard", icon: Shield, permission: "users.view" },
       { to: "/admin/audit-logs", label: "Audit Logs", icon: FileClock, permission: "audit.view" },
-      { label: "Activity", icon: Activity },
     ],
     categories: [
       {
