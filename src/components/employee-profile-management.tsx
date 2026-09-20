@@ -61,11 +61,14 @@ export function EmployeeProfileManagementPage() {
         ? update({ data: { ...parsed, employeeId: editingId } })
         : create({ data: parsed });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(editingId ? "Employee profile updated" : "Employee profile created");
       setForm(emptyForm);
       setEditingId(null);
-      queryClient.invalidateQueries({ queryKey: ["employee-profiles"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["employee-profiles"] }),
+        queryClient.invalidateQueries({ queryKey: ["employees"] }),
+      ]);
     },
     onError: (error) => toast.error(userErrorMessage(error, "Could not save employee profile")),
   });

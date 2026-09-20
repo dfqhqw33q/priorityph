@@ -247,7 +247,7 @@ export function EvaluationStageDetail({
   const recordCommitteeTrainingAction = useServerFn(recordCommitteeTrainingRecommendationAction);
   const saveSignature = useServerFn(saveEvaluationSignature);
   const query = useQuery({
-    queryKey: ["phase2-evaluation", evaluationId],
+    queryKey: ["phase2-evaluation", evaluationId, stage],
     queryFn: () => fetch({ data: { evaluationId, stage } }),
     retry: false,
   });
@@ -627,8 +627,10 @@ export function EvaluationStageDetail({
     onSuccess: async (_result, submit) => {
       if (!submit) {
         toast.success("Draft saved");
-        await queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] });
-        await queryClient.invalidateQueries({ queryKey: ["phase2-queue"] });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] }),
+          queryClient.invalidateQueries({ queryKey: ["phase2-queue"] }),
+        ]);
         return;
       }
       const message =
@@ -642,11 +644,12 @@ export function EvaluationStageDetail({
                 ? "Evaluation submitted for President review."
                 : "Evaluation approved and finalized.";
       toast.success(message);
-      await queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] });
-      await queryClient.invalidateQueries({ queryKey: ["phase2-queue"] });
-      if (stage === "RATER") {
-        await queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] });
-      }
+      const invalidations = [
+        queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] }),
+        queryClient.invalidateQueries({ queryKey: ["phase2-queue"] }),
+      ];
+      if (stage === "RATER") invalidations.push(queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] }));
+      await Promise.all(invalidations);
       navigate({
         to:
           stage === "RATER"

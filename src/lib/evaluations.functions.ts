@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supervisorDraftSchema, queueFiltersSchema } from "./schemas";
 import type { EvaluationDetail, EvaluationListItem } from "./domain";
+import type { EvaluationQueuePage } from "./server-core.server";
 
 const SUPERVISOR_QUEUE_STATUSES = ["SUBMITTED"];
 
@@ -16,38 +17,60 @@ const PRESIDENT_QUEUE_STATUSES = ["FOR_APPROVAL"];
 export const listSupervisorQueue = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => queueFiltersSchema.parse(input ?? {}))
-  .handler(async ({ data, context }): Promise<EvaluationListItem[]> => {
-    const { requirePermission, listEvaluations, writeAudit, getActorRoles } =
+  .handler(async ({ data, context }): Promise<EvaluationQueuePage> => {
+    const { requirePermission, listEvaluationsPage, writeAudit, getActorRoles } =
       await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.view_step1", "Supervisor Review");
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "SUPERVISOR_QUEUE_ACCESSED",
-      module: "Supervisor Review",
-      newValue: { filters: data },
-    });
-    const rows = await listEvaluations(SUPERVISOR_QUEUE_STATUSES, data);
-    return rows.filter(
-      (row) => !row.supervisor_user_id || row.supervisor_user_id === context.userId,
+    const rolesPromise = getActorRoles(context.userId);
+    const rowsPromise = listEvaluationsPage(
+      SUPERVISOR_QUEUE_STATUSES,
+      data,
+      data.page,
+      data.pageSize,
+      data.sort,
+      data.sortDir,
+      context.userId,
     );
+    const auditPromise = rolesPromise.then((roles) =>
+      writeAudit({
+        actorUserId: context.userId,
+        actorRole: roles.join(","),
+        action: "SUPERVISOR_QUEUE_ACCESSED",
+        module: "Supervisor Review",
+        newValue: { filters: data },
+      }),
+    );
+    const [rows] = await Promise.all([rowsPromise, auditPromise]);
+    return rows;
   });
 
 export const listPresidentQueue = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => queueFiltersSchema.parse(input ?? {}))
-  .handler(async ({ data, context }): Promise<EvaluationListItem[]> => {
-    const { requirePermission, listEvaluations, writeAudit, getActorRoles } =
+  .handler(async ({ data, context }): Promise<EvaluationQueuePage> => {
+    const { requirePermission, listEvaluationsPage, writeAudit, getActorRoles } =
       await import("./server-core.server");
     await requirePermission(context.userId, "president.view", "President Review");
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "PRESIDENT_QUEUE_ACCESSED",
-      module: "President Review",
-      newValue: { filters: data },
-    });
-    return listEvaluations(PRESIDENT_QUEUE_STATUSES, data);
+    const rolesPromise = getActorRoles(context.userId);
+    const rowsPromise = listEvaluationsPage(
+      PRESIDENT_QUEUE_STATUSES,
+      data,
+      data.page,
+      data.pageSize,
+      data.sort,
+      data.sortDir,
+    );
+    const auditPromise = rolesPromise.then((roles) =>
+      writeAudit({
+        actorUserId: context.userId,
+        actorRole: roles.join(","),
+        action: "PRESIDENT_QUEUE_ACCESSED",
+        module: "President Review",
+        newValue: { filters: data },
+      }),
+    );
+    const [rows] = await Promise.all([rowsPromise, auditPromise]);
+    return rows;
   });
 
 export const listQueueFilterOptions = createServerFn({ method: "GET" })
@@ -189,13 +212,16 @@ export const getEvaluation = createServerFn({ method: "GET" })
     const { requirePermission, loadEvaluationDetail, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.view_step1", "Supervisor Review");
-    const detail = await loadEvaluationDetail(data.evaluationId);
+    const [detail, roles] = await Promise.all([
+      loadEvaluationDetail(data.evaluationId),
+      getActorRoles(context.userId),
+    ]);
     if (detail?.supervisor_user_id && detail.supervisor_user_id !== context.userId)
       throw validationError("This evaluation is assigned to another supervisor.");
     if (detail) {
       await writeAudit({
         actorUserId: context.userId,
-        actorRole: (await getActorRoles(context.userId)).join(","),
+        actorRole: roles.join(","),
         action: "EVALUATION_VIEWED",
         module: "Evaluation Review",
         entityType: "evaluation",

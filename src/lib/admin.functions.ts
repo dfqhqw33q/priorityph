@@ -32,16 +32,24 @@ export const listUsers = createServerFn({ method: "GET" })
     const { getAdmin, requirePermission } = await import("./server-core.server");
     await requirePermission(context.userId, "users.view", "User Management");
     const admin = await getAdmin();
-    const { data: users } = await admin
-      .from("internal_users")
-      .select(
-        "id, email, full_name, job_title, is_active, is_locked, must_change_password, last_login_at, created_at",
-      )
-      .order("created_at", { ascending: false });
-    const { data: roles } = await admin.from("user_roles").select("user_id, role");
+    const [{ data: users }, { data: roles }] = await Promise.all([
+      admin
+        .from("internal_users")
+        .select(
+          "id, email, full_name, job_title, is_active, is_locked, must_change_password, last_login_at, created_at",
+        )
+        .order("created_at", { ascending: false }),
+      admin.from("user_roles").select("user_id, role"),
+    ]);
+    const rolesByUser = new Map<string, AppRole[]>();
+    for (const row of roles ?? []) {
+      const userRoles = rolesByUser.get(row.user_id) ?? [];
+      userRoles.push(row.role as AppRole);
+      rolesByUser.set(row.user_id, userRoles);
+    }
     return (users ?? []).map((user) => ({
       ...user,
-      roles: (roles ?? []).filter((r) => r.user_id === user.id).map((r) => r.role as AppRole),
+      roles: rolesByUser.get(user.id) ?? [],
     }));
   });
 
@@ -224,12 +232,12 @@ export const assignRoles = createServerFn({ method: "POST" })
     const added = data.roles.filter((role) => !current.includes(role));
 
     try {
-      for (const role of removed) {
+      if (removed.length > 0) {
         const { error } = await admin
           .from("user_roles")
           .delete()
           .eq("user_id", data.userId)
-          .eq("role", role);
+          .in("role", removed);
         if (error) throw validationError(error.message);
       }
       if (added.length > 0) {
@@ -348,7 +356,12 @@ export const listEmployees = createServerFn({ method: "GET" })
     const { getAdmin, requirePermission } = await import("./server-core.server");
     await requirePermission(context.userId, "employees.view", "Employees");
     const admin = await getAdmin();
-    const { data } = await admin.from("employees").select("*").order("employee_number");
+    const { data } = await admin
+      .from("employees")
+      .select(
+        "id, employee_number, full_name, first_name, middle_name, last_name, job_title, division, section, employment_status, created_at, updated_at",
+      )
+      .order("employee_number");
     return data ?? [];
   });
 

@@ -180,12 +180,18 @@ export async function computeScore(evaluationId: string): Promise<ScoreResult> {
     .maybeSingle();
   if (!cycle) throw validationError("Evaluation cycle not found");
 
-  const rule = await loadActiveScoringRule(cycle.template_id);
-  const { data: criteria } = await admin
-    .from("evaluation_criteria")
-    .select("id")
-    .eq("template_id", cycle.template_id)
-    .order("position");
+  const [rule, { data: criteria }, { data: ratings }] = await Promise.all([
+    loadActiveScoringRule(cycle.template_id),
+    admin
+      .from("evaluation_criteria")
+      .select("id")
+      .eq("template_id", cycle.template_id)
+      .order("position"),
+    admin
+      .from("evaluation_ratings")
+      .select("criterion_id, evaluator_type, rating")
+      .eq("evaluation_id", evaluationId),
+  ]);
   const criterionList = criteria ?? [];
 
   const invalid = (notes: string): ScoreResult => ({
@@ -210,10 +216,6 @@ export async function computeScore(evaluationId: string): Promise<ScoreResult> {
   const problems = validateScoringRule(rule, criterionList.length);
   if (problems.length > 0) return invalid(problems.join(" "));
 
-  const { data: ratings } = await admin
-    .from("evaluation_ratings")
-    .select("criterion_id, evaluator_type, rating")
-    .eq("evaluation_id", evaluationId);
   const ratingRows = (ratings ?? []) as RatingRow[];
 
   if (ratingRows.some((row) => row.rating < 1 || row.rating > 5))

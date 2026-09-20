@@ -418,6 +418,12 @@ export const queueFiltersSchema = z.object({
   division: z.string().max(160).default(""),
   section: z.string().max(160).default(""),
   status: z.enum(EVALUATION_STATUSES).nullable().default(null),
+  page: z.number().int().min(0).default(0),
+  pageSize: z.number().int().min(1).max(50).default(20),
+  sort: z
+    .enum(["full_name_snapshot", "employee_number_snapshot", "employee_submitted_at", "status"])
+    .default("employee_submitted_at"),
+  sortDir: z.enum(["asc", "desc"]).default("desc"),
 });
 export type QueueFiltersValues = z.infer<typeof queueFiltersSchema>;
 

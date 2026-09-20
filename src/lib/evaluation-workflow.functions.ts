@@ -45,8 +45,10 @@ export const getEvaluationStage = createServerFn({ method: "GET" })
     await requirePermission(context.userId, permission, `${data.stage} Review`);
     const detail = await loadEvaluationDetail(data.evaluationId);
     if (!detail) return null;
-    const score = await computeScore(data.evaluationId);
-    const admin = await getAdmin();
+    const [score, admin] = await Promise.all([
+      computeScore(data.evaluationId),
+      getAdmin(),
+    ]);
     const allowedStatus = {
       RATER: ["SUBMITTED", "DRAFT", "RETURNED"],
       REVIEWING_SUPERVISOR: ["FOR_REVIEW", "RETURNED"],
@@ -322,7 +324,6 @@ async function transition(
 ) {
   const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
     await import("./server-core.server");
-  const { createFinalEvaluationDocument } = await import("./documents.server");
   const admin = await getAdmin();
   const { data: current } = await admin
     .from("evaluations")
@@ -409,9 +410,19 @@ async function transition(
       } as never)
     : Promise.resolve({ error: null });
   await Promise.all([eventWrite, notificationWrite]);
+  await writeAudit({
+    actorUserId,
+    actorRole: (await getActorRoles(actorUserId)).join(","),
+    action,
+    module: "Evaluation Workflow",
+    entityType: "evaluation",
+    entityId: evaluationId,
+    evaluationId,
+    previousValue: { status: current.status },
+    newValue: { status: next },
+  });
   if (next === "FINALIZED") {
-    try {
-      const finalizationStamp = new Date().toISOString();
+    void (async () => {
       const { ensureDevelopmentRecordsForEvaluation } =
         await import("@/features/learning-management/development.functions");
       const {
@@ -424,11 +435,6 @@ async function transition(
         await import("@/features/social-recognition/recognition.functions");
       const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
       await Promise.all([
-        createFinalEvaluationDocument(evaluationId, actorUserId, {
-          statusOverride: "FINALIZED",
-          finalizedAt: finalizationStamp,
-          finalizationReason: reason,
-        }),
         ensureDevelopmentRecordsForEvaluation(evaluationId),
         ensureTrainingRecommendationsForEvaluation(evaluationId),
         ensureTrainingRequirementForCommitteeDecision(evaluationId),
@@ -436,22 +442,10 @@ async function transition(
         ensureRecognitionCandidatesForEvaluation(evaluationId),
         queueEmployeeFinalizedStep1Email(evaluationId),
       ]);
-    } catch (error) {
-      console.error("[evaluation-workflow] final evaluation downstream generation failed", error);
-      throw error;
-    }
+    })().catch((error) => {
+      console.error("[evaluation-workflow] asynchronous finalization processing failed", error);
+    });
   }
-  await writeAudit({
-    actorUserId,
-    actorRole: (await getActorRoles(actorUserId)).join(","),
-    action,
-    module: "Evaluation Workflow",
-    entityType: "evaluation",
-    entityId: evaluationId,
-    evaluationId,
-    previousValue: { status: current.status },
-    newValue: { status: next },
-  });
   return { ok: true };
 }
 

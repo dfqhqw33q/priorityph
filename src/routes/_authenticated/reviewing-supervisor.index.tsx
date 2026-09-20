@@ -38,7 +38,7 @@ function ReviewingSupervisorDashboard() {
   const fetchCycleOptions = useServerFn(listEvaluationCycleOptionsForUser);
 
   const cycleOptionsQuery = useQuery({
-    queryKey: ["cycle-options", "reviewing-supervisor"],
+    queryKey: ["cycle-options"],
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });

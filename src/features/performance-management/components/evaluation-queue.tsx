@@ -1,7 +1,7 @@
 ﻿import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
@@ -58,8 +58,12 @@ export function EvaluationQueue({
       division: string;
       section: string;
       status: EvaluationStatus | null;
+      page: number;
+      pageSize: number;
+      sort: SortKey;
+      sortDir: "asc" | "desc";
     };
-  }) => Promise<EvaluationListItem[]>;
+  }) => Promise<{ rows: EvaluationListItem[]; total: number }>;
   statuses: EvaluationStatus[];
   detailPath: "/supervisor/evaluations/$evaluationId" | "/president/evaluations/$evaluationId";
   emptyTitle: string;
@@ -83,6 +87,10 @@ export function EvaluationQueue({
     division: division === ALL ? "" : division,
     section: section === ALL ? "" : section,
     status: status === ALL ? null : (status as EvaluationStatus),
+    page,
+    pageSize: PAGE_SIZE,
+    sort: sort.key,
+    sortDir: sort.dir,
   };
 
   const optionsQuery = useQuery({
@@ -97,21 +105,14 @@ export function EvaluationQueue({
     retry: false,
   });
 
-  const rows = useMemo(() => {
-    const list = [...(query.data ?? [])];
-    list.sort((a, b) => {
-      const left = String(a[sort.key] ?? "");
-      const right = String(b[sort.key] ?? "");
-      return sort.dir === "asc" ? left.localeCompare(right) : right.localeCompare(left);
-    });
-    return list;
-  }, [query.data, sort]);
-
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const rows = query.data?.rows ?? [];
+  const total = query.data?.total ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const current = Math.min(page, pageCount - 1);
-  const visible = rows.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
+  const visible = rows;
 
   function toggleSort(key: SortKey) {
+    setPage(0);
     setSort((prev) => ({ key, dir: prev.key === key && prev.dir === "asc" ? "desc" : "asc" }));
   }
 
@@ -314,8 +315,8 @@ export function EvaluationQueue({
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {current * PAGE_SIZE + 1}-{Math.min(rows.length, (current + 1) * PAGE_SIZE)}{" "}
-              of {rows.length}
+              Showing {total === 0 ? 0 : current * PAGE_SIZE + 1}-{Math.min(total, (current + 1) * PAGE_SIZE)}{" "}
+              of {total}
             </p>
             <div className="flex gap-2">
               <Button

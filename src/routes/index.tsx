@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getAuthSession } from "@/hooks/use-access";
 import { getMyAccess } from "@/lib/access.functions";
 import { APP_NAME, roleLandingPath } from "@/lib/domain";
 
@@ -36,7 +37,7 @@ function Index() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.auth.getUser();
+      const { data } = await getAuthSession();
       if (cancelled) return;
       if (!data.user) {
         navigate({ to: "/login", replace: true });

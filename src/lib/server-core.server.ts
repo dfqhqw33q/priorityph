@@ -302,7 +302,40 @@ export type EvaluationQueueFilters = {
   section?: string;
   status?: string | null;
   correctionStage?: string;
+  supervisorUserId?: string;
 };
+
+export type EvaluationQueuePage = {
+  rows: EvaluationListItem[];
+  total: number;
+};
+
+const evaluationQueueSelect =
+  "id, status, correction_stage, supervisor_user_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, employee_submitted_at, supervisor_submitted_at, evaluation_cycles!inner(name, year)";
+
+function applyEvaluationQueueFilters(
+  query: ReturnType<AdminClient["from"]>,
+  statuses: string[],
+  filters: EvaluationQueueFilters = {},
+) {
+  const effective =
+    filters.status && statuses.includes(filters.status) ? [filters.status] : statuses;
+  let next = query.in("status", effective as never);
+  const search = (filters.search ?? "").trim();
+  if (search) {
+    const term = `%${search.replace(/[%,()]/g, "")}%`;
+    next = next.or(`full_name_snapshot.ilike.${term},employee_number_snapshot.ilike.${term}`);
+  }
+  if (filters.division?.trim()) next = next.eq("division_snapshot", filters.division.trim());
+  if (filters.section?.trim()) next = next.eq("section_snapshot", filters.section.trim());
+  if (filters.year) next = next.eq("evaluation_cycles.year", filters.year);
+  if (filters.correctionStage) next = next.eq("correction_stage", filters.correctionStage);
+  if (filters.supervisorUserId)
+    next = next.or(
+      `supervisor_user_id.is.null,supervisor_user_id.eq.${filters.supervisorUserId}`,
+    );
+  return next;
+}
 
 /**
  * Lists evaluations for the Supervisor/President queues. Deliberately unfiltered by
@@ -313,37 +346,45 @@ export async function listEvaluations(
   filters: EvaluationQueueFilters = {},
 ): Promise<EvaluationListItem[]> {
   const admin = await getAdmin();
-  const effective =
-    filters.status && statuses.includes(filters.status) ? [filters.status] : statuses;
-  let query = admin
-    .from("evaluations")
-    .select(
-      "id, status, correction_stage, supervisor_user_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, employee_submitted_at, supervisor_submitted_at, evaluation_cycles!inner(name, year)",
-    )
-    .in("status", effective as never)
-    .order("employee_submitted_at", { ascending: false });
-
-  const search = (filters.search ?? "").trim();
-  if (search) {
-    const term = `%${search.replace(/[%,()]/g, "")}%`;
-    query = query.or(`full_name_snapshot.ilike.${term},employee_number_snapshot.ilike.${term}`);
-  }
-  if (filters.division?.trim()) query = query.eq("division_snapshot", filters.division.trim());
-  if (filters.section?.trim()) query = query.eq("section_snapshot", filters.section.trim());
-  if (filters.year) query = query.eq("evaluation_cycles.year", filters.year);
-  if (filters.correctionStage) query = query.eq("correction_stage", filters.correctionStage);
+  const query = applyEvaluationQueueFilters(
+    admin.from("evaluations").select(evaluationQueueSelect),
+    statuses,
+    filters,
+  ).order("employee_submitted_at", { ascending: false });
 
   const { data } = await query;
-  return (data ?? []).map((row) => {
-    const record = row as unknown as Record<string, unknown>;
-    const cycle = record["evaluation_cycles"] as { name: string; year: number } | null;
-    const { evaluation_cycles: _ignored, ...rest } = record;
-    return {
-      ...rest,
-      cycle_name: cycle?.name ?? "",
-      cycle_year: cycle?.year ?? 0,
-    };
-  }) as EvaluationListItem[];
+  return (data ?? []).map(mapEvaluationListRow);
+}
+
+export async function listEvaluationsPage(
+  statuses: string[],
+  filters: EvaluationQueueFilters = {},
+  page = 0,
+  pageSize = 20,
+  sort: "full_name_snapshot" | "employee_number_snapshot" | "employee_submitted_at" | "status" =
+    "employee_submitted_at",
+  sortDir: "asc" | "desc" = "desc",
+  supervisorUserId?: string,
+): Promise<EvaluationQueuePage> {
+  const admin = await getAdmin();
+  const query = applyEvaluationQueueFilters(
+    admin.from("evaluations").select(evaluationQueueSelect, { count: "exact" }),
+    statuses,
+    { ...filters, supervisorUserId },
+  ).order(sort, { ascending: sortDir === "asc" });
+  const { data, count } = await query.range(page * pageSize, page * pageSize + pageSize - 1);
+  return { rows: (data ?? []).map(mapEvaluationListRow), total: count ?? 0 };
+}
+
+function mapEvaluationListRow(row: unknown): EvaluationListItem {
+  const record = row as Record<string, unknown>;
+  const cycle = record["evaluation_cycles"] as { name: string; year: number } | null;
+  const { evaluation_cycles: _ignored, ...rest } = record;
+  return {
+    ...rest,
+    cycle_name: cycle?.name ?? "",
+    cycle_year: cycle?.year ?? 0,
+  } as EvaluationListItem;
 }
 
 /** Distinct division/section/year values, used to populate queue filters. */
@@ -811,6 +852,21 @@ async function assignedStatusCountsForRole(
     number
   >;
 
+  if (role === "SUPERVISOR" || role === "PRESIDENT") {
+    const admin = await getAdmin();
+    let query = admin.from("evaluations").select("status");
+    if (role === "SUPERVISOR") {
+      query = query.or(`supervisor_user_id.is.null,supervisor_user_id.eq.${userId}`);
+    }
+    if (cycleId) query = query.eq("cycle_id", cycleId);
+    const { data } = await query;
+    for (const row of data ?? []) {
+      const status = row.status as EvaluationStatus;
+      if (status in counts) counts[status] += 1;
+    }
+    return counts;
+  }
+
   for (const status of EVALUATION_STATUSES) {
     counts[status] = await countAssignedEvaluationsForRole(userId, role, [status], cycleId);
   }
@@ -883,30 +939,12 @@ export async function committeeStats(userId: string, cycleId: string | null = nu
   const admin = await getAdmin();
   const counts = await assignedStatusCountsForRole(userId, "COMMITTEE", cycleId);
   const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
-  const { count: trainingRequiredCount } = await admin
+  let trainingQuery = admin
     .from("evaluations")
     .select("id", { count: "exact", head: true })
     .filter("final_action", "eq", "TRAINING_REQUIRED");
-
-  if (cycleId) {
-    const { count } = await admin
-      .from("evaluations")
-      .select("id", { count: "exact", head: true })
-      .eq("cycle_id", cycleId)
-      .filter("final_action", "eq", "TRAINING_REQUIRED");
-    return {
-      totalEvaluations,
-      awaiting: counts.FOR_REVIEW,
-      toReview: counts.FOR_REVIEW,
-      returned: counts.RETURNED,
-      drafts: counts.DRAFT,
-      inProgress: counts.FOR_PROCESSING + counts.FOR_APPROVAL,
-      completed: counts.FOR_APPROVAL,
-      finalized: counts.FINALIZED,
-      trainingRequired: count ?? 0,
-      statusBreakdown: counts,
-    };
-  }
+  if (cycleId) trainingQuery = trainingQuery.eq("cycle_id", cycleId);
+  const { count: trainingRequiredCount } = await trainingQuery;
 
   return {
     totalEvaluations,
@@ -926,12 +964,10 @@ export async function presidentStats(userId: string, cycleId: string | null = nu
   const admin = await getAdmin();
   const counts = await assignedStatusCountsForRole(userId, "PRESIDENT", cycleId);
   const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
-  const [awaiting, inReview, submitted, finalized] = await Promise.all([
-    countAssignedEvaluationsForRole(userId, "PRESIDENT", ["FOR_REVIEW", "FOR_PROCESSING"], cycleId),
-    countAssignedEvaluationsForRole(userId, "PRESIDENT", ["FOR_APPROVAL"], cycleId),
-    countAssignedEvaluationsForRole(userId, "PRESIDENT", ["FINALIZED"], cycleId),
-    countAssignedEvaluationsForRole(userId, "PRESIDENT", ["FINALIZED"], cycleId),
-  ]);
+  const awaiting = counts.FOR_REVIEW + counts.FOR_PROCESSING;
+  const inReview = counts.FOR_APPROVAL;
+  const submitted = counts.FINALIZED;
+  const finalized = counts.FINALIZED;
   const [step2, step3] = await Promise.all([
     countEvaluationsWithSubmission("president_step2_submitted_at", cycleId),
     countEvaluationsWithSubmission("president_step3_submitted_at", cycleId),

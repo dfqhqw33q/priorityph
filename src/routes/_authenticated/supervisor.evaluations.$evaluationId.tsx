@@ -612,8 +612,10 @@ function SupervisorReviewPageInner({
     onSuccess: async () => {
       toast.success("Step 2 submitted for Reviewing Supervisor review");
       setDirty(false);
-      await queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] });
-      await queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["evaluation", evaluationId] }),
+        queryClient.invalidateQueries({ queryKey: ["supervisor-queue"] }),
+      ]);
       navigate({ to: "/supervisor/evaluations" });
     },
     onError: (error: Error) => toast.error(userErrorMessage(error, "Step 2 submission failed")),

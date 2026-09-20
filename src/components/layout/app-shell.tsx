@@ -568,11 +568,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (accessDenied) return null;
 
   async function signOut() {
-    try {
-      await logEvent({ data: { event: "LOGOUT" } });
-    } catch (error) {
-      void error;
-    }
+    void logEvent({ data: { event: "LOGOUT" } }).catch(() => undefined);
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();

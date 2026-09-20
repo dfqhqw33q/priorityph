@@ -51,7 +51,7 @@ function SupervisorDashboard() {
   const fetchCycleOptions = useServerFn(listEvaluationCycleOptionsForUser);
 
   const cycleOptionsQuery = useQuery({
-    queryKey: ["cycle-options", "supervisor"],
+    queryKey: ["cycle-options"],
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });

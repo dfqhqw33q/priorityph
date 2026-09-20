@@ -36,7 +36,7 @@ function HrDashboard() {
   const fetchCycleOptions = useServerFn(listEvaluationCycleOptionsForUser);
 
   const cycleOptionsQuery = useQuery({
-    queryKey: ["cycle-options", "hr"],
+    queryKey: ["cycle-options"],
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });

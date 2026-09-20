@@ -61,6 +61,7 @@ export const savePresidentRatings = createServerFn({ method: "POST" })
     const evaluation = await assertVersion(data.evaluationId, data.version);
     if (evaluation.is_finalized || evaluation.status === "FINALIZED")
       throw validationError("This evaluation can no longer be edited");
+    const rolesPromise = getActorRoles(context.userId);
     await upsertPresidentRatings(data.evaluationId, data.ratings, context.userId);
     const admin = await getAdmin();
     const { error } = await admin
@@ -71,30 +72,33 @@ export const savePresidentRatings = createServerFn({ method: "POST" })
     if (error) throw validationError(error.message);
     const score = await computeScore(data.evaluationId);
     await persistScore(data.evaluationId, score, context.userId);
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "PRESIDENT_RATINGS_UPDATED",
-      module: "President Review",
-      entityType: "evaluation",
-      entityId: data.evaluationId,
-      evaluationId: data.evaluationId,
-      newValue: { ratings: data.ratings.length },
-    });
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "SCORE_CALCULATED",
-      module: "Scoring",
-      entityType: "evaluation",
-      entityId: data.evaluationId,
-      evaluationId: data.evaluationId,
-      newValue: {
-        finalScore: score.finalScore,
-        finalRating: score.finalRatingLabel,
-        status: score.status,
-      },
-    });
+    const roles = await rolesPromise;
+    await Promise.all([
+      writeAudit({
+        actorUserId: context.userId,
+        actorRole: roles.join(","),
+        action: "PRESIDENT_RATINGS_UPDATED",
+        module: "President Review",
+        entityType: "evaluation",
+        entityId: data.evaluationId,
+        evaluationId: data.evaluationId,
+        newValue: { ratings: data.ratings.length },
+      }),
+      writeAudit({
+        actorUserId: context.userId,
+        actorRole: roles.join(","),
+        action: "SCORE_CALCULATED",
+        module: "Scoring",
+        entityType: "evaluation",
+        entityId: data.evaluationId,
+        evaluationId: data.evaluationId,
+        newValue: {
+          finalScore: score.finalScore,
+          finalRating: score.finalRatingLabel,
+          status: score.status,
+        },
+      }),
+    ]);
     return { ok: true };
   });
 

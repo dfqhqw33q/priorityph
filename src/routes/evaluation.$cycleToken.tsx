@@ -57,6 +57,7 @@ function PublicEvaluationPage() {
   const [verificationMessage, setVerificationMessage] = useState("");
   const [signatureMethod, setSignatureMethod] = useState<"UPLOAD" | "DRAWN">("DRAWN");
   const [signatureData, setSignatureData] = useState("");
+  const signatureDataRef = useRef("");
   const [deviceSessionId] = useState(() => {
     const key = "phl-evaluation-device-session";
     const existing = sessionStorage.getItem(key);
@@ -107,6 +108,7 @@ function PublicEvaluationPage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+    signatureDataRef.current = "";
     setSignatureData("");
   }
 
@@ -124,7 +126,14 @@ function PublicEvaluationPage() {
       (event.clientY - rect.top) * (canvas.height / rect.height),
     );
     context.stroke();
-    setSignatureData(canvas.toDataURL("image/png"));
+  }
+
+  function finishSignature(event: React.PointerEvent<HTMLCanvasElement>) {
+    drawingRef.current = false;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    const data = event.currentTarget.toDataURL("image/png");
+    signatureDataRef.current = data;
+    setSignatureData(data);
   }
 
   async function verifyProfile() {
@@ -505,6 +514,7 @@ function PublicEvaluationPage() {
                     variant={signatureMethod === "DRAWN" ? "default" : "outline"}
                     onClick={() => {
                       setSignatureMethod("DRAWN");
+                      signatureDataRef.current = "";
                       setSignatureData("");
                     }}
                   >
@@ -515,6 +525,7 @@ function PublicEvaluationPage() {
                     variant={signatureMethod === "UPLOAD" ? "default" : "outline"}
                     onClick={() => {
                       setSignatureMethod("UPLOAD");
+                      signatureDataRef.current = "";
                       setSignatureData("");
                     }}
                   >
@@ -540,10 +551,7 @@ function PublicEvaluationPage() {
                         event.currentTarget.setPointerCapture(event.pointerId);
                       }}
                       onPointerMove={drawSignature}
-                      onPointerUp={(event) => {
-                        drawingRef.current = false;
-                        event.currentTarget.releasePointerCapture(event.pointerId);
-                      }}
+                      onPointerUp={finishSignature}
                     />
                     <Button type="button" variant="ghost" onClick={clearSignature}>
                       Clear signature
@@ -565,7 +573,11 @@ function PublicEvaluationPage() {
                           return;
                         }
                         const reader = new FileReader();
-                        reader.onload = () => setSignatureData(String(reader.result));
+                        reader.onload = () => {
+                          const data = String(reader.result);
+                          signatureDataRef.current = data;
+                          setSignatureData(data);
+                        };
                         reader.readAsDataURL(file);
                       }}
                     />

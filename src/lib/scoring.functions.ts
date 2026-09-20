@@ -274,10 +274,12 @@ export async function processFinalizedEvaluationSupportModules(
   const { ensureRecognitionCandidatesForEvaluation } =
     await import("@/features/social-recognition/recognition.functions");
 
-  await ensureDevelopmentRecordsForEvaluation(evaluationId);
-  await ensureTrainingRecommendationsForEvaluation(evaluationId);
-  await ensureSuccessionProfileForEvaluation(evaluationId);
-  await ensureRecognitionCandidatesForEvaluation(evaluationId);
+  await Promise.all([
+    ensureDevelopmentRecordsForEvaluation(evaluationId),
+    ensureTrainingRecommendationsForEvaluation(evaluationId),
+    ensureSuccessionProfileForEvaluation(evaluationId),
+    ensureRecognitionCandidatesForEvaluation(evaluationId),
+  ]);
 }
 
 export const reprocessFinalizedEvaluationSupportModules = createServerFn({ method: "POST" })
@@ -316,7 +318,6 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
     } = await import("./server-core.server");
     const { checkFinalizationEligibility, persistScore, emitNotification } =
       await import("./scoring.server");
-    const { createFinalEvaluationDocument } = await import("./documents.server");
     await requirePermission(context.userId, "evaluations.finalize", "Evaluations");
 
     const admin = await getAdmin();
@@ -363,28 +364,12 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
           .eq("evaluation_id", data.evaluationId),
       ]);
 
-      const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
-      await Promise.all([
-        createFinalEvaluationDocument(data.evaluationId, context.userId),
-        processFinalizedEvaluationSupportModules(data.evaluationId),
-        queueEmployeeFinalizedStep1Email(data.evaluationId),
-      ]);
-
       await admin.from("evaluation_events").insert({
         evaluation_id: data.evaluationId,
         event_type: "FINALIZED",
         to_status: "FINALIZED",
         actor_user_id: context.userId,
         reason: data.reason,
-      });
-
-      await emitNotification({
-        evaluationId: data.evaluationId,
-        eventType: "EVALUATION_FINALIZED",
-        audiencePermission: "reports.view",
-        title: "Performance Evaluation Finalized",
-        body: "Your performance evaluation has been finalized and is now complete.",
-        dedupeKey: `finalized:${data.evaluationId}`,
       });
 
       await writeAudit({
@@ -397,6 +382,26 @@ export const finalizeEvaluation = createServerFn({ method: "POST" })
         evaluationId: data.evaluationId,
         newValue: { finalScore: score.finalScore, finalRating: score.finalRatingLabel },
         reason: data.reason,
+      });
+
+      void (async () => {
+        const { createFinalEvaluationDocument } = await import("./documents.server");
+        const { queueEmployeeFinalizedStep1Email } = await import("./public.functions");
+        await Promise.all([
+          createFinalEvaluationDocument(data.evaluationId, context.userId),
+          processFinalizedEvaluationSupportModules(data.evaluationId),
+          queueEmployeeFinalizedStep1Email(data.evaluationId),
+          emitNotification({
+            evaluationId: data.evaluationId,
+            eventType: "EVALUATION_FINALIZED",
+            audiencePermission: "reports.view",
+            title: "Performance Evaluation Finalized",
+            body: "Your performance evaluation has been finalized and is now complete.",
+            dedupeKey: `finalized:${data.evaluationId}`,
+          }),
+        ]);
+      })().catch((error) => {
+        console.error("[finalization] asynchronous downstream processing failed", error);
       });
 
       return { ok: true as const };
