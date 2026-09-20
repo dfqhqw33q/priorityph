@@ -525,8 +525,6 @@ function EmployeeFileContent({
               <TableRow>
                 <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Evaluation Cycle</TableHead>
                 <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Status</TableHead>
-                <TableHead className="min-w-[140px] bg-primary text-primary-foreground">Job Title</TableHead>
-                <TableHead className="min-w-[160px] bg-primary text-primary-foreground">Division / Department</TableHead>
                 <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">Finalized</TableHead>
                 <TableHead className="min-w-[220px] bg-primary text-primary-foreground">Actions</TableHead>
               </TableRow>
@@ -538,8 +536,6 @@ function EmployeeFileContent({
                   <TableCell className="whitespace-nowrap">
                     <EvaluationStatusBadge status={item.status as EvaluationStatus} />
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{item.jobTitle || "-"}</TableCell>
-                  <TableCell className="text-muted-foreground">{item.division || "-"}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                     {formatDateTime(item.finalizedAt)}
                   </TableCell>
@@ -548,7 +544,6 @@ function EmployeeFileContent({
                       <div className="flex flex-wrap gap-2">
                         <Button variant="outline" size="sm" onClick={() => onOpenDocument(item.id, "preview")}>Preview</Button>
                         <Button variant="outline" size="sm" onClick={() => onOpenDocument(item.id, "print")}>Print</Button>
-                        <Button variant="outline" size="sm" onClick={() => onOpenDocument(item.id, "export")}>Export</Button>
                       </div>
                     ) : <span className="text-sm text-muted-foreground">-</span>}
                   </TableCell>
@@ -793,12 +788,6 @@ function ComparisonResults({
         >
           Print Comparison
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => exportComparison(contentRef.current?.innerHTML ?? "")}
-        >
-          Export Comparison
-        </Button>
         <Button variant="outline" onClick={onBack}>
           Back to periods
         </Button>
@@ -819,16 +808,6 @@ function printComparison(content: string) {
   printWindow.print();
 }
 
-function exportComparison(content: string) {
-  if (!content) return;
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Performance Evaluation Comparison</title></head><body>${content}</body></html>`;
-  const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = "performance-evaluation-comparison.html";
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
 
 function EvaluationInformationTable({
   selected,

@@ -64,7 +64,7 @@ export function EvaluationDocumentPreview({
             onClick={() => frameRef.current?.contentWindow?.print()}
             disabled={!html || loading}
           >
-            Print / Export PDF
+            Print
           </Button>
         </DialogFooter>
       </DialogContent>

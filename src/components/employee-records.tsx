@@ -543,13 +543,6 @@ function EmployeeFileContent({
                     >
                       Print
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onOpenDocument(item.id, "export")}
-                    >
-                      Export
-                    </Button>
                   </>
                 ) : null}
               </div>
@@ -784,12 +777,6 @@ function ComparisonResults({
         >
           Print Comparison
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => exportComparison(contentRef.current?.innerHTML ?? "")}
-        >
-          Export Comparison
-        </Button>
         <Button variant="outline" onClick={onBack}>
           Back to periods
         </Button>
@@ -810,16 +797,6 @@ function printComparison(content: string) {
   printWindow.print();
 }
 
-function exportComparison(content: string) {
-  if (!content) return;
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Performance Evaluation Comparison</title></head><body>${content}</body></html>`;
-  const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = "performance-evaluation-comparison.html";
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
 
 function EvaluationInformationTable({
   selected,

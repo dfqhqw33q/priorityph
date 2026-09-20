@@ -1454,7 +1454,7 @@ export function EvaluationStageDetail({
                 Preview Evaluation
               </Button>
               <Button type="button" variant="outline" onClick={openDocument}>
-                Print / Export PDF
+                Print
               </Button>
               <Button type="button" variant="secondary" onClick={openDocument}>
                 Refresh PDF
