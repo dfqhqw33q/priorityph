@@ -128,10 +128,12 @@ export async function queueEmployeeFinalizedStep1Email(evaluationId: string) {
   )}.pdf`;
   const base64Pdf = Buffer.from(documentPdf).toString("base64");
   const html = `
-    <p>Hello,</p>
-    <p>Your completed Step 1 performance evaluation has been finalized and is ready for your records.</p>
-    <p>The attached file contains the finalized evaluation summary prepared for the employee record.</p>
-    <p>Thank you.</p>
+    <p>Dear Employee,</p>
+    <p><strong>This is to inform you that your performance evaluation result has been finalized.</strong></p>
+    <p>Please find attached the <strong>finalized evaluation document</strong> containing your official evaluation result for the current period, including the <strong>final score</strong> and <strong>corresponding adjective rating</strong>.</p>
+    <p>This document is provided for your <strong>personal record only</strong>.</p>
+    <p>Thank you for your continued dedication and service to the Company.</p>
+    <p><strong>Priority Handling Logistics, Inc.</strong><br>Personnel Office</p>
   `;
 
   try {
@@ -282,18 +284,12 @@ export async function queueEmployeeFinalizedEvaluationEmail(evaluationId: string
 
     const subject = "Your Performance Evaluation Has Been Finalized";
     const htmlContent = `
-      <p>Hello,</p>
-      <p>Your completed performance evaluation has been finalized and is ready for your records.</p>
-      <p>The attached file contains your complete evaluation, including:</p>
-      <ul>
-        <li>Your evaluation ratings (Step 1)</li>
-        <li>Supervisor conclusions and comments (Step 2)</li>
-        <li>Reviewing Supervisor review (Step 3)</li>
-        <li>Personnel Office results (Total Points, Adjective Rating)</li>
-        <li>Performance Evaluation Committee recommendation</li>
-        <li>President approval and final action</li>
-      </ul>
-      <p>Thank you.</p>
+      <p>Dear Employee,</p>
+      <p><strong>This is to inform you that your performance evaluation result has been finalized.</strong></p>
+      <p>Please find attached the <strong>finalized evaluation document</strong> containing your official evaluation result for the current period, including the <strong>final score</strong> and <strong>corresponding adjective rating</strong>.</p>
+      <p>This document is provided for your <strong>personal record only</strong>.</p>
+      <p>Thank you for your continued dedication and service to the Company.</p>
+      <p><strong>Priority Handling Logistics, Inc.</strong><br>Personnel Office</p>
     `;
 
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {

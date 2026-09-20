@@ -260,14 +260,14 @@ export function generateEvaluationHTML(params: {
     .step-three-section { margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
     .step-three-section-title { margin: 0 0 8px; }
     .step-three-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 12px; margin-bottom: 8px; }
-    .step-three-field { display: flex; align-items: flex-end; gap: 8px; min-height: 26px; }
-    .step-three-field-label { white-space: nowrap; line-height: 1.2; display: inline-flex; align-items: flex-end; }
-    .step-three-field-value { flex: 1; min-height: 18px; padding-bottom: 2px; border-bottom: 1px solid #000; word-wrap: break-word; line-height: 1; display: inline-block; vertical-align: bottom; }
-    .step-three-result-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
-    .step-three-result-field { display: flex; align-items: flex-end; gap: 8px; min-height: 26px; }
+    .step-three-field { display: flex; align-items: baseline; gap: 8px; min-height: 26px; }
+    .step-three-field-label { white-space: nowrap; line-height: 1.2; display: inline-flex; align-items: baseline; }
+    .step-three-field-value { flex: 1; min-height: 18px; padding-bottom: 2px; border-bottom: 1px solid #000; word-wrap: break-word; line-height: 1; display: inline-block; vertical-align: baseline; }
+    .step-three-result-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+    .step-three-result-field { display: flex; align-items: baseline; gap: 8px; min-height: 26px; }
     .step-three-result-field.total { flex: 1; min-width: 180px; }
     .step-three-result-field.rating { flex: 1; min-width: 250px; }
-    .step-three-result-value { min-width: 86px; flex: 1; min-height: 18px; padding-bottom: 2px; border-bottom: 1px solid #000; line-height: 1; display: inline-block; vertical-align: bottom; }
+    .step-three-result-value { min-width: 86px; flex: 1; min-height: 18px; padding-bottom: 2px; border-bottom: 1px solid #000; line-height: 1; display: inline-block; vertical-align: baseline; }
     .step-three-result-field.total .step-three-result-value { max-width: 90px; }
     .step-three-result-field.rating .step-three-result-value { max-width: 120px; }
     .step-three-prepared { display: flex; justify-content: flex-end; }
@@ -527,10 +527,6 @@ export function generateEvaluationHTML(params: {
 
       <section class="step-three-section">
         <h3 class="step-three-section-title">PERFORMANCE EVALUATION RESULT FOR THIS PERIOD</h3>
-        <div class="step-three-result-row">
-          <div class="step-three-result-field total"><strong>TOTAL POINTS:</strong><span class="step-three-result-value">${text(params.totalPoints)}</span></div>
-          <div class="step-three-result-field rating"><strong>ADJECTIVE RATING:</strong><span class="step-three-result-value">${text(params.adjectiveRating)}</span></div>
-        </div>
         <div class="step-three-field" style="margin-bottom:20px;"><span class="step-three-field-label">Recommended Increase / Bonus :</span><span class="step-three-field-value">${text(params.recommendedIncreaseBonus)}</span></div>
         <div class="step-three-prepared">
           <div class="workflow-signature">
@@ -745,9 +741,19 @@ export function generateEmployeeFinalizedHTML(data: EvaluationDocumentData): str
     "<title></title>",
     `<title>${title}</title>`,
   );
-  const stepTwoStart = fullDocumentWithTitle.indexOf('\n    <div class="step-two">');
+  const performanceHeading =
+    '<h3 class="step-three-section-title">PERFORMANCE EVALUATION RESULT FOR THIS PERIOD</h3>';
+  const performanceSummary = `
+        <div class="step-three-result-row">
+          <div class="step-three-result-field total"><strong>TOTAL POINTS:</strong><span class="step-three-result-value">${data.totalPoints || " "}</span></div>
+          <div class="step-three-result-field rating"><strong>ADJECTIVE RATING:</strong><span class="step-three-result-value">${data.adjectiveRating || " "}</span></div>
+        </div>`;
+  const injectedDocument = fullDocumentWithTitle.includes(performanceHeading)
+    ? fullDocumentWithTitle.replace(performanceHeading, `${performanceHeading}${performanceSummary}`)
+    : fullDocumentWithTitle;
+  const stepTwoStart = injectedDocument.indexOf('\n    <div class="step-two">');
   if (stepTwoStart < 0) throw new Error("Step 2 marker not found in evaluation document");
-  return `${fullDocumentWithTitle.slice(0, stepTwoStart)}\n  </div>\n</body>\n</html>`;
+  return `${injectedDocument.slice(0, stepTwoStart)}\n  </div>\n</body>\n</html>`;
 }
 
 export async function generateEmployeeFinalizedBrowserPDF(
