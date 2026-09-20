@@ -47,7 +47,7 @@ const STAGE_DEFINITIONS = [
 
 const STAGE_EVENT_TYPES: Record<string, string[]> = {
   EMPLOYEE: ["STEP1_SUBMITTED", "EMPLOYEE_STEP1_SUBMITTED"],
-  SUPERVISOR: ["RATER_STEP2_SUBMITTED", "RATER_STEP2_DRAFT_SAVED"],
+  SUPERVISOR: ["RATER_STEP2_SUBMITTED"],
   REVIEWING_SUPERVISOR: [
     "REVIEWING_SUPERVISOR_REVIEW_STARTED",
     "REVIEWING_SUPERVISOR_SUBMITTED",
@@ -64,8 +64,24 @@ const STAGE_EVENT_TYPES: Record<string, string[]> = {
   ],
 };
 
-function humanize(value: string | null | undefined) {
-  return (value ?? "").replaceAll("_", " ").toUpperCase();
+const EVENT_LABELS: Record<string, string> = {
+  STEP1_SUBMITTED: "PERFORMANCE EVALUATION SUBMITTED",
+  EMPLOYEE_STEP1_SUBMITTED: "PERFORMANCE EVALUATION SUBMITTED",
+  RATER_STEP2_SUBMITTED: "PERFORMANCE EVALUATION SUBMITTED TO REVIEWING SUPERVISOR",
+  REVIEWING_SUPERVISOR_REVIEW_STARTED: "PERFORMANCE EVALUATION REVIEW STARTED",
+  REVIEWING_SUPERVISOR_SUBMITTED: "PERFORMANCE EVALUATION SUBMITTED TO HR PERSONNEL",
+  PERSONNEL_SUBMITTED: "PERFORMANCE EVALUATION SUBMITTED TO COMMITTEE",
+  COMMITTEE_SUBMITTED: "PERFORMANCE EVALUATION SUBMITTED TO PRESIDENT",
+  PRESIDENT_STEP2_SUBMITTED: "PRESIDENT EVALUATION REVIEW SUBMITTED",
+  PRESIDENT_STEP3_SUBMITTED: "PRESIDENT EVALUATION REVIEW COMPLETED",
+  PRESIDENT_APPROVED: "PERFORMANCE EVALUATION APPROVED",
+  PRESIDENT_RETURNED: "PERFORMANCE EVALUATION RETURNED",
+  FINALIZED: "PERFORMANCE EVALUATION FINALIZED",
+  RETURNED: "PERFORMANCE EVALUATION RETURNED",
+};
+
+function eventLabel(value: string | null | undefined) {
+  return EVENT_LABELS[value ?? ""] ?? "PERFORMANCE EVALUATION UPDATED";
 }
 
 function formatActorName(fullName: string) {
@@ -97,15 +113,14 @@ function stageForEvent(eventType: string): WorkflowStageKey | undefined {
 
 function buildStages(events: WorkflowEvent[]): WorkflowStage[] {
   const stages = STAGE_DEFINITIONS.map((stage) => ({ ...stage, events: [] as WorkflowEvent[] }));
-  const stageMap = new Map<WorkflowStageKey, WorkflowStage>(
+  const stageMap = Object.fromEntries(
     stages.map((stage) => [stage.key as WorkflowStageKey, stage]),
-  );
+  ) as Record<WorkflowStageKey, WorkflowStage>;
 
   for (const event of events) {
     const stageKey = stageForEvent(event.event_type);
     if (!stageKey) continue;
-    const stage = stageMap.get(stageKey);
-    if (stage) stage.events.push(event);
+    stageMap[stageKey].events.push(event);
   }
 
   return stages;
@@ -120,23 +135,27 @@ export function EvaluationProgressStepper({
   currentStatus: string;
   employeeName: string;
 }) {
-    const stages = buildStages(
-      [...events]
-        .sort((left, right) => left.occurred_at.localeCompare(right.occurred_at))
-        .map((event) => ({
-          ...event,
-          actorName: formatActorName(
-            stageForEvent(event.event_type) === "EMPLOYEE" &&
+  const stages = buildStages(
+    [...events]
+      .filter((event) => event.event_type !== "RATER_STEP2_DRAFT_SAVED")
+      .sort((left, right) => left.occurred_at.localeCompare(right.occurred_at))
+      .map((event) => ({
+        ...event,
+        actorName: formatActorName(
+          stageForEvent(event.event_type) === "EMPLOYEE" &&
             (event.actorName === "System" || event.actorName === "Unknown user")
-              ? employeeName
-              : event.actorName,
-          ),
-        })),
+            ? employeeName
+            : event.actorName,
+        ),
+      })),
   );
   const completedStageCount = stages.filter((stage) => stage.events.length > 0).length;
-  const currentStage = currentStatus === "FOR_APPROVAL" || currentStatus === "RETURNED" || currentStatus === "FINALIZED"
-    ? "PRESIDENT"
-    : "";
+  const currentStage =
+    currentStatus === "FOR_APPROVAL" ||
+    currentStatus === "RETURNED" ||
+    currentStatus === "FINALIZED"
+      ? "PRESIDENT"
+      : "";
 
   const activeStep = Math.max(
     1,
@@ -186,7 +205,7 @@ export function EvaluationProgressStepper({
                             className="mt-1.5 rounded-md border border-border/70 bg-muted/20 px-2.5 py-2"
                           >
                             <p className="break-words text-xs font-semibold text-foreground">
-                              {humanize(event.event_type)}
+                              {eventLabel(event.event_type)}
                             </p>
                             <p className="mt-0.5 break-words text-xs text-muted-foreground">
                               {event.actorName}
