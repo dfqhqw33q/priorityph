@@ -1,4 +1,4 @@
-﻿import { Link } from "@tanstack/react-router";
+﻿import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -69,6 +69,7 @@ export function EvaluationQueue({
   emptyTitle: string;
 }) {
   const fetchOptions = useServerFn(listQueueFilterOptions);
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [year, setYear] = useState<string>(ALL);
@@ -273,13 +274,13 @@ export function EvaluationQueue({
                         {row.employee_number_snapshot}
                       </TableCell>
                       <TableCell>
-                        <Link
+                        <button
+                          type="button"
                           className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                          to={detailPath}
-                          params={{ evaluationId: row.id }}
+                          onClick={() => navigate({ to: detailPath, params: { evaluationId: row.id } })}
                         >
                           {row.full_name_snapshot}
-                        </Link>
+                        </button>
                       </TableCell>
                       <TableCell className="min-w-[150px] text-muted-foreground">
                         {row.job_title_snapshot || "—"}
@@ -300,10 +301,13 @@ export function EvaluationQueue({
                         <EvaluationStatusBadge status={badgeStatus} />
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to={detailPath} params={{ evaluationId: row.id }}>
-                            Open
-                          </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          onClick={() => navigate({ to: detailPath, params: { evaluationId: row.id } })}
+                        >
+                          Open
                         </Button>
                       </TableCell>
                     </TableRow>

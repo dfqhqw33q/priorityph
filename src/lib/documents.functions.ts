@@ -118,7 +118,7 @@ export const uploadEmployeeDocument = createServerFn({ method: "POST" })
     return document;
   });
 
-export const getEvaluationSheetHtml = createServerFn({ method: "GET" })
+export const getEvaluationSheetHtml = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) =>
     z

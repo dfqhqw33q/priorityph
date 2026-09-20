@@ -1,6 +1,6 @@
 ﻿import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { listEvaluationStageQueue } from "@/lib/evaluation-workflow.functions";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ const titles: Record<Stage, string> = {
 
 export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
   const fetchQueue = useServerFn(listEvaluationStageQueue);
+  const navigate = useNavigate();
   const query = useQuery({
     queryKey: ["phase2-queue", stage],
     queryFn: () => fetchQueue({ data: { stage } }),
@@ -108,13 +109,15 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
                     {row.employee_number_snapshot}
                   </TableCell>
                   <TableCell>
-                    <Link
+                    <button
+                      type="button"
                       className="font-normal text-foreground transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      to={detailPath as never}
-                      params={{ evaluationId: row.id } as never}
+                      onClick={() =>
+                        navigate({ to: detailPath as never, params: { evaluationId: row.id } as never })
+                      }
                     >
                       {row.full_name_snapshot}
-                    </Link>
+                    </button>
                   </TableCell>
                   <TableCell>{row.job_title_snapshot || "—"}</TableCell>
                   <TableCell>{row.division_snapshot || "—"}</TableCell>
@@ -129,10 +132,15 @@ export function EvaluationStageQueuePage({ stage }: { stage: Stage }) {
                     <EvaluationStatusBadge status={row.status as EvaluationStatus} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={detailPath as never} params={{ evaluationId: row.id } as never}>
-                        Open
-                      </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      onClick={() =>
+                        navigate({ to: detailPath as never, params: { evaluationId: row.id } as never })
+                      }
+                    >
+                      Open
                     </Button>
                   </TableCell>
                 </TableRow>
