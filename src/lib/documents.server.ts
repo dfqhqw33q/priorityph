@@ -186,7 +186,7 @@ export function generateEvaluationHTML(params: {
     .sig-date { font-size: 9px; }
     
     .conclusions { border-top: 1px solid #000; padding-top: 12px; }
-    .conclusions h3 { text-align: left; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+    .conclusions h3 { text-align: center; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
     .conclusions h4 { font-size: 12px; font-weight: bold; margin: 8px 0; }
     .conclusions p { font-size: 12px; margin: 4px 0; }
     .conclusions .question { margin-bottom: 8px; }
@@ -210,7 +210,7 @@ export function generateEvaluationHTML(params: {
       }
       .step-two, .step-three { orphans: 3; widows: 3; }
     }
-    .step-two-header { text-align: left; margin-bottom: 18px; }
+    .step-two-header { text-align: center; margin-bottom: 18px; }
     .step-two-header h1 { font-size: 16px; margin: 0 0 4px; text-transform: uppercase; }
     .step-two-header h2 { font-size: 13px; margin: 0; text-transform: uppercase; }
     .step-two-title { margin-bottom: 12px; }
@@ -250,7 +250,7 @@ export function generateEvaluationHTML(params: {
     .step-three h2, .step-three h3 { font-weight: bold; text-transform: uppercase; }
     .step-three-header { margin-bottom: 8px; }
     .step-three-comments { margin-bottom: 8px; }
-    .step-three-comments-title { text-align: left; margin-bottom: 8px; }
+    .step-three-comments-title { text-align: center; margin-bottom: 8px; }
     .comment-lines { border-bottom: 1px solid #000; margin-bottom: 8px; padding-bottom: 6px; white-space: pre-wrap; line-height: 1.22; overflow-wrap: anywhere; }
     .step-three-signature { display: flex; justify-content: flex-end; margin-top: 8px; }
     .step-three-rule { border: 0; border-top: 1px solid #000; margin: 10px 0; }
@@ -402,9 +402,10 @@ export function generateEvaluationHTML(params: {
     
     <div class="step-two">
       <header class="step-two-header">
-        <h1>DEVELOP CONCLUSION AND COMMENTS</h1>
+        <h1>Conclusions and Comments</h1>
         <h2>(Confidential: Not to be shown to ratee)</h2>
       </header>
+      <div class="step-two-title"><strong>STEP TWO:</strong> Develop conclusion and comments</div>
       <div>
         <section class="step-two-section">
           <div class="step-two-number">1.</div>
@@ -481,7 +482,7 @@ export function generateEvaluationHTML(params: {
 
     <div class="step-three">
       <div class="step-three-header">
-        <h2>REVIEWED BY THE REVIEWING SUPERVISOR</h2>
+        <h2>STEP THREE: Reviewed by the Reviewing Supervisor</h2>
       </div>
 
       <section class="step-three-comments step-three-section">
@@ -501,7 +502,7 @@ export function generateEvaluationHTML(params: {
       <hr class="step-three-rule">
 
       <section class="step-three-section">
-        <h3 class="step-three-section-title">TO BE FILLED UP BY THE PERSONNEL OFFICE</h3>
+        <h3 class="step-three-section-title" style="text-align:center;">TO BE FILLED UP BY THE PERSONNEL OFFICE</h3>
         <div class="step-three-fields">
           <div class="step-three-field"><span class="step-three-field-label">Employee's Present Salary :</span><span class="step-three-field-value">${text(params.presentSalary)}</span></div>
           <div class="step-three-field"><span class="step-three-field-label">Date of Last Increase :</span><span class="step-three-field-value">${text(params.lastIncreaseDate)}</span></div>

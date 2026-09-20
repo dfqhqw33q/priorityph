@@ -293,13 +293,13 @@ export const PerformanceEvaluationSheet: React.FC<PerformanceEvaluationSheetProp
       </div>
 
       <div className="conclusions-section mx-6 print:mx-10 mb-8 border-t border-black pt-6">
-        <h4 className="font-bold text-[12px] uppercase mb-4 leading-tight">
-          DEVELOP CONCLUSION AND COMMENTS
+        <h4 className="text-center font-bold text-[12px] uppercase mb-4 leading-tight">
+          Conclusions and Comments (Confidential: Not to be Shown to Ratee)
         </h4>
 
         <div className="mb-4">
           <div className="font-bold text-[12px] mb-2">
-            DEVELOP CONCLUSION AND COMMENTS
+            STEP TWO: Develop conclusion and comments
           </div>
         </div>
 
