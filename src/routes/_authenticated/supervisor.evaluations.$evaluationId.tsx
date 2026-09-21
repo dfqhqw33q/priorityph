@@ -1025,7 +1025,10 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <Button variant="ghost" onClick={() => navigate({ to: "/supervisor/evaluations" })}>
+          Back to queue
+        </Button>
         {editable && can("evaluations.rate_supervisor") ? (
           <Button
             variant="outline"
@@ -1040,9 +1043,6 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
             {submitMutation.isPending ? "Submitting..." : "Submit for Reviewing Supervisor"}
           </Button>
         ) : null}
-        <Button variant="ghost" onClick={() => navigate({ to: "/supervisor/evaluations" })}>
-          Back to queue
-        </Button>
       </div>
 
       {!editable ? (

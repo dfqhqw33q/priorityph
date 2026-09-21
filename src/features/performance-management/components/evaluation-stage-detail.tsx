@@ -1486,20 +1486,7 @@ export function EvaluationStageDetail({
               </Button>
             </div>
           ) : null}
-          <div className="flex gap-2">
-            <Button
-              onClick={() => mutation.mutate(true)}
-              disabled={mutation.isPending || !editable}
-            >
-              {mutation.isPending ? "Saving..." : "Submit stage"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => mutation.mutate(false)}
-              disabled={mutation.isPending || !editable}
-            >
-              Save draft
-            </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="outline"
               onClick={() =>
@@ -1518,6 +1505,19 @@ export function EvaluationStageDetail({
               }
             >
               Back to queue
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => mutation.mutate(false)}
+              disabled={mutation.isPending || !editable}
+            >
+              Save draft
+            </Button>
+            <Button
+              onClick={() => mutation.mutate(true)}
+              disabled={mutation.isPending || !editable}
+            >
+              {mutation.isPending ? "Saving..." : "Submit stage"}
             </Button>
           </div>
         </CardContent>
