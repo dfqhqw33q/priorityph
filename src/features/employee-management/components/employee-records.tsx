@@ -647,13 +647,13 @@ function DocumentSections({
           <caption className="sr-only">Employee file categories</caption>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[220px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[220px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Category
               </TableHead>
-              <TableHead className="w-[120px] whitespace-nowrap bg-primary text-primary-foreground">
+              <TableHead className="w-[120px] whitespace-nowrap bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Records
               </TableHead>
-              <TableHead className="min-w-[280px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[280px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Files / Actions
               </TableHead>
             </TableRow>
