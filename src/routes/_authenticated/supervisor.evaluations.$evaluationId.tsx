@@ -36,9 +36,11 @@ import {
   EvaluationRatingCards,
   ratingFor,
 } from "@/features/performance-management/components/rating-matrix";
+import { EvaluationProgressStepper } from "@/features/performance-management/components/evaluation-progress-stepper";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluation } from "@/lib/evaluations.functions";
 import { saveEvaluationSignature, saveRaterStep2 } from "@/lib/evaluation-workflow.functions";
+import { getEvaluationHistory } from "@/lib/reports.functions";
 import { recordRaterAiAction, suggestRaterFields } from "@/lib/ai.functions";
 import { SignatureField } from "@/features/performance-management/components/signature-field";
 import { TextShimmer } from "@/components/loading-ui/text-shimmer";
@@ -293,6 +295,7 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
   const queryClient = useQueryClient();
   const { can } = useAccess();
   const fetchEvaluation = useServerFn(getEvaluation);
+  const fetchHistory = useServerFn(getEvaluationHistory);
   const submitStep2 = useServerFn(saveRaterStep2);
   const saveSignature = useServerFn(saveEvaluationSignature);
   const getRaterSuggestions = useServerFn(suggestRaterFields);
@@ -333,6 +336,12 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
   const query = useQuery({
     queryKey: ["evaluation", evaluationId],
     queryFn: () => fetchEvaluation({ data: { evaluationId } }),
+    retry: false,
+  });
+  const historyQuery = useQuery({
+    queryKey: ["evaluation-progress", evaluationId],
+    queryFn: () => fetchHistory({ data: { evaluationId } }),
+    enabled: evaluationId !== undefined,
     retry: false,
   });
   const detail = query.data ?? null;
@@ -963,7 +972,7 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
               </div>
             ) : null}
           </section>
-          <div className="grid items-start gap-6 border-t border-border/60 pt-4 lg:grid-cols-2">
+          <div className="space-y-4 border-t border-border/60 pt-4">
             <section className="min-w-0 space-y-4">
               <h3 className="text-sm font-semibold uppercase tracking-tight">OTHER COMMENTS</h3>
               <RaterAiField
@@ -982,27 +991,36 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
                 onDiscard={() => discardSuggestion("otherComments")}
               />
             </section>
-            <section className="min-w-0 space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-tight">SIGNATURE</h3>
-              <div className="space-y-1.5">
-                <SignatureField
-                  {...(signature ? { value: signature } : {})}
-                  compact
-                  disabled={!editable}
-                  onSave={persistSignature}
-                  onChange={(value) => {
-                    setSignature(value);
-                    setDirty(true);
-                  }}
-                />
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-semibold text-foreground">Date &amp; Time:</span>
-                <span className="text-muted-foreground">
-                  {formatDateTime(step2["date"] || currentDate)}
-                </span>
-              </div>
-            </section>
+
+            <div className="grid items-stretch gap-4 lg:grid-cols-2">
+              <section className="min-w-0 space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-tight">SIGNATURE</h3>
+                <div className="space-y-1.5">
+                  <SignatureField
+                    {...(signature ? { value: signature } : {})}
+                    compact
+                    disabled={!editable}
+                    onSave={persistSignature}
+                    onChange={(value) => {
+                      setSignature(value);
+                      setDirty(true);
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-semibold text-foreground">Date &amp; Time:</span>
+                  <span className="text-muted-foreground">
+                    {formatDateTime(step2["date"] || currentDate)}
+                  </span>
+                </div>
+              </section>
+
+              <EvaluationProgressStepper
+                events={historyQuery.data?.events ?? []}
+                currentStatus={detail?.status ?? "DRAFT"}
+                employeeName={detail?.full_name_snapshot ?? "Employee"}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
