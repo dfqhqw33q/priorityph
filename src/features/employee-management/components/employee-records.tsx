@@ -492,25 +492,25 @@ function EmployeeFileContent({
           <caption className="sr-only">Employee profile information</caption>
           <TableHeader>
             <TableRow>
-              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+              <TableHead className="whitespace-nowrap bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Employee ID
               </TableHead>
-              <TableHead className="min-w-[180px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[180px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Full Name
               </TableHead>
-              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[140px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Job Title
               </TableHead>
-              <TableHead className="min-w-[170px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[170px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Division / Department
               </TableHead>
-              <TableHead className="min-w-[140px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[140px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Section / Unit
               </TableHead>
-              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+              <TableHead className="whitespace-nowrap bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Status
               </TableHead>
-              <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+              <TableHead className="whitespace-nowrap bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Created
               </TableHead>
             </TableRow>
@@ -558,16 +558,16 @@ function EmployeeFileContent({
             <caption className="sr-only">Performance evaluations</caption>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">
+                <TableHead className="min-w-[220px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                   Evaluation Cycle
                 </TableHead>
-                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+                <TableHead className="whitespace-nowrap bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                   Status
                 </TableHead>
-                <TableHead className="whitespace-nowrap bg-primary text-primary-foreground">
+                <TableHead className="whitespace-nowrap bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                   Finalized
                 </TableHead>
-                <TableHead className="min-w-[220px] bg-primary text-primary-foreground">
+                <TableHead className="min-w-[220px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                   Actions
                 </TableHead>
               </TableRow>

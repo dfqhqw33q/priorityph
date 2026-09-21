@@ -149,22 +149,22 @@ function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
           <caption className="sr-only">Employee information</caption>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[120px] whitespace-nowrap bg-primary text-primary-foreground">
+              <TableHead className="min-w-[120px] whitespace-nowrap bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Employee ID
               </TableHead>
-              <TableHead className="min-w-[190px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[190px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Full Name
               </TableHead>
-              <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[150px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Job Title
               </TableHead>
-              <TableHead className="min-w-[170px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[170px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Division / Department
               </TableHead>
-              <TableHead className="min-w-[150px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[150px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Section / Unit
               </TableHead>
-              <TableHead className="min-w-[180px] bg-primary text-primary-foreground">
+              <TableHead className="min-w-[180px] bg-muted/60 text-foreground dark:bg-muted/60 dark:text-foreground">
                 Supervisor
               </TableHead>
             </TableRow>
