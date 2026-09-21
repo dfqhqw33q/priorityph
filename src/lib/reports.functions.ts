@@ -244,19 +244,25 @@ function getRoleCompletedAccess(roleNames: string[]) {
   }
 
   if (roleNames.includes("HR")) {
-    return { statusSet: ["FOR_REVIEW"], assignment: "personnel" as const };
+    return { statusSet: ["FOR_REVIEW", "FINALIZED"], assignment: "personnel" as const };
   }
 
   if (roleNames.includes("SUPERVISOR")) {
-    return { statusSet: ["FOR_REVIEW"], assignment: "supervisor" as const };
+    return { statusSet: ["FOR_REVIEW", "FINALIZED"], assignment: "supervisor" as const };
   }
 
   if (roleNames.includes("REVIEWING_SUPERVISOR")) {
-    return { statusSet: ["FOR_PROCESSING"], assignment: "reviewing_supervisor" as const };
+    return {
+      statusSet: ["FOR_PROCESSING", "FINALIZED"],
+      assignment: "reviewing_supervisor" as const,
+    };
   }
 
   if (roleNames.includes("COMMITTEE")) {
-    return { statusSet: ["FOR_APPROVAL"], assignment: "committee" as const };
+    return {
+      statusSet: ["FOR_APPROVAL", "FINALIZED"],
+      assignment: "committee" as const,
+    };
   }
 
   return { statusSet: [], assignment: "all" as const };
@@ -403,24 +409,24 @@ export const getReport = createServerFn({ method: "POST" })
 
     if (workflowAssignment !== "all") {
       let authorizedIds: string[] = [];
-      const targetStatus = isCompletedView
+      const targetStatuses = isCompletedView
         ? workflowAssignment === "supervisor" || workflowAssignment === "personnel"
-          ? "FOR_REVIEW"
+          ? ["FOR_REVIEW", "FINALIZED"]
           : workflowAssignment === "reviewing_supervisor"
-            ? "FOR_PROCESSING"
+            ? ["FOR_PROCESSING", "FINALIZED"]
             : workflowAssignment === "committee"
-              ? "FOR_APPROVAL"
+              ? ["FOR_APPROVAL", "FINALIZED"]
               : workflowAssignment === "president"
-                ? "FINALIZED"
-                : "FOR_REVIEW"
+                ? ["FINALIZED"]
+                : ["FOR_REVIEW"]
         : isDraftsView
-          ? "DRAFT"
-          : "RETURNED";
+          ? ["DRAFT"]
+          : ["RETURNED"];
       if (workflowAssignment === "supervisor") {
         const { data: rows } = await admin
           .from("evaluations")
           .select("id")
-          .eq("status", targetStatus)
+          .in("status", targetStatuses as never)
           .eq("supervisor_user_id", context.userId);
         authorizedIds = (rows ?? []).map((row) => row.id);
       } else if (workflowAssignment === "personnel") {
@@ -434,7 +440,7 @@ export const getReport = createServerFn({ method: "POST" })
             .from("evaluations")
             .select("id")
             .in("id", evaluationIds)
-            .eq("status", targetStatus);
+            .in("status", targetStatuses as never);
           authorizedIds = (matchingRows ?? []).map((row) => row.id);
         }
       } else if (workflowAssignment === "reviewing_supervisor") {
@@ -448,7 +454,7 @@ export const getReport = createServerFn({ method: "POST" })
             .from("evaluations")
             .select("id")
             .in("id", evaluationIds)
-            .eq("status", targetStatus);
+            .in("status", targetStatuses as never);
           authorizedIds = (matchingRows ?? []).map((row) => row.id);
         }
       } else if (workflowAssignment === "committee") {
@@ -462,14 +468,14 @@ export const getReport = createServerFn({ method: "POST" })
             .from("evaluations")
             .select("id")
             .in("id", evaluationIds)
-            .eq("status", targetStatus);
+            .in("status", targetStatuses as never);
           authorizedIds = (matchingRows ?? []).map((row) => row.id);
         }
       } else if (workflowAssignment === "president") {
         const { data: rows } = await admin
           .from("evaluations")
           .select("id")
-          .eq("status", targetStatus)
+          .in("status", targetStatuses as never)
           .eq("president_user_id", context.userId);
         authorizedIds = (rows ?? []).map((row) => row.id);
       }

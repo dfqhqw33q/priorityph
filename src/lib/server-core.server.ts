@@ -943,7 +943,7 @@ export async function hrStats(userId: string, cycleId: string | null = null) {
   return {
     totalEvaluations,
     awaitingReview: counts.FOR_PROCESSING,
-    completed: counts.FOR_REVIEW,
+    completed: counts.FOR_REVIEW + counts.FINALIZED,
     drafts: counts.DRAFT,
     returned: counts.RETURNED,
     pending,
@@ -970,7 +970,7 @@ export async function supervisorStats(userId: string, cycleId: string | null = n
     returned: counts.RETURNED,
     drafts: counts.DRAFT,
     submitted: counts.SUBMITTED,
-    completed: counts.FOR_REVIEW,
+    completed: counts.FOR_REVIEW + counts.FINALIZED,
     withPresident: counts.FOR_PROCESSING + counts.FOR_APPROVAL + counts.FINALIZED,
     statusBreakdown: counts,
   };
@@ -987,7 +987,7 @@ export async function reviewingSupervisorStats(userId: string, cycleId: string |
     returned: counts.RETURNED,
     drafts: counts.DRAFT,
     inProgress: counts.FOR_PROCESSING + counts.FOR_APPROVAL + counts.FINALIZED,
-    completed: counts.FOR_PROCESSING,
+    completed: counts.FOR_PROCESSING + counts.FINALIZED,
     finalized: counts.FINALIZED,
     statusBreakdown: counts,
   };
@@ -1011,7 +1011,7 @@ export async function committeeStats(userId: string, cycleId: string | null = nu
     returned: counts.RETURNED,
     drafts: counts.DRAFT,
     inProgress: counts.FOR_PROCESSING + counts.FOR_APPROVAL,
-    completed: counts.FOR_APPROVAL,
+    completed: counts.FOR_APPROVAL + counts.FINALIZED,
     finalized: counts.FINALIZED,
     trainingRequired: trainingRequiredCount ?? 0,
     statusBreakdown: counts,
