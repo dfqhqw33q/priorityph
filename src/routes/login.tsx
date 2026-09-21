@@ -82,6 +82,12 @@ function LoginPage() {
         return;
       }
 
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user) {
+        toast.error("Sign-in is still initializing. Please try again in a moment.");
+        return;
+      }
+
       const access = await fetchAccess();
       if (!access) {
         await supabase.auth.signOut();

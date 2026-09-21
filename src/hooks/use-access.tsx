@@ -10,12 +10,10 @@ type AuthSnapshot = { userId: string | null; ready: boolean };
 
 let authSnapshot: AuthSnapshot = { userId: null, ready: false };
 let authSubscriptionStarted = false;
-let initialSessionPromise: ReturnType<typeof supabase.auth.getSession> | null = null;
 const authSubscribers = new Set<() => void>();
 
 export function getAuthSession() {
-  initialSessionPromise ??= supabase.auth.getSession();
-  return initialSessionPromise;
+  return supabase.auth.getSession();
 }
 
 function publishAuthSnapshot(next: AuthSnapshot) {
@@ -31,7 +29,6 @@ function ensureAuthSubscription() {
     publishAuthSnapshot({ userId: data.session?.user.id ?? null, ready: true });
   });
   supabase.auth.onAuthStateChange((_event, session) => {
-    initialSessionPromise = null;
     publishAuthSnapshot({ userId: session?.user.id ?? null, ready: true });
   });
 }
