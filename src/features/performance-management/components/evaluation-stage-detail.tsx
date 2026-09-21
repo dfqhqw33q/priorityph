@@ -1279,28 +1279,26 @@ export function EvaluationStageDetail({
             </>
           ) : stage === "COMMITTEE" ? (
             <>
-              <div className="space-y-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="w-full">
-                    {action === "TRAINING_REQUIRED" ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={committeeTrainingBusy || !editable}
-                        onClick={generateCommitteeTrainingRecommendation}
-                      >
-                        {committeeTrainingBusy ? (
-                          <TextShimmer>Generating...</TextShimmer>
-                        ) : committeeTrainingRecommendation ? (
-                          "Regenerate"
-                        ) : (
-                          "Personalized Training Recommendation"
-                        )}
-                      </Button>
-                    ) : null}
+              <div className="space-y-3">
+                {action === "TRAINING_REQUIRED" ? (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={committeeTrainingBusy || !editable}
+                      onClick={generateCommitteeTrainingRecommendation}
+                    >
+                      {committeeTrainingBusy ? (
+                        <TextShimmer>Generating...</TextShimmer>
+                      ) : committeeTrainingRecommendation ? (
+                        "Regenerate"
+                      ) : (
+                        "Personalized Training Recommendation"
+                      )}
+                    </Button>
                   </div>
-                </div>
+                ) : null}
                 {committeeTrainingUnavailable ? (
                   <p className="text-sm text-muted-foreground">{committeeTrainingUnavailable}</p>
                 ) : null}
