@@ -792,9 +792,16 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       } as never,
       { onConflict: "evaluation_id" },
     );
-    const signatureWrite = data.submit && signature
-      ? saveStageSignature(data.evaluationId, "PERSONNEL", signature, context.userId, data.version)
-      : Promise.resolve();
+    const signatureWrite =
+      data.submit && signature
+        ? saveStageSignature(
+            data.evaluationId,
+            "PERSONNEL",
+            signature,
+            context.userId,
+            data.version,
+          )
+        : Promise.resolve();
     const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);
     if (stageError) throw validationError(stageError.message);
     return result;
@@ -840,9 +847,16 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       } as never,
       { onConflict: "evaluation_id" },
     );
-    const signatureWrite = data.submit && signature
-      ? saveStageSignature(data.evaluationId, "COMMITTEE", signature, context.userId, data.version)
-      : Promise.resolve();
+    const signatureWrite =
+      data.submit && signature
+        ? saveStageSignature(
+            data.evaluationId,
+            "COMMITTEE",
+            signature,
+            context.userId,
+            data.version,
+          )
+        : Promise.resolve();
     const [{ error: stageError }] = await Promise.all([stageWrite, signatureWrite]);
     if (stageError) throw validationError(stageError.message);
     return result;
