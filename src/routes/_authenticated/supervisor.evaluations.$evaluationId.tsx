@@ -287,8 +287,7 @@ export function SupervisorReviewPage({
 
 function SupervisorReviewPageFromRoute() {
   const { evaluationId } = Route.useParams();
-  if (!evaluationId) return null;
-  return <SupervisorReviewPageInner evaluationId={evaluationId} />;
+  return <SupervisorReviewPageInner evaluationId={evaluationId ?? ""} />;
 }
 
 function SupervisorReviewPageInner({ evaluationId }: { evaluationId: string }) {
@@ -301,6 +300,7 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId: string }) {
   const saveSignature = useServerFn(saveEvaluationSignature);
   const getRaterSuggestions = useServerFn(suggestRaterFields);
   const recordRaterAction = useServerFn(recordRaterAiAction);
+  const currentEvaluationId = evaluationId || "";
   const [ratings, setRatings] = useState<Record<string, number | null>>({});
   const [remarks, setRemarks] = useState("");
   const [step2, setStep2] = useState<Step2State>({
@@ -336,13 +336,21 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId: string }) {
   }>({ developmentPotential: null, advancementOutlook: null });
 
   const query = useQuery({
-    queryKey: ["evaluation", evaluationId],
-    queryFn: () => fetchEvaluation({ data: { evaluationId } }),
+    queryKey: ["evaluation", currentEvaluationId],
+    enabled: currentEvaluationId.length > 0,
+    queryFn: async () => {
+      if (!currentEvaluationId) return null;
+      return fetchEvaluation({ data: { evaluationId: currentEvaluationId } });
+    },
     retry: false,
   });
   const historyQuery = useQuery({
-    queryKey: ["evaluation-progress", evaluationId],
-    queryFn: () => fetchHistory({ data: { evaluationId } }),
+    queryKey: ["evaluation-progress", currentEvaluationId],
+    enabled: currentEvaluationId.length > 0,
+    queryFn: async () => {
+      if (!currentEvaluationId) return null;
+      return fetchHistory({ data: { evaluationId: currentEvaluationId } });
+    },
     retry: false,
   });
   const detail = query.data ?? null;
