@@ -69,7 +69,7 @@ function ReviewingSupervisorDashboard() {
       {
         status: "FOR_PROCESSING",
         label: "Completed",
-        value: breakdown["FOR_PROCESSING"] ?? 0,
+        value: (breakdown["FOR_PROCESSING"] ?? 0) + (breakdown["FINALIZED"] ?? 0),
         color: "var(--success)",
       },
       {

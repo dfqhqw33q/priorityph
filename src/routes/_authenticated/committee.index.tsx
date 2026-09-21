@@ -67,7 +67,7 @@ function CommitteeDashboard() {
       {
         status: "FOR_APPROVAL",
         label: "Completed",
-        value: breakdown.FOR_APPROVAL ?? 0,
+        value: (breakdown.FOR_APPROVAL ?? 0) + (breakdown.FINALIZED ?? 0),
         color: "var(--success)",
       },
       {

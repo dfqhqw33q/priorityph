@@ -63,7 +63,7 @@ function HrDashboard() {
       {
         status: "FOR_REVIEW",
         label: "Completed",
-        value: count("FOR_REVIEW"),
+        value: count("FOR_REVIEW") + count("FINALIZED"),
         color: "var(--success)",
       },
       { status: "DRAFT", label: "Drafts", value: count("DRAFT"), color: "var(--muted-foreground)" },
