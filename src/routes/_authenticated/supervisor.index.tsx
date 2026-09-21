@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_authenticated/supervisor/")({
 });
 
 function SupervisorDashboard() {
-  const [cycleId, setCycleId] = useState<string | null | undefined>(undefined);
+  const [cycleId, setCycleId] = useState<string | null>(null);
   const fetchStats = useServerFn(getSupervisorStats);
   const fetchCycleOptions = useServerFn(listEvaluationCycleOptionsForUser);
 
@@ -55,9 +55,7 @@ function SupervisorDashboard() {
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });
-  const activeCycleId =
-    cycleOptionsQuery.data?.find((cycle) => cycle.status === "ACTIVE")?.id ?? null;
-  const selectedCycleId = cycleId === undefined ? activeCycleId : cycleId;
+  const selectedCycleId = cycleId ?? null;
 
   const query = useQuery({
     queryKey: ["supervisor-stats", selectedCycleId ?? "all"],

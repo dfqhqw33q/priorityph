@@ -64,7 +64,7 @@ export function HistoryTablePage({
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [status, setStatus] = useState(defaultStatus);
-  const [cycleId, setCycleId] = useState<string | undefined>(undefined);
+  const [cycleId, setCycleId] = useState<string>(ALL);
   const [page, setPage] = useState(0);
   const [previewEvaluationId, setPreviewEvaluationId] = useState<string | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
@@ -105,11 +105,6 @@ export function HistoryTablePage({
     enabled: timelineEvaluationId !== null,
     retry: false,
   });
-
-  useEffect(() => {
-    if (cycleId !== undefined || !query.data) return;
-    setCycleId(query.data.options.cycles[0]?.id ?? ALL);
-  }, [cycleId, query.data]);
 
   const rows = (query.data?.rows ?? []) as ReportRow[];
   const effectiveCycleId = cycleId ?? ALL;

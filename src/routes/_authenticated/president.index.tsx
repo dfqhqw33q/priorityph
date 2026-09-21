@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/president/")({
 });
 
 function PresidentDashboard() {
-  const [cycleId, setCycleId] = useState<string | null | undefined>(undefined);
+  const [cycleId, setCycleId] = useState<string | null>(null);
   const fetchStats = useServerFn(getPresidentStats);
   const fetchCycleOptions = useServerFn(listEvaluationCycleOptionsForUser);
 
@@ -56,9 +56,7 @@ function PresidentDashboard() {
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });
-  const activeCycleId =
-    cycleOptionsQuery.data?.find((cycle) => cycle.status === "ACTIVE")?.id ?? null;
-  const selectedCycleId = cycleId === undefined ? activeCycleId : cycleId;
+  const selectedCycleId = cycleId ?? null;
 
   const query = useQuery({
     queryKey: ["president-stats", selectedCycleId ?? "all"],

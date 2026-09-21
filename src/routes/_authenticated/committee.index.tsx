@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/committee/")({
 });
 
 function CommitteeDashboard() {
-  const [cycleId, setCycleId] = useState<string | null | undefined>(undefined);
+  const [cycleId, setCycleId] = useState<string | null>(null);
   const fetchStats = useServerFn(getCommitteeStats);
   const fetchCycleOptions = useServerFn(listEvaluationCycleOptionsForUser);
 
@@ -40,9 +40,7 @@ function CommitteeDashboard() {
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });
-  const activeCycleId =
-    cycleOptionsQuery.data?.find((cycle) => cycle.status === "ACTIVE")?.id ?? null;
-  const selectedCycleId = cycleId === undefined ? activeCycleId : cycleId;
+  const selectedCycleId = cycleId ?? null;
 
   const query = useQuery({
     queryKey: ["committee-stats", selectedCycleId ?? "all"],

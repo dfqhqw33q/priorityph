@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/reviewing-supervisor/")({
 });
 
 function ReviewingSupervisorDashboard() {
-  const [cycleId, setCycleId] = useState<string | null | undefined>(undefined);
+  const [cycleId, setCycleId] = useState<string | null>(null);
   const fetchStats = useServerFn(getReviewingSupervisorStats);
   const fetchCycleOptions = useServerFn(listEvaluationCycleOptionsForUser);
 
@@ -42,9 +42,7 @@ function ReviewingSupervisorDashboard() {
     queryFn: () => fetchCycleOptions(),
     retry: false,
   });
-  const activeCycleId =
-    cycleOptionsQuery.data?.find((cycle) => cycle.status === "ACTIVE")?.id ?? null;
-  const selectedCycleId = cycleId === undefined ? activeCycleId : cycleId;
+  const selectedCycleId = cycleId ?? null;
 
   const query = useQuery({
     queryKey: ["reviewing-supervisor-stats", selectedCycleId ?? "all"],
