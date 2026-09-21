@@ -124,7 +124,9 @@ export function HistoryTablePage({
   const detailRoute =
     mode === "history"
       ? "/hr/evaluation-history/$evaluationId"
-      : `${rolePrefix}/${mode}/$evaluationId`;
+      : mode === "completed"
+        ? `${rolePrefix}/evaluations/$evaluationId`
+        : `${rolePrefix}/${mode}/$evaluationId`;
 
   async function openEvaluationPreview(evaluationId: string) {
     setPreviewEvaluationId(evaluationId);
