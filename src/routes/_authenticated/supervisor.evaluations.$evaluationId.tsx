@@ -656,6 +656,7 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
 
   return (
     <div className="space-y-6">
+      <h2 className="text-sm font-semibold uppercase">EMPLOYEE PROFILE INFORMATION</h2>
       <div className="max-w-full border border-border bg-card shadow-sm">
         <Table>
           <caption className="sr-only">Employee information</caption>
