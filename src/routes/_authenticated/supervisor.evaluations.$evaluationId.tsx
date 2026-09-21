@@ -287,10 +287,11 @@ export function SupervisorReviewPage({
 
 function SupervisorReviewPageFromRoute() {
   const { evaluationId } = Route.useParams();
+  if (!evaluationId) return null;
   return <SupervisorReviewPageInner evaluationId={evaluationId} />;
 }
 
-function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) {
+function SupervisorReviewPageInner({ evaluationId }: { evaluationId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { can } = useAccess();
@@ -333,6 +334,7 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
     developmentPotential: { recommendedOption: string; reason: string } | null;
     advancementOutlook: { recommendedOption: string; reason: string } | null;
   }>({ developmentPotential: null, advancementOutlook: null });
+
   const query = useQuery({
     queryKey: ["evaluation", evaluationId],
     queryFn: () => fetchEvaluation({ data: { evaluationId } }),
@@ -341,7 +343,6 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId?: string }) 
   const historyQuery = useQuery({
     queryKey: ["evaluation-progress", evaluationId],
     queryFn: () => fetchHistory({ data: { evaluationId } }),
-    enabled: evaluationId !== undefined,
     retry: false,
   });
   const detail = query.data ?? null;
