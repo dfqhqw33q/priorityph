@@ -733,7 +733,7 @@ function ComparisonResults({
       <h3 className="text-lg font-semibold">A-J Performance Comparison</h3>
       <div className="overflow-x-auto border border-border">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/50 dark:text-foreground">
+          <thead className="border-b border-primary/30 bg-primary text-primary-foreground dark:border-border dark:bg-muted/60 dark:text-foreground">
             <tr>
               <th className="px-3 py-2">Criterion</th>
               <th className="px-3 py-2">{comparison?.cycleYear ?? "-"} Self</th>
