@@ -579,7 +579,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SidebarHeader className="flex h-16 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-5 text-sidebar-foreground">
           <Link to="/" className="flex min-w-0 translate-y-1 items-center gap-3">
             <img
-              src="/logo.png"
+              src="/logo-optimized.webp"
               alt="Priority Handling Logistics, Inc."
               className="size-10 shrink-0 object-contain"
             />

@@ -69,7 +69,7 @@ function Index() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="text-center flex flex-col items-center">
         <img
-          src="/logo.png"
+          src="/logo-optimized.webp"
           alt="Priority Handling Logistics, Inc."
           className="h-10 w-auto max-w-56 object-contain mb-4"
         />

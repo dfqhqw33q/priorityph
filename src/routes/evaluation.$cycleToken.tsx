@@ -305,7 +305,7 @@ function PublicEvaluationPage() {
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="/logo.png"
+              src="/logo-optimized.webp"
               alt="Priority Handling Logistics, Inc."
               className="h-8 w-auto max-w-44 object-contain"
             />
