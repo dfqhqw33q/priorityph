@@ -895,6 +895,62 @@ export async function statusCountsForCycle(cycleId: string | null = null) {
   return counts;
 }
 
+export async function hrStats(userId: string, cycleId: string | null = null) {
+  const admin = await getAdmin();
+  const { data: personnelRows } = await admin
+    .from("personnel_processing")
+    .select("evaluation_id")
+    .eq("personnel_user_id", userId);
+
+  const evaluationIds = Array.from(
+    new Set((personnelRows ?? []).map((row) => row.evaluation_id).filter(Boolean)),
+  );
+  const counts = Object.fromEntries(EVALUATION_STATUSES.map((status) => [status, 0])) as Record<
+    EvaluationStatus,
+    number
+  >;
+
+  if (evaluationIds.length === 0) {
+    return {
+      totalEvaluations: 0,
+      awaitingReview: 0,
+      completed: 0,
+      drafts: 0,
+      returned: 0,
+      pending: 0,
+      statusBreakdown: counts,
+    };
+  }
+
+  let query = admin.from("evaluations").select("status").in("id", evaluationIds);
+  if (cycleId) query = query.eq("cycle_id", cycleId);
+  const { data = [] } = await query;
+
+  for (const row of data ?? []) {
+    const status = row?.status as EvaluationStatus | undefined;
+    if (status && status in counts) counts[status] += 1;
+  }
+
+  const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  const pending =
+    counts.DRAFT +
+    counts.SUBMITTED +
+    counts.FOR_REVIEW +
+    counts.FOR_PROCESSING +
+    counts.FOR_APPROVAL +
+    counts.RETURNED;
+
+  return {
+    totalEvaluations,
+    awaitingReview: counts.FOR_PROCESSING,
+    completed: counts.FOR_REVIEW,
+    drafts: counts.DRAFT,
+    returned: counts.RETURNED,
+    pending,
+    statusBreakdown: counts,
+  };
+}
+
 export async function supervisorStats(userId: string, cycleId: string | null = null) {
   const counts = await assignedStatusCountsForRole(userId, "SUPERVISOR", cycleId);
   const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);

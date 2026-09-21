@@ -120,31 +120,17 @@ export const getHRStats = createServerFn({ method: "GET" })
     z.object({ cycleId: z.string().uuid().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    const { requirePermission, statusCountsForCycle, recentActivity, getActorRoles } =
+    const { requirePermission, hrStats, recentActivity, getActorRoles } =
       await import("./server-core.server");
     await requirePermission(context.userId, "cycles.view", "HR Dashboard");
     const roles = await getActorRoles(context.userId);
     const [counts, activity] = await Promise.all([
-      statusCountsForCycle(data.cycleId ?? null),
+      hrStats(context.userId, data.cycleId ?? null),
       recentActivity(context.userId, roles, data.cycleId ?? null),
     ]);
 
-    const totalEvaluations = Object.values(counts).reduce((sum, value) => sum + value, 0);
-    const pending =
-      counts.DRAFT +
-      counts.SUBMITTED +
-      counts.FOR_REVIEW +
-      counts.FOR_PROCESSING +
-      counts.FOR_APPROVAL +
-      counts.RETURNED;
-
     return {
-      totalEvaluations,
-      awaitingReview: counts.FOR_PROCESSING,
-      completed: counts.FOR_REVIEW,
-      drafts: counts.DRAFT,
-      pending,
-      statusBreakdown: counts,
+      ...counts,
       activity,
       cycleId: data.cycleId ?? null,
     };
