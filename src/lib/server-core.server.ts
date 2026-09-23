@@ -1,5 +1,6 @@
 import { getRequest } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { validatePassword } from "./password-policy";
 
 import type { Database } from "@/integrations/supabase/types";
 import {
@@ -218,10 +219,56 @@ export function generateCycleToken(): string {
 
 export function randomPassword(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return Array.from(bytes)
-    .map((b) => alphabet[b % alphabet.length])
-    .join("");
+  while (true) {
+    const bytes = crypto.getRandomValues(new Uint8Array(24));
+    const password = Array.from(bytes)
+      .map((b) => alphabet[b % alphabet.length])
+      .join("");
+    if (validatePassword(password).valid) return password;
+  }
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;",
+    };
+    return entities[character] ?? character;
+  });
+}
+
+export async function sendCredentialEmail(input: {
+  email: string;
+  fullName: string;
+  temporaryPassword: string;
+  reason: "ACCOUNT_CREATED" | "PASSWORD_RESET";
+}): Promise<{ sent: boolean; message: string }> {
+  const apiKey = process.env["BREVO_API_KEY"];
+  const fromAddress = process.env["EMAIL_FROM"] ?? "noreply@priorityhandling.local";
+  if (!apiKey || !fromAddress.includes("@"))
+    return { sent: false, message: "Email service is not configured." };
+  const safeName = escapeHtml(input.fullName);
+  const safePassword = escapeHtml(input.temporaryPassword);
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json", "api-key": apiKey },
+    body: JSON.stringify({
+      sender: { name: "Priority Handling Logistics", email: fromAddress },
+      to: [{ email: input.email, name: input.fullName }],
+      subject:
+        input.reason === "ACCOUNT_CREATED"
+          ? "Your Priority Handling account"
+          : "Your Priority Handling password was reset",
+      htmlContent: `<p>Hello ${safeName},</p><p>Your temporary password is:</p><p><strong>${safePassword}</strong></p><p>This password is temporary. Sign in and change it before accessing the application.</p>`,
+      textContent: `Your temporary password is: ${input.temporaryPassword}\n\nThis password is temporary. Sign in and change it before accessing the application.`,
+    }),
+  });
+  if (!response.ok) return { sent: false, message: `Email provider returned ${response.status}.` };
+  return { sent: true, message: "Credential email sent." };
 }
 
 /** Throws (and audits) unless the caller holds at least one of the permissions. */

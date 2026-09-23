@@ -94,6 +94,15 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       throw new Error("Unauthorized: No user ID found in token");
     }
 
+    const { data: account, error: accountError } = await supabase
+      .from("internal_users")
+      .select("id, is_active, is_locked")
+      .eq("id", data.claims.sub)
+      .maybeSingle();
+    if (accountError || !account || !account.is_active || account.is_locked) {
+      throw new Error("Unauthorized: Account is inactive or locked");
+    }
+
     return next({
       context: {
         supabase,

@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { bootstrapAdminSchema } from "./schemas";
+import { bootstrapAdminSchema, resetPasswordSchema } from "./schemas";
+import { validatePassword } from "./password-policy";
 import type { AppRole, Permission } from "./domain";
 
 export type AccessProfile = {
@@ -123,6 +124,54 @@ export const recordLoginEvent = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const changeMyPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => resetPasswordSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { getAdmin, getActorRoles, getRequestMeta, writeAudit, validationError } =
+      await import("./server-core.server");
+    const admin = await getAdmin();
+    const { data: profile } = await admin
+      .from("internal_users")
+      .select("email, full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (!profile) throw validationError("Your internal account could not be found");
+    const passwordCheck = validatePassword(data.password, [profile.full_name, profile.email]);
+    if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0]);
+    const { error } = await admin.auth.admin.updateUserById(context.userId, {
+      password: data.password,
+    });
+    if (error) throw validationError(error.message);
+    const { error: profileError } = await admin
+      .from("internal_users")
+      .update({ must_change_password: false })
+      .eq("id", context.userId);
+    if (profileError) throw validationError(profileError.message);
+    const meta = getRequestMeta();
+    const roles = await getActorRoles(context.userId);
+    await Promise.all([
+      admin.from("password_reset_events").insert({
+        user_id: context.userId,
+        event_type: "PASSWORD_CHANGED",
+        ip_address: meta.ip,
+        user_agent: meta.userAgent,
+      }),
+      writeAudit(
+        {
+          actorUserId: context.userId,
+          actorRole: roles.join(","),
+          action: "FORCED_PASSWORD_CHANGED",
+          module: "Authentication",
+          entityType: "internal_user",
+          entityId: context.userId,
+        },
+        meta,
+      ),
+    ]);
+    return { ok: true };
+  });
+
 export const recordAuthFailure = createServerFn({ method: "POST" })
   .validator((input: { email: string; event: "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" }) => ({
     email: String(input.email).slice(0, 200),
@@ -174,6 +223,8 @@ export const bootstrapAdministrator = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { getAdmin, writeAudit, validationError, safeMessage } =
       await import("./server-core.server");
+    const passwordCheck = validatePassword(data.password, [data.fullName, data.email]);
+    if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0]);
     const admin = await getAdmin();
     const { count } = await admin
       .from("internal_users")

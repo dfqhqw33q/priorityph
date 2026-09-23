@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordPolicyMessage } from "./password-policy";
 
 import { APP_ROLES, CYCLE_STATUSES, EVALUATION_STATUSES, PERMISSIONS } from "./domain";
 import { normalizeDisplayText } from "./validation";
@@ -351,14 +352,17 @@ export const reopenSchema = z.object({
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const forgotPasswordSchema = z.object({ email: z.string().email() });
 
 export const resetPasswordSchema = z
   .object({
-    password: z.string().min(10, "Use at least 10 characters"),
+    password: z.string().superRefine((value, context) => {
+      const message = passwordPolicyMessage(value);
+      if (message !== true) context.addIssue({ code: z.ZodIssueCode.custom, message });
+    }),
     confirmPassword: z.string(),
   })
   .refine((v) => v.password === v.confirmPassword, {
@@ -380,19 +384,29 @@ export const userUpdateSchema = z.object({
   jobTitle: z.string().max(160).default(""),
 });
 
-export const userAccessActionSchema = z.object({
-  userId: z.string().uuid(),
-  action: z.enum([
-    "ACTIVATE",
-    "DEACTIVATE",
-    "LOCK",
-    "UNLOCK",
-    "RESET_PASSWORD",
-    "REQUIRE_PASSWORD_CHANGE",
-    "REVOKE_SESSIONS",
-  ]),
-  reason: reasonSchema,
-});
+export const userAccessActionSchema = z
+  .object({
+    userId: z.string().uuid(),
+    action: z.enum([
+      "ACTIVATE",
+      "DEACTIVATE",
+      "LOCK",
+      "UNLOCK",
+      "RESET_PASSWORD",
+      "REQUIRE_PASSWORD_CHANGE",
+      "REVOKE_SESSIONS",
+    ]),
+    password: z.string().optional(),
+    temporaryPassword: z.boolean().default(false),
+    reason: reasonSchema,
+  })
+  .superRefine((value, context) => {
+    if (value.action === "RESET_PASSWORD" && value.password && !value.temporaryPassword) {
+      const message = passwordPolicyMessage(value.password);
+      if (message !== true)
+        context.addIssue({ code: z.ZodIssueCode.custom, path: ["password"], message });
+    }
+  });
 
 export const assignRolesSchema = z.object({
   userId: z.string().uuid(),
@@ -409,7 +423,10 @@ export const rolePermissionsSchema = z.object({
 export const bootstrapAdminSchema = z.object({
   email: z.string().email(),
   fullName: trimmed(2, 160),
-  password: z.string().min(10, "Use at least 10 characters"),
+  password: z.string().superRefine((value, context) => {
+    const message = passwordPolicyMessage(value);
+    if (message !== true) context.addIssue({ code: z.ZodIssueCode.custom, message });
+  }),
 });
 
 export const queueFiltersSchema = z.object({

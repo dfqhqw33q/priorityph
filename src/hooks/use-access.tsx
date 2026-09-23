@@ -1,6 +1,9 @@
 import { useSyncExternalStore } from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getMyAccess, type AccessProfile } from "@/lib/access.functions";
@@ -11,6 +14,11 @@ type AuthSnapshot = { userId: string | null; ready: boolean };
 let authSnapshot: AuthSnapshot = { userId: null, ready: false };
 let authSubscriptionStarted = false;
 const authSubscribers = new Set<() => void>();
+const INACTIVITY_TIMEOUT_MS = 3 * 60_000;
+const TIMEOUT_WARNING_MS = 30_000;
+const LAST_ACTIVITY_KEY = "phl-last-activity";
+let inactivityCleanup: (() => void) | null = null;
+let inactivityUserId: string | null = null;
 
 export function getAuthSession() {
   return supabase.auth.getSession();
@@ -43,6 +51,44 @@ function getAuthSnapshot() {
   return authSnapshot;
 }
 
+function startInactivityTimeout(userId: string, queryClient: ReturnType<typeof useQueryClient>) {
+  if (typeof window === "undefined") return;
+  if (inactivityCleanup) inactivityCleanup();
+  inactivityUserId = userId;
+  let warningShown = false;
+  let signingOut = false;
+  const markActivity = () => {
+    window.sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+    warningShown = false;
+  };
+  const activityEvents = ["mousedown", "keydown", "touchstart", "scroll", "pointerdown"];
+  const onActivity = () => markActivity();
+  const lastActivity = Number(window.sessionStorage.getItem(LAST_ACTIVITY_KEY));
+  if (!Number.isFinite(lastActivity) || Date.now() - lastActivity >= INACTIVITY_TIMEOUT_MS)
+    markActivity();
+  activityEvents.forEach((event) => window.addEventListener(event, onActivity, { passive: true }));
+  const timer = window.setInterval(() => {
+    const inactiveFor = Date.now() - Number(window.sessionStorage.getItem(LAST_ACTIVITY_KEY));
+    if (inactiveFor >= INACTIVITY_TIMEOUT_MS && !signingOut) {
+      signingOut = true;
+      void supabase.auth.signOut().finally(() => {
+        queryClient.removeQueries({ queryKey: ["access", userId] });
+        window.sessionStorage.removeItem(LAST_ACTIVITY_KEY);
+        window.location.assign("/login");
+      });
+    } else if (inactiveFor >= INACTIVITY_TIMEOUT_MS - TIMEOUT_WARNING_MS && !warningShown) {
+      warningShown = true;
+      toast.warning("You will be signed out in 30 seconds due to inactivity.");
+    }
+  }, 1_000);
+  inactivityCleanup = () => {
+    window.clearInterval(timer);
+    activityEvents.forEach((event) => window.removeEventListener(event, onActivity));
+    inactivityCleanup = null;
+    inactivityUserId = null;
+  };
+}
+
 export function useAccess() {
   const { userId, ready: authReady } = useSyncExternalStore(
     subscribeToAuth,
@@ -50,6 +96,15 @@ export function useAccess() {
     getAuthSnapshot,
   );
   const fetchAccess = useServerFn(getMyAccess);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (authReady && userId && inactivityUserId !== userId) {
+      startInactivityTimeout(userId, queryClient);
+    }
+    if (authReady && !userId && inactivityCleanup) inactivityCleanup();
+    return () => undefined;
+  }, [authReady, queryClient, userId]);
 
   const query = useQuery<AccessProfile | null>({
     queryKey: ["access", userId],

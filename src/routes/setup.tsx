@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordField } from "@/components/shared/password-field";
 import { bootstrapAdministrator, needsBootstrap } from "@/lib/access.functions";
 import { bootstrapAdminSchema } from "@/lib/schemas";
 
@@ -95,13 +96,13 @@ function SetupPage() {
                   <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
                 ) : null}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
+              <div>
+                <PasswordField
                   id="password"
-                  type="password"
-                  autoComplete="new-password"
-                  {...form.register("password")}
+                  label="Password"
+                  identifiers={[form.watch("fullName"), form.watch("email")]}
+                  value={form.watch("password")}
+                  onChange={(value) => form.setValue("password", value, { shouldValidate: true })}
                 />
                 {form.formState.errors.password ? (
                   <p className="text-xs text-destructive">

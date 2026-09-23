@@ -8,11 +8,9 @@ import type { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PasswordField } from "@/components/shared/password-field";
 import { PageHeader } from "@/components/shared/shared-ui";
-import { supabase } from "@/integrations/supabase/client";
-import { recordLoginEvent } from "@/lib/access.functions";
+import { changeMyPassword } from "@/lib/access.functions";
 import { resetPasswordSchema } from "@/lib/schemas";
 import { roleLandingPath } from "@/lib/domain";
 import { useAccess } from "@/hooks/use-access";
@@ -26,7 +24,7 @@ type Values = z.infer<typeof resetPasswordSchema>;
 function ChangePasswordPage() {
   const navigate = useNavigate();
   const { access, refetch } = useAccess();
-  const logEvent = useServerFn(recordLoginEvent);
+  const changePassword = useServerFn(changeMyPassword);
   const [pending, setPending] = useState(false);
   const form = useForm<Values>({
     resolver: zodResolver(resetPasswordSchema),
@@ -36,15 +34,12 @@ function ChangePasswordPage() {
   async function onSubmit(values: Values) {
     setPending(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: values.password });
-      if (error) {
-        toast.error("Could not update your password");
-        return;
-      }
-      await logEvent({ data: { event: "PASSWORD_CHANGED" } }).catch(() => undefined);
+      await changePassword({ data: values });
       await refetch();
       toast.success("Password updated");
       navigate({ to: roleLandingPath(access?.roles ?? []) });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update your password");
     } finally {
       setPending(false);
     }
@@ -62,18 +57,19 @@ function ChangePasswordPage() {
           <CardHeader>
             <CardTitle className="text-base">Change password</CardTitle>
             <CardDescription>
-              Use at least 10 characters and avoid common passwords.
+              Use at least 14 characters with uppercase, lowercase, a number, and a special
+              character.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-              <div className="space-y-2">
-                <Label htmlFor="password">New password</Label>
-                <Input
+              <div>
+                <PasswordField
                   id="password"
-                  type="password"
-                  autoComplete="new-password"
-                  {...form.register("password")}
+                  label="New password"
+                  value={form.watch("password")}
+                  identifiers={[access?.fullName ?? "", access?.email ?? ""]}
+                  onChange={(value) => form.setValue("password", value, { shouldValidate: true })}
                 />
                 {form.formState.errors.password ? (
                   <p className="text-xs text-destructive">
@@ -81,13 +77,14 @@ function ChangePasswordPage() {
                   </p>
                 ) : null}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
-                <Input
+              <div>
+                <PasswordField
                   id="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  {...form.register("confirmPassword")}
+                  label="Confirm password"
+                  value={form.watch("confirmPassword")}
+                  onChange={(value) =>
+                    form.setValue("confirmPassword", value, { shouldValidate: true })
+                  }
                 />
                 {form.formState.errors.confirmPassword ? (
                   <p className="text-xs text-destructive">

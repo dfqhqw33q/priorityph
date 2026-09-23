@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 import { userErrorMessage } from "@/lib/validation";
-import { ArrowDown, ArrowUp, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,7 @@ import {
   formatDateTime,
 } from "@/components/shared/shared-ui";
 import { useAccess } from "@/hooks/use-access";
+import { PasswordField } from "@/components/shared/password-field";
 import {
   applyUserAccessAction,
   assignRoles,
@@ -62,6 +63,7 @@ import {
 } from "@/lib/admin.functions";
 import { APP_ROLES, ROLE_LABELS, humanizeToken, permissionLabel, type AppRole } from "@/lib/domain";
 import { userFormSchema } from "@/lib/schemas";
+import { validatePassword } from "@/lib/password-policy";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   head: () => ({
@@ -140,6 +142,12 @@ function AdminUsersPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<AccessAction | null>(null);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [credential, setCredential] = useState<{
+    password: string;
+    emailSent: boolean;
+    emailMessage: string;
+  } | null>(null);
   const [rolesDraft, setRolesDraft] = useState<AppRole[]>([]);
   const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
   const [profileDraft, setProfileDraft] = useState({ fullName: "", jobTitle: "" });
@@ -186,18 +194,26 @@ function AdminUsersPage() {
   }
 
   const actionMutation = useMutation({
-    mutationFn: (input: { action: AccessAction; reason: string }) =>
+    mutationFn: (input: {
+      action: AccessAction;
+      reason: string;
+      password?: string;
+      temporaryPassword?: boolean;
+    }) =>
       applyAction({
-        data: { userId: selectedId as string, action: input.action, reason: input.reason },
+        data: {
+          userId: selectedId as string,
+          action: input.action,
+          reason: input.reason,
+          password: input.password,
+          temporaryPassword: input.temporaryPassword,
+        },
       }),
     onSuccess: async (result) => {
-      toast.success(
-        result.temporaryPassword
-          ? `Temporary password: ${result.temporaryPassword}`
-          : "Change applied",
-        result.temporaryPassword ? { duration: 20000 } : undefined,
-      );
+      if (result.temporaryPassword) setCredential(result);
+      else toast.success("Change applied");
       setPendingAction(null);
+      setResetOpen(false);
       await refresh();
     },
     onError: (error: Error) => toast.error(userErrorMessage(error, "Access update failed")),
@@ -234,9 +250,7 @@ function AdminUsersPage() {
     mutationFn: (values: { email: string; fullName: string; jobTitle: string; roles: AppRole[] }) =>
       create({ data: values }),
     onSuccess: async (result) => {
-      toast.success(`User created. Temporary password: ${result.temporaryPassword}`, {
-        duration: 30000,
-      });
+      setCredential(result);
       setCreateOpen(false);
       await refresh();
     },
@@ -537,7 +551,9 @@ function AdminUsersPage() {
                     key={action}
                     size="sm"
                     variant="outline"
-                    onClick={() => setPendingAction(action)}
+                    onClick={() =>
+                      action === "RESET_PASSWORD" ? setResetOpen(true) : setPendingAction(action)
+                    }
                   >
                     {ACTION_LABELS[action]}
                   </Button>
@@ -603,6 +619,19 @@ function AdminUsersPage() {
           pendingAction && actionMutation.mutate({ action: pendingAction, reason })
         }
       />
+
+      <PasswordResetDialog
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        email={selected?.email ?? ""}
+        fullName={selected?.full_name ?? ""}
+        pending={actionMutation.isPending}
+        onSubmit={(password, temporaryPassword, reason) =>
+          actionMutation.mutate({ action: "RESET_PASSWORD", password, temporaryPassword, reason })
+        }
+      />
+
+      <CredentialDialog credential={credential} onClose={() => setCredential(null)} />
 
       <ReasonDialog
         open={rolesDialogOpen}
@@ -711,6 +740,126 @@ function CreateUserDialog({
           <Button onClick={submit} disabled={pending}>
             {pending ? "Creating..." : "Create user"}
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PasswordResetDialog({
+  open,
+  onOpenChange,
+  email,
+  fullName,
+  pending,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  email: string;
+  fullName: string;
+  pending: boolean;
+  onSubmit: (password: string | undefined, temporaryPassword: boolean, reason: string) => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [reason, setReason] = useState("");
+  const validation = validatePassword(password, [fullName, email]);
+  const generate = () => onSubmit(undefined, true, reason);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Change password</DialogTitle>
+          <DialogDescription>
+            Enter a new password or generate a temporary password for {email}. The user must change
+            a generated password at next sign-in.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <PasswordField
+            id="reset-password"
+            label="New password"
+            value={password}
+            identifiers={[fullName, email]}
+            onChange={setPassword}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={generate}
+            disabled={pending || !reason.trim()}
+          >
+            Generate temporary password
+          </Button>
+          <div className="space-y-1.5">
+            <Label htmlFor="reset-reason">Reason</Label>
+            <Input
+              id="reset-reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => onSubmit(password, false, reason)}
+            disabled={pending || !validation.valid || !reason.trim()}
+          >
+            {pending ? "Saving..." : "Change password"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CredentialDialog({
+  credential,
+  onClose,
+}: {
+  credential: { password: string; emailSent?: boolean; emailMessage?: string } | null;
+  onClose: () => void;
+}) {
+  if (!credential) return null;
+  async function copy() {
+    await navigator.clipboard.writeText(credential.password);
+    toast.success("Temporary password copied");
+  }
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Temporary password</DialogTitle>
+          <DialogDescription>
+            This password is shown once. Deliver it securely if the credential email was not sent.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center gap-2">
+          <Input readOnly value={credential.password} type="text" />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Copy temporary password"
+            onClick={() => void copy()}
+          >
+            <Copy />
+          </Button>
+        </div>
+        <p
+          className={
+            credential.emailSent ? "text-sm text-muted-foreground" : "text-sm text-destructive"
+          }
+        >
+          {credential.emailSent
+            ? "Credential email sent successfully."
+            : `Credential email failed: ${credential.emailMessage ?? "Unknown error"}`}
+        </p>
+        <DialogFooter>
+          <Button onClick={onClose}>Done</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

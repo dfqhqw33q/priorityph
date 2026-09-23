@@ -12,6 +12,7 @@ import {
   employeeProfileSchema,
 } from "./schemas";
 import type { AppRole, Permission } from "./domain";
+import { validatePassword } from "./password-policy";
 
 export type InternalUserRow = {
   id: string;
@@ -130,6 +131,7 @@ export const createUser = createServerFn({ method: "POST" })
       validationError,
       safeMessage,
       randomPassword,
+      sendCredentialEmail,
     } = await import("./server-core.server");
     await requirePermission(context.userId, "users.manage", "User Management");
     const admin = await getAdmin();
@@ -159,13 +161,44 @@ export const createUser = createServerFn({ method: "POST" })
       await writeAudit({
         actorUserId: context.userId,
         actorRole: (await getActorRoles(context.userId)).join(","),
+        action: "TEMPORARY_PASSWORD_GENERATED",
+        module: "Authentication",
+        entityType: "internal_user",
+        entityId: userId,
+      });
+
+      const delivery = await sendCredentialEmail({
+        email: data.email,
+        fullName: data.fullName,
+        temporaryPassword: tempPassword,
+        reason: "ACCOUNT_CREATED",
+      });
+      await writeAudit({
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
+        action: delivery.sent ? "CREDENTIAL_EMAIL_SENT" : "CREDENTIAL_EMAIL_FAILED",
+        module: "Authentication",
+        entityType: "internal_user",
+        entityId: userId,
+        reason: delivery.sent ? undefined : delivery.message,
+        result: delivery.sent ? "SUCCESS" : "FAILURE",
+      });
+
+      await writeAudit({
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
         action: "USER_CREATED",
         module: "User Management",
         entityType: "internal_user",
         entityId: userId,
         newValue: { email: data.email, fullName: data.fullName, roles: data.roles },
       });
-      return { userId, temporaryPassword: tempPassword };
+      return {
+        userId,
+        temporaryPassword: tempPassword,
+        emailSent: delivery.sent,
+        emailMessage: delivery.message,
+      };
     } catch (error) {
       throw new Error(safeMessage(error, "Could not create the user"));
     }
@@ -214,6 +247,7 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
       validationError,
       safeMessage,
       randomPassword,
+      sendCredentialEmail,
     } = await import("./server-core.server");
     const permission: Permission =
       data.action === "RESET_PASSWORD" || data.action === "REQUIRE_PASSWORD_CHANGE"
@@ -225,7 +259,12 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
     const admin = await getAdmin();
 
     try {
-      let result: { ok: boolean; temporaryPassword: string | null } = {
+      let result: {
+        ok: boolean;
+        temporaryPassword: string | null;
+        emailSent?: boolean;
+        emailMessage?: string;
+      } = {
         ok: true,
         temporaryPassword: null,
       };
@@ -247,20 +286,62 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
           .update({ must_change_password: true })
           .eq("id", data.userId);
       } else if (data.action === "RESET_PASSWORD") {
-        const tempPassword = randomPassword();
+        const { data: target, error: targetError } = await admin
+          .from("internal_users")
+          .select("email, full_name")
+          .eq("id", data.userId)
+          .maybeSingle();
+        if (targetError || !target) throw validationError("The user account could not be found");
+        const generated = data.temporaryPassword || !data.password;
+        const password = generated ? randomPassword() : data.password!;
+        const passwordCheck = validatePassword(password, [target.full_name, target.email]);
+        if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0]);
         const { error } = await admin.auth.admin.updateUserById(data.userId, {
-          password: tempPassword,
+          password,
         });
         if (error) throw validationError(error.message);
         await admin
           .from("internal_users")
-          .update({ must_change_password: true })
+          .update({ must_change_password: generated })
           .eq("id", data.userId);
         await admin.from("password_reset_events").insert({
           user_id: data.userId,
           event_type: "ADMIN_PASSWORD_RESET",
         });
-        result = { ok: true, temporaryPassword: tempPassword };
+        if (generated) {
+          await writeAudit({
+            actorUserId: context.userId,
+            actorRole: (await getActorRoles(context.userId)).join(","),
+            action: "TEMPORARY_PASSWORD_GENERATED",
+            module: "Authentication",
+            entityType: "internal_user",
+            entityId: data.userId,
+          });
+          const delivery = await sendCredentialEmail({
+            email: target.email,
+            fullName: target.full_name,
+            temporaryPassword: password,
+            reason: "PASSWORD_RESET",
+          });
+          await writeAudit({
+            actorUserId: context.userId,
+            actorRole: (await getActorRoles(context.userId)).join(","),
+            action: delivery.sent ? "CREDENTIAL_EMAIL_SENT" : "CREDENTIAL_EMAIL_FAILED",
+            module: "Authentication",
+            entityType: "internal_user",
+            entityId: data.userId,
+            reason: delivery.sent ? undefined : delivery.message,
+            result: delivery.sent ? "SUCCESS" : "FAILURE",
+          });
+          result = {
+            ok: true,
+            temporaryPassword: password,
+            emailSent: delivery.sent,
+            emailMessage: delivery.message,
+          };
+        } else {
+          result = { ok: true, temporaryPassword: null };
+        }
       } else if (data.action === "REVOKE_SESSIONS") {
         await admin.auth.admin.signOut(data.userId, "global").catch(() => undefined);
       }

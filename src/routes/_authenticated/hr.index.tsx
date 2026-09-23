@@ -16,7 +16,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   EmptyState,
-  AuditActivityTable,
   DashboardSummaryLayout,
   LoadingBlock,
   PageHeader,
@@ -210,16 +209,6 @@ function HrDashboard() {
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
-                </CardContent>
-              </Card>
-            }
-            activity={
-              <Card className="border border-border bg-card shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Recent Evaluation Activity</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <AuditActivityTable rows={query.data?.activity ?? []} />
                 </CardContent>
               </Card>
             }

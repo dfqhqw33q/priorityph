@@ -179,17 +179,10 @@ export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
 
 export function DashboardSummaryLayout({
   status,
-  activity,
 }: {
   status: ReactNode;
-  activity: ReactNode;
 }) {
-  return (
-    <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,13fr)]">
-      <div className="min-w-0">{status}</div>
-      <div className="min-w-0">{activity}</div>
-    </div>
-  );
+  return <div className="min-w-0">{status}</div>;
 }
 
 export function LoadingBlock({
