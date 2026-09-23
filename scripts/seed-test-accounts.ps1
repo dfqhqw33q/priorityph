@@ -37,10 +37,10 @@ function Send-CredentialEmail($account, $password) {
 }
 
 $accounts = @(
-  @{ email = 'adminjaypriorityph@gmail.com'; full_name = 'Jay'; job_title = 'Administrator'; role = 'ADMINISTRATOR' },
+  @{ email = '[adminalexpriorityph@gmail.com](mailto:adminalexpriorityph@gmail.com'; full_name = 'Jay'; job_title = 'Administrator'; role = 'ADMINISTRATOR' },
   @{ email = 'presidentnoahpriorityph@gmail.com'; full_name = 'Noah Sinclair'; job_title = 'President'; role = 'PRESIDENT' },
-  @{ email = 'supervisorcharlottepriorityph@gmail.com'; full_name = 'Charlotte Galleta'; job_title = 'Supervisor / Rater / Immediate Supervisor'; role = 'SUPERVISOR' },
-  @{ email = 'hrwilfredopriorityph@gmail.com'; full_name = 'Wilfredo'; job_title = 'HR / Personnel'; role = 'HR' },
+  @{ email = 'supervisorhanapriorityph@gmail.com'; full_name = 'Charlotte Galleta'; job_title = 'Supervisor / Rater / Immediate Supervisor'; role = 'SUPERVISOR' },
+  @{ email = 'hrelenapriorityph@gmail.com'; full_name = 'Wilfredo'; job_title = 'HR / Personnel'; role = 'HR' },
   @{ email = 'revsupliampriorityph@gmail.com'; full_name = 'Reviewing Supervisor'; job_title = 'Reviewing Supervisor / Division Head'; role = 'REVIEWING_SUPERVISOR' },
   @{ email = 'commiteeoliviapriorityph@gmail.com'; full_name = 'Olivia Hayes'; job_title = 'Committee Member'; role = 'COMMITTEE' }
 )
