@@ -115,6 +115,7 @@ export const listDevelopmentEmployees = createServerFn({ method: "GET" })
     const { data, error } = await admin
       .from("employees")
       .select("id, full_name, employee_number")
+      .is("user_id", null)
       .order("full_name");
     if (error) throw new Error(error.message);
     return data ?? [];

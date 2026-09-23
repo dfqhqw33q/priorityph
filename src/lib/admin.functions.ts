@@ -615,6 +615,8 @@ export const listEmployees = createServerFn({ method: "GET" })
       .select(
         "id, employee_number, full_name, first_name, middle_name, last_name, job_title, division, section, employment_status, created_at, updated_at",
       )
+      // Employee rows linked to an internal login belong in User Accounts, not profile management.
+      .is("user_id", null)
       .order("employee_number");
     return data ?? [];
   });
@@ -846,6 +848,7 @@ export const getEmployeeRecord = createServerFn({ method: "GET" })
     const { data: employee } = await admin
       .from("employees")
       .select("*")
+      .is("user_id", null)
       .eq("id", data.employeeId)
       .maybeSingle();
     if (!employee) return null;

@@ -42,6 +42,7 @@ export const listDigital201Employees = createServerFn({ method: "GET" })
       .select(
         "id, employee_number, full_name, job_title, division, section, employment_status, created_at",
       )
+      .is("user_id", null)
       .order("employee_number");
     return data ?? [];
   });
@@ -67,6 +68,7 @@ export const listDigital201EmployeesPage = createServerFn({ method: "GET" })
         "id, employee_number, full_name, job_title, division, section, employment_status, created_at",
         { count: "exact" },
       )
+      .is("user_id", null)
       .order("employee_number");
     const search = data.search.trim().replace(/[%,()]/g, "");
     if (search) {
@@ -93,6 +95,7 @@ export const getCompetencyProfile = createServerFn({ method: "GET" })
       admin
         .from("employees")
         .select("id, employee_number, full_name, job_title, division, section")
+        .is("user_id", null)
         .eq("id", data.employeeId)
         .maybeSingle(),
       admin
@@ -779,6 +782,7 @@ export const getDigital201File = createServerFn({ method: "POST" })
         .select(
           "id, employee_number, full_name, first_name, middle_name, last_name, job_title, division, section, employment_status, created_at, updated_at",
         )
+        .is("user_id", null)
         .eq("id", data.employeeId)
         .maybeSingle(),
       admin
