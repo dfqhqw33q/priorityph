@@ -220,7 +220,7 @@ export const beginStepUpAuthentication = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, getActorRoles, writeAudit, validationError } =
+    const { enforceRateLimit, getAdmin, getActorRoles, writeAudit, validationError } =
       await import("./server-core.server");
     const admin = await getAdmin();
     const sessionId = String(context.claims.session_id ?? "");
