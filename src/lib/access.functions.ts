@@ -163,7 +163,7 @@ export const changeMyAccountPassword = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!profile) throw validationError("Your internal account could not be found");
     const passwordCheck = validatePassword(data.password, [profile.full_name, profile.email]);
-    if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0]);
+    if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0] ?? "Password is invalid");
     const url = process.env["SUPABASE_URL"];
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
     if (!url || !key) throw validationError("Password re-authentication is unavailable");
@@ -451,7 +451,7 @@ export const changeMyPassword = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!profile) throw validationError("Your internal account could not be found");
     const passwordCheck = validatePassword(data.password, [profile.full_name, profile.email]);
-    if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0]);
+    if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0] ?? "Password is invalid");
     const { error } = await admin.auth.admin.updateUserById(context.userId, {
       password: data.password,
     });
@@ -537,7 +537,7 @@ export const bootstrapAdministrator = createServerFn({ method: "POST" })
     const { getAdmin, writeAudit, validationError, safeMessage } =
       await import("./server-core.server");
     const passwordCheck = validatePassword(data.password, [data.fullName, data.email]);
-    if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0]);
+    if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0] ?? "Password is invalid");
     const admin = await getAdmin();
     const { count } = await admin
       .from("internal_users")

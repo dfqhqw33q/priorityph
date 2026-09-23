@@ -180,7 +180,7 @@ export const createUser = createServerFn({ method: "POST" })
         module: "Authentication",
         entityType: "internal_user",
         entityId: userId,
-        reason: delivery.sent ? undefined : delivery.message,
+        reason: delivery.sent ? null : delivery.message,
         result: delivery.sent ? "SUCCESS" : "FAILURE",
       });
 
@@ -295,7 +295,7 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
         const generated = data.temporaryPassword || !data.password;
         const password = generated ? randomPassword() : data.password!;
         const passwordCheck = validatePassword(password, [target.full_name, target.email]);
-        if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0]);
+        if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0] ?? "Password is invalid");
         const { error } = await admin.auth.admin.updateUserById(data.userId, {
           password,
         });
@@ -330,7 +330,7 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
             module: "Authentication",
             entityType: "internal_user",
             entityId: data.userId,
-            reason: delivery.sent ? undefined : delivery.message,
+            reason: delivery.sent ? null : delivery.message,
             result: delivery.sent ? "SUCCESS" : "FAILURE",
           });
           result = {

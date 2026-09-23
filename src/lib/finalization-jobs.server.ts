@@ -69,5 +69,6 @@ export async function processFinalizationJobs(): Promise<{
       failed += 1;
     }
   }
-  return { claimed: (jobs ?? []).length, completed, failed };
+  const claimedJobs = (jobs as unknown as ProcessingJob[] | null) ?? [];
+  return { claimed: claimedJobs.length, completed, failed };
 }

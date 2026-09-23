@@ -210,7 +210,13 @@ function AdminUsersPage() {
         },
       }),
     onSuccess: async (result) => {
-      if (result.temporaryPassword) setCredential(result);
+      if (result.temporaryPassword) {
+        setCredential({
+          password: result.temporaryPassword,
+          emailSent: result.emailSent ?? false,
+          emailMessage: result.emailMessage ?? "",
+        });
+      }
       else toast.success("Change applied");
       setPendingAction(null);
       setResetOpen(false);
@@ -250,7 +256,13 @@ function AdminUsersPage() {
     mutationFn: (values: { email: string; fullName: string; jobTitle: string; roles: AppRole[] }) =>
       create({ data: values }),
     onSuccess: async (result) => {
-      setCredential(result);
+      if (result.temporaryPassword) {
+        setCredential({
+          password: result.temporaryPassword,
+          emailSent: result.emailSent ?? false,
+          emailMessage: result.emailMessage ?? "",
+        });
+      }
       setCreateOpen(false);
       await refresh();
     },
@@ -627,7 +639,12 @@ function AdminUsersPage() {
         fullName={selected?.full_name ?? ""}
         pending={actionMutation.isPending}
         onSubmit={(password, temporaryPassword, reason) =>
-          actionMutation.mutate({ action: "RESET_PASSWORD", password, temporaryPassword, reason })
+          actionMutation.mutate({
+            action: "RESET_PASSWORD",
+            ...(password ? { password } : {}),
+            temporaryPassword,
+            reason,
+          })
         }
       />
 
@@ -825,7 +842,7 @@ function CredentialDialog({
 }) {
   if (!credential) return null;
   async function copy() {
-    await navigator.clipboard.writeText(credential.password);
+    await navigator.clipboard.writeText(credential?.password ?? "");
     toast.success("Temporary password copied");
   }
   return (
