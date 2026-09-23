@@ -567,65 +567,65 @@ export function EvaluationStageDetail({
         signature,
       };
       const execute = async () => {
-      if (stage === "RATER")
-        return saveRaterStep2({
+        if (stage === "RATER")
+          return saveRaterStep2({
+            data: {
+              ...base,
+              strengths: values.strengths ?? "",
+              weaknesses: values.weaknesses ?? "",
+              development: values.development ?? "",
+              advancement: values.advancement ?? "",
+              careerTransfer: values.careerTransfer ?? "",
+              recommendations: values.recommendations ?? "",
+              date: submit ? values.date || workflowDate() : values.date || "",
+            },
+          });
+        if (stage === "REVIEWING_SUPERVISOR")
+          return submitReviewingSupervisor({
+            data: {
+              ...base,
+              ratings: Object.entries(ratings)
+                .filter(([, rating]) => rating !== null)
+                .map(([criterionId, rating]) => ({ criterionId, rating: rating! })),
+              comments: values.comments ?? "",
+              recommendations: values.recommendations ?? "",
+              date: submit ? values.date || workflowDate() : values.date || "",
+            },
+          });
+        if (stage === "PERSONNEL")
+          return submitPersonnelProcessing({
+            data: {
+              ...base,
+              presentSalary: values.presentSalary ? Number(values.presentSalary) : null,
+              lastIncreaseDate: values.lastIncreaseDate || null,
+              lastIncreaseNature: values.lastIncreaseNature ?? "",
+              lastIncreaseAmount: values.lastIncreaseAmount
+                ? Number(values.lastIncreaseAmount)
+                : null,
+              totalPoints: detail.score?.finalScore ?? null,
+              adjectiveRating: detail.score?.finalRatingLabel ?? "",
+              recommendedIncreaseBonus: values.recommendedIncreaseBonus ?? "",
+            },
+          });
+        if (stage === "COMMITTEE")
+          return submitCommitteeReview({
+            data: {
+              ...base,
+              finalAction: action as never,
+              actionDetails: values.actionDetails ?? "",
+              recommendation: values.recommendations ?? "",
+            },
+          });
+        return approveEvaluation({
           data: {
-            ...base,
-            strengths: values.strengths ?? "",
-            weaknesses: values.weaknesses ?? "",
-            development: values.development ?? "",
-            advancement: values.advancement ?? "",
-            careerTransfer: values.careerTransfer ?? "",
-            recommendations: values.recommendations ?? "",
-            date: submit ? values.date || workflowDate() : values.date || "",
+            evaluationId,
+            version: detail.version,
+            approve: values.approve === "true",
+            reason,
+            correctionStage: correctionStage as never,
+            signature: signature ? { method: "TYPED", data: signature.data } : undefined,
           },
         });
-      if (stage === "REVIEWING_SUPERVISOR")
-        return submitReviewingSupervisor({
-          data: {
-            ...base,
-            ratings: Object.entries(ratings)
-              .filter(([, rating]) => rating !== null)
-              .map(([criterionId, rating]) => ({ criterionId, rating: rating! })),
-            comments: values.comments ?? "",
-            recommendations: values.recommendations ?? "",
-            date: submit ? values.date || workflowDate() : values.date || "",
-          },
-        });
-      if (stage === "PERSONNEL")
-        return submitPersonnelProcessing({
-          data: {
-            ...base,
-            presentSalary: values.presentSalary ? Number(values.presentSalary) : null,
-            lastIncreaseDate: values.lastIncreaseDate || null,
-            lastIncreaseNature: values.lastIncreaseNature ?? "",
-            lastIncreaseAmount: values.lastIncreaseAmount
-              ? Number(values.lastIncreaseAmount)
-              : null,
-            totalPoints: detail.score?.finalScore ?? null,
-            adjectiveRating: detail.score?.finalRatingLabel ?? "",
-            recommendedIncreaseBonus: values.recommendedIncreaseBonus ?? "",
-          },
-        });
-      if (stage === "COMMITTEE")
-        return submitCommitteeReview({
-          data: {
-            ...base,
-            finalAction: action as never,
-            actionDetails: values.actionDetails ?? "",
-            recommendation: values.recommendations ?? "",
-          },
-        });
-      return approveEvaluation({
-        data: {
-          evaluationId,
-          version: detail.version,
-          approve: values.approve === "true",
-          reason,
-          correctionStage: correctionStage as never,
-          signature: signature ? { method: "TYPED", data: signature.data } : undefined,
-        },
-      });
       };
       return submit
         ? runSensitiveAction("submit or finalize an evaluation", execute, true)
