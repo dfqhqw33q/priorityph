@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, History as HistoryIcon, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Download, History as HistoryIcon, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +65,10 @@ export function HistoryTablePage({
   const debouncedSearch = useDebouncedValue(search);
   const [status, setStatus] = useState(defaultStatus);
   const [cycleId, setCycleId] = useState<string>(ALL);
+  const [division, setDivision] = useState(ALL);
+  const [section, setSection] = useState(ALL);
+  const [finalRating, setFinalRating] = useState(ALL);
+  const [exporting, setExporting] = useState(false);
   const [page, setPage] = useState(0);
   const [previewEvaluationId, setPreviewEvaluationId] = useState<string | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
@@ -83,7 +87,16 @@ export function HistoryTablePage({
   const query = useQuery({
     queryKey: [
       "evaluation-history",
-      { mode, search: debouncedSearch, status: effectiveStatus, cycleId: cycleId ?? ALL, page },
+      {
+        mode,
+        search: debouncedSearch,
+        status: effectiveStatus,
+        cycleId: cycleId ?? ALL,
+        division,
+        section,
+        finalRating,
+        page,
+      },
     ],
     queryFn: () =>
       fetchReport({
@@ -91,6 +104,9 @@ export function HistoryTablePage({
           search: debouncedSearch,
           status: effectiveStatus,
           cycleId: (cycleId ?? ALL) === ALL ? null : (cycleId ?? null),
+          division: division === ALL ? "" : division,
+          section: section === ALL ? "" : section,
+          finalRating: finalRating === ALL ? "" : finalRating,
           year: null,
           recordType: mode,
           page,
@@ -107,6 +123,9 @@ export function HistoryTablePage({
   });
 
   const rows = (query.data?.rows ?? []) as ReportRow[];
+  const finalRatingOptions = Array.from(
+    new Set(rows.map((row) => row.finalRating).filter((value): value is string => Boolean(value))),
+  );
   const effectiveCycleId = cycleId ?? ALL;
   const cycleOptions = (query.data?.options.cycles ?? []).filter((cycle) => cycle.id && cycle.year);
   const currentRole = (useAccess()?.access?.roles ?? []) as Array<
@@ -151,7 +170,60 @@ export function HistoryTablePage({
   const hasActiveFilters =
     search.trim().length > 0 ||
     (showStatusFilter && status !== defaultStatus) ||
-    effectiveCycleId !== ALL;
+    effectiveCycleId !== ALL ||
+    division !== ALL ||
+    section !== ALL ||
+    finalRating !== ALL;
+
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const result = await fetchReport({
+        data: {
+          search: debouncedSearch,
+          status: effectiveStatus,
+          cycleId: effectiveCycleId === ALL ? null : effectiveCycleId,
+          division: division === ALL ? "" : division,
+          section: section === ALL ? "" : section,
+          finalRating: finalRating === ALL ? "" : finalRating,
+          year: null,
+          recordType: mode,
+          page: 0,
+          pageSize: 10000,
+          exportAll: true,
+        },
+      });
+      const escapeCsv = (value: string | number | null) => {
+        const text = value === null ? "" : String(value);
+        return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+      };
+      const csv = [
+        ["Evaluation ID", "Employee", "Cycle", "Status", "Division", "Section", "Final Rating", "Score"],
+        ...result.rows.map((row) => [
+          row.evaluationDisplayId,
+          row.fullName,
+          `${row.cycleName} (${row.cycleYear})`,
+          row.status,
+          row.division,
+          row.section,
+          row.finalRating,
+          row.finalScore,
+        ]),
+      ]
+        .map((row) => row.map(escapeCsv).join(","))
+        .join("\r\n");
+      const url = URL.createObjectURL(
+        new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "evaluation-report.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const emptyTitle =
     search.trim() || (showStatusFilter && status !== defaultStatus) || effectiveCycleId !== ALL
@@ -244,17 +316,85 @@ export function HistoryTablePage({
               ))}
             </select>
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="history-division">Division</Label>
+            <select
+              id="history-division"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              value={division}
+              onChange={(e) => {
+                setDivision(e.target.value);
+                setPage(0);
+              }}
+            >
+              <option value={ALL}>All divisions</option>
+              {(query.data?.options.divisions ?? []).map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="history-section">Section</Label>
+            <select
+              id="history-section"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              value={section}
+              onChange={(e) => {
+                setSection(e.target.value);
+                setPage(0);
+              }}
+            >
+              <option value={ALL}>All sections</option>
+              {(query.data?.options.sections ?? []).map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="history-rating">Final rating</Label>
+            <select
+              id="history-rating"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              value={finalRating}
+              onChange={(e) => {
+                setFinalRating(e.target.value);
+                setPage(0);
+              }}
+            >
+              <option value={ALL}>All ratings</option>
+              {finalRatingOptions.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </div>
           <Button
             variant="outline"
             onClick={() => {
               setSearch("");
               setStatus(defaultStatus);
               setCycleId(ALL);
+              setDivision(ALL);
+              setSection(ALL);
+              setFinalRating(ALL);
               setPage(0);
             }}
           >
             <RotateCcw />
             Clear filters
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => void exportCsv()}
+            disabled={exporting || query.isLoading}
+          >
+            <Download />
+            {exporting ? "Exporting..." : "Export CSV"}
           </Button>
         </CardContent>
       </Card>
@@ -276,6 +416,9 @@ export function HistoryTablePage({
                 setSearch("");
                 setStatus(defaultStatus);
                 setCycleId(ALL);
+                setDivision(ALL);
+                setSection(ALL);
+                setFinalRating(ALL);
                 setPage(0);
               }}
             >
@@ -289,16 +432,37 @@ export function HistoryTablePage({
             <caption className="sr-only">{title}</caption>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[120px] whitespace-nowrap">Employee ID</TableHead>
-                <TableHead className="min-w-[190px]">Full Name</TableHead>
-                <TableHead className="min-w-[150px]">Job Title</TableHead>
-                <TableHead className="min-w-[170px]">Division / Department</TableHead>
-                <TableHead className="min-w-[150px]">Section / Unit</TableHead>
-                <TableHead className="min-w-[240px]">Cycle</TableHead>
-                <TableHead className="min-w-[120px] whitespace-nowrap">Status</TableHead>
-                <TableHead className="min-w-[190px] whitespace-nowrap">Date Submitted</TableHead>
+                <TableHead scope="col" className="min-w-[150px] whitespace-nowrap">
+                  Evaluation ID
+                </TableHead>
+                <TableHead scope="col" className="min-w-[120px] whitespace-nowrap">
+                  Employee ID
+                </TableHead>
+                <TableHead scope="col" className="min-w-[190px]">
+                  Full Name
+                </TableHead>
+                <TableHead scope="col" className="min-w-[150px]">
+                  Job Title
+                </TableHead>
+                <TableHead scope="col" className="min-w-[170px]">
+                  Division / Department
+                </TableHead>
+                <TableHead scope="col" className="min-w-[150px]">
+                  Section / Unit
+                </TableHead>
+                <TableHead scope="col" className="min-w-[240px]">
+                  Cycle
+                </TableHead>
+                <TableHead scope="col" className="min-w-[120px] whitespace-nowrap">
+                  Status
+                </TableHead>
+                <TableHead scope="col" className="min-w-[190px] whitespace-nowrap">
+                  Date Submitted
+                </TableHead>
                 {mode === "history" ? (
-                  <TableHead className="w-[60px] text-right">Activity</TableHead>
+                  <TableHead scope="col" className="w-[60px] text-right">
+                    Activity
+                  </TableHead>
                 ) : null}
               </TableRow>
             </TableHeader>
@@ -316,6 +480,9 @@ export function HistoryTablePage({
                         : row.status;
                 return (
                   <TableRow key={row.evaluationId}>
+                    <TableCell className="whitespace-nowrap font-mono text-xs">
+                      {row.evaluationDisplayId}
+                    </TableCell>
                     <TableCell className="whitespace-nowrap tabular-nums">
                       {row.employeeNumber}
                     </TableCell>

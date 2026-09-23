@@ -77,6 +77,15 @@ function scrub(value: unknown): unknown {
 export async function writeAudit(entry: AuditEntry, meta?: RequestMeta): Promise<void> {
   const admin = await getAdmin();
   const requestMeta = meta ?? getRequestMeta();
+  let evaluationDisplayId: string | null = null;
+  if (entry.evaluationId) {
+    const { data } = await admin
+      .from("evaluations")
+      .select("evaluation_id")
+      .eq("id", entry.evaluationId)
+      .maybeSingle();
+    evaluationDisplayId = data?.evaluation_id ?? null;
+  }
   const { error } = await admin.from("audit_logs").insert({
     actor_user_id: entry.actorUserId ?? null,
     actor_role: entry.actorRole ?? null,
@@ -86,6 +95,7 @@ export async function writeAudit(entry: AuditEntry, meta?: RequestMeta): Promise
     entity_id: entry.entityId ?? null,
     employee_id: entry.employeeId ?? null,
     evaluation_id: entry.evaluationId ?? null,
+    evaluation_display_id: evaluationDisplayId,
     previous_value: scrub(entry.previousValue) as never,
     new_value: scrub(entry.newValue) as never,
     reason: entry.reason ?? null,
@@ -411,7 +421,7 @@ export type EvaluationQueuePage = {
 };
 
 const evaluationQueueSelect =
-  "id, status, correction_stage, supervisor_user_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, employee_submitted_at, supervisor_submitted_at, evaluation_cycles!inner(name, year)";
+  "id, evaluation_id, status, correction_stage, supervisor_user_id, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, employee_submitted_at, supervisor_submitted_at, evaluation_cycles!inner(name, year)";
 
 function applyEvaluationQueueFilters(
   query: ReturnType<AdminClient["from"]>,

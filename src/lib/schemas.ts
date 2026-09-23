@@ -490,6 +490,8 @@ export const auditFiltersSchema = z.object({
   action: z.string().max(80).default(""),
   entityType: z.string().max(80).default(""),
   result: z.string().max(20).default(""),
+  evaluationId: z.string().max(80).default(""),
+  exportAll: z.boolean().default(false),
   page: z.number().int().min(0).default(0),
   pageSize: z.number().int().min(1).max(100).default(25),
   sortDir: z.enum(["asc", "desc"]).default("desc"),
@@ -552,6 +554,7 @@ export const reportFiltersSchema = z.object({
   search: z.string().max(120).default(""),
   recordType: z.enum(["history", "completed", "drafts", "returned"]).default("history"),
   page: z.number().int().min(0).max(10000).default(0),
-  pageSize: z.number().int().min(5).max(100).default(25),
+  pageSize: z.number().int().min(5).max(10000).default(25),
+  exportAll: z.boolean().default(false),
 });
 export type ReportFilters = z.infer<typeof reportFiltersSchema>;

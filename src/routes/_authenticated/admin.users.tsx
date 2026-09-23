@@ -216,8 +216,7 @@ function AdminUsersPage() {
           emailSent: result.emailSent ?? false,
           emailMessage: result.emailMessage ?? "",
         });
-      }
-      else toast.success("Change applied");
+      } else toast.success("Change applied");
       setPendingAction(null);
       setResetOpen(false);
       await refresh();

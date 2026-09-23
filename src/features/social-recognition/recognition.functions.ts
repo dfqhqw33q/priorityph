@@ -253,8 +253,10 @@ export const listRecognitionRanking = createServerFn({ method: "GET" })
     );
     const candidateByEvaluation = new Map<string, string>();
     for (const candidate of candidates ?? []) {
-      if (candidate.status === "APPROVED") candidateByEvaluation.set(candidate.source_evaluation_id, "APPROVED");
-      else if (!candidateByEvaluation.has(candidate.source_evaluation_id)) candidateByEvaluation.set(candidate.source_evaluation_id, candidate.status);
+      if (candidate.status === "APPROVED")
+        candidateByEvaluation.set(candidate.source_evaluation_id, "APPROVED");
+      else if (!candidateByEvaluation.has(candidate.source_evaluation_id))
+        candidateByEvaluation.set(candidate.source_evaluation_id, candidate.status);
     }
     return rows.map((row, index) => {
       const record = recordByEvaluation.get(row.evaluationId);
@@ -269,11 +271,7 @@ export const listRecognitionRanking = createServerFn({ method: "GET" })
         sourceCycleName: row.sourceCycleName,
         sourceCycleYear: row.sourceCycleYear,
         performanceScore: row.performanceScore,
-        recognitionStatus: record
-          ? "RECOGNIZED"
-          : candidateStatus
-            ? "PENDING"
-            : "NOT_RECOGNIZED",
+        recognitionStatus: record ? "RECOGNIZED" : candidateStatus ? "PENDING" : "NOT_RECOGNIZED",
         recognitionRecordId: record?.id ?? null,
         certificateGeneratedAt: record?.certificate_generated_at ?? null,
       };
@@ -307,7 +305,11 @@ export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
       .select("status, is_finalized")
       .eq("id", candidate.source_evaluation_id)
       .maybeSingle();
-    if (!sourceEvaluation || sourceEvaluation.status !== "FINALIZED" || !sourceEvaluation.is_finalized)
+    if (
+      !sourceEvaluation ||
+      sourceEvaluation.status !== "FINALIZED" ||
+      !sourceEvaluation.is_finalized
+    )
       throw validationError("Only finalized evaluations can be recognized");
     if (candidate.status !== "PENDING")
       throw validationError("This recognition candidate has already been reviewed");
@@ -508,24 +510,30 @@ export const generateRecognitionCertificate = createServerFn({ method: "POST" })
       `Performance score: ${score !== null && score !== undefined ? Number(score).toFixed(2) : "N/A"}`,
       { x: 285, y: 210, size: 12, font },
     );
-    page.drawText(`Evaluation cycle: ${cycle?.name ?? "Finalized evaluation"} ${cycle?.year ?? ""}`.trim(), {
-      x: 270,
-      y: 190,
-      size: 12,
-      font,
-    });
+    page.drawText(
+      `Evaluation cycle: ${cycle?.name ?? "Finalized evaluation"} ${cycle?.year ?? ""}`.trim(),
+      {
+        x: 270,
+        y: 190,
+        size: 12,
+        font,
+      },
+    );
     page.drawText(`Issued ${new Date(row.recognition_date).toLocaleDateString()}`, {
       x: 315,
       y: 170,
       size: 12,
       font,
     });
-    page.drawText(`Authorized signatory: ${signatory?.full_name ?? "Priority Handling Logistics"}`, {
-      x: 245,
-      y: 135,
-      size: 12,
-      font,
-    });
+    page.drawText(
+      `Authorized signatory: ${signatory?.full_name ?? "Priority Handling Logistics"}`,
+      {
+        x: 245,
+        y: 135,
+        size: 12,
+        font,
+      },
+    );
     const bytes = await pdf.save();
     const employeeId = String(row.employee_id ?? "");
     if (!employeeId) throw validationError("Recognition record has no employee assigned");

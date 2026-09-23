@@ -96,7 +96,11 @@ export function EmptyState({
   children?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
+    <div
+      className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center"
+      role="status"
+      aria-live="polite"
+    >
       <p className="text-sm font-semibold text-foreground">{title}</p>
       {description ? <p className="mt-1.5 text-xs text-muted-foreground">{description}</p> : null}
       {children}
@@ -181,6 +185,27 @@ export function DashboardSummaryLayout({ status }: { status: ReactNode }) {
   return <div className="min-w-0">{status}</div>;
 }
 
+export function ChartDataSummary({
+  title,
+  items,
+}: {
+  title: string;
+  items: Array<{ label: string; value: number }>;
+}) {
+  return (
+    <div className="sr-only">
+      <h3>{title}</h3>
+      <ul>
+        {items.map((item) => (
+          <li key={item.label}>
+            {item.label}: {item.value}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function LoadingBlock({
   rows = 4,
   variant = "table",
@@ -190,7 +215,12 @@ export function LoadingBlock({
 }) {
   if (variant === "cards") {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading"
+      >
         {Array.from({ length: Math.max(rows, 4) }).map((_, index) => (
           <div key={index} className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <Skeleton className="h-3 w-28" />
@@ -204,7 +234,7 @@ export function LoadingBlock({
 
   if (variant === "detail") {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="status" aria-live="polite" aria-label="Loading">
         {Array.from({ length: Math.max(2, Math.ceil(rows / 4)) }).map((_, index) => (
           <div key={index} className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <Skeleton className="h-5 w-48" />
@@ -224,7 +254,12 @@ export function LoadingBlock({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <div
+      className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading"
+    >
       <div className="grid grid-cols-2 gap-4 border-b border-border bg-muted/40 px-4 py-3 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
           <Skeleton key={index} className={cn("h-3", index === 1 ? "w-32" : "w-20")} />

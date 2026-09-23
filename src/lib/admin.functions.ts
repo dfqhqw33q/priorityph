@@ -295,7 +295,8 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
         const generated = data.temporaryPassword || !data.password;
         const password = generated ? randomPassword() : data.password!;
         const passwordCheck = validatePassword(password, [target.full_name, target.email]);
-        if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0] ?? "Password is invalid");
+        if (!passwordCheck.valid)
+          throw validationError(passwordCheck.errors[0] ?? "Password is invalid");
         const { error } = await admin.auth.admin.updateUserById(data.userId, {
           password,
         });
@@ -657,6 +658,9 @@ export const listAuditEvents = createServerFn({ method: "GET" })
     if (clean(data.action)) query = query.eq("action", data.action.trim());
     if (clean(data.entityType)) query = query.eq("entity_type", data.entityType.trim());
     if (clean(data.result)) query = query.eq("result", data.result.trim());
+    if (clean(data.evaluationId))
+      query = query.ilike("evaluation_display_id", `%${clean(data.evaluationId)}%`);
+    if (data.exportAll) query = query.range(0, 9999);
 
     const { data: rows, count } = await query;
     const actorIds = Array.from(

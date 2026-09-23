@@ -16,6 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   EmptyState,
+  ChartDataSummary,
   DashboardSummaryLayout,
   LoadingBlock,
   PageHeader,
@@ -217,6 +218,7 @@ function ReviewingSupervisorDashboard() {
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
+                  <ChartDataSummary title="Evaluation status" items={chartData} />
                 </CardContent>
               </Card>
             }

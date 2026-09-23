@@ -183,8 +183,13 @@ const NAV: Array<{
     roles: ["HR"],
     direct: [{ to: "/hr", label: "Dashboard", icon: Gauge, permission: "cycles.view" }],
     bottom: [
-      { label: "Reports", icon: FileClock },
-      { label: "Settings", icon: Settings },
+      {
+        to: "/hr/evaluation-history",
+        label: "Reports",
+        icon: FileClock,
+        permission: "evaluations.view_201",
+      },
+      { to: "/account/settings", label: "Settings", icon: Settings },
     ],
     categories: [
       {
@@ -533,6 +538,38 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (accessDenied) navigate({ to: "/unauthorized", replace: true });
     else if (passwordChangeRequired) navigate({ to: "/account/password", replace: true });
   }, [accessDenied, navigate, passwordChangeRequired]);
+
+  useEffect(() => {
+    if (!access?.userId) return;
+    const refreshDashboardQueries = () => {
+      void Promise.all(
+        [
+          "supervisor-stats",
+          "reviewing-supervisor-stats",
+          "committee-stats",
+          "president-stats",
+          "hr-stats",
+          "admin-stats",
+        ].map((queryKey) => queryClient.invalidateQueries({ queryKey: [queryKey] })),
+      );
+    };
+    const channel = supabase
+      .channel(`evaluation-dashboard-refresh:${access.userId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "evaluations" },
+        refreshDashboardQueries,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "evaluation_events" },
+        refreshDashboardQueries,
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [access?.userId, queryClient]);
 
   if (isLoading) {
     return (

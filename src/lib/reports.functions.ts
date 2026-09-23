@@ -14,6 +14,7 @@ const digital201FileInputSchema = z.object({
 
 export type ReportRow = {
   evaluationId: string;
+  evaluationDisplayId: string;
   employeeNumber: string;
   fullName: string;
   jobTitle: string;
@@ -362,7 +363,7 @@ export const getReport = createServerFn({ method: "POST" })
     let query = admin
       .from("evaluations")
       .select(
-        "id, status, employee_submitted_at, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, finalized_at, cycle_id, evaluation_cycles!inner(name, year)",
+        "id, evaluation_id, status, employee_submitted_at, employee_number_snapshot, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, finalized_at, cycle_id, evaluation_cycles!inner(name, year)",
         { count: "exact" },
       )
       .order("employee_submitted_at", { ascending: false, nullsFirst: false });
@@ -374,8 +375,10 @@ export const getReport = createServerFn({ method: "POST" })
     }
     if (data.division.trim()) query = query.eq("division_snapshot", data.division.trim());
     if (data.section.trim()) query = query.eq("section_snapshot", data.section.trim());
-    if (effectivePermittedStatuses && effectivePermittedStatuses.length > 0) {
-      query = query.in("status", effectivePermittedStatuses as never);
+    if (effectivePermittedStatuses) {
+      if (effectivePermittedStatuses.length > 0)
+        query = query.in("status", effectivePermittedStatuses as never);
+      else query = query.eq("id", "00000000-0000-0000-0000-000000000000");
     }
     if (
       !isCompletedView &&
@@ -389,12 +392,14 @@ export const getReport = createServerFn({ method: "POST" })
     if (supervisorOnly) query = query.eq("supervisor_user_id", context.userId);
     if (data.cycleId) query = query.eq("cycle_id", data.cycleId);
     if (data.year) query = query.eq("evaluation_cycles.year", data.year);
+    let matchingFinalRatingIds: string[] | null = null;
     if (data.finalRating.trim()) {
       const { data: matchingScores } = await admin
         .from("evaluation_scores")
         .select("evaluation_id")
         .eq("final_rating_label", data.finalRating.trim());
       const matchingIds = (matchingScores ?? []).map((score) => score.evaluation_id);
+      matchingFinalRatingIds = matchingIds;
       if (matchingIds.length > 0) query = query.in("id", matchingIds);
       else query = query.eq("id", "00000000-0000-0000-0000-000000000000");
     }
@@ -407,8 +412,8 @@ export const getReport = createServerFn({ method: "POST" })
           ? returnedAssignment
           : "all";
 
+    let authorizedIds: string[] = [];
     if (workflowAssignment !== "all") {
-      let authorizedIds: string[] = [];
       const targetStatuses = isCompletedView
         ? workflowAssignment === "supervisor" || workflowAssignment === "personnel"
           ? ["FOR_REVIEW", "FINALIZED"]
@@ -487,8 +492,59 @@ export const getReport = createServerFn({ method: "POST" })
       }
     }
 
+    const summaryQuery = admin
+      .from("evaluations")
+      .select("id, evaluation_cycles!inner(year)")
+      .order("employee_submitted_at", { ascending: false, nullsFirst: false });
+    const summarySearch = data.search.trim();
+    if (summarySearch) {
+      const term = `%${summarySearch.replace(/[%,()]/g, "")}%`;
+      summaryQuery.or(`full_name_snapshot.ilike.${term},employee_number_snapshot.ilike.${term}`);
+    }
+    if (data.division.trim()) summaryQuery.eq("division_snapshot", data.division.trim());
+    if (data.section.trim()) summaryQuery.eq("section_snapshot", data.section.trim());
+    if (effectivePermittedStatuses) {
+      if (effectivePermittedStatuses.length > 0)
+        summaryQuery.in("status", effectivePermittedStatuses as never);
+      else summaryQuery.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+    if (
+      !isCompletedView &&
+      data.status.trim() &&
+      (!permittedStatuses ||
+        permittedStatuses.length === 0 ||
+        permittedStatuses.includes(data.status.trim()))
+    ) {
+      summaryQuery.eq("status", data.status.trim() as never);
+    }
+    if (supervisorOnly) summaryQuery.eq("supervisor_user_id", context.userId);
+    if (data.cycleId) summaryQuery.eq("cycle_id", data.cycleId);
+    if (data.year) summaryQuery.eq("evaluation_cycles.year", data.year);
+    if (matchingFinalRatingIds) {
+      if (matchingFinalRatingIds.length > 0) summaryQuery.in("id", matchingFinalRatingIds);
+      else summaryQuery.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+    if (workflowAssignment !== "all") {
+      summaryQuery.in(
+        "id",
+        workflowAssignment === "supervisor" ||
+          workflowAssignment === "personnel" ||
+          workflowAssignment === "reviewing_supervisor" ||
+          workflowAssignment === "committee" ||
+          workflowAssignment === "president"
+          ? authorizedIds
+          : ["00000000-0000-0000-0000-000000000000"],
+      );
+    }
+    const { data: matchingRows, error: matchingError } = await summaryQuery;
+    if (matchingError) throw new Error(matchingError.message);
+    const matchingEvaluationIds = (matchingRows ?? []).map((row) => row.id);
+
     const from = data.page * data.pageSize;
-    const { data: rows, count } = await query.range(from, from + data.pageSize - 1);
+    const { data: rows, count } = await query.range(
+      data.exportAll ? 0 : from,
+      data.exportAll ? Math.max(matchingEvaluationIds.length - 1, 0) : from + data.pageSize - 1,
+    );
     const list = rows ?? [];
 
     const scoreMap = new Map<
@@ -526,6 +582,7 @@ export const getReport = createServerFn({ method: "POST" })
       const score = scoreMap.get(row.id);
       return {
         evaluationId: row.id,
+        evaluationDisplayId: row.evaluation_id,
         employeeNumber: row.employee_number_snapshot,
         fullName: row.full_name_snapshot,
         jobTitle: row.job_title_snapshot,
@@ -545,26 +602,22 @@ export const getReport = createServerFn({ method: "POST" })
 
     const filtered = reportRows;
 
-    // Cycle-wide aggregates, independent of pagination, are computed in the database.
-    const { data: summaryRows, error: summaryError } = (await admin.rpc(
-      "get_evaluation_score_summary" as never,
-      {} as never,
-    )) as unknown as {
-      data: Array<{
-        final_rating_label: string;
-        score_count: number;
-        score_total: number;
-      }> | null;
-      error: { message: string } | null;
-    };
-    if (summaryError) throw new Error(summaryError.message);
     const distribution = new Map<string, number>();
     let scored = 0;
     let total = 0;
-    for (const row of summaryRows ?? []) {
-      distribution.set(row.final_rating_label, Number(row.score_count));
-      scored += Number(row.score_count);
-      total += Number(row.score_total);
+    if (matchingEvaluationIds.length > 0) {
+      const { data: summaryScores, error: summaryError } = await admin
+        .from("evaluation_scores")
+        .select("final_rating_label, final_score")
+        .eq("calculation_status", "CALCULATED")
+        .in("evaluation_id", matchingEvaluationIds);
+      if (summaryError) throw new Error(summaryError.message);
+      for (const row of summaryScores ?? []) {
+        const label = row.final_rating_label ?? "Unrated";
+        distribution.set(label, (distribution.get(label) ?? 0) + 1);
+        scored += 1;
+        total += Number(row.final_score ?? 0);
+      }
     }
 
     const [{ divisions, sections, years }, { data: cycles }] = await Promise.all([
@@ -639,10 +692,13 @@ export const getEvaluationHistory = createServerFn({ method: "GET" })
           .order("occurred_at", { ascending: false })
           .limit(200),
         admin
-          .from("notification_events")
-          .select("id, event_type, title, body, occurred_at")
-          .eq("evaluation_id", data.evaluationId)
-          .order("occurred_at", { ascending: false }),
+          .from("user_notifications")
+          .select(
+            "id, notification_events!inner(id, event_type, title, body, occurred_at, evaluation_id)",
+          )
+          .eq("user_id", context.userId)
+          .eq("notification_events.evaluation_id", data.evaluationId)
+          .order("created_at", { ascending: false }),
       ]);
 
     if (!detail) return null;

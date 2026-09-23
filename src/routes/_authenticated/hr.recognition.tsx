@@ -249,7 +249,9 @@ function RecognitionRanking({
         ) : (
           <div className="overflow-x-auto">
             <Table>
-              <caption className="sr-only">Top employees ranked by finalized performance score</caption>
+              <caption className="sr-only">
+                Top employees ranked by finalized performance score
+              </caption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Rank</TableHead>
@@ -274,7 +276,9 @@ function RecognitionRanking({
                         ? `${row.sourceCycleName} (${row.sourceCycleYear ?? ""})`
                         : "-"}
                     </TableCell>
-                    <TableCell className="font-semibold">{row.performanceScore.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold">
+                      {row.performanceScore.toFixed(2)}
+                    </TableCell>
                     <TableCell>{humanizeToken(row.recognitionStatus)}</TableCell>
                     <TableCell>
                       {row.recognitionRecordId ? (

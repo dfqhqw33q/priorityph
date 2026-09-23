@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Download } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,7 @@ type AuditRow = {
   entity_id: string | null;
   employee_id: string | null;
   evaluation_id: string | null;
+  evaluation_display_id: string | null;
   previous_value: unknown;
   new_value: unknown;
   reason: string | null;
@@ -89,6 +90,8 @@ function AuditLogsPage() {
   const [action, setAction] = useState(ALL);
   const [entityType, setEntityType] = useState(ALL);
   const [result, setResult] = useState(ALL);
+  const [evaluationId, setEvaluationId] = useState("");
+  const [exporting, setExporting] = useState(false);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<AuditRow | null>(null);
@@ -103,6 +106,7 @@ function AuditLogsPage() {
     action: action === ALL ? "" : action,
     entityType: entityType === ALL ? "" : entityType,
     result: result === ALL ? "" : result,
+    evaluationId,
     page,
     pageSize: PAGE_SIZE,
     sortDir,
@@ -138,6 +142,38 @@ function AuditLogsPage() {
   const current = Math.min(page, pageCount - 1);
   const visible = rows;
 
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const result = await fetchEvents({ data: { ...filters, page: 0, exportAll: true } });
+      const escapeCsv = (value: unknown) => {
+        const text = value == null ? "" : String(value);
+        return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+      };
+      const csv = [
+        ["Evaluation ID", "Activity / Action", "Performed By", "Role", "Employee", "Date & Time", "Context", "Result"],
+        ...result.rows.map((row) => [
+          row.evaluation_display_id,
+          row.action,
+          actorName(row.actor_user_id),
+          row.actor_role,
+          row.employee_id,
+          row.occurred_at,
+          row.entity_type ? `${row.module}: ${row.entity_type}` : row.module,
+          row.result,
+        ]),
+      ].map((row) => row.map(escapeCsv).join(",")).join("\r\n");
+      const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "audit-log.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (query.isError) {
     const message = query.error instanceof Error ? query.error.message : "Unavailable";
     return <EmptyState title="You do not have access to audit logs" description={message} />;
@@ -148,6 +184,12 @@ function AuditLogsPage() {
       <PageHeader
         title="Activity Log"
         description="Review important system activity and investigate changes when needed."
+        actions={
+          <Button variant="outline" onClick={() => void exportCsv()} disabled={exporting || query.isLoading}>
+            <Download />
+            {exporting ? "Exporting..." : "Export CSV"}
+          </Button>
+        }
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -220,6 +262,18 @@ function AuditLogsPage() {
           allLabel="All results"
           options={options.results.map((value) => ({ value, label: value }))}
         />
+        <div className="space-y-1.5">
+          <Label htmlFor="audit-evaluation-id">Evaluation ID</Label>
+          <Input
+            id="audit-evaluation-id"
+            placeholder="EV-2026-000001"
+            value={evaluationId}
+            onChange={(e) => {
+              setEvaluationId(e.target.value);
+              setPage(0);
+            }}
+          />
+        </div>
       </div>
 
       {query.isLoading ? (
@@ -334,7 +388,7 @@ function AuditLogsPage() {
             <Detail label="Record type" value={selected?.entity_type ?? "-"} />
             <Detail label="Record ID" value={selected?.entity_id ?? "-"} />
             <Detail label="Employee ID" value={selected?.employee_id ?? "-"} />
-            <Detail label="Evaluation ID" value={selected?.evaluation_id ?? "-"} />
+            <Detail label="Evaluation ID" value={selected?.evaluation_display_id ?? "-"} />
             <Detail label="Reference ID" value={selected?.correlation_id ?? "-"} />
             <Detail label="Result" value={selected?.result ?? "-"} />
             <Detail label="Reason" value={selected?.reason ?? "-"} />
