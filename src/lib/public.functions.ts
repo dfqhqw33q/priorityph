@@ -635,12 +635,15 @@ export const submitStep1 = createServerFn({ method: "POST" })
 
     if (evalError && evalError.code !== "23505") {
       console.error("Public evaluation insert failed", {
+        correlationId: meta.correlationId,
         code: evalError.code,
         message: evalError.message,
         details: evalError.details,
         hint: evalError.hint,
       });
-      throw validationError("Could not save your evaluation, please try again");
+      throw validationError(
+        `Could not save your evaluation, please try again. Reference: ${meta.correlationId.slice(0, 8)}`,
+      );
     }
     if (evalError || !evaluation) {
       await writeAudit(
