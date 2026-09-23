@@ -641,6 +641,23 @@ export const submitStep1 = createServerFn({ method: "POST" })
         details: evalError.details,
         hint: evalError.hint,
       });
+      await writeAudit(
+        {
+          action: "STEP1_SUBMISSION_FAILED",
+          module: "Step 1 Submission",
+          entityType: "employee",
+          entityId: employeeId,
+          employeeId,
+          newValue: {
+            employee_number: data.employeeNumber,
+            submission_id: data.submissionId,
+            database_code: evalError.code,
+            database_message: evalError.message,
+          },
+          result: "FAILURE",
+        },
+        meta,
+      );
       throw validationError(
         `Could not save your evaluation, please try again. Reference: ${meta.correlationId.slice(0, 8)}`,
       );
