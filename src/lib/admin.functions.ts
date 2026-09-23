@@ -684,7 +684,12 @@ export const listAuditEvents = createServerFn({ method: "GET" })
       newValue: { filters: { ...data, search: clean(data.search) } },
     });
 
-    return { rows: rows ?? [], actors: actors ?? [], employees: employees ?? [], totalCount: count ?? 0 };
+    return {
+      rows: rows ?? [],
+      actors: actors ?? [],
+      employees: employees ?? [],
+      totalCount: count ?? 0,
+    };
   });
 
 export const getEmployeeRecord = createServerFn({ method: "GET" })

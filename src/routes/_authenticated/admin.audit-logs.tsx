@@ -151,19 +151,33 @@ function AuditLogsPage() {
         return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
       };
       const csv = [
-        ["Evaluation ID", "Activity / Action", "Performed By", "Role", "Employee", "Date & Time", "Context", "Result"],
+        [
+          "Evaluation ID",
+          "Activity / Action",
+          "Performed By",
+          "Role",
+          "Employee",
+          "Date & Time",
+          "Context",
+          "Result",
+        ],
         ...result.rows.map((row) => [
           row.evaluation_display_id,
           row.action,
           actorName(row.actor_user_id),
           row.actor_role,
-          (result.employees ?? []).find((employee) => employee.id === row.employee_id)?.full_name ?? row.employee_id,
+          (result.employees ?? []).find((employee) => employee.id === row.employee_id)?.full_name ??
+            row.employee_id,
           row.occurred_at,
           row.entity_type ? `${row.module}: ${row.entity_type}` : row.module,
           row.result,
         ]),
-      ].map((row) => row.map(escapeCsv).join(",")).join("\r\n");
-      const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }));
+      ]
+        .map((row) => row.map(escapeCsv).join(","))
+        .join("\r\n");
+      const url = URL.createObjectURL(
+        new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }),
+      );
       const link = document.createElement("a");
       link.href = url;
       link.download = "audit-log.csv";
@@ -185,7 +199,11 @@ function AuditLogsPage() {
         title="Activity Log"
         description="Review important system activity and investigate changes when needed."
         actions={
-          <Button variant="outline" onClick={() => void exportCsv()} disabled={exporting || query.isLoading}>
+          <Button
+            variant="outline"
+            onClick={() => void exportCsv()}
+            disabled={exporting || query.isLoading}
+          >
             <Download />
             {exporting ? "Exporting..." : "Export CSV"}
           </Button>

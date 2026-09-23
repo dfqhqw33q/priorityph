@@ -198,7 +198,16 @@ export function HistoryTablePage({
         return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
       };
       const csv = [
-        ["Evaluation ID", "Employee", "Cycle", "Status", "Division", "Section", "Final Rating", "Score"],
+        [
+          "Evaluation ID",
+          "Employee",
+          "Cycle",
+          "Status",
+          "Division",
+          "Section",
+          "Final Rating",
+          "Score",
+        ],
         ...result.rows.map((row) => [
           row.evaluationDisplayId,
           row.fullName,
