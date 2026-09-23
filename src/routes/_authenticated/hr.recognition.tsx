@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,8 +37,10 @@ import {
   listFinalizedEvaluationsForRecognition,
   listRecognitionData,
   listRecognitionEmployees,
+  listRecognitionRanking,
   reviewRecognitionCandidate,
   type RecognitionCandidate,
+  type RecognitionRankingRow,
   type RecognitionRecord,
 } from "@/features/social-recognition/recognition.functions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -60,6 +63,7 @@ function RecognitionPage() {
   const fetchData = useServerFn(listRecognitionData);
   const fetchEmployees = useServerFn(listRecognitionEmployees);
   const fetchEvaluations = useServerFn(listFinalizedEvaluationsForRecognition);
+  const fetchRanking = useServerFn(listRecognitionRanking);
   const review = useServerFn(reviewRecognitionCandidate);
   const createOther = useServerFn(createOtherRecognitionCandidate);
   const certificate = useServerFn(generateRecognitionCertificate);
@@ -94,6 +98,11 @@ function RecognitionPage() {
     queryFn: () => fetchEvaluations(),
     retry: false,
   });
+  const rankingQuery = useQuery({
+    queryKey: ["recognition-ranking"],
+    queryFn: () => fetchRanking(),
+    retry: false,
+  });
   const mutation = useMutation({
     mutationFn: (input: { id: string; decision: "APPROVED" | "REJECTED"; reviewNotes: string }) =>
       review({ data: input }),
@@ -111,11 +120,18 @@ function RecognitionPage() {
     },
   });
   const download = async (record: RecognitionRecord) => {
-    const result = await certificate({ data: { recordId: record.id } });
-    const link = document.createElement("a");
-    link.href = `data:application/pdf;base64,${result.base64}`;
-    link.download = result.fileName;
-    link.click();
+    try {
+      const result = await certificate({ data: { recordId: record.id } });
+      const link = document.createElement("a");
+      link.href = `data:application/pdf;base64,${result.base64}`;
+      link.download = result.fileName;
+      link.click();
+      await queryClient.invalidateQueries({ queryKey: ["recognition-ranking"] });
+      await queryClient.invalidateQueries({ queryKey: ["recognition"] });
+      toast.success("Certificate generated");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Certificate generation failed");
+    }
   };
   const data = dataQuery.data;
 
@@ -160,6 +176,11 @@ function RecognitionPage() {
           />
         </CardContent>
       </Card>
+      <RecognitionRanking
+        rows={rankingQuery.data ?? []}
+        loading={rankingQuery.isLoading}
+        onCertificate={(recordId) => void download({ id: recordId })}
+      />
       {dataQuery.isLoading ? (
         <LoadingBlock rows={8} />
       ) : dataQuery.isError ? (
@@ -202,6 +223,84 @@ function RecognitionPage() {
   );
 }
 
+function RecognitionRanking({
+  rows,
+  loading,
+  onCertificate,
+}: {
+  rows: RecognitionRankingRow[];
+  loading: boolean;
+  onCertificate: (recordId: string) => void;
+}) {
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <h2 className="mb-1 text-lg font-semibold">Top Recognition Ranking</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Finalized performance scores only. Recognition remains a separate approval decision.
+        </p>
+        {loading ? (
+          <LoadingBlock rows={4} />
+        ) : rows.length === 0 ? (
+          <EmptyState
+            title="No finalized performance scores"
+            description="Employees appear after a finalized evaluation has a calculated score."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <caption className="sr-only">Top employees ranked by finalized performance score</caption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Rank</TableHead>
+                  <TableHead>Employee</TableHead>
+                  <TableHead>Job Title</TableHead>
+                  <TableHead>Division / Department</TableHead>
+                  <TableHead>Evaluation Cycle</TableHead>
+                  <TableHead>Performance Score</TableHead>
+                  <TableHead>Recognition Status</TableHead>
+                  <TableHead>Certificate</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.sourceEvaluationId}>
+                    <TableCell className="font-semibold">{row.rank}</TableCell>
+                    <TableCell>{row.employeeName}</TableCell>
+                    <TableCell>{row.employeeJobTitle || "-"}</TableCell>
+                    <TableCell>{row.employeeDivision || "-"}</TableCell>
+                    <TableCell>
+                      {row.sourceCycleName
+                        ? `${row.sourceCycleName} (${row.sourceCycleYear ?? ""})`
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="font-semibold">{row.performanceScore.toFixed(2)}</TableCell>
+                    <TableCell>{humanizeToken(row.recognitionStatus)}</TableCell>
+                    <TableCell>
+                      {row.recognitionRecordId ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={Boolean(row.certificateGeneratedAt)}
+                          onClick={() => onCertificate(row.recognitionRecordId!)}
+                        >
+                          {row.certificateGeneratedAt ? "Generated" : "Generate Certificate"}
+                        </Button>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function RecognitionDirectory({
   candidates,
   records,
@@ -217,7 +316,7 @@ function RecognitionDirectory({
   onSelect: (employeeId: string) => void;
   onBack: () => void;
   onReview: (candidate: RecognitionCandidate) => void;
-  onCertificate: (record: RecognitionRecord) => void;
+  onCertificate: (record: { id: string }) => void;
 }) {
   const employees = Array.from(
     new Map(
@@ -322,7 +421,7 @@ function RecognitionDetail({
   records: RecognitionRecord[];
   onBack: () => void;
   onReview: (candidate: RecognitionCandidate) => void;
-  onCertificate: (record: RecognitionRecord) => void;
+  onCertificate: (record: { id: string }) => void;
 }) {
   if (!employee) return null;
   return (
@@ -378,8 +477,13 @@ function RecognitionDetail({
                 </p>
                 <h3 className="font-semibold">{record.recognitionType}</h3>
               </div>
-              <Button variant="outline" size="sm" onClick={() => onCertificate(record)}>
-                Certificate
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={Boolean(record.certificateGeneratedAt)}
+                onClick={() => onCertificate(record)}
+              >
+                {record.certificateGeneratedAt ? "Generated" : "Certificate"}
               </Button>
             </div>
             <p className="whitespace-pre-wrap text-sm">{record.reason}</p>
@@ -484,7 +588,7 @@ function History({
   onCertificate,
 }: {
   records: RecognitionRecord[];
-  onCertificate: (record: RecognitionRecord) => void;
+  onCertificate: (record: { id: string }) => void;
 }) {
   return (
     <Card>
@@ -543,8 +647,13 @@ function History({
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <Button variant="outline" size="sm" onClick={() => onCertificate(record)}>
-                        Generate Certificate
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={Boolean(record.certificateGeneratedAt)}
+                        onClick={() => onCertificate(record)}
+                      >
+                        {record.certificateGeneratedAt ? "Generated" : "Generate Certificate"}
                       </Button>
                     </td>
                   </tr>

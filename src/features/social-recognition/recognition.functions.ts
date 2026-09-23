@@ -55,6 +55,21 @@ export type RecognitionRecord = {
   status?: z.infer<typeof candidateStatus>;
 };
 
+export type RecognitionRankingRow = {
+  rank: number;
+  employeeId: string;
+  employeeName: string;
+  employeeJobTitle: string;
+  employeeDivision: string;
+  sourceEvaluationId: string;
+  sourceCycleName: string | null;
+  sourceCycleYear: number | null;
+  performanceScore: number;
+  recognitionStatus: "RECOGNIZED" | "PENDING" | "NOT_RECOGNIZED";
+  recognitionRecordId: string | null;
+  certificateGeneratedAt: string | null;
+};
+
 function related(row: Record<string, unknown>) {
   const employee = row["employees"] as {
     full_name?: string;
@@ -113,13 +128,13 @@ export const listRecognitionData = createServerFn({ method: "GET" })
     let candidates = admin
       .from("recognition_candidates")
       .select(
-        "id, employee_id, source_evaluation_id, recognition_type, reason, status, review_notes, created_at, employees!inner(full_name, employee_number, job_title, division, section), evaluations(evaluation_cycles(name, year))",
+        "id, employee_id, source_evaluation_id, recognition_type, reason, status, review_notes, created_at, employees!inner(full_name, employee_number, job_title, division, section), evaluations!inner(status, is_finalized, evaluation_cycles(name, year))",
       )
       .order("created_at", { ascending: false });
     let records = admin
       .from("recognition_records")
       .select(
-        "id, candidate_id, employee_id, source_evaluation_id, recognition_type, reason, recognition_date, approved_at, certificate_generated_at, employees!inner(full_name, employee_number, job_title, division, section), evaluations(evaluation_cycles(name, year))",
+        "id, candidate_id, employee_id, source_evaluation_id, recognition_type, reason, recognition_date, approved_at, certificate_generated_at, employees!inner(full_name, employee_number, job_title, division, section), evaluations!inner(status, is_finalized, evaluation_cycles(name, year))",
       )
       .order("recognition_date", { ascending: false });
     if (data.employeeId) {
@@ -183,6 +198,88 @@ export const listFinalizedEvaluationsForRecognition = createServerFn({ method: "
     return data ?? [];
   });
 
+export const listRecognitionRanking = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<RecognitionRankingRow[]> => {
+    const { getAdmin, requirePermission } = await import("../../lib/server-core.server");
+    await requirePermission(context.userId, "recognition.view", "Social Recognition");
+    const admin = await getAdmin();
+    const { data: evaluations, error } = await admin
+      .from("evaluations")
+      .select(
+        "id, employee_id, full_name_snapshot, job_title_snapshot, division_snapshot, status, is_finalized, evaluation_cycles(name, year), evaluation_scores(final_score)",
+      )
+      .eq("status", "FINALIZED")
+      .eq("is_finalized", true)
+      .order("finalized_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    const rows = (evaluations ?? [])
+      .map((row) => {
+        const scoreRow = Array.isArray(row.evaluation_scores)
+          ? row.evaluation_scores[0]
+          : row.evaluation_scores;
+        const score = Number(scoreRow?.final_score);
+        if (!Number.isFinite(score)) return null;
+        const cycle = Array.isArray(row.evaluation_cycles)
+          ? row.evaluation_cycles[0]
+          : row.evaluation_cycles;
+        return {
+          evaluationId: row.id,
+          employeeId: row.employee_id,
+          employeeName: row.full_name_snapshot,
+          employeeJobTitle: row.job_title_snapshot,
+          employeeDivision: row.division_snapshot,
+          sourceCycleName: cycle?.name ?? null,
+          sourceCycleYear: cycle?.year ?? null,
+          performanceScore: score,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null)
+      .sort((left, right) => right.performanceScore - left.performanceScore);
+    if (rows.length === 0) return [];
+    const evaluationIds = rows.map((row) => row.evaluationId);
+    const [{ data: records }, { data: candidates }] = await Promise.all([
+      admin
+        .from("recognition_records")
+        .select("id, source_evaluation_id, certificate_generated_at")
+        .in("source_evaluation_id", evaluationIds),
+      admin
+        .from("recognition_candidates")
+        .select("source_evaluation_id, status")
+        .in("source_evaluation_id", evaluationIds),
+    ]);
+    const recordByEvaluation = new Map(
+      (records ?? []).map((record) => [record.source_evaluation_id, record]),
+    );
+    const candidateByEvaluation = new Map<string, string>();
+    for (const candidate of candidates ?? []) {
+      if (candidate.status === "APPROVED") candidateByEvaluation.set(candidate.source_evaluation_id, "APPROVED");
+      else if (!candidateByEvaluation.has(candidate.source_evaluation_id)) candidateByEvaluation.set(candidate.source_evaluation_id, candidate.status);
+    }
+    return rows.map((row, index) => {
+      const record = recordByEvaluation.get(row.evaluationId);
+      const candidateStatus = candidateByEvaluation.get(row.evaluationId);
+      return {
+        rank: index + 1,
+        employeeId: row.employeeId,
+        employeeName: row.employeeName,
+        employeeJobTitle: row.employeeJobTitle,
+        employeeDivision: row.employeeDivision,
+        sourceEvaluationId: row.evaluationId,
+        sourceCycleName: row.sourceCycleName,
+        sourceCycleYear: row.sourceCycleYear,
+        performanceScore: row.performanceScore,
+        recognitionStatus: record
+          ? "RECOGNIZED"
+          : candidateStatus
+            ? "PENDING"
+            : "NOT_RECOGNIZED",
+        recognitionRecordId: record?.id ?? null,
+        certificateGeneratedAt: record?.certificate_generated_at ?? null,
+      };
+    });
+  });
+
 export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) =>
@@ -205,6 +302,13 @@ export const reviewRecognitionCandidate = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .maybeSingle();
     if (!candidate) throw validationError("Recognition candidate not found");
+    const { data: sourceEvaluation } = await admin
+      .from("evaluations")
+      .select("status, is_finalized")
+      .eq("id", candidate.source_evaluation_id)
+      .maybeSingle();
+    if (!sourceEvaluation || sourceEvaluation.status !== "FINALIZED" || !sourceEvaluation.is_finalized)
+      throw validationError("Only finalized evaluations can be recognized");
     if (candidate.status !== "PENDING")
       throw validationError("This recognition candidate has already been reviewed");
     const reviewedAt = new Date().toISOString();
@@ -341,15 +445,33 @@ export const generateRecognitionCertificate = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const { data: row } = await admin
       .from("recognition_records")
-      .select("*, employees(full_name), recognition_candidates(recognition_type, reason)")
+      .select(
+        "*, employees(full_name), recognition_candidates(recognition_type, reason), evaluations!inner(status, is_finalized, full_name_snapshot, evaluation_cycles(name, year), evaluation_scores(final_score))",
+      )
       .eq("id", data.recordId)
       .maybeSingle();
     if (!row) throw validationError("Recognition record not found");
+    const sourceEvaluation = row.evaluations as { status?: string; is_finalized?: boolean } | null;
+    if (sourceEvaluation?.status !== "FINALIZED" || !sourceEvaluation.is_finalized)
+      throw validationError("Certificates require a finalized evaluation");
+    if (row.certificate_generated_at)
+      throw validationError("A certificate has already been generated for this recognition record");
     const employee = row.employees as { full_name?: string } | null;
     const candidate = row.recognition_candidates as {
       recognition_type?: string;
       reason?: string;
     } | null;
+    const evaluation = row.evaluations as {
+      evaluation_cycles?: { name?: string; year?: number } | null;
+      evaluation_scores?: { final_score?: number | null } | null;
+    } | null;
+    const cycle = evaluation?.evaluation_cycles;
+    const score = evaluation?.evaluation_scores?.final_score;
+    const { data: signatory } = await admin
+      .from("internal_users")
+      .select("full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
     const pdf = await PDFDocument.create();
     const page = pdf.addPage([792, 612]);
     const font = await pdf.embedFont(StandardFonts.Helvetica);
@@ -382,9 +504,25 @@ export const generateRecognitionCertificate = createServerFn({ method: "POST" })
       font,
       maxWidth: 492,
     });
+    page.drawText(
+      `Performance score: ${score !== null && score !== undefined ? Number(score).toFixed(2) : "N/A"}`,
+      { x: 285, y: 210, size: 12, font },
+    );
+    page.drawText(`Evaluation cycle: ${cycle?.name ?? "Finalized evaluation"} ${cycle?.year ?? ""}`.trim(), {
+      x: 270,
+      y: 190,
+      size: 12,
+      font,
+    });
     page.drawText(`Issued ${new Date(row.recognition_date).toLocaleDateString()}`, {
       x: 315,
       y: 170,
+      size: 12,
+      font,
+    });
+    page.drawText(`Authorized signatory: ${signatory?.full_name ?? "Priority Handling Logistics"}`, {
+      x: 245,
+      y: 135,
       size: 12,
       font,
     });
@@ -428,12 +566,27 @@ export const generateRecognitionCertificate = createServerFn({ method: "POST" })
         file_size: bytes.length,
         created_by: context.userId,
       });
-      if (documentError) throw validationError(documentError.message);
+      if (documentError) {
+        await admin.storage.from("employee-files").remove([storagePath]);
+        throw validationError(documentError.message);
+      }
     }
     await admin
       .from("recognition_records")
       .update({ certificate_generated_at: new Date().toISOString() })
       .eq("id", data.recordId);
+    const { getActorRoles, writeAudit } = await import("../../lib/server-core.server");
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "RECOGNITION_CERTIFICATE_GENERATED",
+      module: "Social Recognition",
+      entityType: "recognition_record",
+      entityId: data.recordId,
+      employeeId,
+      evaluationId: row.source_evaluation_id,
+      newValue: { fileName, storagePath },
+    });
     return {
       fileName,
       base64: Buffer.from(bytes).toString("base64"),
