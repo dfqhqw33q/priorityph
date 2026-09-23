@@ -213,9 +213,6 @@ function LoginPage() {
             )}
 
             <div className="mt-4 flex flex-col gap-2 text-center text-sm">
-              <Link to="/forgot-password" className="text-primary hover:underline font-medium">
-                Forgot your password?
-              </Link>
               {setupNeeded ? (
                 <Link to="/setup" className="text-primary hover:underline font-medium">
                   No accounts exist yet — run initial setup
