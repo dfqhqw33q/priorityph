@@ -5,7 +5,7 @@ import {
   authenticateSupabaseRequest,
   requireSupabaseAuth,
 } from "@/integrations/supabase/auth-middleware";
-import { bootstrapAdminSchema, resetPasswordSchema } from "./schemas";
+import { accountPasswordChangeSchema, bootstrapAdminSchema, resetPasswordSchema } from "./schemas";
 import { validatePassword } from "./password-policy";
 import type { AppRole, Permission } from "./domain";
 
@@ -20,6 +20,135 @@ export type AccessProfile = {
   roles: AppRole[];
   permissions: Permission[];
 };
+
+export type AccountSettings = {
+  userId: string;
+  fullName: string;
+  email: string;
+  jobTitle: string | null;
+  isActive: boolean;
+  isLocked: boolean;
+  mustChangePassword: boolean;
+  lastLoginAt: string | null;
+  roles: AppRole[];
+  otpRequired: true;
+  recentSecurityActivity: Array<{
+    action: string;
+    result: string;
+    occurredAt: string;
+  }>;
+};
+
+export const getMyAccountSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AccountSettings> => {
+    const { getAdmin } = await import("./server-core.server");
+    const admin = await getAdmin();
+    const [{ data: profile }, { data: roles }, { data: activity }] = await Promise.all([
+      admin
+        .from("internal_users")
+        .select("id, full_name, email, job_title, is_active, is_locked, must_change_password, last_login_at")
+        .eq("id", context.userId)
+        .maybeSingle(),
+      admin.from("user_roles").select("role").eq("user_id", context.userId),
+      admin
+        .from("audit_logs")
+        .select("action, result, occurred_at")
+        .eq("actor_user_id", context.userId)
+        .eq("module", "Authentication")
+        .order("occurred_at", { ascending: false })
+        .limit(10),
+    ]);
+    if (!profile) throw new Error("Your internal account could not be found");
+    return {
+      userId: profile.id,
+      fullName: profile.full_name,
+      email: profile.email,
+      jobTitle: profile.job_title,
+      isActive: profile.is_active,
+      isLocked: profile.is_locked,
+      mustChangePassword: profile.must_change_password,
+      lastLoginAt: profile.last_login_at,
+      roles: (roles ?? []).map((row) => row.role as AppRole),
+      otpRequired: true,
+      recentSecurityActivity: (activity ?? []).map((row) => ({
+        action: row.action,
+        result: row.result,
+        occurredAt: row.occurred_at,
+      })),
+    };
+  });
+
+export const updateMyProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => z.object({ fullName: z.string().trim().min(2).max(160) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { getAdmin, getActorRoles, writeAudit, validationError } = await import("./server-core.server");
+    const admin = await getAdmin();
+    const { data: previous } = await admin.from("internal_users").select("full_name").eq("id", context.userId).maybeSingle();
+    const { error } = await admin.from("internal_users").update({ full_name: data.fullName }).eq("id", context.userId);
+    if (error) throw validationError(error.message);
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "PROFILE_UPDATED",
+      module: "Authentication",
+      entityType: "internal_user",
+      entityId: context.userId,
+      previousValue: previous,
+      newValue: { full_name: data.fullName },
+    });
+    return { ok: true };
+  });
+
+export const changeMyAccountPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => accountPasswordChangeSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { getAdmin, getActorRoles, getRequestMeta, writeAudit, validationError } = await import("./server-core.server");
+    const admin = await getAdmin();
+    const { data: profile } = await admin.from("internal_users").select("email, full_name").eq("id", context.userId).maybeSingle();
+    if (!profile) throw validationError("Your internal account could not be found");
+    const passwordCheck = validatePassword(data.password, [profile.full_name, profile.email]);
+    if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0]);
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!url || !key) throw validationError("Password re-authentication is unavailable");
+    const { createClient } = await import("@supabase/supabase-js");
+    const verifier = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { error: reauthError } = await verifier.auth.signInWithPassword({ email: profile.email, password: data.currentPassword });
+    await verifier.auth.signOut().catch(() => undefined);
+    if (reauthError) throw validationError("The current password is incorrect");
+    const { error } = await admin.auth.admin.updateUserById(context.userId, { password: data.password });
+    if (error) throw validationError(error.message);
+    await admin.auth.admin.signOut(context.userId, "others");
+    const meta = getRequestMeta();
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "PASSWORD_CHANGED",
+      module: "Authentication",
+      entityType: "internal_user",
+      entityId: context.userId,
+    }, meta);
+    return { ok: true };
+  });
+
+export const recordEmailSecurityEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => z.object({ event: z.enum(["EMAIL_CHANGE_REQUESTED", "EMAIL_VERIFIED"]) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { getActorRoles, writeAudit } = await import("./server-core.server");
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: data.event,
+      module: "Authentication",
+      entityType: "internal_user",
+      entityId: context.userId,
+    });
+    return { ok: true };
+  });
 
 export const getMyAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

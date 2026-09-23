@@ -370,6 +370,20 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
+export const accountPasswordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    password: z.string().superRefine((value, context) => {
+      const message = passwordPolicyMessage(value);
+      if (message !== true) context.addIssue({ code: z.ZodIssueCode.custom, message });
+    }),
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 export const userFormSchema = z.object({
   email: z.string().email(),
   fullName: trimmed(2, 160),

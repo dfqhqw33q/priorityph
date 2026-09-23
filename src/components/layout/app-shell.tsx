@@ -645,6 +645,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                     </p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="gap-2">
+                    <Link to="/account/settings">
+                      <User className="size-4" />
+                      Profile and account settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="gap-2">
                     <LogOut className="size-4" />
                     Sign out
