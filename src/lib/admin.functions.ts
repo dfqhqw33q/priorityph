@@ -623,8 +623,14 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => employeeProfileAdminSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, requireStepUp, writeAudit, getActorRoles, validationError } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      requireStepUp,
+      writeAudit,
+      getActorRoles,
+      validationError,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "employees.manage", "Employee Profiles");
     await requireStepUp(
       context.userId,
