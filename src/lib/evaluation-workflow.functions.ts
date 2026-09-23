@@ -451,7 +451,8 @@ export const saveEvaluationSignature = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, requireStepUp, validationError } =
+      await import("./server-core.server");
     const permissionByStage = {
       RATER_STEP2: "evaluations.rate_supervisor",
       REVIEWING_SUPERVISOR_STEP3: "evaluations.review_step3",
@@ -460,6 +461,12 @@ export const saveEvaluationSignature = createServerFn({ method: "POST" })
       PRESIDENT: "president.approve",
     } as const;
     await requirePermission(context.userId, permissionByStage[data.stage], "Evaluation Signature");
+    await requireStepUp(
+      context.userId,
+      String(context.claims.session_id ?? ""),
+      "sign an evaluation",
+      true,
+    );
     const admin = await getAdmin();
     const { data: evaluation } = await admin
       .from("evaluations")
@@ -482,10 +489,23 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => raterStep2Schema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError, writeAudit, getActorRoles } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      requireStepUp,
+      validationError,
+      writeAudit,
+      getActorRoles,
+    } = await import("./server-core.server");
     const { computeScore } = await import("./scoring.server");
     await requirePermission(context.userId, "evaluations.step2", "Rater Step 2");
+    if (data.submit)
+      await requireStepUp(
+        context.userId,
+        String(context.claims.session_id ?? ""),
+        "submit an evaluation review",
+        true,
+      );
     const admin = await getAdmin();
     const { data: evaluation } = await admin
       .from("evaluations")
@@ -606,9 +626,21 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => reviewingSupervisorReviewSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError, upsertReviewingSupervisorRatings } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      requireStepUp,
+      validationError,
+      upsertReviewingSupervisorRatings,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "evaluations.review_step3", "Reviewing Supervisor");
+    if (data.submit)
+      await requireStepUp(
+        context.userId,
+        String(context.claims.session_id ?? ""),
+        "submit a reviewing supervisor review",
+        true,
+      );
     if (data.submit && !data.signature)
       throw validationError("A Reviewing Supervisor signature is required before submission");
     const admin = await getAdmin();
@@ -675,9 +707,17 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => personnelProcessingSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, requireStepUp, validationError } =
+      await import("./server-core.server");
     const { computeScore } = await import("./scoring.server");
     await requirePermission(context.userId, "personnel.process", "Personnel Processing");
+    if (data.submit)
+      await requireStepUp(
+        context.userId,
+        String(context.claims.session_id ?? ""),
+        "submit personnel processing",
+        true,
+      );
     if (data.submit && !data.signature)
       throw validationError("A Personnel Office signature is required before submission");
     const score = await computeScore(data.evaluationId);
@@ -748,8 +788,16 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => committeeReviewSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, requireStepUp, validationError } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "committee.review", "Committee Review");
+    if (data.submit)
+      await requireStepUp(
+        context.userId,
+        String(context.claims.session_id ?? ""),
+        "submit a committee review",
+        true,
+      );
     if (data.submit && !data.signature)
       throw validationError("A Committee signature is required before submission");
     const admin = await getAdmin();
@@ -803,8 +851,15 @@ export const approveEvaluation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => presidentApprovalSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, validationError } = await import("./server-core.server");
+    const { getAdmin, requirePermission, requireStepUp, validationError } =
+      await import("./server-core.server");
     await requirePermission(context.userId, "president.approve", "President Approval");
+    await requireStepUp(
+      context.userId,
+      String(context.claims.session_id ?? ""),
+      "approve or return an evaluation",
+      true,
+    );
     if (!data.approve && !data.reason)
       throw validationError("A reason is required when returning an evaluation");
     if (data.approve && !data.signature)

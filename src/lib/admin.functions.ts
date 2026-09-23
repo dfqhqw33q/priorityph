@@ -142,6 +142,7 @@ export const createUser = createServerFn({ method: "POST" })
     const {
       getAdmin,
       requirePermission,
+      requireStepUp,
       writeAudit,
       getActorRoles,
       validationError,
@@ -150,6 +151,12 @@ export const createUser = createServerFn({ method: "POST" })
       sendCredentialEmail,
     } = await import("./server-core.server");
     await requirePermission(context.userId, "users.manage", "User Management");
+    await requireStepUp(
+      context.userId,
+      String(context.claims.session_id ?? ""),
+      "create a user account",
+      true,
+    );
     const admin = await getAdmin();
     try {
       const tempPassword = randomPassword();
@@ -242,9 +249,21 @@ export const updateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => userUpdateSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      requireStepUp,
+      writeAudit,
+      getActorRoles,
+      validationError,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "users.manage", "User Management");
+    await requireStepUp(
+      context.userId,
+      String(context.claims.session_id ?? ""),
+      "update a user profile",
+      true,
+    );
     const admin = await getAdmin();
     const { data: before } = await admin
       .from("internal_users")
@@ -276,6 +295,7 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
     const {
       getAdmin,
       requirePermission,
+      requireStepUp,
       writeAudit,
       getActorRoles,
       validationError,
@@ -290,6 +310,12 @@ export const applyUserAccessAction = createServerFn({ method: "POST" })
           ? "users.revoke_sessions"
           : "users.manage";
     await requirePermission(context.userId, permission, "User Management");
+    await requireStepUp(
+      context.userId,
+      String(context.claims.session_id ?? ""),
+      "change account security",
+      true,
+    );
     const admin = await getAdmin();
 
     try {
@@ -400,9 +426,22 @@ export const assignRoles = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => assignRolesSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError, safeMessage } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      requireStepUp,
+      writeAudit,
+      getActorRoles,
+      validationError,
+      safeMessage,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "users.assign_roles", "User Management");
+    await requireStepUp(
+      context.userId,
+      String(context.claims.session_id ?? ""),
+      "change roles",
+      true,
+    );
     const admin = await getAdmin();
     const { data: before } = await admin
       .from("user_roles")
@@ -462,8 +501,14 @@ export const setRolePermissions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => rolePermissionsSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      requireStepUp,
+      writeAudit,
+      getActorRoles,
+      validationError,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "permissions.manage", "Roles & Permissions");
     const admin = await getAdmin();
 
@@ -553,6 +598,12 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
     await requirePermission(context.userId, "employees.manage", "Employee Profiles");
+    await requireStepUp(
+      context.userId,
+      String(context.claims.session_id ?? ""),
+      "create an employee profile",
+      true,
+    );
     const admin = await getAdmin();
     const fullName = [data.firstName, data.middleName, data.lastName].filter(Boolean).join(" ");
     const { data: employee, error } = await admin
@@ -598,9 +649,21 @@ export const updateEmployeeProfile = createServerFn({ method: "POST" })
     employeeProfileAdminSchema.extend({ employeeId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
-      await import("./server-core.server");
+    const {
+      getAdmin,
+      requirePermission,
+      requireStepUp,
+      writeAudit,
+      getActorRoles,
+      validationError,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "employees.manage", "Employee Profiles");
+    await requireStepUp(
+      context.userId,
+      String(context.claims.session_id ?? ""),
+      "update an employee profile",
+      true,
+    );
     const admin = await getAdmin();
     const { data: previous } = await admin
       .from("employees")
@@ -664,9 +727,17 @@ export const listAuditEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => auditFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles } =
+    const { getAdmin, requirePermission, requireStepUp, writeAudit, getActorRoles } =
       await import("./server-core.server");
     await requirePermission(context.userId, "audit.view", "Audit Logs");
+    if (data.exportAll) {
+      await requireStepUp(
+        context.userId,
+        String(context.claims.session_id ?? ""),
+        "export audit logs",
+        true,
+      );
+    }
     const admin = await getAdmin();
 
     let query = admin

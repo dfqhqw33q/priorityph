@@ -114,6 +114,28 @@ export class AuthorizationError extends Error {
   }
 }
 
+export async function requireStepUp(
+  userId: string,
+  sessionId: string,
+  action: string,
+  fresh = false,
+) {
+  const admin = await getAdmin();
+  const table = admin.from("security_elevations" as never);
+  const { data } = await table
+    .select("elevated_at, expires_at")
+    .eq("user_id", userId)
+    .eq("session_id", sessionId)
+    .maybeSingle();
+  const now = Date.now();
+  const elevatedAt = data ? new Date(String(data.elevated_at)).getTime() : 0;
+  const expiresAt = data ? new Date(String(data.expires_at)).getTime() : 0;
+  if (!data || expiresAt <= now || (fresh && elevatedAt < now - 60_000)) {
+    throw new AuthorizationError(`Step-up authentication required for ${action}`);
+  }
+  return true;
+}
+
 export async function getActorRoles(userId: string): Promise<AppRole[]> {
   const admin = await getAdmin();
   const { data } = await admin.from("user_roles").select("role").eq("user_id", userId);

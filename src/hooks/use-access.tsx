@@ -17,8 +17,46 @@ const authSubscribers = new Set<() => void>();
 const INACTIVITY_TIMEOUT_MS = 3 * 60_000;
 const TIMEOUT_WARNING_MS = 30_000;
 const LAST_ACTIVITY_KEY = "phl-last-activity";
+const STEP_UP_THRESHOLD_MS = 45_000;
 let inactivityCleanup: (() => void) | null = null;
 let inactivityUserId: string | null = null;
+type SecuritySnapshot = { stepUpRequired: boolean; elevatedUntil: number | null };
+let securitySnapshot: SecuritySnapshot = { stepUpRequired: false, elevatedUntil: null };
+const securitySubscribers = new Set<() => void>();
+
+function publishSecuritySnapshot(next: SecuritySnapshot) {
+  if (
+    next.stepUpRequired === securitySnapshot.stepUpRequired &&
+    next.elevatedUntil === securitySnapshot.elevatedUntil
+  )
+    return;
+  securitySnapshot = next;
+  securitySubscribers.forEach((subscriber) => subscriber());
+}
+
+export function markStepUpSatisfied(expiresInSeconds: number) {
+  publishSecuritySnapshot({
+    stepUpRequired: false,
+    elevatedUntil: Date.now() + expiresInSeconds * 1000,
+  });
+}
+
+export function clearSecurityState() {
+  publishSecuritySnapshot({ stepUpRequired: false, elevatedUntil: null });
+}
+
+function subscribeToSecurity(subscriber: () => void) {
+  securitySubscribers.add(subscriber);
+  return () => securitySubscribers.delete(subscriber);
+}
+
+function getSecuritySnapshot() {
+  return securitySnapshot;
+}
+
+export function useSecurityStatus() {
+  return useSyncExternalStore(subscribeToSecurity, getSecuritySnapshot, getSecuritySnapshot);
+}
 
 export function getAuthSession() {
   return supabase.auth.getSession();
@@ -60,6 +98,10 @@ function startInactivityTimeout(userId: string, queryClient: ReturnType<typeof u
   const markActivity = () => {
     window.sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
     warningShown = false;
+    publishSecuritySnapshot({
+      stepUpRequired: securitySnapshot.stepUpRequired,
+      elevatedUntil: securitySnapshot.elevatedUntil,
+    });
   };
   const activityEvents = [
     "mousedown",
@@ -77,11 +119,18 @@ function startInactivityTimeout(userId: string, queryClient: ReturnType<typeof u
   activityEvents.forEach((event) => window.addEventListener(event, onActivity, { passive: true }));
   const timer = window.setInterval(() => {
     const inactiveFor = Date.now() - Number(window.sessionStorage.getItem(LAST_ACTIVITY_KEY));
+    if (inactiveFor >= STEP_UP_THRESHOLD_MS && inactiveFor < INACTIVITY_TIMEOUT_MS) {
+      publishSecuritySnapshot({
+        stepUpRequired: true,
+        elevatedUntil: securitySnapshot.elevatedUntil,
+      });
+    }
     if (inactiveFor >= INACTIVITY_TIMEOUT_MS && !signingOut) {
       signingOut = true;
       void supabase.auth.signOut().finally(() => {
         queryClient.removeQueries({ queryKey: ["access", userId] });
         window.sessionStorage.removeItem(LAST_ACTIVITY_KEY);
+        clearSecurityState();
         window.location.assign("/login");
       });
     } else if (inactiveFor >= INACTIVITY_TIMEOUT_MS - TIMEOUT_WARNING_MS && !warningShown) {
@@ -111,6 +160,7 @@ export function useAccess() {
       startInactivityTimeout(userId, queryClient);
     }
     if (authReady && !userId && inactivityCleanup) inactivityCleanup();
+    if (authReady && !userId) clearSecurityState();
     return () => undefined;
   }, [authReady, queryClient, userId]);
 

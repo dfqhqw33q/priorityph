@@ -11,6 +11,7 @@ import { EmptyState, LoadingBlock, PageHeader } from "@/components/shared/shared
 import { createEmployeeProfile, listEmployees, updateEmployeeProfile } from "@/lib/admin.functions";
 import { employeeProfileAdminSchema, type EmployeeProfileAdminValues } from "@/lib/schemas";
 import { userErrorMessage } from "@/lib/validation";
+import { useStepUp } from "@/components/layout/step-up-provider";
 
 const emptyForm: EmployeeProfileAdminValues = {
   firstName: "",
@@ -32,6 +33,7 @@ export function EmployeeProfileManagementPage() {
   const update = useServerFn(updateEmployeeProfile);
   const fetchEmployees = useServerFn(listEmployees);
   const queryClient = useQueryClient();
+  const { runSensitiveAction } = useStepUp();
   const [form, setForm] = useState<EmployeeProfileAdminValues>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -60,9 +62,14 @@ export function EmployeeProfileManagementPage() {
   const mutation = useMutation({
     mutationFn: async () => {
       const parsed = employeeProfileAdminSchema.parse(form);
-      return editingId
-        ? update({ data: { ...parsed, employeeId: editingId } })
-        : create({ data: parsed });
+      return runSensitiveAction(
+        editingId ? "update an employee profile" : "create an employee profile",
+        () =>
+          editingId
+            ? update({ data: { ...parsed, employeeId: editingId } })
+            : create({ data: parsed }),
+        true,
+      );
     },
     onSuccess: async (result) => {
       toast.success(editingId ? "Employee profile updated" : "Employee profile created");

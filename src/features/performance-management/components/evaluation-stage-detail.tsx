@@ -53,6 +53,7 @@ import {
 } from "@/components/shared/shared-ui";
 import { EvaluationProgressStepper } from "@/features/performance-management/components/evaluation-progress-stepper";
 import { TextShimmer } from "@/components/loading-ui/text-shimmer";
+import { useStepUp } from "@/components/layout/step-up-provider";
 import {
   getEvaluationStage,
   approveEvaluation,
@@ -238,6 +239,7 @@ export function EvaluationStageDetail({
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { runSensitiveAction } = useStepUp();
   const fetch = useServerFn(getEvaluationStage);
   const fetchHistory = useServerFn(getEvaluationHistory);
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
@@ -564,6 +566,7 @@ export function EvaluationStageDetail({
         submit,
         signature,
       };
+      const execute = async () => {
       if (stage === "RATER")
         return saveRaterStep2({
           data: {
@@ -623,6 +626,10 @@ export function EvaluationStageDetail({
           signature: signature ? { method: "TYPED", data: signature.data } : undefined,
         },
       });
+      };
+      return submit
+        ? runSensitiveAction("submit or finalize an evaluation", execute, true)
+        : execute();
     },
     onSuccess: async (_result, submit) => {
       if (!submit) {

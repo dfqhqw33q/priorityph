@@ -21,6 +21,7 @@ import {
 } from "@/lib/access.functions";
 import { ROLE_LABELS, type AppRole } from "@/lib/domain";
 import { userErrorMessage } from "@/lib/validation";
+import { useStepUp } from "@/components/layout/step-up-provider";
 
 export const Route = createFileRoute("/_authenticated/account/settings")({
   head: () => ({
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/account/settings")({
 
 export function AccountSettingsPage() {
   const queryClient = useQueryClient();
+  const { runSensitiveAction } = useStepUp();
   const fetchSettings = useServerFn(getMyAccountSettings);
   const saveProfile = useServerFn(updateMyProfile);
   const changePassword = useServerFn(changeMyAccountPassword);
@@ -59,7 +61,8 @@ export function AccountSettingsPage() {
   }, [settingsQuery.data]);
 
   const profileMutation = useMutation({
-    mutationFn: () => saveProfile({ data: { fullName } }),
+    mutationFn: () =>
+      runSensitiveAction("update your profile", () => saveProfile({ data: { fullName } }), true),
     onSuccess: async () => {
       toast.success("Profile updated");
       await queryClient.invalidateQueries({ queryKey: ["account-settings"] });
@@ -70,7 +73,11 @@ export function AccountSettingsPage() {
 
   const passwordMutation = useMutation({
     mutationFn: () =>
-      changePassword({ data: { currentPassword, password: newPassword, confirmPassword } }),
+      runSensitiveAction(
+        "change your password",
+        () => changePassword({ data: { currentPassword, password: newPassword, confirmPassword } }),
+        true,
+      ),
     onSuccess: () => {
       setCurrentPassword("");
       setNewPassword("");
@@ -86,14 +93,17 @@ export function AccountSettingsPage() {
       toast.error("Enter a different email address.");
       return;
     }
-    const { error } = await supabase.auth.updateUser({ email: nextEmail });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    await recordEmailEvent({ data: { event: "EMAIL_CHANGE_REQUESTED" } });
-    setPendingEmail(nextEmail);
-    toast.success("Confirmation email sent to the new address.");
+    await runSensitiveAction(
+      "change your email",
+      async () => {
+        const { error } = await supabase.auth.updateUser({ email: nextEmail });
+        if (error) throw error;
+        await recordEmailEvent({ data: { event: "EMAIL_CHANGE_REQUESTED" } });
+        setPendingEmail(nextEmail);
+        toast.success("Confirmation email sent to the new address.");
+      },
+      true,
+    ).catch((error) => toast.error(userErrorMessage(error, "Email change failed")));
   }
 
   async function refreshEmailState() {

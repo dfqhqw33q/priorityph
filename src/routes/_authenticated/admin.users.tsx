@@ -64,6 +64,7 @@ import {
 import { APP_ROLES, ROLE_LABELS, humanizeToken, permissionLabel, type AppRole } from "@/lib/domain";
 import { userFormSchema } from "@/lib/schemas";
 import { validatePassword } from "@/lib/password-policy";
+import { useStepUp } from "@/components/layout/step-up-provider";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   head: () => ({
@@ -125,6 +126,7 @@ const ACTION_LABELS: Record<AccessAction, string> = {
 function AdminUsersPage() {
   const queryClient = useQueryClient();
   const { can, access } = useAccess();
+  const { runSensitiveAction } = useStepUp();
 
   const fetchUsersPage = useServerFn(listUsersPage);
   const create = useServerFn(createUser);
@@ -202,15 +204,20 @@ function AdminUsersPage() {
       password?: string;
       temporaryPassword?: boolean;
     }) =>
-      applyAction({
-        data: {
-          userId: selectedId as string,
-          action: input.action,
-          reason: input.reason,
-          password: input.password,
-          temporaryPassword: input.temporaryPassword,
-        },
-      }),
+      runSensitiveAction(
+        "change account security",
+        () =>
+          applyAction({
+            data: {
+              userId: selectedId as string,
+              action: input.action,
+              reason: input.reason,
+              password: input.password,
+              temporaryPassword: input.temporaryPassword,
+            },
+          }),
+        true,
+      ),
     onSuccess: async (result) => {
       if (result.temporaryPassword) {
         setCredential({
@@ -228,7 +235,11 @@ function AdminUsersPage() {
 
   const rolesMutation = useMutation({
     mutationFn: (reason: string) =>
-      setRoles({ data: { userId: selectedId as string, roles: rolesDraft, reason } }),
+      runSensitiveAction(
+        "change user roles",
+        () => setRoles({ data: { userId: selectedId as string, roles: rolesDraft, reason } }),
+        true,
+      ),
     onSuccess: async () => {
       toast.success("Roles updated");
       setRolesDialogOpen(false);
@@ -239,13 +250,18 @@ function AdminUsersPage() {
 
   const profileMutation = useMutation({
     mutationFn: () =>
-      update({
-        data: {
-          userId: selectedId as string,
-          fullName: profileDraft.fullName,
-          jobTitle: profileDraft.jobTitle,
-        },
-      }),
+      runSensitiveAction(
+        "update a user profile",
+        () =>
+          update({
+            data: {
+              userId: selectedId as string,
+              fullName: profileDraft.fullName,
+              jobTitle: profileDraft.jobTitle,
+            },
+          }),
+        true,
+      ),
     onSuccess: async () => {
       toast.success("Profile updated");
       await refresh();
@@ -255,7 +271,7 @@ function AdminUsersPage() {
 
   const createMutation = useMutation({
     mutationFn: (values: { email: string; fullName: string; jobTitle: string; roles: AppRole[] }) =>
-      create({ data: values }),
+      runSensitiveAction("create a user account", () => create({ data: values }), true),
     onSuccess: async (result) => {
       if (result.temporaryPassword) {
         setCredential({

@@ -161,8 +161,14 @@ export const changeMyAccountPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => accountPasswordChangeSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, getActorRoles, getRequestMeta, writeAudit, validationError } =
+    const { getAdmin, getActorRoles, getRequestMeta, requireStepUp, writeAudit, validationError } =
       await import("./server-core.server");
+    await requireStepUp(
+      context.userId,
+      String(context.claims.session_id ?? ""),
+      "change your password",
+      true,
+    );
     const admin = await getAdmin();
     const { data: profile } = await admin
       .from("internal_users")
@@ -204,6 +210,65 @@ export const changeMyAccountPassword = createServerFn({ method: "POST" })
       meta,
     );
     return { ok: true };
+  });
+
+export const beginStepUpAuthentication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => z.object({ password: z.string().min(1) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { getAdmin, getActorRoles, writeAudit, validationError } =
+      await import("./server-core.server");
+    const admin = await getAdmin();
+    const sessionId = String(context.claims.session_id ?? "");
+    if (!sessionId) throw validationError("Step-up authentication is unavailable");
+    const { data: profile } = await admin
+      .from("internal_users")
+      .select("email, full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (!profile) throw validationError("Your internal account could not be found");
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!url || !key) throw validationError("Step-up authentication is unavailable");
+    const { createClient } = await import("@supabase/supabase-js");
+    const verifier = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await verifier.auth.signInWithPassword({
+      email: profile.email,
+      password: data.password,
+    });
+    await verifier.auth.signOut().catch(() => undefined);
+    const roles = (await getActorRoles(context.userId)).join(",");
+    if (error) {
+      await writeAudit({
+        actorUserId: context.userId,
+        actorRole: roles,
+        action: "STEP_UP_FAILED",
+        module: "Authentication",
+        entityType: "internal_user",
+        entityId: context.userId,
+        result: "FAILURE",
+      });
+      throw validationError("Identity verification failed");
+    }
+    const table = admin.from("security_elevations" as never);
+    const { error: elevationError } = await table.upsert({
+      user_id: context.userId,
+      session_id: sessionId,
+      elevated_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
+    } as never);
+    if (elevationError) throw validationError("Could not establish elevated access");
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: roles,
+      action: "STEP_UP_SUCCEEDED",
+      module: "Authentication",
+      entityType: "internal_user",
+      entityId: context.userId,
+    });
+    return { ok: true, expiresInSeconds: 600 };
   });
 
 export const recordEmailSecurityEvent = createServerFn({ method: "POST" })

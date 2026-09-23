@@ -55,6 +55,7 @@ import { recordLoginEvent } from "@/lib/access.functions";
 import { ROLE_LABELS, type AppRole, type Permission } from "@/lib/domain";
 import { useAccess } from "@/hooks/use-access";
 import { NotificationCenter } from "@/components/layout/notification-center";
+import { StepUpProvider } from "@/components/layout/step-up-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type NavItem = {
@@ -617,98 +618,100 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="icon" className="border-r border-border bg-card">
-        <SidebarHeader className="flex h-16 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-5 text-sidebar-foreground">
-          <Link to="/" className="flex min-w-0 translate-y-1 items-center gap-3">
-            <img
-              src="/logo-optimized.webp"
-              alt="Priority Handling Logistics, Inc."
-              className="size-10 shrink-0 object-contain"
-            />
-            <span className="min-w-0 text-[11px] font-bold uppercase leading-[1.08] tracking-[0.02em] text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-              PRIORITY HANDLING
-              <br />
-              LOGISTICS INC.
-            </span>
-          </Link>
-        </SidebarHeader>
-        <SidebarContent className="px-3 py-5">
-          <NavLinks />
-        </SidebarContent>
-        <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
-          <div className="flex flex-col gap-2">
-            <div className="flex min-w-0 items-center justify-between gap-2">
-              <span className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
-                Theme
-              </span>
-              <ThemeModeControls className="flex items-center gap-0.5 group-data-[collapsible=icon]:hidden" />
-              <ThemeToggle className="hidden size-7 group-data-[collapsible=icon]:inline-flex" />
-            </div>
-            <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-              <SidebarTrigger
-                aria-label="Collapse or expand sidebar"
-                title="Collapse or expand sidebar"
+    <StepUpProvider>
+      <SidebarProvider>
+        <Sidebar collapsible="icon" className="border-r border-border bg-card">
+          <SidebarHeader className="flex h-16 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-5 text-sidebar-foreground">
+            <Link to="/" className="flex min-w-0 translate-y-1 items-center gap-3">
+              <img
+                src="/logo-optimized.webp"
+                alt="Priority Handling Logistics, Inc."
+                className="size-10 shrink-0 object-contain"
               />
-              <span className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
-                Collapse
+              <span className="min-w-0 text-[11px] font-bold uppercase leading-[1.08] tracking-[0.02em] text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+                PRIORITY HANDLING
+                <br />
+                LOGISTICS INC.
               </span>
+            </Link>
+          </SidebarHeader>
+          <SidebarContent className="px-3 py-5">
+            <NavLinks />
+          </SidebarContent>
+          <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
+            <div className="flex flex-col gap-2">
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <span className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+                  Theme
+                </span>
+                <ThemeModeControls className="flex items-center gap-0.5 group-data-[collapsible=icon]:hidden" />
+                <ThemeToggle className="hidden size-7 group-data-[collapsible=icon]:inline-flex" />
+              </div>
+              <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+                <SidebarTrigger
+                  aria-label="Collapse or expand sidebar"
+                  title="Collapse or expand sidebar"
+                />
+                <span className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+                  Collapse
+                </span>
+              </div>
             </div>
-          </div>
-        </SidebarFooter>
-      </Sidebar>
+          </SidebarFooter>
+        </Sidebar>
 
-      <SidebarInset>
-        <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
-          <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
-            <SidebarTrigger className="md:hidden" aria-label="Open sidebar" />
-            <div className="ml-auto flex items-center gap-3">
-              <NotificationCenter />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full"
-                    aria-label="Open profile menu"
-                  >
-                    <Avatar className="size-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground">
+        <SidebarInset>
+          <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
+            <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+              <SidebarTrigger className="md:hidden" aria-label="Open sidebar" />
+              <div className="ml-auto flex items-center gap-3">
+                <NotificationCenter />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full"
+                      aria-label="Open profile menu"
+                    >
+                      <Avatar className="size-8">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          <User className="size-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <p className="font-semibold text-foreground">{access?.fullName}</p>
+                      <p className="font-normal text-muted-foreground">
+                        {(access?.roles ?? []).map((role) => ROLE_LABELS[role]).join(" \u00b7 ") ||
+                          "No role assigned"}
+                      </p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild className="gap-2">
+                      <Link to="/account/settings">
                         <User className="size-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <p className="font-semibold text-foreground">{access?.fullName}</p>
-                    <p className="font-normal text-muted-foreground">
-                      {(access?.roles ?? []).map((role) => ROLE_LABELS[role]).join(" \u00b7 ") ||
-                        "No role assigned"}
-                    </p>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="gap-2">
-                    <Link to="/account/settings">
-                      <User className="size-4" />
-                      Profile and account settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="gap-2">
-                    <LogOut className="size-4" />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                        Profile and account settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={signOut} className="gap-2">
+                      <LogOut className="size-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <main className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 space-y-6 px-4 py-6 sm:px-6">
-          {children}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+          <main className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 space-y-6 px-4 py-6 sm:px-6">
+            {children}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </StepUpProvider>
   );
 }
