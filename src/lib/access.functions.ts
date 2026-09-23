@@ -633,15 +633,18 @@ export const recordAuthFailure = createServerFn({ method: "POST" })
           .maybeSingle();
         if (lockError) throw new Error("Could not lock the account after repeated failures");
         if (lockedAccount) {
-          await writeAudit({
-            actorUserId: lockedAccount.id,
-            action: "ACCOUNT_LOCKED_FAILED_LOGIN",
-            module: "Authentication",
-            entityType: "internal_user",
-            entityId: lockedAccount.id,
-            reason: "Five failed sign-in attempts within 15 minutes",
-            result: "FAILURE",
-          }, meta);
+          await writeAudit(
+            {
+              actorUserId: lockedAccount.id,
+              action: "ACCOUNT_LOCKED_FAILED_LOGIN",
+              module: "Authentication",
+              entityType: "internal_user",
+              entityId: lockedAccount.id,
+              reason: "Five failed sign-in attempts within 15 minutes",
+              result: "FAILURE",
+            },
+            meta,
+          );
         }
       }
     } else {

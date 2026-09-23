@@ -46,17 +46,17 @@ The source code does not show a password prompt triggered by “45.” Protected
 
 The system also re-checks the password for sensitive actions. For actions that require fresh verification, the user must verify again for each action. A successful verification is tied to the current session and action and lasts ten minutes.
 
-| Security control | What happens | Purpose |
-| --- | --- | --- |
-| Account status | Inactive or locked users cannot use protected functions. Five failed password attempts within 15 minutes lock the internal account until an administrator unlocks it. | Blocks access to disabled accounts and slows password guessing. |
-| Email verification | A six-digit code is emailed at sign-in and expires after five minutes. | Adds a second sign-in check. |
-| Password re-check | The user enters their password before sensitive actions such as submitting, signing, approving, or managing accounts. | Confirms the user is present for important changes. |
-| Inactivity expiry | Protected activity refreshes a three-minute inactivity window; an expired session requires sign-in again. | Limits use of an unattended session. |
-| Rate limits | Repeated verification attempts are limited. | Slows repeated guessing attempts. |
-| Role and permission checks | Server functions check the user’s permissions before protected operations. | Limits users to actions allowed for their role. |
-| Audit records | Login, security, account, and evaluation actions are recorded. | Shows who acted and when. |
-| Status and version checks | Stale edits, invalid stage changes, and edits to finalized evaluations are rejected. | Protects the workflow order and record accuracy. |
-| Finalized record safeguards | Finalized evaluation records are protected from ordinary changes. | Preserves the approved result. |
+| Security control            | What happens                                                                                                                                                          | Purpose                                                         |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Account status              | Inactive or locked users cannot use protected functions. Five failed password attempts within 15 minutes lock the internal account until an administrator unlocks it. | Blocks access to disabled accounts and slows password guessing. |
+| Email verification          | A six-digit code is emailed at sign-in and expires after five minutes.                                                                                                | Adds a second sign-in check.                                    |
+| Password re-check           | The user enters their password before sensitive actions such as submitting, signing, approving, or managing accounts.                                                 | Confirms the user is present for important changes.             |
+| Inactivity expiry           | Protected activity refreshes a three-minute inactivity window; an expired session requires sign-in again.                                                             | Limits use of an unattended session.                            |
+| Rate limits                 | Repeated verification attempts are limited.                                                                                                                           | Slows repeated guessing attempts.                               |
+| Role and permission checks  | Server functions check the user’s permissions before protected operations.                                                                                            | Limits users to actions allowed for their role.                 |
+| Audit records               | Login, security, account, and evaluation actions are recorded.                                                                                                        | Shows who acted and when.                                       |
+| Status and version checks   | Stale edits, invalid stage changes, and edits to finalized evaluations are rejected.                                                                                  | Protects the workflow order and record accuracy.                |
+| Finalized record safeguards | Finalized evaluation records are protected from ordinary changes.                                                                                                     | Preserves the approved result.                                  |
 
 ## 4. HR prepares an evaluation cycle
 
@@ -226,12 +226,12 @@ The Committee reviews the evaluation package, including the A–J ratings, score
 
 The available actions are:
 
-| Committee action | Meaning | Typical follow-up after President approval |
-| --- | --- | --- |
-| Retain | Recommend that the employee stay in the present job. | Keep the approved decision in the evaluation record; no job or payroll change is implied. |
-| Transfer | Recommend moving the employee to another job, unit, department, or location. | HR / Internal Mobility reviews and processes the move. |
-| Promote | Recommend moving the employee to a higher position or role. | HR / HCM reviews the new position, grade, profile, and salary impact. |
-| Increase Salary | Recommend a salary increase. | Payroll & Benefits reviews the approved amount and effective date before processing. |
+| Committee action          | Meaning                                                                                | Typical follow-up after President approval                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Retain                    | Recommend that the employee stay in the present job.                                   | Keep the approved decision in the evaluation record; no job or payroll change is implied.   |
+| Transfer                  | Recommend moving the employee to another job, unit, department, or location.           | HR / Internal Mobility reviews and processes the move.                                      |
+| Promote                   | Recommend moving the employee to a higher position or role.                            | HR / HCM reviews the new position, grade, profile, and salary impact.                       |
+| Increase Salary           | Recommend a salary increase.                                                           | Payroll & Benefits reviews the approved amount and effective date before processing.        |
 | Training Required / Other | Recommend a different action, such as training. Details should explain what is needed. | Learning & Development reviews the requirement and arranges the actual training assignment. |
 
 The Committee’s selection is a recommendation. It does not itself change payroll, a job assignment, or the employee’s training status. The Committee signs and submits the recommendation to the President.
@@ -318,16 +318,16 @@ Purpose: help the President review and summarize the evidence. The President rem
 
 Finalization queues background work for Development, Training, Succession, Social Recognition, the official document, and employee notification. The background work may finish after the President’s approval screen has completed.
 
-| Downstream module | Evidence used | Result in the current system |
-| --- | --- | --- |
-| Learning / Development | Supervisor growth suggestions, effectiveness comments, and other comments. The system looks for actionable development recommendations. | Creates Recommended development records for Learning or HR users to review. |
-| Training recommendations | Training recommendations from saved AI analysis, when present. | Creates training recommendation records for Training Management to review. |
-| Training Required action | Committee action details and recommendation, when the final action is Training Required. | Creates a training record with status Required and notifies users with training-management access. |
-| Succession | Development potential, advancement outlook, transfer interest, desired job or location, and qualification. | Creates or updates the internal Succession profile and notifies users with succession permissions. |
-| Competency profile | Employee, Supervisor, and Reviewing Supervisor ratings, calculated result, and prior finalized evaluations. | Shows per-factor comparisons, analysis, and trends for HR. |
-| Social Recognition | Finalized evaluation scores and related evaluation records. | Supports score ranking, recognition candidate review, recognition records, and certificates. |
-| Final evaluation document | Finalized evaluation details and signatures. | Creates the official evaluation document and protects the finalized evaluation from ordinary changes. |
-| Employee notice | Finalization status. | Queues an email telling the employee the evaluation is finalized. |
+| Downstream module         | Evidence used                                                                                                                           | Result in the current system                                                                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Learning / Development    | Supervisor growth suggestions, effectiveness comments, and other comments. The system looks for actionable development recommendations. | Creates Recommended development records for Learning or HR users to review.                           |
+| Training recommendations  | Training recommendations from saved AI analysis, when present.                                                                          | Creates training recommendation records for Training Management to review.                            |
+| Training Required action  | Committee action details and recommendation, when the final action is Training Required.                                                | Creates a training record with status Required and notifies users with training-management access.    |
+| Succession                | Development potential, advancement outlook, transfer interest, desired job or location, and qualification.                              | Creates or updates the internal Succession profile and notifies users with succession permissions.    |
+| Competency profile        | Employee, Supervisor, and Reviewing Supervisor ratings, calculated result, and prior finalized evaluations.                             | Shows per-factor comparisons, analysis, and trends for HR.                                            |
+| Social Recognition        | Finalized evaluation scores and related evaluation records.                                                                             | Supports score ranking, recognition candidate review, recognition records, and certificates.          |
+| Final evaluation document | Finalized evaluation details and signatures.                                                                                            | Creates the official evaluation document and protects the finalized evaluation from ordinary changes. |
+| Employee notice           | Finalization status.                                                                                                                    | Queues an email telling the employee the evaluation is finalized.                                     |
 
 AI-generated training recommendations and a Committee’s Training Required action are separate things. The AI recommendation is optional guidance. A Required training record is created when the Committee action is Training Required, the evaluation is finalized, and action details are present.
 
@@ -397,15 +397,15 @@ The code inspected supports recommendations and training records, but I did not 
 
 ## 18. Supporting data flows and integration status
 
-| Data flow | Purpose | Current behavior found in the code |
-| --- | --- | --- |
-| Core HCM → Performance & Development | Use employee number, name, job title, department, status, employment date, and profile details to verify employees and identify evaluation records. | Internal employee records are used for verification and evaluation snapshots. No live connection to a separate HCM application was found. |
-| Workforce Management → Performance & Development | Provide attendance, punctuality, work-hour, and leave information as supporting evidence. | Factor E mentions attendance and punctuality. No attendance or timesheet import was found. Ratings are entered by evaluators; attendance data does not automatically change the rating. |
-| Payroll & Benefits → Performance & Development | Display salary and previous increase history for Personnel. | The Personnel stage stores present salary and last increase date, nature, and amount. I did not find live Payroll retrieval. |
-| Performance & Development → Payroll & Benefits | Provide employee ID, total points, adjective rating, recommendation, approved increase, and promotion action for processing. | The evaluation system stores points, rating, compensation context, and Committee action. I did not find an external payroll update. |
-| Performance & Development → Learning & Development | Turn comments, gaps, and training decisions into follow-up work. | The system can create development records, AI training recommendations, and a Required training record. Full training assignment and completion validation were not found. |
-| Performance & Development → Succession / Internal Mobility | Store development readiness and transfer information. | Finalized Supervisor responses can update the internal Succession profile. The system does not automatically execute a promotion or transfer. |
-| Performance & Development → Social Recognition | Help HR identify employees for recognition from completed evaluation results. | The system ranks finalized evaluations by score and supports recognition workflows. No attendance-data feed for automatic Attendance Recognition eligibility was found. |
+| Data flow                                                  | Purpose                                                                                                                                             | Current behavior found in the code                                                                                                                                                      |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core HCM → Performance & Development                       | Use employee number, name, job title, department, status, employment date, and profile details to verify employees and identify evaluation records. | Internal employee records are used for verification and evaluation snapshots. No live connection to a separate HCM application was found.                                               |
+| Workforce Management → Performance & Development           | Provide attendance, punctuality, work-hour, and leave information as supporting evidence.                                                           | Factor E mentions attendance and punctuality. No attendance or timesheet import was found. Ratings are entered by evaluators; attendance data does not automatically change the rating. |
+| Payroll & Benefits → Performance & Development             | Display salary and previous increase history for Personnel.                                                                                         | The Personnel stage stores present salary and last increase date, nature, and amount. I did not find live Payroll retrieval.                                                            |
+| Performance & Development → Payroll & Benefits             | Provide employee ID, total points, adjective rating, recommendation, approved increase, and promotion action for processing.                        | The evaluation system stores points, rating, compensation context, and Committee action. I did not find an external payroll update.                                                     |
+| Performance & Development → Learning & Development         | Turn comments, gaps, and training decisions into follow-up work.                                                                                    | The system can create development records, AI training recommendations, and a Required training record. Full training assignment and completion validation were not found.              |
+| Performance & Development → Succession / Internal Mobility | Store development readiness and transfer information.                                                                                               | Finalized Supervisor responses can update the internal Succession profile. The system does not automatically execute a promotion or transfer.                                           |
+| Performance & Development → Social Recognition             | Help HR identify employees for recognition from completed evaluation results.                                                                       | The system ranks finalized evaluations by score and supports recognition workflows. No attendance-data feed for automatic Attendance Recognition eligibility was found.                 |
 
 ## 19. Final result
 

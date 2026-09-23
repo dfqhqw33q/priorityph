@@ -1,3 +1,5 @@
+param([string]$Email)
+
 $ErrorActionPreference = 'Stop'
 
 $projectRef = if ($env:SUPABASE_PROJECT_REF) {
@@ -42,12 +44,17 @@ $accounts = @(
   @{ email = 'yang.lionheart777@gmail.com'; full_name = 'Yang Lionheart'; job_title = 'Human Resources'; role = 'HR' },
   @{ email = 'hkenshin975@gmail.com'; full_name = 'Kenshin'; job_title = 'Supervisor'; role = 'SUPERVISOR' },
   @{ email = 'boni.dumpp@gmail.com'; full_name = 'Boni Dumpp'; job_title = 'Reviewing Supervisor'; role = 'REVIEWING_SUPERVISOR' },
-  @{ email = 'jayyliteralz@gmail.com'; full_name = 'Jay Literalz'; job_title = 'Committee Member'; role = 'COMMITTEE' }
+  @{ email = 'jayyliteral@gmail.com'; full_name = 'Jay Literalz'; job_title = 'Committee Member'; role = 'COMMITTEE'; previous_email = 'jayyliteralz@gmail.com' }
 )
+if ($Email) { $accounts = @($accounts | Where-Object { $_.email -eq $Email }) }
+if ($Email -and $accounts.Count -eq 0) { throw "No seeded account matches $Email." }
 
 $existing = Invoke-RestMethod -Method Get -Uri "$supabaseUrl/auth/v1/admin/users?per_page=1000" -Headers $headers
 foreach ($account in $accounts) {
   $match = @($existing.users | Where-Object { $_.email -eq $account.email }) | Select-Object -First 1
+  if (-not $match -and $account.previous_email) {
+    $match = @($existing.users | Where-Object { $_.email -eq $account.previous_email }) | Select-Object -First 1
+  }
   $body = @{ email = $account.email; password = $password; email_confirm = $true; user_metadata = @{ full_name = $account.full_name } } | ConvertTo-Json -Depth 5
   if ($match) {
     $user = Invoke-RestMethod -Method Put -Uri "$supabaseUrl/auth/v1/admin/users/$($match.id)" -Headers $headers -ContentType 'application/json' -Body $body
