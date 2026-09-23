@@ -633,8 +633,15 @@ export const submitStep1 = createServerFn({ method: "POST" })
       .select("id")
       .single();
 
-    if (evalError && evalError.code !== "23505")
+    if (evalError && evalError.code !== "23505") {
+      console.error("Public evaluation insert failed", {
+        code: evalError.code,
+        message: evalError.message,
+        details: evalError.details,
+        hint: evalError.hint,
+      });
       throw validationError("Could not save your evaluation, please try again");
+    }
     if (evalError || !evaluation) {
       await writeAudit(
         {

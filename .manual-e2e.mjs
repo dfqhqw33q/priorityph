@@ -20,16 +20,14 @@ const id = crypto.randomUUID();
 const email = `playwright-lock-${Date.now()}@example.invalid`;
 let browser;
 try {
-  const { error: insertError } = await admin
-    .from("internal_users")
-    .insert({
-      id,
-      email,
-      full_name: "Playwright Lockout Test",
-      is_active: true,
-      is_locked: false,
-      must_change_password: false,
-    });
+  const { error: insertError } = await admin.from("internal_users").insert({
+    id,
+    email,
+    full_name: "Playwright Lockout Test",
+    is_active: true,
+    is_locked: false,
+    must_change_password: false,
+  });
   if (insertError) throw insertError;
   console.log("Test fixture created.");
 
