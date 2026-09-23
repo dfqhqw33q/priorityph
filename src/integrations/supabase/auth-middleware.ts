@@ -126,6 +126,29 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       throw new Error("MFA_REQUIRED: Verify the code sent to your email");
     }
 
+    const { data: securitySession } = await supabaseAdmin
+      .from("security_sessions" as never)
+      .select("expires_at")
+      .eq("user_id", authenticated.userId)
+      .eq("session_id", sessionId)
+      .maybeSingle();
+    if (securitySession?.expires_at && new Date(String(securitySession.expires_at)) <= new Date()) {
+      await supabaseAdmin
+        .from("security_sessions" as never)
+        .delete()
+        .eq("user_id", authenticated.userId)
+        .eq("session_id", sessionId);
+      throw new Error("SESSION_EXPIRED: Sign in again to continue");
+    }
+    await supabaseAdmin.rpc(
+      "touch_security_session" as never,
+      {
+        _user_id: authenticated.userId,
+        _session_id: sessionId,
+        _timeout_seconds: 180,
+      } as never,
+    );
+
     return next({
       context: {
         ...authenticated,

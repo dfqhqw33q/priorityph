@@ -61,7 +61,7 @@ export function StepUpProvider({ children }: { children: ReactNode }) {
     setSubmitting(true);
     setError(null);
     try {
-      const result = await startStepUp({ data: { password } });
+      const result = await startStepUp({ data: { password, action: pending.action } });
       markStepUpSatisfied(result.expiresInSeconds);
       const callback = pending.callback;
       const resolve = pending.resolve;

@@ -141,6 +141,7 @@ export const createUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const {
       getAdmin,
+      enforceRateLimit,
       requirePermission,
       requireStepUp,
       writeAudit,
@@ -151,6 +152,7 @@ export const createUser = createServerFn({ method: "POST" })
       sendCredentialEmail,
     } = await import("./server-core.server");
     await requirePermission(context.userId, "users.manage", "User Management");
+    await enforceRateLimit(`account-create:${context.userId}`, 300, 10);
     await requireStepUp(
       context.userId,
       String(context.claims.session_id ?? ""),
@@ -159,6 +161,25 @@ export const createUser = createServerFn({ method: "POST" })
     );
     const admin = await getAdmin();
     try {
+      if (data.requestId) {
+        const { data: existingRequest } = await admin
+          .from("security_idempotency_requests" as never)
+          .select("resource_id")
+          .eq("request_key", data.requestId)
+          .eq("action", "CREATE_USER")
+          .maybeSingle();
+        if (existingRequest)
+          throw validationError("This account creation request was already processed");
+        const { error: requestError } = await admin
+          .from("security_idempotency_requests" as never)
+          .insert({
+            request_key: data.requestId,
+            action: "CREATE_USER",
+            actor_user_id: context.userId,
+          } as never);
+        if (requestError)
+          throw validationError("This account creation request was already processed");
+      }
       const tempPassword = randomPassword();
       const { data: created, error } = await admin.auth.admin.createUser({
         email: data.email,
@@ -179,10 +200,17 @@ export const createUser = createServerFn({ method: "POST" })
         must_change_password: true,
       });
       if (profileError) throw validationError(profileError.message);
-      const { data: employee, error: employeeError } = await admin.rpc(
+      if (data.requestId) {
+        await admin
+          .from("security_idempotency_requests" as never)
+          .update({ resource_id: userId } as never)
+          .eq("request_key", data.requestId);
+      }
+      const { data: employeeResult, error: employeeError } = await admin.rpc(
         "ensure_internal_user_employee" as never,
         { _user_id: userId } as never,
       );
+      const employee = employeeResult as { id: string; employee_number: string } | null;
       if (employeeError || !employee)
         throw validationError("Could not create the employee record for this account");
       await admin.from("user_roles").insert(data.roles.map((role) => ({ user_id: userId, role })));
@@ -595,7 +623,7 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => employeeProfileAdminSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
+    const { getAdmin, requirePermission, requireStepUp, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
     await requirePermission(context.userId, "employees.manage", "Employee Profiles");
     await requireStepUp(
@@ -727,10 +755,17 @@ export const listAuditEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => auditFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermission, requireStepUp, writeAudit, getActorRoles } =
-      await import("./server-core.server");
+    const {
+      enforceRateLimit,
+      getAdmin,
+      requirePermission,
+      requireStepUp,
+      writeAudit,
+      getActorRoles,
+    } = await import("./server-core.server");
     await requirePermission(context.userId, "audit.view", "Audit Logs");
     if (data.exportAll) {
+      await enforceRateLimit(`audit-export:${context.userId}`, 300, 5);
       await requireStepUp(
         context.userId,
         String(context.claims.session_id ?? ""),

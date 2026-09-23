@@ -503,7 +503,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
       await requireStepUp(
         context.userId,
         String(context.claims.session_id ?? ""),
-        "submit an evaluation review",
+        "submit or finalize an evaluation",
         true,
       );
     const admin = await getAdmin();
@@ -638,7 +638,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       await requireStepUp(
         context.userId,
         String(context.claims.session_id ?? ""),
-        "submit a reviewing supervisor review",
+        "submit or finalize an evaluation",
         true,
       );
     if (data.submit && !data.signature)
@@ -715,7 +715,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       await requireStepUp(
         context.userId,
         String(context.claims.session_id ?? ""),
-        "submit personnel processing",
+        "submit or finalize an evaluation",
         true,
       );
     if (data.submit && !data.signature)
@@ -795,7 +795,7 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       await requireStepUp(
         context.userId,
         String(context.claims.session_id ?? ""),
-        "submit a committee review",
+        "submit or finalize an evaluation",
         true,
       );
     if (data.submit && !data.signature)
@@ -857,7 +857,7 @@ export const approveEvaluation = createServerFn({ method: "POST" })
     await requireStepUp(
       context.userId,
       String(context.claims.session_id ?? ""),
-      "approve or return an evaluation",
+      "submit or finalize an evaluation",
       true,
     );
     if (!data.approve && !data.reason)

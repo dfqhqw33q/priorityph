@@ -324,6 +324,7 @@ export const getReport = createServerFn({ method: "POST" })
     const {
       requirePermissionAny,
       requireStepUp,
+      enforceRateLimit,
       getAdmin,
       writeAudit,
       getActorRoles,
@@ -342,6 +343,7 @@ export const getReport = createServerFn({ method: "POST" })
       ],
       "Evaluation History",
     );
+    if (data.exportAll) await enforceRateLimit(`report-export:${context.userId}`, 300, 5);
     if (data.exportAll)
       await requireStepUp(
         context.userId,

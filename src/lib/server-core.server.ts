@@ -121,19 +121,50 @@ export async function requireStepUp(
   fresh = false,
 ) {
   const admin = await getAdmin();
-  const table = admin.from("security_elevations" as never);
-  const { data } = await table
-    .select("elevated_at, expires_at")
-    .eq("user_id", userId)
-    .eq("session_id", sessionId)
-    .maybeSingle();
-  const now = Date.now();
-  const elevatedAt = data ? new Date(String(data.elevated_at)).getTime() : 0;
-  const expiresAt = data ? new Date(String(data.expires_at)).getTime() : 0;
-  if (!data || expiresAt <= now || (fresh && elevatedAt < now - 60_000)) {
+  const { data, error } = await admin.rpc(
+    "consume_step_up" as never,
+    {
+      _user_id: userId,
+      _session_id: sessionId,
+      _action_key: action,
+      _fresh: fresh,
+    } as never,
+  );
+  if (error || data !== true) {
     throw new AuthorizationError(`Step-up authentication required for ${action}`);
   }
   return true;
+}
+
+export async function enforceRateLimit(
+  bucketKey: string,
+  windowSeconds: number,
+  maxAttempts: number,
+) {
+  const admin = await getAdmin();
+  const { data, error } = await admin.rpc(
+    "check_rate_limit" as never,
+    {
+      _bucket_key: bucketKey.slice(0, 240),
+      _window_seconds: windowSeconds,
+      _max_attempts: maxAttempts,
+    } as never,
+  );
+  if (error || data !== true)
+    throw new AuthorizationError("Too many attempts. Please try again later.");
+}
+
+export async function touchSecuritySession(userId: string, sessionId: string) {
+  if (!sessionId) return;
+  const admin = await getAdmin();
+  await admin.rpc(
+    "touch_security_session" as never,
+    {
+      _user_id: userId,
+      _session_id: sessionId,
+      _timeout_seconds: 180,
+    } as never,
+  );
 }
 
 export async function getActorRoles(userId: string): Promise<AppRole[]> {

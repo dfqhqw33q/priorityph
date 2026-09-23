@@ -271,7 +271,11 @@ function AdminUsersPage() {
 
   const createMutation = useMutation({
     mutationFn: (values: { email: string; fullName: string; jobTitle: string; roles: AppRole[] }) =>
-      runSensitiveAction("create a user account", () => create({ data: values }), true),
+      runSensitiveAction(
+        "create a user account",
+        () => create({ data: { ...values, requestId: crypto.randomUUID() } }),
+        true,
+      ),
     onSuccess: async (result) => {
       if (result.temporaryPassword) {
         setCredential({

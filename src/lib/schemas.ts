@@ -392,6 +392,7 @@ export const userFormSchema = z.object({
   fullName: trimmed(2, 160),
   jobTitle: z.string().max(160).default(""),
   roles: z.array(z.enum(APP_ROLES)).length(1, "Select exactly one role"),
+  requestId: z.string().uuid().optional(),
 });
 export type UserFormValues = z.infer<typeof userFormSchema>;
 

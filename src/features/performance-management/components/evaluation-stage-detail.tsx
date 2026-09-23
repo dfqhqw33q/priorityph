@@ -319,9 +319,14 @@ export function EvaluationStageDetail({
           : stage === "COMMITTEE"
             ? "COMMITTEE"
             : "PRESIDENT";
-    await saveSignature({
-      data: { evaluationId, version: detail.version, stage: signatureStage, signature },
-    });
+    await runSensitiveAction(
+      "sign an evaluation",
+      () =>
+        saveSignature({
+          data: { evaluationId, version: detail.version, stage: signatureStage, signature },
+        }),
+      true,
+    );
     await queryClient.invalidateQueries({ queryKey: ["phase2-evaluation", evaluationId] });
   }
   useEffect(() => {

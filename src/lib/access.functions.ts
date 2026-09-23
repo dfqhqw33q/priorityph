@@ -131,7 +131,7 @@ export const updateMyProfile = createServerFn({ method: "POST" })
     z.object({ fullName: z.string().trim().min(2).max(160) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, getActorRoles, writeAudit, validationError } =
+    const { enforceRateLimit, getAdmin, getActorRoles, writeAudit, validationError } =
       await import("./server-core.server");
     const admin = await getAdmin();
     const { data: previous } = await admin
@@ -214,13 +214,18 @@ export const changeMyAccountPassword = createServerFn({ method: "POST" })
 
 export const beginStepUpAuthentication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => z.object({ password: z.string().min(1) }).parse(input))
+  .validator((input: unknown) =>
+    z
+      .object({ password: z.string().min(1), action: z.string().trim().min(1).max(120) })
+      .parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { getAdmin, getActorRoles, writeAudit, validationError } =
       await import("./server-core.server");
     const admin = await getAdmin();
     const sessionId = String(context.claims.session_id ?? "");
     if (!sessionId) throw validationError("Step-up authentication is unavailable");
+    await enforceRateLimit(`step-up:${context.userId}:${sessionId}`, 300, 5);
     const { data: profile } = await admin
       .from("internal_users")
       .select("email, full_name")
@@ -264,6 +269,7 @@ export const beginStepUpAuthentication = createServerFn({ method: "POST" })
     const { error: elevationError } = await table.upsert({
       user_id: context.userId,
       session_id: sessionId,
+      action_key: data.action,
       elevated_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
     } as never);
@@ -344,11 +350,19 @@ export const beginEmailMfa = createServerFn({ method: "POST" })
   .validator((input: unknown) => z.object({}).parse(input ?? {}))
   .handler(async () => {
     const authenticated = await authenticateSupabaseRequest();
-    const { getAdmin, generateEmailOtp, hashEmailOtp, sendEmailOtp, writeAudit, getActorRoles } =
-      await import("./server-core.server");
+    const {
+      enforceRateLimit,
+      getAdmin,
+      generateEmailOtp,
+      hashEmailOtp,
+      sendEmailOtp,
+      writeAudit,
+      getActorRoles,
+    } = await import("./server-core.server");
     const admin = await getAdmin();
     const sessionId = String(authenticated.claims.session_id ?? "");
     if (!sessionId) throw new Error("MFA could not be started for this session");
+    await enforceRateLimit(`mfa-send:${authenticated.userId}:${sessionId}`, 300, 5);
     const { data: recentChallenge } = await (admin.from("email_mfa_challenges" as never) as any)
       .select("created_at")
       .eq("user_id", authenticated.userId)
@@ -410,10 +424,11 @@ export const verifyEmailMfa = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const authenticated = await authenticateSupabaseRequest();
-    const { getAdmin, getActorRoles, hashEmailOtp, writeAudit } =
+    const { enforceRateLimit, getAdmin, getActorRoles, hashEmailOtp, writeAudit } =
       await import("./server-core.server");
     const admin = await getAdmin();
     const sessionId = String(authenticated.claims.session_id ?? "");
+    await enforceRateLimit(`mfa-verify:${authenticated.userId}:${sessionId}`, 300, 10);
     const challengeTable = admin.from("email_mfa_challenges" as never) as any;
     const { data: challenge } = await challengeTable
       .select("id, otp_hash, attempts, expires_at, verified_at")
@@ -576,9 +591,15 @@ export const recordAuthFailure = createServerFn({ method: "POST" })
     event: input.event,
   }))
   .handler(async ({ data }) => {
-    const { getAdmin, writeAudit, getRequestMeta } = await import("./server-core.server");
+    const { enforceRateLimit, getAdmin, writeAudit, getRequestMeta } =
+      await import("./server-core.server");
     const admin = await getAdmin();
     const meta = getRequestMeta();
+    await enforceRateLimit(
+      `auth-failure:${data.event}:${meta.ip ?? "unknown"}:${data.email.toLowerCase()}`,
+      300,
+      data.event === "LOGIN_FAILED" ? 10 : 5,
+    );
     if (data.event === "LOGIN_FAILED") {
       await admin.from("login_events").insert({
         email: data.email,

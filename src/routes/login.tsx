@@ -128,7 +128,9 @@ function LoginPage() {
       setResendCooldown(30);
       toast.success("A new verification code was sent to your email.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not resend the verification code");
+      toast.error(
+        error instanceof Error ? error.message : "Could not resend the verification code",
+      );
     } finally {
       setPending(false);
     }
@@ -216,7 +218,9 @@ function LoginPage() {
                   onClick={() => void resendOtp()}
                   disabled={pending || resendCooldown > 0}
                 >
-                  {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend verification code"}
+                  {resendCooldown > 0
+                    ? `Resend code in ${resendCooldown}s`
+                    : "Resend verification code"}
                 </Button>
               </form>
             ) : (
