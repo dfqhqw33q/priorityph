@@ -43,6 +43,7 @@ export type Database = {
           entity_id: string | null;
           entity_type: string | null;
           evaluation_id: string | null;
+          evaluation_display_id: string | null;
           id: string;
           ip_address: string | null;
           module: string;
@@ -62,6 +63,7 @@ export type Database = {
           entity_id?: string | null;
           entity_type?: string | null;
           evaluation_id?: string | null;
+          evaluation_display_id?: string | null;
           id?: string;
           ip_address?: string | null;
           module: string;
@@ -824,6 +826,8 @@ export type Database = {
           finalized_at: string | null;
           finalized_by: string | null;
           full_name_snapshot: string;
+          evaluation_id: string;
+          evaluation_sequence: number;
           id: string;
           is_finalized: boolean;
           job_title_snapshot: string;
@@ -873,6 +877,8 @@ export type Database = {
           finalized_at?: string | null;
           finalized_by?: string | null;
           full_name_snapshot: string;
+          evaluation_id?: never;
+          evaluation_sequence?: never;
           id?: string;
           is_finalized?: boolean;
           job_title_snapshot: string;

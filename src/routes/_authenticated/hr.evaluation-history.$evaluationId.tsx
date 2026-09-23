@@ -132,6 +132,7 @@ function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Info label="Evaluation ID" value={detail.evaluation_id ?? "-"} />
         <Info
           label="Self-assessment submitted"
           value={formatDateTime(detail.employee_submitted_at)}

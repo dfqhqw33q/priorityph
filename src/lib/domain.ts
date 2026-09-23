@@ -232,6 +232,7 @@ export type CycleSummary = {
 
 export type EvaluationListItem = {
   id: string;
+  evaluation_id: string;
   status: EvaluationStatus;
   correction_stage: string | null;
   supervisor_user_id: string | null;

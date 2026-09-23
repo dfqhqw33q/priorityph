@@ -157,7 +157,7 @@ function AuditLogsPage() {
           row.action,
           actorName(row.actor_user_id),
           row.actor_role,
-          row.employee_id,
+          (result.employees ?? []).find((employee) => employee.id === row.employee_id)?.full_name ?? row.employee_id,
           row.occurred_at,
           row.entity_type ? `${row.module}: ${row.entity_type}` : row.module,
           row.result,
@@ -305,6 +305,7 @@ function AuditLogsPage() {
                     </button>
                   </TableHead>
                   <TableHead scope="col">User</TableHead>
+                  <TableHead scope="col">Evaluation ID</TableHead>
                   <TableHead scope="col">Action</TableHead>
                   <TableHead scope="col">Area</TableHead>
                   <TableHead scope="col">Result</TableHead>
@@ -326,6 +327,9 @@ function AuditLogsPage() {
                           {row.actor_role}
                         </span>
                       ) : null}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {row.evaluation_display_id ?? "-"}
                     </TableCell>
                     <TableCell className="text-xs font-semibold">
                       {humanizeToken(row.action)}

@@ -666,19 +666,25 @@ export const listAuditEvents = createServerFn({ method: "GET" })
     const actorIds = Array.from(
       new Set((rows ?? []).map((row) => row.actor_user_id).filter(Boolean) as string[]),
     );
+    const employeeIds = Array.from(
+      new Set((rows ?? []).map((row) => row.employee_id).filter(Boolean) as string[]),
+    );
     const { data: actors } = actorIds.length
       ? await admin.from("internal_users").select("id, full_name, email").in("id", actorIds)
+      : { data: [] };
+    const { data: employees } = employeeIds.length
+      ? await admin.from("employees").select("id, full_name, employee_number").in("id", employeeIds)
       : { data: [] };
 
     await writeAudit({
       actorUserId: context.userId,
       actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "AUDIT_LOG_ACCESSED",
+      action: data.exportAll ? "AUDIT_LOG_EXPORTED" : "AUDIT_LOG_ACCESSED",
       module: "Audit Logs",
       newValue: { filters: { ...data, search: clean(data.search) } },
     });
 
-    return { rows: rows ?? [], actors: actors ?? [], totalCount: count ?? 0 };
+    return { rows: rows ?? [], actors: actors ?? [], employees: employees ?? [], totalCount: count ?? 0 };
   });
 
 export const getEmployeeRecord = createServerFn({ method: "GET" })
@@ -697,7 +703,7 @@ export const getEmployeeRecord = createServerFn({ method: "GET" })
     const { data: history } = await admin
       .from("evaluations")
       .select(
-        "id, status, employee_submitted_at, supervisor_submitted_at, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, evaluation_cycles(name, year)",
+        "id, evaluation_id, status, employee_submitted_at, supervisor_submitted_at, full_name_snapshot, job_title_snapshot, division_snapshot, section_snapshot, evaluation_cycles(name, year)",
       )
       .eq("employee_id", data.employeeId)
       .order("employee_submitted_at", { ascending: false });

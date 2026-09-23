@@ -232,6 +232,9 @@ export function EvaluationQueue({
               <caption className="sr-only">Employee evaluations available for review</caption>
               <TableHeader>
                 <TableRow>
+                  <TableHead scope="col" className="min-w-[150px] whitespace-nowrap">
+                    Evaluation ID
+                  </TableHead>
                   <TableHead scope="col" className="min-w-[120px] whitespace-nowrap">
                     <SortButton label="Employee ID" sortKey="employee_number_snapshot" />
                   </TableHead>
@@ -270,6 +273,9 @@ export function EvaluationQueue({
 
                   return (
                     <TableRow key={row.id}>
+                      <TableCell className="whitespace-nowrap font-mono text-xs">
+                        {row.evaluation_id}
+                      </TableCell>
                       <TableCell className="whitespace-nowrap tabular-nums">
                         {row.employee_number_snapshot}
                       </TableCell>
