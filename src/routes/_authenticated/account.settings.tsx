@@ -16,6 +16,7 @@ import {
   changeMyAccountPassword,
   getMyAccountSettings,
   recordEmailSecurityEvent,
+  syncMyConfirmedEmail,
   updateMyProfile,
 } from "@/lib/access.functions";
 import { ROLE_LABELS, type AppRole } from "@/lib/domain";
@@ -37,6 +38,7 @@ function AccountSettingsPage() {
   const saveProfile = useServerFn(updateMyProfile);
   const changePassword = useServerFn(changeMyAccountPassword);
   const recordEmailEvent = useServerFn(recordEmailSecurityEvent);
+  const syncEmail = useServerFn(syncMyConfirmedEmail);
   const [fullName, setFullName] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
   const [email, setEmail] = useState("");
@@ -95,6 +97,7 @@ function AccountSettingsPage() {
   }
 
   async function refreshEmailState() {
+    await syncEmail();
     const { data } = await supabase.auth.getUser();
     if (data.user?.email && data.user.email !== settingsQuery.data?.email) {
       await recordEmailEvent({ data: { event: "EMAIL_VERIFIED" } });
@@ -220,7 +223,9 @@ function AccountSettingsPage() {
                   onChange={(event) => setEmail(event.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Current email is verified by Supabase Auth.
+                  {settings.emailConfirmedAt
+                    ? `Verified ${new Date(settings.emailConfirmedAt).toLocaleString()}`
+                    : "Email verification is pending."}
                 </p>
               </div>
               {pendingEmail ? (

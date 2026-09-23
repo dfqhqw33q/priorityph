@@ -12,6 +12,7 @@ import type { AppRole, Permission } from "./domain";
 export type AccessProfile = {
   userId: string;
   email: string;
+  emailConfirmedAt: string | null;
   fullName: string;
   jobTitle: string | null;
   isActive: boolean;
@@ -44,26 +45,32 @@ export const getMyAccountSettings = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<AccountSettings> => {
     const { getAdmin } = await import("./server-core.server");
     const admin = await getAdmin();
-    const [{ data: profile }, { data: roles }, { data: activity }] = await Promise.all([
-      admin
-        .from("internal_users")
-        .select("id, full_name, email, job_title, is_active, is_locked, must_change_password, last_login_at")
-        .eq("id", context.userId)
-        .maybeSingle(),
-      admin.from("user_roles").select("role").eq("user_id", context.userId),
-      admin
-        .from("audit_logs")
-        .select("action, result, occurred_at")
-        .eq("actor_user_id", context.userId)
-        .eq("module", "Authentication")
-        .order("occurred_at", { ascending: false })
-        .limit(10),
-    ]);
+    const [{ data: profile }, { data: roles }, { data: activity }, authUserResult] =
+      await Promise.all([
+        admin
+          .from("internal_users")
+          .select(
+            "id, full_name, email, job_title, is_active, is_locked, must_change_password, last_login_at",
+          )
+          .eq("id", context.userId)
+          .maybeSingle(),
+        admin.from("user_roles").select("role").eq("user_id", context.userId),
+        admin
+          .from("audit_logs")
+          .select("action, result, occurred_at")
+          .eq("actor_user_id", context.userId)
+          .eq("module", "Authentication")
+          .order("occurred_at", { ascending: false })
+          .limit(10),
+        admin.auth.admin.getUserById(context.userId),
+      ]);
     if (!profile) throw new Error("Your internal account could not be found");
+    const authUser = authUserResult.data.user;
     return {
       userId: profile.id,
       fullName: profile.full_name,
       email: profile.email,
+      emailConfirmedAt: authUser?.email_confirmed_at ?? null,
       jobTitle: profile.job_title,
       isActive: profile.is_active,
       isLocked: profile.is_locked,
@@ -79,14 +86,55 @@ export const getMyAccountSettings = createServerFn({ method: "GET" })
     };
   });
 
+export const syncMyConfirmedEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { getAdmin, getActorRoles, writeAudit } = await import("./server-core.server");
+    const admin = await getAdmin();
+    const { data: authResult } = await admin.auth.admin.getUserById(context.userId);
+    const confirmedEmail = authResult.user?.email;
+    if (!confirmedEmail || !authResult.user?.email_confirmed_at) return { updated: false };
+    const { data: current } = await admin
+      .from("internal_users")
+      .select("email")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (!current || current.email.toLowerCase() === confirmedEmail.toLowerCase())
+      return { updated: false };
+    const { error } = await admin
+      .from("internal_users")
+      .update({ email: confirmedEmail.toLowerCase() })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: (await getActorRoles(context.userId)).join(","),
+      action: "EMAIL_VERIFIED",
+      module: "Authentication",
+      entityType: "internal_user",
+      entityId: context.userId,
+    });
+    return { updated: true };
+  });
+
 export const updateMyProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => z.object({ fullName: z.string().trim().min(2).max(160) }).parse(input))
+  .validator((input: unknown) =>
+    z.object({ fullName: z.string().trim().min(2).max(160) }).parse(input),
+  )
   .handler(async ({ data, context }) => {
-    const { getAdmin, getActorRoles, writeAudit, validationError } = await import("./server-core.server");
+    const { getAdmin, getActorRoles, writeAudit, validationError } =
+      await import("./server-core.server");
     const admin = await getAdmin();
-    const { data: previous } = await admin.from("internal_users").select("full_name").eq("id", context.userId).maybeSingle();
-    const { error } = await admin.from("internal_users").update({ full_name: data.fullName }).eq("id", context.userId);
+    const { data: previous } = await admin
+      .from("internal_users")
+      .select("full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const { error } = await admin
+      .from("internal_users")
+      .update({ full_name: data.fullName })
+      .eq("id", context.userId);
     if (error) throw validationError(error.message);
     await writeAudit({
       actorUserId: context.userId,
@@ -105,9 +153,14 @@ export const changeMyAccountPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => accountPasswordChangeSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { getAdmin, getActorRoles, getRequestMeta, writeAudit, validationError } = await import("./server-core.server");
+    const { getAdmin, getActorRoles, getRequestMeta, writeAudit, validationError } =
+      await import("./server-core.server");
     const admin = await getAdmin();
-    const { data: profile } = await admin.from("internal_users").select("email, full_name").eq("id", context.userId).maybeSingle();
+    const { data: profile } = await admin
+      .from("internal_users")
+      .select("email, full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
     if (!profile) throw validationError("Your internal account could not be found");
     const passwordCheck = validatePassword(data.password, [profile.full_name, profile.email]);
     if (!passwordCheck.valid) throw validationError(passwordCheck.errors[0]);
@@ -115,28 +168,40 @@ export const changeMyAccountPassword = createServerFn({ method: "POST" })
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
     if (!url || !key) throw validationError("Password re-authentication is unavailable");
     const { createClient } = await import("@supabase/supabase-js");
-    const verifier = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { error: reauthError } = await verifier.auth.signInWithPassword({ email: profile.email, password: data.currentPassword });
+    const verifier = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error: reauthError } = await verifier.auth.signInWithPassword({
+      email: profile.email,
+      password: data.currentPassword,
+    });
     await verifier.auth.signOut().catch(() => undefined);
     if (reauthError) throw validationError("The current password is incorrect");
-    const { error } = await admin.auth.admin.updateUserById(context.userId, { password: data.password });
+    const { error } = await admin.auth.admin.updateUserById(context.userId, {
+      password: data.password,
+    });
     if (error) throw validationError(error.message);
     await admin.auth.admin.signOut(context.userId, "others");
     const meta = getRequestMeta();
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: (await getActorRoles(context.userId)).join(","),
-      action: "PASSWORD_CHANGED",
-      module: "Authentication",
-      entityType: "internal_user",
-      entityId: context.userId,
-    }, meta);
+    await writeAudit(
+      {
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
+        action: "PASSWORD_CHANGED",
+        module: "Authentication",
+        entityType: "internal_user",
+        entityId: context.userId,
+      },
+      meta,
+    );
     return { ok: true };
   });
 
 export const recordEmailSecurityEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => z.object({ event: z.enum(["EMAIL_CHANGE_REQUESTED", "EMAIL_VERIFIED"]) }).parse(input))
+  .validator((input: unknown) =>
+    z.object({ event: z.enum(["EMAIL_CHANGE_REQUESTED", "EMAIL_VERIFIED"]) }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { getActorRoles, writeAudit } = await import("./server-core.server");
     await writeAudit({

@@ -513,6 +513,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const logEvent = useServerFn(recordLoginEvent);
   const accessRule = routeAccess(pathname);
+  const passwordChangeRequired =
+    !isLoading &&
+    !isError &&
+    access?.mustChangePassword === true &&
+    pathname !== "/account/password";
   const accessDenied =
     !isLoading &&
     !isError &&
@@ -526,7 +531,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (accessDenied) navigate({ to: "/unauthorized", replace: true });
-  }, [accessDenied, navigate]);
+    else if (passwordChangeRequired) navigate({ to: "/account/password", replace: true });
+  }, [accessDenied, navigate, passwordChangeRequired]);
 
   if (isLoading) {
     return (
