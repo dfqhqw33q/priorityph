@@ -4,9 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 
 import { supabase } from "@/integrations/supabase/client";
-import { getMyAccess, type AccessProfile } from "@/lib/access.functions";
+import { getMyAccess, recordLoginEvent, type AccessProfile } from "@/lib/access.functions";
 import type { Permission } from "@/lib/domain";
 
 type AuthSnapshot = { userId: string | null; ready: boolean };
@@ -89,7 +90,11 @@ function getAuthSnapshot() {
   return authSnapshot;
 }
 
-function startInactivityTimeout(userId: string, queryClient: ReturnType<typeof useQueryClient>) {
+function startInactivityTimeout(
+  userId: string,
+  queryClient: ReturnType<typeof useQueryClient>,
+  recordEvent: (input: { data: { event: "SESSION_EXPIRED" } }) => Promise<unknown>,
+) {
   if (typeof window === "undefined") return;
   if (inactivityCleanup) inactivityCleanup();
   inactivityUserId = userId;
@@ -127,6 +132,7 @@ function startInactivityTimeout(userId: string, queryClient: ReturnType<typeof u
     }
     if (inactiveFor >= INACTIVITY_TIMEOUT_MS && !signingOut) {
       signingOut = true;
+      void recordEvent({ data: { event: "SESSION_EXPIRED" } }).catch(() => undefined);
       void supabase.auth.signOut().finally(() => {
         queryClient.removeQueries({ queryKey: ["access", userId] });
         window.sessionStorage.removeItem(LAST_ACTIVITY_KEY);
@@ -153,16 +159,17 @@ export function useAccess() {
     getAuthSnapshot,
   );
   const fetchAccess = useServerFn(getMyAccess);
+  const recordEvent = useServerFn(recordLoginEvent);
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (authReady && userId && inactivityUserId !== userId) {
-      startInactivityTimeout(userId, queryClient);
+      startInactivityTimeout(userId, queryClient, recordEvent);
     }
     if (authReady && !userId && inactivityCleanup) inactivityCleanup();
     if (authReady && !userId) clearSecurityState();
     return () => undefined;
-  }, [authReady, queryClient, userId]);
+  }, [authReady, queryClient, recordEvent, userId]);
 
   const query = useQuery<AccessProfile | null>({
     queryKey: ["access", userId],

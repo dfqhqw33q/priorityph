@@ -227,6 +227,15 @@ export const beginStepUpAuthentication = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
     if (!profile) throw validationError("Your internal account could not be found");
+    const roles = (await getActorRoles(context.userId)).join(",");
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: roles,
+      action: "STEP_UP_REQUESTED",
+      module: "Authentication",
+      entityType: "internal_user",
+      entityId: context.userId,
+    });
     const url = process.env["SUPABASE_URL"];
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
     if (!url || !key) throw validationError("Step-up authentication is unavailable");
@@ -239,7 +248,6 @@ export const beginStepUpAuthentication = createServerFn({ method: "POST" })
       password: data.password,
     });
     await verifier.auth.signOut().catch(() => undefined);
-    const roles = (await getActorRoles(context.userId)).join(",");
     if (error) {
       await writeAudit({
         actorUserId: context.userId,
@@ -263,7 +271,7 @@ export const beginStepUpAuthentication = createServerFn({ method: "POST" })
     await writeAudit({
       actorUserId: context.userId,
       actorRole: roles,
-      action: "STEP_UP_SUCCEEDED",
+      action: "STEP_UP_ELEVATED",
       module: "Authentication",
       entityType: "internal_user",
       entityId: context.userId,
@@ -449,7 +457,9 @@ export const verifyEmailMfa = createServerFn({ method: "POST" })
 
 export const recordLoginEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: { event: "LOGIN" | "LOGOUT" | "PASSWORD_CHANGED" }) => input)
+  .validator(
+    (input: { event: "LOGIN" | "LOGOUT" | "SESSION_EXPIRED" | "PASSWORD_CHANGED" }) => input,
+  )
   .handler(async ({ data, context }) => {
     const { getAdmin, writeAudit, getRequestMeta, getActorRoles } =
       await import("./server-core.server");
