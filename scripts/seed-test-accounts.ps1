@@ -37,7 +37,7 @@ function Send-CredentialEmail($account, $password) {
 }
 
 $accounts = @(
-  @{ email = 'adminalexpriorityph@gmail.com'; full_name = 'Jay'; job_title = 'Administrator'; role = 'ADMINISTRATOR' }
+  @{ email = 'jayyliteral@gmail.com'; full_name = 'Jay'; job_title = 'Administrator'; role = 'ADMINISTRATOR' }
 )
 
 $existing = Invoke-RestMethod -Method Get -Uri "$supabaseUrl/auth/v1/admin/users?per_page=1000" -Headers $headers
