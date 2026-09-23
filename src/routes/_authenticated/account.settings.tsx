@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/account/settings")({
   component: AccountSettingsPage,
 });
 
-function AccountSettingsPage() {
+export function AccountSettingsPage() {
   const queryClient = useQueryClient();
   const fetchSettings = useServerFn(getMyAccountSettings);
   const saveProfile = useServerFn(updateMyProfile);
