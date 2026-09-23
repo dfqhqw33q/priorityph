@@ -31,83 +31,100 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+export async function authenticateSupabaseRequest() {
+  const SUPABASE_URL = process.env["SUPABASE_URL"];
+  const SUPABASE_PUBLISHABLE_KEY = process.env["SUPABASE_PUBLISHABLE_KEY"];
+
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    const missing = [
+      ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY ? ["SUPABASE_PUBLISHABLE_KEY"] : []),
+    ];
+    const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Configure the required Supabase environment variables.`;
+    console.error(`[Supabase] ${message}`);
+    throw new Error(message);
+  }
+
+  const request = getRequest();
+
+  if (!request?.headers) {
+    throw new Error("Unauthorized: No request headers available");
+  }
+
+  const authHeader = request.headers.get("authorization");
+
+  if (!authHeader) {
+    throw new Error("Unauthorized: No authorization header provided");
+  }
+
+  if (!authHeader.startsWith("Bearer ")) {
+    throw new Error("Unauthorized: Only Bearer tokens are supported");
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  if (!token) {
+    throw new Error("Unauthorized: No token provided");
+  }
+
+  if (token.split(".").length !== 3) {
+    throw new Error("Unauthorized: Invalid token");
+  }
+
+  const supabase = createClient<Database>(SUPABASE_URL!, SUPABASE_PUBLISHABLE_KEY!, {
+    global: {
+      fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY!),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    auth: {
+      storage: undefined,
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
+  const { data, error } = await supabase.auth.getClaims(token);
+  if (error || !data?.claims) {
+    throw new Error("Unauthorized: Invalid token");
+  }
+
+  if (!data.claims.sub) {
+    throw new Error("Unauthorized: No user ID found in token");
+  }
+
+  const { data: account, error: accountError } = await supabase
+    .from("internal_users")
+    .select("id, is_active, is_locked")
+    .eq("id", data.claims.sub)
+    .maybeSingle();
+  if (accountError || !account || !account.is_active || account.is_locked) {
+    throw new Error("Unauthorized: Account is inactive or locked");
+  }
+
+  return { supabase, userId: data.claims.sub, claims: data.claims };
+}
+
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
-    const SUPABASE_URL = process.env["SUPABASE_URL"];
-    const SUPABASE_PUBLISHABLE_KEY = process.env["SUPABASE_PUBLISHABLE_KEY"];
-
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-      const missing = [
-        ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
-        ...(!SUPABASE_PUBLISHABLE_KEY ? ["SUPABASE_PUBLISHABLE_KEY"] : []),
-      ];
-      const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Configure the required Supabase environment variables.`;
-      console.error(`[Supabase] ${message}`);
-      throw new Error(message);
-    }
-
-    const request = getRequest();
-
-    if (!request?.headers) {
-      throw new Error("Unauthorized: No request headers available");
-    }
-
-    const authHeader = request.headers.get("authorization");
-
-    if (!authHeader) {
-      throw new Error("Unauthorized: No authorization header provided");
-    }
-
-    if (!authHeader.startsWith("Bearer ")) {
-      throw new Error("Unauthorized: Only Bearer tokens are supported");
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    if (!token) {
-      throw new Error("Unauthorized: No token provided");
-    }
-
-    if (token.split(".").length !== 3) {
-      throw new Error("Unauthorized: Invalid token");
-    }
-
-    const supabase = createClient<Database>(SUPABASE_URL!, SUPABASE_PUBLISHABLE_KEY!, {
-      global: {
-        fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY!),
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      auth: {
-        storage: undefined,
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
-
-    const { data, error } = await supabase.auth.getClaims(token);
-    if (error || !data?.claims) {
-      throw new Error("Unauthorized: Invalid token");
-    }
-
-    if (!data.claims.sub) {
-      throw new Error("Unauthorized: No user ID found in token");
-    }
-
-    const { data: account, error: accountError } = await supabase
-      .from("internal_users")
-      .select("id, is_active, is_locked")
-      .eq("id", data.claims.sub)
+    const authenticated = await authenticateSupabaseRequest();
+    const sessionId = String(authenticated.claims.session_id ?? "");
+    if (!sessionId) throw new Error("Unauthorized: Session identity unavailable");
+    const { supabaseAdmin } = await import("./client.server");
+    const { data: verification } = await (
+      supabaseAdmin.from("email_mfa_challenges" as never) as any
+    )
+      .select("verified_at, expires_at")
+      .eq("user_id", authenticated.userId)
+      .eq("session_id", sessionId)
       .maybeSingle();
-    if (accountError || !account || !account.is_active || account.is_locked) {
-      throw new Error("Unauthorized: Account is inactive or locked");
+    if (!verification?.verified_at || new Date(verification.expires_at as string) < new Date()) {
+      throw new Error("MFA_REQUIRED: Verify the code sent to your email");
     }
 
     return next({
       context: {
-        supabase,
-        userId: data.claims.sub,
-        claims: data.claims,
+        ...authenticated,
       },
     });
   },

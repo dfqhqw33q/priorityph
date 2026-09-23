@@ -14,5 +14,11 @@
       "src": "/(.*)",
       "dest": "/__server"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/finalization",
+      "schedule": "* * * * *"
+    }
   ]
 }

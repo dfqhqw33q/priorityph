@@ -117,6 +117,14 @@ export async function requirePermission(
   moduleName: string,
 ): Promise<void> {
   const admin = await getAdmin();
+  const { data: account } = await admin
+    .from("internal_users")
+    .select("must_change_password")
+    .eq("id", userId)
+    .maybeSingle();
+  if (account?.must_change_password) {
+    throw new AuthorizationError("Password change required before using the application");
+  }
   const { data, error } = await admin.rpc("has_permission", {
     _user_id: userId,
     _permission: permission,
@@ -271,6 +279,43 @@ export async function sendCredentialEmail(input: {
   return { sent: true, message: "Credential email sent." };
 }
 
+export function generateEmailOtp(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(4));
+  const value = ((bytes[0]! << 24) | (bytes[1]! << 16) | (bytes[2]! << 8) | bytes[3]!) >>> 0;
+  return String(value % 1_000_000).padStart(6, "0");
+}
+
+export async function hashEmailOtp(otp: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(otp));
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+export async function sendEmailOtp(input: {
+  email: string;
+  fullName: string;
+  otp: string;
+}): Promise<{ sent: boolean; message: string }> {
+  const apiKey = process.env["BREVO_API_KEY"];
+  const fromAddress = process.env["EMAIL_FROM"] ?? "noreply@priorityhandling.local";
+  if (!apiKey || !fromAddress.includes("@"))
+    return { sent: false, message: "Email service is not configured." };
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json", "api-key": apiKey },
+    body: JSON.stringify({
+      sender: { name: "Priority Handling Logistics", email: fromAddress },
+      to: [{ email: input.email, name: input.fullName }],
+      subject: "Your Priority Handling verification code",
+      htmlContent: `<p>Hello ${escapeHtml(input.fullName)},</p><p>Your verification code is:</p><p><strong>${escapeHtml(input.otp)}</strong></p><p>This code expires in five minutes and can be used only once.</p>`,
+      textContent: `Your verification code is: ${input.otp}\n\nThis code expires in five minutes and can be used only once.`,
+    }),
+  });
+  if (!response.ok) return { sent: false, message: `Email provider returned ${response.status}.` };
+  return { sent: true, message: "Verification code sent." };
+}
+
 /** Throws (and audits) unless the caller holds at least one of the permissions. */
 export async function requirePermissionAny(
   userId: string,
@@ -278,6 +323,14 @@ export async function requirePermissionAny(
   moduleName: string,
 ): Promise<void> {
   const admin = await getAdmin();
+  const { data: account } = await admin
+    .from("internal_users")
+    .select("must_change_password")
+    .eq("id", userId)
+    .maybeSingle();
+  if (account?.must_change_password) {
+    throw new AuthorizationError("Password change required before using the application");
+  }
   for (const permission of permissions) {
     const { data } = await admin.rpc("has_permission", {
       _user_id: userId,

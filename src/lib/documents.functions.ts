@@ -105,7 +105,10 @@ export const uploadEmployeeDocument = createServerFn({ method: "POST" })
       })
       .select()
       .single();
-    if (error) throw validationError(error.message);
+    if (error) {
+      await admin.storage.from("employee-files").remove([path]);
+      throw validationError(error.message);
+    }
     await writeAudit({
       actorUserId: context.userId,
       actorRole: (await getActorRoles(context.userId)).join(","),

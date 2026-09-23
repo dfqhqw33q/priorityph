@@ -61,7 +61,15 @@ function startInactivityTimeout(userId: string, queryClient: ReturnType<typeof u
     window.sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
     warningShown = false;
   };
-  const activityEvents = ["mousedown", "keydown", "touchstart", "scroll", "pointerdown"];
+  const activityEvents = [
+    "mousedown",
+    "keydown",
+    "touchstart",
+    "scroll",
+    "pointerdown",
+    "popstate",
+    "hashchange",
+  ];
   const onActivity = () => markActivity();
   const lastActivity = Number(window.sessionStorage.getItem(LAST_ACTIVITY_KEY));
   if (!Number.isFinite(lastActivity) || Date.now() - lastActivity >= INACTIVITY_TIMEOUT_MS)

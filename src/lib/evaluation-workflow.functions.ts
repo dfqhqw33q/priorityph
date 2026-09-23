@@ -335,94 +335,28 @@ async function transition(
   if (current.is_finalized) throw validationError("Finalized evaluations cannot be modified");
   if (!(transitions[current.status as EvaluationStatus] ?? []).includes(next))
     throw validationError(`Invalid workflow transition from ${current.status} to ${next}`);
-  const { data: updatedEvaluation, error } = await admin
-    .from("evaluations")
-    .update({
-      status: next,
-      version: expectedVersion + 1,
-      correction_reason: next === "RETURNED" ? reason : undefined,
-      correction_stage: next === "RETURNED" ? correctionStage : null,
-      is_finalized: next === "FINALIZED" ? true : undefined,
-      finalized_by: next === "FINALIZED" ? actorUserId : undefined,
-      finalized_at: next === "FINALIZED" ? new Date().toISOString() : undefined,
-      finalization_reason: next === "FINALIZED" ? reason : undefined,
-    } as never)
-    .eq("id", evaluationId)
-    .eq("version", expectedVersion)
-    .select("id")
-    .maybeSingle();
-  if (error) throw validationError(error.message);
-  if (!updatedEvaluation)
-    throw validationError("This evaluation changed in another session. Reload and try again.");
-  const eventWrite = admin.from("evaluation_events").insert({
-    evaluation_id: evaluationId,
-    event_type: action,
-    from_status: current.status,
-    to_status: next,
-    actor_user_id: actorUserId,
-    reason: reason || null,
-  });
-  const notificationWrite = createNotification
-    ? admin.from("notification_events").insert({
-        evaluation_id: evaluationId,
-        event_type: action,
-        audience_permission:
-          next === "RETURNED" && correctionStage
-            ? (notificationPermissionByStatus[
-                correctionStage === "SUPERVISOR_DRAFT"
-                  ? "DRAFT"
-                  : correctionStage === "PERSONNEL_PROCESSING"
-                    ? "FOR_PROCESSING"
-                    : "FOR_REVIEW"
-              ] ?? "evaluations.view_history")
-            : (notificationPermissionByStatus[next] ?? "evaluations.view_history"),
-        title:
-          next === "DRAFT"
-            ? "New Evaluation Submitted"
-            : next === "FOR_REVIEW"
-              ? "New Evaluation Submitted"
-              : next === "FOR_PROCESSING"
-                ? "Evaluation Ready for Processing"
-                : next === "FOR_APPROVAL"
-                  ? "Evaluation Ready for Review"
-                  : next === "RETURNED"
-                    ? "Evaluation Returned"
-                    : next === "FINALIZED"
-                      ? "Performance Evaluation Finalized"
-                      : "Evaluation workflow updated",
-        body:
-          next === "DRAFT"
-            ? "A new performance evaluation has been submitted to you for review and assessment."
-            : next === "FOR_REVIEW"
-              ? "A performance evaluation has been submitted to you for review and assessment."
-              : next === "FOR_PROCESSING"
-                ? "A completed performance evaluation is ready for Personnel processing."
-                : next === "FOR_APPROVAL"
-                  ? "A performance evaluation is ready for your Committee review and recommendation."
-                  : next === "RETURNED"
-                    ? "A performance evaluation has been returned to you for correction and resubmission."
-                    : next === "FINALIZED"
-                      ? "Your performance evaluation has been finalized and is now complete."
-                      : reason ||
-                        `An evaluation entered ${next.replaceAll("_", " ").toLowerCase()}.`,
-        payload: { fromStatus: current.status, toStatus: next, reason, correctionStage },
-        dedupe_key: `${evaluationId}:${action}:${expectedVersion}`,
-      } as never)
-    : Promise.resolve({ error: null });
-  const auditWrite = getActorRoles(actorUserId).then((roles) =>
-    writeAudit({
-      actorUserId,
-      actorRole: roles.join(","),
-      action,
-      module: "Evaluation Workflow",
-      entityType: "evaluation",
-      entityId: evaluationId,
-      evaluationId,
-      previousValue: { status: current.status },
-      newValue: { status: next },
-    }),
-  );
-  await Promise.all([eventWrite, notificationWrite, auditWrite]);
+  if (createNotification) {
+    const { error } = await admin.rpc(
+      "atomic_evaluation_transition" as never,
+      {
+        _evaluation_id: evaluationId,
+        _expected_version: expectedVersion,
+        _next_status: next,
+        _actor_user_id: actorUserId,
+        _action: action,
+        _reason: reason,
+        _correction_stage: correctionStage,
+      } as never,
+    );
+    if (error) throw validationError(error.message);
+  } else {
+    const { error } = await admin
+      .from("evaluations")
+      .update({ status: next, version: expectedVersion + 1 } as never)
+      .eq("id", evaluationId)
+      .eq("version", expectedVersion);
+    if (error) throw validationError(error.message);
+  }
   if (next === "FINALIZED") {
     void (async () => {
       const { ensureDevelopmentRecordsForEvaluation } =
@@ -489,7 +423,10 @@ async function saveStageSignature(
     } as never,
     { onConflict: "evaluation_id,stage" },
   );
-  if (error) throw validationError(error.message);
+  if (error) {
+    if (storagePath) await admin.storage.from("employee-files").remove([storagePath]);
+    throw validationError(error.message);
+  }
 }
 
 export const saveEvaluationSignature = createServerFn({ method: "POST" })

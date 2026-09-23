@@ -177,11 +177,7 @@ export function AuditActivityTable({ rows }: { rows: AuditActivityRow[] }) {
   );
 }
 
-export function DashboardSummaryLayout({
-  status,
-}: {
-  status: ReactNode;
-}) {
+export function DashboardSummaryLayout({ status }: { status: ReactNode }) {
   return <div className="min-w-0">{status}</div>;
 }
 

@@ -15,9 +15,11 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getMyAccess,
+  beginEmailMfa,
   needsBootstrap,
   recordAuthFailure,
   recordLoginEvent,
+  verifyEmailMfa,
 } from "@/lib/access.functions";
 import { APP_NAME, roleLandingPath } from "@/lib/domain";
 import { loginSchema } from "@/lib/schemas";
@@ -51,10 +53,16 @@ function LoginPage() {
   const queryClient = useQueryClient();
   const [pending, setPending] = useState(false);
   const [setupNeeded, setSetupNeeded] = useState(false);
+  const [mfaChallenge, setMfaChallenge] = useState<{ id: string; expiresInSeconds: number } | null>(
+    null,
+  );
+  const [otp, setOtp] = useState("");
   const checkBootstrap = useServerFn(needsBootstrap);
   const fetchAccess = useServerFn(getMyAccess);
   const logEvent = useServerFn(recordLoginEvent);
   const logFailure = useServerFn(recordAuthFailure);
+  const startMfa = useServerFn(beginEmailMfa);
+  const verifyMfa = useServerFn(verifyEmailMfa);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -88,6 +96,23 @@ function LoginPage() {
         return;
       }
 
+      const challenge = await startMfa({ data: {} });
+      setMfaChallenge({ id: challenge.challengeId, expiresInSeconds: challenge.expiresInSeconds });
+      return;
+    } catch (error) {
+      await supabase.auth.signOut().catch(() => undefined);
+      toast.error(error instanceof Error ? error.message : "Could not send the verification code");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function onVerifyOtp(event: React.FormEvent) {
+    event.preventDefault();
+    if (!mfaChallenge) return;
+    setPending(true);
+    try {
+      await verifyMfa({ data: { challengeId: mfaChallenge.id, otp } });
       const access = await fetchAccess();
       if (!access) {
         await supabase.auth.signOut();
@@ -107,6 +132,8 @@ function LoginPage() {
         return;
       }
       navigate({ to: roleLandingPath(access.roles) });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Verification failed");
     } finally {
       setPending(false);
     }
@@ -129,37 +156,61 @@ function LoginPage() {
             <CardDescription>Use your work email and password.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="username"
-                  {...form.register("email")}
-                />
-                {form.formState.errors.email ? (
-                  <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  {...form.register("password")}
-                />
-                {form.formState.errors.password ? (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.password.message}
+            {mfaChallenge ? (
+              <form className="space-y-4" onSubmit={onVerifyOtp}>
+                <div className="space-y-2">
+                  <Label htmlFor="email-otp">Email verification code</Label>
+                  <Input
+                    id="email-otp"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the six-digit code sent to your account email. It expires in five minutes.
                   </p>
-                ) : null}
-              </div>
-              <Button type="submit" className="w-full" disabled={pending}>
-                {pending ? <BouncingDots className="w-16" /> : "Sign in"}
-              </Button>
-            </form>
+                </div>
+                <Button type="submit" className="w-full" disabled={pending || otp.length !== 6}>
+                  {pending ? <BouncingDots className="w-16" /> : "Verify and continue"}
+                </Button>
+              </form>
+            ) : (
+              <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="username"
+                    {...form.register("email")}
+                  />
+                  {form.formState.errors.email ? (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.email.message}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    {...form.register("password")}
+                  />
+                  {form.formState.errors.password ? (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.password.message}
+                    </p>
+                  ) : null}
+                </div>
+                <Button type="submit" className="w-full" disabled={pending}>
+                  {pending ? <BouncingDots className="w-16" /> : "Sign in"}
+                </Button>
+              </form>
+            )}
 
             <div className="mt-4 flex flex-col gap-2 text-center text-sm">
               <Link to="/forgot-password" className="text-primary hover:underline font-medium">

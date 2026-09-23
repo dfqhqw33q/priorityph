@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  authenticateSupabaseRequest,
+  requireSupabaseAuth,
+} from "@/integrations/supabase/auth-middleware";
 import { bootstrapAdminSchema, resetPasswordSchema } from "./schemas";
 import { validatePassword } from "./password-policy";
 import type { AppRole, Permission } from "./domain";
@@ -58,6 +62,121 @@ export const getMyAccess = createServerFn({ method: "GET" })
       roles,
       permissions,
     };
+  });
+
+export const beginEmailMfa = createServerFn({ method: "POST" })
+  .validator((input: unknown) => z.object({}).parse(input ?? {}))
+  .handler(async () => {
+    const authenticated = await authenticateSupabaseRequest();
+    const { getAdmin, generateEmailOtp, hashEmailOtp, sendEmailOtp, writeAudit, getActorRoles } =
+      await import("./server-core.server");
+    const admin = await getAdmin();
+    const sessionId = String(authenticated.claims.session_id ?? "");
+    if (!sessionId) throw new Error("MFA could not be started for this session");
+    const { data: recentChallenge } = await (admin.from("email_mfa_challenges" as never) as any)
+      .select("created_at")
+      .eq("user_id", authenticated.userId)
+      .eq("session_id", sessionId)
+      .gt("created_at", new Date(Date.now() - 30_000).toISOString())
+      .maybeSingle();
+    if (recentChallenge)
+      throw new Error("Please wait before requesting another verification code.");
+    const { data: profile } = await admin
+      .from("internal_users")
+      .select("email, full_name")
+      .eq("id", authenticated.userId)
+      .maybeSingle();
+    if (!profile) throw new Error("Your internal account could not be found");
+    const otp = generateEmailOtp();
+    const otpHash = await hashEmailOtp(otp);
+    const challengeTable = admin.from("email_mfa_challenges" as never) as any;
+    await challengeTable.delete().eq("user_id", authenticated.userId).eq("session_id", sessionId);
+    const { data: challenge, error } = await challengeTable
+      .insert({
+        user_id: authenticated.userId,
+        session_id: sessionId,
+        otp_hash: otpHash,
+        expires_at: new Date(Date.now() + 5 * 60_000).toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error || !challenge) throw new Error("Could not start email verification");
+    const delivery = await sendEmailOtp({ email: profile.email, fullName: profile.full_name, otp });
+    if (!delivery.sent) {
+      await challengeTable.delete().eq("id", challenge.id);
+      await writeAudit({
+        actorUserId: authenticated.userId,
+        actorRole: (await getActorRoles(authenticated.userId)).join(","),
+        action: "MFA_OTP_SEND_FAILED",
+        module: "Authentication",
+        entityType: "internal_user",
+        entityId: authenticated.userId,
+        reason: delivery.message,
+        result: "FAILURE",
+      });
+      throw new Error(delivery.message);
+    }
+    await writeAudit({
+      actorUserId: authenticated.userId,
+      actorRole: (await getActorRoles(authenticated.userId)).join(","),
+      action: "MFA_OTP_SENT",
+      module: "Authentication",
+      entityType: "internal_user",
+      entityId: authenticated.userId,
+      result: "SUCCESS",
+    });
+    return { challengeId: challenge.id, expiresInSeconds: 300 };
+  });
+
+export const verifyEmailMfa = createServerFn({ method: "POST" })
+  .validator((input: unknown) =>
+    z.object({ challengeId: z.string().uuid(), otp: z.string().regex(/^\d{6}$/) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const authenticated = await authenticateSupabaseRequest();
+    const { getAdmin, getActorRoles, hashEmailOtp, writeAudit } =
+      await import("./server-core.server");
+    const admin = await getAdmin();
+    const sessionId = String(authenticated.claims.session_id ?? "");
+    const challengeTable = admin.from("email_mfa_challenges" as never) as any;
+    const { data: challenge } = await challengeTable
+      .select("id, otp_hash, attempts, expires_at, verified_at")
+      .eq("id", data.challengeId)
+      .eq("user_id", authenticated.userId)
+      .eq("session_id", sessionId)
+      .maybeSingle();
+    const roles = (await getActorRoles(authenticated.userId)).join(",");
+    if (
+      !challenge ||
+      challenge.verified_at ||
+      challenge.attempts >= 5 ||
+      new Date(challenge.expires_at).getTime() <= Date.now() ||
+      (await hashEmailOtp(data.otp)) !== challenge.otp_hash
+    ) {
+      if (challenge && challenge.attempts < 5)
+        await challengeTable.update({ attempts: challenge.attempts + 1 }).eq("id", challenge.id);
+      await writeAudit({
+        actorUserId: authenticated.userId,
+        actorRole: roles,
+        action: "MFA_OTP_FAILED",
+        module: "Authentication",
+        entityType: "internal_user",
+        entityId: authenticated.userId,
+        result: "FAILURE",
+      });
+      throw new Error("The verification code is invalid or expired.");
+    }
+    await challengeTable.update({ verified_at: new Date().toISOString() }).eq("id", challenge.id);
+    await writeAudit({
+      actorUserId: authenticated.userId,
+      actorRole: roles,
+      action: "MFA_OTP_VERIFIED",
+      module: "Authentication",
+      entityType: "internal_user",
+      entityId: authenticated.userId,
+      result: "SUCCESS",
+    });
+    return { ok: true };
   });
 
 export const recordLoginEvent = createServerFn({ method: "POST" })
