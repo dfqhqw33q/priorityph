@@ -1,8 +1,14 @@
 $ErrorActionPreference = 'Stop'
 
-$projectRef = if ($env:SUPABASE_PROJECT_REF) { $env:SUPABASE_PROJECT_REF } else { 'opgphfvdqdhxicrebfuk' }
+$projectRef = if ($env:SUPABASE_PROJECT_REF) {
+  $env:SUPABASE_PROJECT_REF
+} elseif ($env:VITE_SUPABASE_URL -match '^https://([^.]+)\.supabase\.co') {
+  $Matches[1]
+} else {
+  'opgphfvdqdhxicrebfuk'
+}
 $supabaseUrl = "https://$projectRef.supabase.co"
-$password = if ($env:PHASE2_TEST_PASSWORD) { $env:PHASE2_TEST_PASSWORD } else { 'Phase2Test!2026' }
+$password = 'Phase2Test!2026'
 
 $serviceKey = $env:SUPABASE_SERVICE_ROLE_KEY
 if ([string]::IsNullOrWhiteSpace($serviceKey)) {
@@ -12,13 +18,31 @@ if ([string]::IsNullOrWhiteSpace($serviceKey)) {
 if ([string]::IsNullOrWhiteSpace($serviceKey)) { throw 'Could not obtain the Supabase service-role key.' }
 
 $headers = @{ apikey = $serviceKey; Authorization = "Bearer $serviceKey" }
+$brevoApiKey = $env:BREVO_API_KEY
+$emailFrom = $env:EMAIL_FROM
+if ([string]::IsNullOrWhiteSpace($brevoApiKey) -or [string]::IsNullOrWhiteSpace($emailFrom) -or $emailFrom -notmatch '@') {
+  throw 'Credential delivery requires BREVO_API_KEY and EMAIL_FROM environment variables.'
+}
+
+function Send-CredentialEmail($account, $password) {
+  $body = @{
+    sender = @{ name = 'Priority Handling Logistics'; email = $emailFrom }
+    to = @(@{ email = $account.email; name = $account.full_name })
+    subject = 'Your Priority Handling account credentials'
+    htmlContent = "<p>Hello $($account.full_name),</p><p>Your Priority Handling account has been created.</p><p>Email: <strong>$($account.email)</strong></p><p>Temporary password: <strong>$password</strong></p><p>Keep these credentials private.</p>"
+    textContent = "Your Priority Handling account has been created.`n`nEmail: $($account.email)`nTemporary password: $password`n`nKeep these credentials private."
+  } | ConvertTo-Json -Depth 8
+  $mailHeaders = @{ Accept = 'application/json'; 'Content-Type' = 'application/json'; 'api-key' = $brevoApiKey }
+  Invoke-RestMethod -Method Post -Uri 'https://api.brevo.com/v3/smtp/email' -Headers $mailHeaders -ContentType 'application/json' -Body $body | Out-Null
+}
+
 $accounts = @(
-  @{ email = 'adminpriorityph@gmail.com'; full_name = 'RAI-LI T. BONIFACIO'; job_title = 'Administrator'; role = 'ADMINISTRATOR' },
-  @{ email = 'presidentpriorityph@gmail.com'; full_name = 'JAY M. LITERAL'; job_title = 'President'; role = 'PRESIDENT' },
-  @{ email = 'supervisorpriorityph@gmail.com'; full_name = 'CHARLOTTE V. GALLETA'; job_title = 'Supervisor / Rater / Immediate Supervisor'; role = 'SUPERVISOR' },
-  @{ email = 'hrpriorityph@gmail.com'; full_name = 'MIKAELLA T. ISIP'; job_title = 'HR / Personnel'; role = 'HR' },
-  @{ email = 'revsupervisorpriorityph@gmail.com'; full_name = 'MARK JEROME C. MOLLENA'; job_title = 'Reviewing Supervisor / Division Head'; role = 'REVIEWING_SUPERVISOR' },
-  @{ email = 'committeepriorityph@gmail.com'; full_name = 'ELENA C. SANTOS'; job_title = 'Committee Member'; role = 'COMMITTEE' }
+  @{ email = 'adminjaypriorityph@gmail.com'; full_name = 'Jay'; job_title = 'Administrator'; role = 'ADMINISTRATOR' },
+  @{ email = 'presidentnoahpriorityph@gmail.com'; full_name = 'Noah Sinclair'; job_title = 'President'; role = 'PRESIDENT' },
+  @{ email = 'supervisorcharlottepriorityph@gmail.com'; full_name = 'Charlotte Galleta'; job_title = 'Supervisor / Rater / Immediate Supervisor'; role = 'SUPERVISOR' },
+  @{ email = 'hrwilfredopriorityph@gmail.com'; full_name = 'Wilfredo'; job_title = 'HR / Personnel'; role = 'HR' },
+  @{ email = 'revsupliampriorityph@gmail.com'; full_name = 'Reviewing Supervisor'; job_title = 'Reviewing Supervisor / Division Head'; role = 'REVIEWING_SUPERVISOR' },
+  @{ email = 'commiteeoliviapriorityph@gmail.com'; full_name = 'Olivia Hayes'; job_title = 'Committee Member'; role = 'COMMITTEE' }
 )
 
 $existing = Invoke-RestMethod -Method Get -Uri "$supabaseUrl/auth/v1/admin/users?per_page=1000" -Headers $headers
@@ -42,6 +66,8 @@ foreach ($account in $accounts) {
   } else {
     Invoke-RestMethod -Method Post -Uri "$supabaseUrl/rest/v1/user_roles" -Headers $roleHeaders -ContentType 'application/json' -Body $roleRow | Out-Null
   }
+  Send-CredentialEmail $account $password
+  Write-Output "$($account.role): credentials sent to $($account.email)"
   Write-Output "$($account.role): $($account.email) provisioned"
 }
 

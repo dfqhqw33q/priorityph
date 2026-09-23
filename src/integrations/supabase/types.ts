@@ -408,7 +408,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           division?: string;
-          employee_number: string;
+          employee_number?: never;
           employment_status?: Database["public"]["Enums"]["employment_status"];
           first_name?: string;
           full_name: string;

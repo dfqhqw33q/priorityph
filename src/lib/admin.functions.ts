@@ -10,6 +10,7 @@ import {
   userUpdateSchema,
   auditFiltersSchema,
   employeeProfileSchema,
+  employeeProfileAdminSchema,
 } from "./schemas";
 import type { AppRole, Permission } from "./domain";
 import { validatePassword } from "./password-policy";
@@ -514,7 +515,7 @@ export const listEmployees = createServerFn({ method: "GET" })
 
 export const createEmployeeProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => employeeProfileSchema.parse(input))
+  .validator((input: unknown) => employeeProfileAdminSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
       await import("./server-core.server");
@@ -524,7 +525,6 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
     const { data: employee, error } = await admin
       .from("employees")
       .insert({
-        employee_number: data.employeeNumber,
         full_name: fullName,
         first_name: data.firstName,
         middle_name: data.middleName,
@@ -533,7 +533,7 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
         division: data.division,
         section: data.section,
       } as never)
-      .select("id")
+      .select("id, employee_number")
       .single();
     if (error || !employee) {
       if (error?.code === "23505")
@@ -549,19 +549,18 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
       entityId: employee.id,
       employeeId: employee.id,
       newValue: {
-        employee_number: data.employeeNumber,
         first_name: data.firstName,
         middle_name: data.middleName,
         last_name: data.lastName,
       },
     });
-    return { employeeId: employee.id };
+    return { employeeId: employee.id, employeeNumber: employee.employee_number };
   });
 
 export const updateEmployeeProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) =>
-    employeeProfileSchema.extend({ employeeId: z.string().uuid() }).parse(input),
+    employeeProfileAdminSchema.extend({ employeeId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { getAdmin, requirePermission, writeAudit, getActorRoles, validationError } =
@@ -578,7 +577,6 @@ export const updateEmployeeProfile = createServerFn({ method: "POST" })
     const { error } = await admin
       .from("employees")
       .update({
-        employee_number: data.employeeNumber,
         full_name: fullName,
         first_name: data.firstName,
         middle_name: data.middleName,
@@ -604,7 +602,6 @@ export const updateEmployeeProfile = createServerFn({ method: "POST" })
       employeeId: data.employeeId,
       previousValue: previous,
       newValue: {
-        employee_number: data.employeeNumber,
         first_name: data.firstName,
         middle_name: data.middleName,
         last_name: data.lastName,

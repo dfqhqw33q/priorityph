@@ -90,6 +90,9 @@ export const employeeProfileSchema = z.object({
 });
 export type EmployeeProfileValues = z.infer<typeof employeeProfileSchema>;
 
+export const employeeProfileAdminSchema = employeeProfileSchema.omit({ employeeNumber: true });
+export type EmployeeProfileAdminValues = z.infer<typeof employeeProfileAdminSchema>;
+
 export const cycleFormSchema = z
   .object({
     name: trimmed(3, 160),
