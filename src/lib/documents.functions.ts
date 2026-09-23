@@ -132,7 +132,7 @@ export const getEvaluationSheetHtml = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { getAdmin, requirePermissionAny, validationError } =
+    const { getAdmin, requirePermissionAny, requireStepUp, validationError } =
       await import("./server-core.server");
     const { generateEvaluationData, generateEvaluationHTML } = await import("./documents.server");
 
@@ -143,6 +143,12 @@ export const getEvaluationSheetHtml = createServerFn({ method: "POST" })
         context.userId,
         ["evaluations.view_201", "president.view", "evaluations.review_step3"],
         "Evaluation Sheet",
+      );
+      await requireStepUp(
+        context.userId,
+        String(context.claims.session_id ?? ""),
+        "open an evaluation document",
+        true,
       );
       console.log(`[getEvaluationSheetHtml] Permissions check passed`);
 

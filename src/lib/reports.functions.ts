@@ -323,6 +323,7 @@ export const getReport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const {
       requirePermissionAny,
+      requireStepUp,
       getAdmin,
       writeAudit,
       getActorRoles,
@@ -341,6 +342,13 @@ export const getReport = createServerFn({ method: "POST" })
       ],
       "Evaluation History",
     );
+    if (data.exportAll)
+      await requireStepUp(
+        context.userId,
+        String(context.claims.session_id ?? ""),
+        "export evaluation reports",
+        true,
+      );
     const admin = await getAdmin();
     const roles = await getActorRoles(context.userId);
     const { permittedStatuses, supervisorOnly } = getRoleHistoryAccess(roles);

@@ -547,7 +547,12 @@ export function EvaluationStageDetail({
       if (stage === "PRESIDENT" && signature) {
         Object.assign(params, { presidentSignatureData: signature.data });
       }
-      const result = await getSheetHtml({ data: params });
+      const result = await runSensitiveAction(
+        "open an evaluation document",
+        () => getSheetHtml({ data: params }),
+        true,
+      );
+      if (!result) return;
       setDocumentHtml(result.html);
     } catch (error) {
       setDocumentOpen(false);

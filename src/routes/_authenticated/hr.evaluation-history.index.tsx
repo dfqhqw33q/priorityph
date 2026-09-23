@@ -31,6 +31,7 @@ import { useAccess } from "@/hooks/use-access";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
 import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
 import { EvaluationProgressStepper } from "@/features/performance-management/components/evaluation-progress-stepper";
+import { useStepUp } from "@/components/layout/step-up-provider";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,7 @@ export function HistoryTablePage({
   const fetchReport = useServerFn(getReport);
   const fetchSheetHtml = useServerFn(getEvaluationSheetHtml);
   const fetchEvaluationHistory = useServerFn(getEvaluationHistory);
+  const { runSensitiveAction } = useStepUp();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [status, setStatus] = useState(defaultStatus);
@@ -152,7 +154,12 @@ export function HistoryTablePage({
     setPreviewHtml(null);
     setPreviewLoading(true);
     try {
-      const result = await fetchSheetHtml({ data: { evaluationId } });
+      const result = await runSensitiveAction(
+        "open an evaluation document",
+        () => fetchSheetHtml({ data: { evaluationId } }),
+        true,
+      );
+      if (!result) return;
       setPreviewHtml(result.html);
     } catch (error) {
       setPreviewEvaluationId(null);
@@ -178,21 +185,27 @@ export function HistoryTablePage({
   async function exportCsv() {
     setExporting(true);
     try {
-      const result = await fetchReport({
-        data: {
-          search: debouncedSearch,
-          status: effectiveStatus,
-          cycleId: effectiveCycleId === ALL ? null : effectiveCycleId,
-          division: division === ALL ? "" : division,
-          section: section === ALL ? "" : section,
-          finalRating: finalRating === ALL ? "" : finalRating,
-          year: null,
-          recordType: mode,
-          page: 0,
-          pageSize: 10000,
-          exportAll: true,
-        },
-      });
+      const result = await runSensitiveAction(
+        "export evaluation reports",
+        () =>
+          fetchReport({
+            data: {
+              search: debouncedSearch,
+              status: effectiveStatus,
+              cycleId: effectiveCycleId === ALL ? null : effectiveCycleId,
+              division: division === ALL ? "" : division,
+              section: section === ALL ? "" : section,
+              finalRating: finalRating === ALL ? "" : finalRating,
+              year: null,
+              recordType: mode,
+              page: 0,
+              pageSize: 10000,
+              exportAll: true,
+            },
+          }),
+        true,
+      );
+      if (!result) return;
       const escapeCsv = (value: string | number | null) => {
         const text = value === null ? "" : String(value);
         return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;

@@ -24,6 +24,7 @@ import { humanizeToken } from "@/lib/domain";
 import { getEvaluationSheetHtml } from "@/lib/documents.functions";
 import { EvaluationDocumentPreview } from "@/features/performance-management/components/evaluation-document-preview";
 import { ratingFor } from "@/features/performance-management/components/rating-matrix";
+import { useStepUp } from "@/components/layout/step-up-provider";
 
 export const Route = createFileRoute("/_authenticated/hr/evaluation-history/$evaluationId")({
   component: HistoryDetailPage,
@@ -49,6 +50,7 @@ function HistoryDetailPageFromRoute() {
 function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
   const fetch = useServerFn(getEvaluationHistory);
   const getSheetHtml = useServerFn(getEvaluationSheetHtml);
+  const { runSensitiveAction } = useStepUp();
   const [documentAction, setDocumentAction] = useState<"preview" | "print" | null>(null);
   const [documentHtml, setDocumentHtml] = useState<string | null>(null);
   const [documentOpen, setDocumentOpen] = useState(false);
@@ -63,7 +65,12 @@ function HistoryDetailPageInner({ evaluationId }: { evaluationId?: string }) {
     setDocumentAction(mode);
     setDocumentOpen(true);
     try {
-      const result = await getSheetHtml({ data: { evaluationId } });
+      const result = await runSensitiveAction(
+        "open an evaluation document",
+        () => getSheetHtml({ data: { evaluationId } }),
+        true,
+      );
+      if (!result) return;
       setDocumentHtml(result.html);
     } catch (error) {
       setDocumentOpen(false);
