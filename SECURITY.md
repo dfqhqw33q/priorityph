@@ -64,6 +64,6 @@ Never test a restore directly over production data.
 
 ## Remaining Product Decision
 
-Email OTP is the current second factor. TOTP or passkeys are not yet implemented. Adding either requires an enrollment flow, recovery codes, device revocation, support recovery, and account-lockout policy. Do not introduce custom cryptography; use Supabase-supported MFA or WebAuthn/passkey libraries.
+Email OTP is the current second factor. Five failed password attempts within 15 minutes lock the matching internal account; an administrator must unlock it. TOTP or passkeys are not yet implemented. Adding either requires an enrollment flow, recovery codes, device revocation, and support recovery. Do not introduce custom cryptography; use Supabase-supported MFA or WebAuthn/passkey libraries.
 
 Automated cross-user RLS, step-up bypass, role escalation, and concurrent-finalization tests require a test runner and isolated Supabase test project, which this repository does not currently provide.

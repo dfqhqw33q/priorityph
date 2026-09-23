@@ -586,10 +586,14 @@ export const changeMyPassword = createServerFn({ method: "POST" })
   });
 
 export const recordAuthFailure = createServerFn({ method: "POST" })
-  .validator((input: { email: string; event: "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" }) => ({
-    email: String(input.email).slice(0, 200),
-    event: input.event,
-  }))
+  .validator((input: unknown) =>
+    z
+      .object({
+        email: z.string().trim().email().max(200),
+        event: z.enum(["LOGIN_FAILED", "PASSWORD_RESET_REQUESTED"]),
+      })
+      .parse(input),
+  )
   .handler(async ({ data }) => {
     const { enforceRateLimit, getAdmin, writeAudit, getRequestMeta } =
       await import("./server-core.server");
@@ -601,13 +605,45 @@ export const recordAuthFailure = createServerFn({ method: "POST" })
       data.event === "LOGIN_FAILED" ? 10 : 5,
     );
     if (data.event === "LOGIN_FAILED") {
-      await admin.from("login_events").insert({
-        email: data.email,
+      const email = data.email.toLowerCase();
+      const { error: insertError } = await admin.from("login_events").insert({
+        email,
         event_type: "LOGIN_FAILED",
         result: "FAILURE",
         ip_address: meta.ip,
         user_agent: meta.userAgent,
       });
+      if (insertError) throw new Error("Could not record the sign-in failure");
+
+      const lockoutWindowStart = new Date(Date.now() - 15 * 60_000).toISOString();
+      const { count, error: countError } = await admin
+        .from("login_events")
+        .select("id", { count: "exact", head: true })
+        .eq("email", email)
+        .eq("event_type", "LOGIN_FAILED")
+        .gte("occurred_at", lockoutWindowStart);
+      if (countError) throw new Error("Could not check sign-in failures");
+      if ((count ?? 0) >= 5) {
+        const { data: lockedAccount, error: lockError } = await admin
+          .from("internal_users")
+          .update({ is_locked: true })
+          .eq("email", email)
+          .eq("is_locked", false)
+          .select("id")
+          .maybeSingle();
+        if (lockError) throw new Error("Could not lock the account after repeated failures");
+        if (lockedAccount) {
+          await writeAudit({
+            actorUserId: lockedAccount.id,
+            action: "ACCOUNT_LOCKED_FAILED_LOGIN",
+            module: "Authentication",
+            entityType: "internal_user",
+            entityId: lockedAccount.id,
+            reason: "Five failed sign-in attempts within 15 minutes",
+            result: "FAILURE",
+          }, meta);
+        }
+      }
     } else {
       await admin.from("password_reset_events").insert({
         email: data.email,

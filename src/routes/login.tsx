@@ -192,13 +192,14 @@ function LoginPage() {
                   <InputOTP
                     id="email-otp"
                     maxLength={6}
+                    containerClassName="w-full justify-center"
                     value={otp}
                     onChange={(value) => setOtp(value.replace(/\D/g, ""))}
                     disabled={pending}
                     autoComplete="one-time-code"
                     aria-label="Six-digit email verification code"
                   >
-                    <InputOTPGroup>
+                    <InputOTPGroup className="w-full justify-center">
                       {Array.from({ length: 6 }, (_, index) => (
                         <InputOTPSlot key={index} index={index} />
                       ))}
