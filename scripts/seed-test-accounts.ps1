@@ -57,6 +57,8 @@ foreach ($account in $accounts) {
 
   $profile = @{ id = $user.id; email = $account.email; full_name = $account.full_name; job_title = $account.job_title; is_active = $true; is_locked = $false; must_change_password = $false } | ConvertTo-Json
   Invoke-RestMethod -Method Post -Uri "$supabaseUrl/rest/v1/internal_users" -Headers ($headers + @{ Prefer = 'resolution=merge-duplicates' }) -ContentType 'application/json' -Body $profile | Out-Null
+  $employee = Invoke-RestMethod -Method Post -Uri "$supabaseUrl/rest/v1/rpc/ensure_internal_user_employee" -Headers ($headers + @{ 'Content-Type' = 'application/json' }) -ContentType 'application/json' -Body (@{ _user_id = $user.id } | ConvertTo-Json)
+  if ([string]::IsNullOrWhiteSpace($employee.employee_number)) { throw "Could not resolve an Employee ID for $($account.email)." }
   $roleRow = @{ user_id = $user.id; role = $account.role } | ConvertTo-Json
   $roleHeaders = $headers + @{ Prefer = 'return=minimal' }
   $roleUrl = "$supabaseUrl/rest/v1/user_roles?user_id=eq.$($user.id)&select=id"
@@ -68,7 +70,7 @@ foreach ($account in $accounts) {
   }
   Send-CredentialEmail $account $password
   Write-Output "$($account.role): credentials sent to $($account.email)"
-  Write-Output "$($account.role): $($account.email) provisioned"
+  Write-Output "$($account.role): $($account.email) provisioned as $($employee.employee_number)"
 }
 
 Write-Output 'All six test accounts are ready.'

@@ -26,6 +26,7 @@ export type InternalUserRow = {
   last_login_at: string | null;
   created_at: string;
   roles: AppRole[];
+  employee_number: string | null;
 };
 
 export const listUsers = createServerFn({ method: "GET" })
@@ -34,7 +35,7 @@ export const listUsers = createServerFn({ method: "GET" })
     const { getAdmin, requirePermission } = await import("./server-core.server");
     await requirePermission(context.userId, "users.view", "User Management");
     const admin = await getAdmin();
-    const [{ data: users }, { data: roles }] = await Promise.all([
+    const [{ data: users }, { data: roles }, { data: employees }] = await Promise.all([
       admin
         .from("internal_users")
         .select(
@@ -42,6 +43,7 @@ export const listUsers = createServerFn({ method: "GET" })
         )
         .order("created_at", { ascending: false }),
       admin.from("user_roles").select("user_id, role"),
+      admin.from("employees").select("user_id, employee_number"),
     ]);
     const rolesByUser = new Map<string, AppRole[]>();
     for (const row of roles ?? []) {
@@ -52,6 +54,8 @@ export const listUsers = createServerFn({ method: "GET" })
     return (users ?? []).map((user) => ({
       ...user,
       roles: rolesByUser.get(user.id) ?? [],
+      employee_number:
+        (employees ?? []).find((employee) => employee.user_id === user.id)?.employee_number ?? null,
     }));
   });
 
@@ -105,9 +109,14 @@ export const listUsersPage = createServerFn({ method: "GET" })
       data.page * data.pageSize + data.pageSize - 1,
     );
     const userIds = (users ?? []).map((user) => user.id);
-    const { data: roles } = userIds.length
-      ? await admin.from("user_roles").select("user_id, role").in("user_id", userIds)
-      : { data: [] };
+    const [{ data: roles }, { data: employees }] = await Promise.all([
+      userIds.length
+        ? await admin.from("user_roles").select("user_id, role").in("user_id", userIds)
+        : { data: [] },
+      userIds.length
+        ? await admin.from("employees").select("user_id, employee_number").in("user_id", userIds)
+        : { data: [] },
+    ]);
     const rolesByUser = new Map<string, AppRole[]>();
     for (const row of roles ?? []) {
       const userRoles = rolesByUser.get(row.user_id) ?? [];
@@ -115,7 +124,13 @@ export const listUsersPage = createServerFn({ method: "GET" })
       rolesByUser.set(row.user_id, userRoles);
     }
     return {
-      rows: (users ?? []).map((user) => ({ ...user, roles: rolesByUser.get(user.id) ?? [] })),
+      rows: (users ?? []).map((user) => ({
+        ...user,
+        roles: rolesByUser.get(user.id) ?? [],
+        employee_number:
+          (employees ?? []).find((employee) => employee.user_id === user.id)?.employee_number ??
+          null,
+      })),
       total: count ?? 0,
     };
   });
@@ -157,7 +172,24 @@ export const createUser = createServerFn({ method: "POST" })
         must_change_password: true,
       });
       if (profileError) throw validationError(profileError.message);
+      const { data: employee, error: employeeError } = await admin.rpc(
+        "ensure_internal_user_employee" as never,
+        { _user_id: userId } as never,
+      );
+      if (employeeError || !employee)
+        throw validationError("Could not create the employee record for this account");
       await admin.from("user_roles").insert(data.roles.map((role) => ({ user_id: userId, role })));
+
+      await writeAudit({
+        actorUserId: context.userId,
+        actorRole: (await getActorRoles(context.userId)).join(","),
+        action: "INTERNAL_USER_EMPLOYEE_LINKED",
+        module: "User Management",
+        entityType: "internal_user",
+        entityId: userId,
+        employeeId: employee.id,
+        newValue: { employee_number: employee.employee_number },
+      });
 
       await writeAudit({
         actorUserId: context.userId,
@@ -199,6 +231,7 @@ export const createUser = createServerFn({ method: "POST" })
         temporaryPassword: tempPassword,
         emailSent: delivery.sent,
         emailMessage: delivery.message,
+        employeeNumber: employee.employee_number,
       };
     } catch (error) {
       throw new Error(safeMessage(error, "Could not create the user"));
@@ -537,7 +570,9 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
       .single();
     if (error || !employee) {
       if (error?.code === "23505")
-        throw validationError("Could not create the employee profile because a duplicate record was detected");
+        throw validationError(
+          "Could not create the employee profile because a duplicate record was detected",
+        );
       throw validationError(error?.message ?? "Could not create employee profile");
     }
     await writeAudit({

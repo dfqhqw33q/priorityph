@@ -32,6 +32,7 @@ export type AccountSettings = {
   mustChangePassword: boolean;
   lastLoginAt: string | null;
   roles: AppRole[];
+  employeeNumber: string | null;
   otpRequired: true;
   recentSecurityActivity: Array<{
     action: string;
@@ -45,25 +46,31 @@ export const getMyAccountSettings = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<AccountSettings> => {
     const { getAdmin } = await import("./server-core.server");
     const admin = await getAdmin();
-    const [{ data: profile }, { data: roles }, { data: activity }, authUserResult] =
-      await Promise.all([
-        admin
-          .from("internal_users")
-          .select(
-            "id, full_name, email, job_title, is_active, is_locked, must_change_password, last_login_at",
-          )
-          .eq("id", context.userId)
-          .maybeSingle(),
-        admin.from("user_roles").select("role").eq("user_id", context.userId),
-        admin
-          .from("audit_logs")
-          .select("action, result, occurred_at")
-          .eq("actor_user_id", context.userId)
-          .eq("module", "Authentication")
-          .order("occurred_at", { ascending: false })
-          .limit(10),
-        admin.auth.admin.getUserById(context.userId),
-      ]);
+    const [
+      { data: profile },
+      { data: roles },
+      { data: activity },
+      { data: employee },
+      authUserResult,
+    ] = await Promise.all([
+      admin
+        .from("internal_users")
+        .select(
+          "id, full_name, email, job_title, is_active, is_locked, must_change_password, last_login_at",
+        )
+        .eq("id", context.userId)
+        .maybeSingle(),
+      admin.from("user_roles").select("role").eq("user_id", context.userId),
+      admin
+        .from("audit_logs")
+        .select("action, result, occurred_at")
+        .eq("actor_user_id", context.userId)
+        .eq("module", "Authentication")
+        .order("occurred_at", { ascending: false })
+        .limit(10),
+      admin.from("employees").select("employee_number").eq("user_id", context.userId).maybeSingle(),
+      admin.auth.admin.getUserById(context.userId),
+    ]);
     if (!profile) throw new Error("Your internal account could not be found");
     const authUser = authUserResult.data.user;
     return {
@@ -77,6 +84,7 @@ export const getMyAccountSettings = createServerFn({ method: "GET" })
       mustChangePassword: profile.must_change_password,
       lastLoginAt: profile.last_login_at,
       roles: (roles ?? []).map((row) => row.role as AppRole),
+      employeeNumber: employee?.employee_number ?? null,
       otpRequired: true,
       recentSecurityActivity: (activity ?? []).map((row) => ({
         action: row.action,
@@ -564,6 +572,11 @@ export const bootstrapAdministrator = createServerFn({ method: "POST" })
         must_change_password: false,
       });
       if (profileError) throw new Error(profileError.message);
+      const { data: employee, error: employeeError } = await admin.rpc(
+        "ensure_internal_user_employee" as never,
+        { _user_id: userId } as never,
+      );
+      if (employeeError || !employee) throw new Error("Could not create the employee record");
       const { error: roleError } = await admin
         .from("user_roles")
         .insert({ user_id: userId, role: "ADMINISTRATOR" });
@@ -578,7 +591,7 @@ export const bootstrapAdministrator = createServerFn({ method: "POST" })
         entityId: userId,
         newValue: { email: data.email, roles: ["ADMINISTRATOR"] },
       });
-      return { ok: true };
+      return { ok: true, employeeNumber: employee.employee_number };
     } catch (error) {
       throw new Error(safeMessage(error, "Initial setup failed"));
     }

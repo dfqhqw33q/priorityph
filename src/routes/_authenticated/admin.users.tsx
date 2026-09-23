@@ -100,6 +100,7 @@ type UserRow = {
   last_login_at: string | null;
   created_at: string;
   roles: AppRole[];
+  employee_number: string | null;
 };
 
 type AccessAction =
@@ -147,6 +148,7 @@ function AdminUsersPage() {
     password: string;
     emailSent: boolean;
     emailMessage: string;
+    employeeNumber?: string;
   } | null>(null);
   const [rolesDraft, setRolesDraft] = useState<AppRole[]>([]);
   const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
@@ -260,6 +262,7 @@ function AdminUsersPage() {
           password: result.temporaryPassword,
           emailSent: result.emailSent ?? false,
           emailMessage: result.emailMessage ?? "",
+          employeeNumber: result.employeeNumber,
         });
       }
       setCreateOpen(false);
@@ -381,6 +384,7 @@ function AdminUsersPage() {
                     </button>
                   </TableHead>
                   <TableHead scope="col">Email</TableHead>
+                  <TableHead scope="col">Employee ID</TableHead>
                   <TableHead scope="col">Roles</TableHead>
                   <TableHead scope="col">Status</TableHead>
                   <TableHead scope="col">Last sign-in</TableHead>
@@ -401,6 +405,9 @@ function AdminUsersPage() {
                       ) : null}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {user.employee_number ?? "-"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {user.roles.map((role) => (
@@ -836,7 +843,12 @@ function CredentialDialog({
   credential,
   onClose,
 }: {
-  credential: { password: string; emailSent?: boolean; emailMessage?: string } | null;
+  credential: {
+    password: string;
+    employeeNumber?: string;
+    emailSent?: boolean;
+    emailMessage?: string;
+  } | null;
   onClose: () => void;
 }) {
   if (!credential) return null;
@@ -848,7 +860,9 @@ function CredentialDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Temporary password</DialogTitle>
+          <DialogTitle>
+            {credential.employeeNumber ? "Account created successfully" : "Temporary password"}
+          </DialogTitle>
           <DialogDescription>
             This password is shown once. Deliver it securely if the credential email was not sent.
           </DialogDescription>
@@ -865,6 +879,23 @@ function CredentialDialog({
             <Copy />
           </Button>
         </div>
+        {credential.employeeNumber ? (
+          <div className="space-y-1.5">
+            <Label>Employee ID</Label>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={credential.employeeNumber} />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Copy Employee ID"
+                onClick={() => void navigator.clipboard.writeText(credential.employeeNumber!)}
+              >
+                <Copy />
+              </Button>
+            </div>
+          </div>
+        ) : null}
         <p
           className={
             credential.emailSent ? "text-sm text-muted-foreground" : "text-sm text-destructive"

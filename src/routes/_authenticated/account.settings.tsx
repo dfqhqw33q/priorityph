@@ -144,6 +144,12 @@ export function AccountSettingsPage() {
               </p>
             </div>
             <div className="space-y-1.5">
+              <Label>Employee ID</Label>
+              <p className="rounded-md border border-border bg-muted/30 px-3 py-2 font-mono text-sm">
+                {settings.employeeNumber ?? "Not assigned"}
+              </p>
+            </div>
+            <div className="space-y-1.5">
               <Label>Role</Label>
               <p className="text-sm">{role ? ROLE_LABELS[role] : "No role assigned"}</p>
             </div>

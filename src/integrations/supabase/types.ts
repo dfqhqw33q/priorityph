@@ -399,6 +399,7 @@ export type Database = {
           first_name: string;
           full_name: string;
           id: string;
+          user_id: string | null;
           job_title: string;
           last_name: string;
           middle_name: string;
@@ -413,6 +414,7 @@ export type Database = {
           first_name?: string;
           full_name: string;
           id?: string;
+          user_id?: string | null;
           job_title?: string;
           last_name?: string;
           middle_name?: string;
@@ -427,6 +429,7 @@ export type Database = {
           first_name?: string;
           full_name?: string;
           id?: string;
+          user_id?: string | null;
           job_title?: string;
           last_name?: string;
           middle_name?: string;
@@ -2247,6 +2250,10 @@ export type Database = {
           score_count: number;
           score_total: number;
         }[];
+      };
+      ensure_internal_user_employee: {
+        Args: { _user_id: string };
+        Returns: Database["public"]["Tables"]["employees"]["Row"];
       };
       has_permission: {
         Args: { _permission: string; _user_id: string };
