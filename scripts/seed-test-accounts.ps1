@@ -37,7 +37,12 @@ function Send-CredentialEmail($account, $password) {
 }
 
 $accounts = @(
-  @{ email = 'jayyliteral@gmail.com'; full_name = 'Jay'; job_title = 'Administrator'; role = 'ADMINISTRATOR' }
+  @{ email = 'satoshesh@gmail.com'; full_name = 'Satoshi Sesh'; job_title = 'President'; role = 'PRESIDENT' },
+  @{ email = 'bonifacioraili994@gmail.com'; full_name = 'Bonifacio Raili'; job_title = 'Administrator'; role = 'ADMINISTRATOR' },
+  @{ email = 'yang.lionheart777@gmail.com'; full_name = 'Yang Lionheart'; job_title = 'Human Resources'; role = 'HR' },
+  @{ email = 'hkenshin975@gmail.com'; full_name = 'Kenshin'; job_title = 'Supervisor'; role = 'SUPERVISOR' },
+  @{ email = 'boni.dumpp@gmail.com'; full_name = 'Boni Dumpp'; job_title = 'Reviewing Supervisor'; role = 'REVIEWING_SUPERVISOR' },
+  @{ email = 'jayyliteralz@gmail.com'; full_name = 'Jay Literalz'; job_title = 'Committee Member'; role = 'COMMITTEE' }
 )
 
 $existing = Invoke-RestMethod -Method Get -Uri "$supabaseUrl/auth/v1/admin/users?per_page=1000" -Headers $headers
@@ -68,4 +73,4 @@ foreach ($account in $accounts) {
   Write-Output "$($account.role): $($account.email) provisioned as $($employee.employee_number)"
 }
 
-Write-Output 'The administrator test account is ready.'
+Write-Output 'All seeded test accounts are ready.'
