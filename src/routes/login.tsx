@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BouncingDots } from "@/components/loading-ui/bouncing-dots";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getMyAccess,
@@ -57,6 +58,7 @@ function LoginPage() {
     null,
   );
   const [otp, setOtp] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
   const checkBootstrap = useServerFn(needsBootstrap);
   const fetchAccess = useServerFn(getMyAccess);
   const logEvent = useServerFn(recordLoginEvent);
@@ -98,10 +100,35 @@ function LoginPage() {
 
       const challenge = await startMfa({ data: {} });
       setMfaChallenge({ id: challenge.challengeId, expiresInSeconds: challenge.expiresInSeconds });
+      setResendCooldown(30);
       return;
     } catch (error) {
       await supabase.auth.signOut().catch(() => undefined);
       toast.error(error instanceof Error ? error.message : "Could not send the verification code");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = window.setInterval(() => {
+      setResendCooldown((current) => Math.max(0, current - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendCooldown]);
+
+  async function resendOtp() {
+    if (pending || resendCooldown > 0) return;
+    setPending(true);
+    try {
+      const challenge = await startMfa({ data: {} });
+      setMfaChallenge({ id: challenge.challengeId, expiresInSeconds: challenge.expiresInSeconds });
+      setOtp("");
+      setResendCooldown(30);
+      toast.success("A new verification code was sent to your email.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not resend the verification code");
     } finally {
       setPending(false);
     }
@@ -160,20 +187,36 @@ function LoginPage() {
               <form className="space-y-4" onSubmit={onVerifyOtp}>
                 <div className="space-y-2">
                   <Label htmlFor="email-otp">Email verification code</Label>
-                  <Input
+                  <InputOTP
                     id="email-otp"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
                     maxLength={6}
                     value={otp}
-                    onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
-                  />
+                    onChange={(value) => setOtp(value.replace(/\D/g, ""))}
+                    disabled={pending}
+                    autoComplete="one-time-code"
+                    aria-label="Six-digit email verification code"
+                  >
+                    <InputOTPGroup>
+                      {Array.from({ length: 6 }, (_, index) => (
+                        <InputOTPSlot key={index} index={index} />
+                      ))}
+                    </InputOTPGroup>
+                  </InputOTP>
                   <p className="text-xs text-muted-foreground">
                     Enter the six-digit code sent to your account email. It expires in five minutes.
                   </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={pending || otp.length !== 6}>
                   {pending ? <BouncingDots className="w-16" /> : "Verify and continue"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => void resendOtp()}
+                  disabled={pending || resendCooldown > 0}
+                >
+                  {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend verification code"}
                 </Button>
               </form>
             ) : (
