@@ -537,7 +537,7 @@ export const createEmployeeProfile = createServerFn({ method: "POST" })
       .single();
     if (error || !employee) {
       if (error?.code === "23505")
-        throw validationError("An employee profile with that number already exists");
+        throw validationError("Could not create the employee profile because a duplicate record was detected");
       throw validationError(error?.message ?? "Could not create employee profile");
     }
     await writeAudit({
