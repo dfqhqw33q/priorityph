@@ -1,3 +1,4 @@
+DO $$ BEGIN
   CREATE TYPE public.scoring_rule_status AS ENUM ('DRAFT','ACTIVE','RETIRED');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 

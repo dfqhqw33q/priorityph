@@ -138,7 +138,6 @@ INSERT INTO public.president_step_items (template_id, position, code, label, hel
  ('33333333-3333-4333-8333-333333333333', 5, 'S3_RECOMMENDED_INCREASE',
   'Recommended increase / bonus', 'Configurable placeholder.', 'TEXT', '[]'::jsonb, false)
 ON CONFLICT (template_id, code) DO NOTHING;
-DO $$ BEGIN
 GRANT SELECT ON public.evaluations TO authenticated;
 ALTER TABLE public.evaluations
   ADD COLUMN IF NOT EXISTS supervisor_step2_submitted_at timestamptz,
@@ -223,14 +222,3 @@ CREATE TRIGGER trg_personnel_finalized BEFORE UPDATE OR DELETE ON public.personn
 DROP TRIGGER IF EXISTS trg_committee_finalized ON public.committee_reviews;
 CREATE TRIGGER trg_committee_finalized BEFORE UPDATE OR DELETE ON public.committee_reviews FOR EACH ROW EXECUTE FUNCTION public.prevent_finalized_phase2_mutation();
 
-DROP POLICY IF EXISTS "notifications viewable with evaluation access" ON public.notification_events;
-CREATE POLICY "notifications viewable with evaluation access" ON public.notification_events FOR SELECT TO authenticated
-USING (
-  public.has_permission(auth.uid(), 'evaluations.view_step1')
-  OR public.has_permission(auth.uid(), 'president.view')
-  OR public.has_permission(auth.uid(), 'cycles.view')
-  OR public.has_permission(auth.uid(), 'evaluations.review_step3')
-  OR public.has_permission(auth.uid(), 'personnel.process')
-  OR public.has_permission(auth.uid(), 'committee.review')
-  OR public.has_permission(auth.uid(), 'president.approve')
-);

@@ -20,31 +20,40 @@ if ([string]::IsNullOrWhiteSpace($serviceKey)) {
 if ([string]::IsNullOrWhiteSpace($serviceKey)) { throw 'Could not obtain the Supabase service-role key.' }
 
 $headers = @{ apikey = $serviceKey; Authorization = "Bearer $serviceKey" }
-$brevoApiKey = $env:BREVO_API_KEY
-$emailFrom = $env:EMAIL_FROM
-if ([string]::IsNullOrWhiteSpace($brevoApiKey) -or [string]::IsNullOrWhiteSpace($emailFrom) -or $emailFrom -notmatch '@') {
-  throw 'Credential delivery requires BREVO_API_KEY and EMAIL_FROM environment variables.'
+
+if (-not $Email) {
+  $mfaHeaders = $headers + @{ Prefer = 'return=minimal' }
+  Invoke-RestMethod -Method Patch -Uri "$supabaseUrl/rest/v1/system_settings?id=eq.auth" -Headers $mfaHeaders -ContentType 'application/json' -Body (@{ email_otp_enabled = $false } | ConvertTo-Json) | Out-Null
+  Write-Output 'Email OTP: disabled for the default test seed.'
 }
 
-function Send-CredentialEmail($account, $password) {
-  $body = @{
-    sender = @{ name = 'Priority Handling Logistics'; email = $emailFrom }
-    to = @(@{ email = $account.email; name = $account.full_name })
-    subject = 'Your Priority Handling account credentials'
-    htmlContent = "<p>Hello $($account.full_name),</p><p>Your Priority Handling account has been created.</p><p>Email: <strong>$($account.email)</strong></p><p>Temporary password: <strong>$password</strong></p><p>Keep these credentials private.</p>"
-    textContent = "Your Priority Handling account has been created.`n`nEmail: $($account.email)`nTemporary password: $password`n`nKeep these credentials private."
-  } | ConvertTo-Json -Depth 8
-  $mailHeaders = @{ Accept = 'application/json'; 'Content-Type' = 'application/json'; 'api-key' = $brevoApiKey }
-  Invoke-RestMethod -Method Post -Uri 'https://api.brevo.com/v3/smtp/email' -Headers $mailHeaders -ContentType 'application/json' -Body $body | Out-Null
-}
+# Credential delivery is disabled for test seeding. To restore it later, uncomment
+# this block and the Send-CredentialEmail call below.
+# $brevoApiKey = $env:BREVO_API_KEY
+# $emailFrom = $env:EMAIL_FROM
+# if ([string]::IsNullOrWhiteSpace($brevoApiKey) -or [string]::IsNullOrWhiteSpace($emailFrom) -or $emailFrom -notmatch '@') {
+#   throw 'Credential delivery requires BREVO_API_KEY and EMAIL_FROM environment variables.'
+# }
+#
+# function Send-CredentialEmail($account, $password) {
+#   $body = @{
+#     sender = @{ name = 'Priority Handling Logistics'; email = $emailFrom }
+#     to = @(@{ email = $account.email; name = $account.full_name })
+#     subject = 'Your Priority Handling account credentials'
+#     htmlContent = "<p>Hello $($account.full_name),</p><p>Your Priority Handling account has been created.</p><p>Email: <strong>$($account.email)</strong></p><p>Temporary password: <strong>$password</strong></p><p>Keep these credentials private.</p>"
+#     textContent = "Your Priority Handling account has been created.`n`nEmail: $($account.email)`nTemporary password: $password`n`nKeep these credentials private."
+#   } | ConvertTo-Json -Depth 8
+#   $mailHeaders = @{ Accept = 'application/json'; 'Content-Type' = 'application/json'; 'api-key' = $brevoApiKey }
+#   Invoke-RestMethod -Method Post -Uri 'https://api.brevo.com/v3/smtp/email' -Headers $mailHeaders -ContentType 'application/json' -Body $body | Out-Null
+# }
 
 $accounts = @(
-  @{ email = 'satoshesh@gmail.com'; full_name = 'Satoshi Sesh'; job_title = 'President'; role = 'PRESIDENT' },
-  @{ email = 'bonifacioraili994@gmail.com'; full_name = 'Bonifacio Raili'; job_title = 'Administrator'; role = 'ADMINISTRATOR' },
-  @{ email = 'yang.lionheart777@gmail.com'; full_name = 'Yang Lionheart'; job_title = 'Human Resources'; role = 'HR' },
-  @{ email = 'hkenshin975@gmail.com'; full_name = 'Kenshin'; job_title = 'Supervisor'; role = 'SUPERVISOR' },
-  @{ email = 'boni.dumpp@gmail.com'; full_name = 'Boni Dumpp'; job_title = 'Reviewing Supervisor'; role = 'REVIEWING_SUPERVISOR' },
-  @{ email = 'jayyliteral@gmail.com'; full_name = 'Jay Literalz'; job_title = 'Committee Member'; role = 'COMMITTEE'; previous_email = 'jayyliteralz@gmail.com' }
+  @{ email = 'presidentpriorityph@gmail.com'; full_name = 'Satoshi Sesh'; job_title = 'President'; role = 'PRESIDENT'; previous_email = 'satoshesh@gmail.com' },
+  @{ email = 'adminpriorityph@gmail.com'; full_name = 'Bonifacio Raili'; job_title = 'Administrator'; role = 'ADMINISTRATOR'; previous_email = 'bonifacioraili994@gmail.com' },
+  @{ email = 'hrpriorityph@gmail.com'; full_name = 'Yang Lionheart'; job_title = 'Human Resources'; role = 'HR'; previous_email = 'yang.lionheart777@gmail.com' },
+  @{ email = 'supervisorpriorityph@gmail.com'; full_name = 'Kenshin'; job_title = 'Supervisor'; role = 'SUPERVISOR'; previous_email = 'hkenshin975@gmail.com' },
+  @{ email = 'revsupervisorpriorityph@gmail.com'; full_name = 'Boni Dumpp'; job_title = 'Reviewing Supervisor'; role = 'REVIEWING_SUPERVISOR'; previous_email = 'boni.dumpp@gmail.com' },
+  @{ email = 'committeepriorityph@gmail.com'; full_name = 'Jay Literalz'; job_title = 'Committee Member'; role = 'COMMITTEE'; previous_email = 'jayyliteral@gmail.com' }
 )
 if ($Email) { $accounts = @($accounts | Where-Object { $_.email -eq $Email }) }
 if ($Email -and $accounts.Count -eq 0) { throw "No seeded account matches $Email." }
@@ -75,8 +84,8 @@ foreach ($account in $accounts) {
   } else {
     Invoke-RestMethod -Method Post -Uri "$supabaseUrl/rest/v1/user_roles" -Headers $roleHeaders -ContentType 'application/json' -Body $roleRow | Out-Null
   }
-  Send-CredentialEmail $account $password
-  Write-Output "$($account.role): credentials sent to $($account.email)"
+  # Send-CredentialEmail $account $password
+  Write-Output "$($account.role): $($account.email) provisioned (credentials were not emailed)"
   Write-Output "$($account.role): $($account.email) provisioned as $($employee.employee_number)"
 }
 

@@ -200,13 +200,13 @@ GRANT ALL ON public.security_idempotency_requests TO service_role;
 
 CREATE TABLE IF NOT EXISTS public.system_settings (
   id text PRIMARY KEY,
-  email_otp_enabled boolean NOT NULL DEFAULT true,
+  email_otp_enabled boolean NOT NULL DEFAULT false,
   updated_at timestamptz NOT NULL DEFAULT now(),
   updated_by uuid REFERENCES public.internal_users(id)
 );
 
 INSERT INTO public.system_settings (id, email_otp_enabled)
-VALUES ('auth', true)
+VALUES ('auth', false)
 ON CONFLICT (id) DO NOTHING;
 
 DROP TRIGGER IF EXISTS trg_system_settings_updated ON public.system_settings;
