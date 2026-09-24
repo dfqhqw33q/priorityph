@@ -77,6 +77,28 @@ function LoginPage() {
       .catch(() => setSetupNeeded(false));
   }, [checkBootstrap]);
 
+  async function finishLogin() {
+    const access = await fetchAccess();
+    if (!access) {
+      await supabase.auth.signOut();
+      toast.error("This account has no internal profile. Contact an administrator.");
+      return;
+    }
+    if (!access.isActive || access.isLocked) {
+      await supabase.auth.signOut();
+      toast.error("Your account is deactivated or locked. Contact an administrator.");
+      return;
+    }
+
+    queryClient.setQueryData(["access", access.userId], access);
+    void logEvent({ data: { event: "LOGIN" } }).catch(() => undefined);
+    if (access.mustChangePassword) {
+      navigate({ to: "/account/password" });
+      return;
+    }
+    navigate({ to: roleLandingPath(access.roles) });
+  }
+
   async function onSubmit(values: LoginValues) {
     setPending(true);
     try {
@@ -99,6 +121,10 @@ function LoginPage() {
       }
 
       const challenge = await startMfa({ data: {} });
+      if (!challenge.required) {
+        await finishLogin();
+        return;
+      }
       setMfaChallenge({ id: challenge.challengeId, expiresInSeconds: challenge.expiresInSeconds });
       setResendCooldown(30);
       return;
@@ -123,6 +149,10 @@ function LoginPage() {
     setPending(true);
     try {
       const challenge = await startMfa({ data: {} });
+      if (!challenge.required) {
+        await finishLogin();
+        return;
+      }
       setMfaChallenge({ id: challenge.challengeId, expiresInSeconds: challenge.expiresInSeconds });
       setOtp("");
       setResendCooldown(30);
@@ -142,25 +172,7 @@ function LoginPage() {
     setPending(true);
     try {
       await verifyMfa({ data: { challengeId: mfaChallenge.id, otp } });
-      const access = await fetchAccess();
-      if (!access) {
-        await supabase.auth.signOut();
-        toast.error("This account has no internal profile. Contact an administrator.");
-        return;
-      }
-      if (!access.isActive || access.isLocked) {
-        await supabase.auth.signOut();
-        toast.error("Your account is deactivated or locked. Contact an administrator.");
-        return;
-      }
-
-      queryClient.setQueryData(["access", access.userId], access);
-      void logEvent({ data: { event: "LOGIN" } }).catch(() => undefined);
-      if (access.mustChangePassword) {
-        navigate({ to: "/account/password" });
-        return;
-      }
-      navigate({ to: roleLandingPath(access.roles) });
+      await finishLogin();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Verification failed");
     } finally {

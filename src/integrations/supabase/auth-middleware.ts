@@ -114,17 +114,21 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
     const authenticated = await authenticateSupabaseRequest();
     const sessionId = String(authenticated.claims.session_id ?? "");
     if (!sessionId) throw new Error("Unauthorized: Session identity unavailable");
-    const { supabaseAdmin } = await import("./client.server");
-    const { data: verification } = await supabaseAdmin
-      .from("email_mfa_challenges")
-      .select("verified_at, expires_at")
-      .eq("user_id", authenticated.userId)
-      .eq("session_id", sessionId)
-      .maybeSingle();
-    if (!verification?.verified_at || new Date(verification.expires_at as string) < new Date()) {
-      throw new Error("MFA_REQUIRED: Verify the code sent to your email");
+    const { isEmailOtpEnabled } = await import("@/lib/server-core.server");
+    if (await isEmailOtpEnabled()) {
+      const { supabaseAdmin } = await import("./client.server");
+      const { data: verification } = await supabaseAdmin
+        .from("email_mfa_challenges")
+        .select("verified_at, expires_at")
+        .eq("user_id", authenticated.userId)
+        .eq("session_id", sessionId)
+        .maybeSingle();
+      if (!verification?.verified_at || new Date(verification.expires_at as string) < new Date()) {
+        throw new Error("MFA_REQUIRED: Verify the code sent to your email");
+      }
     }
 
+    const { supabaseAdmin } = await import("./client.server");
     const { data: securitySession } = await supabaseAdmin
       .from("security_sessions" as never)
       .select("expires_at")

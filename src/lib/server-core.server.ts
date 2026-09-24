@@ -19,6 +19,20 @@ export async function getAdmin(): Promise<AdminClient> {
   return supabaseAdmin as unknown as AdminClient;
 }
 
+export async function isEmailOtpEnabled(): Promise<boolean> {
+  const admin = await getAdmin();
+  const { data, error } = await admin
+    .from("system_settings")
+    .select("email_otp_enabled")
+    .eq("id", "auth")
+    .maybeSingle();
+  if (error) {
+    console.error("[security] Could not read email OTP setting; keeping OTP enabled", error);
+    return true;
+  }
+  return data?.email_otp_enabled ?? true;
+}
+
 export type RequestMeta = {
   ip: string | null;
   userAgent: string | null;

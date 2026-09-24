@@ -11,12 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import {
   changeMyAccountPassword,
   getMyAccountSettings,
   recordEmailSecurityEvent,
   syncMyConfirmedEmail,
+  updateEmailOtpSetting,
   updateMyProfile,
 } from "@/lib/access.functions";
 import { ROLE_LABELS, type AppRole } from "@/lib/domain";
@@ -41,6 +43,7 @@ export function AccountSettingsPage() {
   const changePassword = useServerFn(changeMyAccountPassword);
   const recordEmailEvent = useServerFn(recordEmailSecurityEvent);
   const syncEmail = useServerFn(syncMyConfirmedEmail);
+  const saveEmailOtpSetting = useServerFn(updateEmailOtpSetting);
   const [fullName, setFullName] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
   const [email, setEmail] = useState("");
@@ -85,6 +88,15 @@ export function AccountSettingsPage() {
       toast.success("Password changed. Other sessions were signed out.");
     },
     onError: (error: Error) => toast.error(userErrorMessage(error, "Password change failed")),
+  });
+
+  const otpMutation = useMutation({
+    mutationFn: (enabled: boolean) => saveEmailOtpSetting({ data: { enabled } }),
+    onSuccess: async ({ enabled }) => {
+      toast.success(`Email OTP ${enabled ? "enabled" : "disabled"}`);
+      await queryClient.invalidateQueries({ queryKey: ["account-settings"] });
+    },
+    onError: (error: Error) => toast.error(userErrorMessage(error, "Email OTP setting update failed")),
   });
 
   async function requestEmailChange() {
@@ -226,7 +238,7 @@ export function AccountSettingsPage() {
             <CardHeader>
               <CardTitle className="text-base">Email and verification</CardTitle>
               <CardDescription>
-                Email confirmation is required for address changes. Email OTP cannot be disabled.
+                Email confirmation is required for address changes.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -261,10 +273,37 @@ export function AccountSettingsPage() {
                 <p className="font-medium">Email OTP authentication</p>
                 <p className="text-muted-foreground">
                   {settings.otpRequired
-                    ? "Required and active for this account."
-                    : "Not available."}
+                    ? "Enabled and required for internal sign-in."
+                    : "Disabled and bypassed for internal sign-in."}
                 </p>
               </div>
+              {settings.roles.includes("ADMINISTRATOR") ? (
+                <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="email-otp-setting">Require email OTP</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Controls the live authentication policy for all internal users.
+                    </p>
+                  </div>
+                  <Switch
+                    id="email-otp-setting"
+                    checked={settings.otpRequired}
+                    disabled={otpMutation.isPending}
+                    onCheckedChange={(enabled) => {
+                      if (
+                        !enabled &&
+                        !window.confirm(
+                          "Disabling email OTP removes an authentication security layer for all internal users. Continue?",
+                        )
+                      ) {
+                        return;
+                      }
+                      otpMutation.mutate(enabled);
+                    }}
+                    aria-label="Require email OTP"
+                  />
+                </div>
+              ) : null}
             </CardContent>
           </Card>
 

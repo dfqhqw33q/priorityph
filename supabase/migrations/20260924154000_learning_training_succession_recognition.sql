@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS public.development_records (
+CREATE TABLE IF NOT EXISTS public.development_records (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid NOT NULL REFERENCES public.employees(id) ON DELETE RESTRICT,
   source_evaluation_id uuid REFERENCES public.evaluations(id) ON DELETE SET NULL,

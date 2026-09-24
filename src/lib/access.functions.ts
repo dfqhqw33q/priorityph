@@ -33,7 +33,7 @@ export type AccountSettings = {
   lastLoginAt: string | null;
   roles: AppRole[];
   employeeNumber: string | null;
-  otpRequired: true;
+  otpRequired: boolean;
   recentSecurityActivity: Array<{
     action: string;
     result: string;
@@ -51,6 +51,7 @@ export const getMyAccountSettings = createServerFn({ method: "GET" })
       { data: roles },
       { data: activity },
       { data: employee },
+      { data: otpSetting },
       authUserResult,
     ] = await Promise.all([
       admin
@@ -69,6 +70,11 @@ export const getMyAccountSettings = createServerFn({ method: "GET" })
         .order("occurred_at", { ascending: false })
         .limit(10),
       admin.from("employees").select("employee_number").eq("user_id", context.userId).maybeSingle(),
+      admin
+        .from("system_settings")
+        .select("email_otp_enabled")
+        .eq("id", "auth")
+        .maybeSingle(),
       admin.auth.admin.getUserById(context.userId),
     ]);
     if (!profile) throw new Error("Your internal account could not be found");
@@ -85,7 +91,7 @@ export const getMyAccountSettings = createServerFn({ method: "GET" })
       lastLoginAt: profile.last_login_at,
       roles: (roles ?? []).map((row) => row.role as AppRole),
       employeeNumber: employee?.employee_number ?? null,
-      otpRequired: true,
+      otpRequired: otpSetting?.email_otp_enabled ?? true,
       recentSecurityActivity: (activity ?? []).map((row) => ({
         action: row.action,
         result: row.result,
@@ -123,6 +129,40 @@ export const syncMyConfirmedEmail = createServerFn({ method: "POST" })
       entityId: context.userId,
     });
     return { updated: true };
+  });
+
+export const updateEmailOtpSetting = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => z.object({ enabled: z.boolean() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { getAdmin, getActorRoles, writeAudit, validationError } =
+      await import("./server-core.server");
+    const admin = await getAdmin();
+    const roles = await getActorRoles(context.userId);
+    if (!roles.includes("ADMINISTRATOR")) {
+      throw validationError("Only administrators can change the email OTP setting");
+    }
+    const { data: previous } = await admin
+      .from("system_settings")
+      .select("email_otp_enabled")
+      .eq("id", "auth")
+      .maybeSingle();
+    const { error } = await admin
+      .from("system_settings")
+      .update({ email_otp_enabled: data.enabled, updated_by: context.userId })
+      .eq("id", "auth");
+    if (error) throw validationError("Could not update the email OTP setting");
+    await writeAudit({
+      actorUserId: context.userId,
+      actorRole: roles.join(","),
+      action: "EMAIL_OTP_SETTING_UPDATED",
+      module: "Authentication",
+      entityType: "system_setting",
+      entityId: "auth",
+      previousValue: previous,
+      newValue: { email_otp_enabled: data.enabled },
+    });
+    return { enabled: data.enabled };
   });
 
 export const updateMyProfile = createServerFn({ method: "POST" })
@@ -358,10 +398,14 @@ export const beginEmailMfa = createServerFn({ method: "POST" })
       sendEmailOtp,
       writeAudit,
       getActorRoles,
+      isEmailOtpEnabled,
     } = await import("./server-core.server");
     const admin = await getAdmin();
     const sessionId = String(authenticated.claims.session_id ?? "");
     if (!sessionId) throw new Error("MFA could not be started for this session");
+    if (!(await isEmailOtpEnabled())) {
+      return { required: false, challengeId: null, expiresInSeconds: 0 };
+    }
     await enforceRateLimit(`mfa-send:${authenticated.userId}:${sessionId}`, 300, 5);
     const { data: recentChallenge } = await admin
       .from("email_mfa_challenges")
@@ -425,8 +469,9 @@ export const verifyEmailMfa = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const authenticated = await authenticateSupabaseRequest();
-    const { enforceRateLimit, getAdmin, getActorRoles, hashEmailOtp, writeAudit } =
+    const { enforceRateLimit, getAdmin, getActorRoles, hashEmailOtp, isEmailOtpEnabled, writeAudit } =
       await import("./server-core.server");
+    if (!(await isEmailOtpEnabled())) return { ok: true };
     const admin = await getAdmin();
     const sessionId = String(authenticated.claims.session_id ?? "");
     await enforceRateLimit(`mfa-verify:${authenticated.userId}:${sessionId}`, 300, 10);

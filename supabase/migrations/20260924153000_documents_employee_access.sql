@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS public.employee_documents (
+CREATE TABLE IF NOT EXISTS public.employee_documents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid NOT NULL REFERENCES public.employees(id) ON DELETE CASCADE,
   evaluation_id uuid REFERENCES public.evaluations(id) ON DELETE SET NULL,
@@ -313,3 +313,181 @@ CREATE INDEX IF NOT EXISTS idx_audit_employee_occurred
 CREATE UNIQUE INDEX IF NOT EXISTS idx_audit_logs_correlation_id_unique
   ON public.audit_logs (correlation_id)
   WHERE correlation_id IS NOT NULL;
+
+CREATE SEQUENCE IF NOT EXISTS public.employee_id_sequence
+  AS bigint
+  START WITH 1
+  INCREMENT BY 1
+  MINVALUE 1;
+
+DO $$
+DECLARE
+  invalid_count integer;
+  maximum_sequence bigint;
+BEGIN
+  SELECT COUNT(*) INTO invalid_count
+  FROM public.employees
+  WHERE employee_number IS NULL
+     OR employee_number !~ '^EMP-[0-9]{6,}$';
+
+  IF invalid_count > 0 THEN
+    RAISE NOTICE 'Backfilling % employee records with invalid Employee IDs using new permanent IDs.', invalid_count;
+  END IF;
+
+  SELECT MAX(substring(employee_number FROM '^EMP-([0-9]+)$')::bigint)
+  INTO maximum_sequence
+  FROM public.employees
+  WHERE employee_number ~ '^EMP-[0-9]{6,}$';
+
+  IF maximum_sequence IS NULL OR maximum_sequence < 1 THEN
+    PERFORM setval('public.employee_id_sequence', 1, false);
+  ELSE
+    PERFORM setval('public.employee_id_sequence', maximum_sequence, true);
+  END IF;
+END $$;
+
+WITH invalid_employees AS (
+  SELECT id, nextval('public.employee_id_sequence') AS sequence_number
+  FROM public.employees
+  WHERE employee_number IS NULL
+     OR employee_number !~ '^EMP-[0-9]{6,}$'
+  ORDER BY created_at, id
+)
+UPDATE public.employees e
+SET employee_number = format('EMP-%s', lpad(invalid_employees.sequence_number::text, 6, '0'))
+FROM invalid_employees
+WHERE e.id = invalid_employees.id;
+
+CREATE OR REPLACE FUNCTION public.assign_employee_number()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  NEW.employee_number := format('EMP-%s', lpad(nextval('public.employee_id_sequence')::text, 6, '0'));
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.prevent_employee_number_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.employee_number IS DISTINCT FROM OLD.employee_number THEN
+    RAISE EXCEPTION 'Employee ID cannot be changed';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_assign_employee_number ON public.employees;
+CREATE TRIGGER trg_assign_employee_number
+BEFORE INSERT ON public.employees
+FOR EACH ROW EXECUTE FUNCTION public.assign_employee_number();
+
+DROP TRIGGER IF EXISTS trg_prevent_employee_number_mutation ON public.employees;
+CREATE TRIGGER trg_prevent_employee_number_mutation
+BEFORE UPDATE ON public.employees
+FOR EACH ROW EXECUTE FUNCTION public.prevent_employee_number_mutation();
+
+ALTER TABLE public.employees
+  ALTER COLUMN employee_number SET NOT NULL;
+
+ALTER TABLE public.employees
+  DROP CONSTRAINT IF EXISTS employees_employee_number_format_check;
+ALTER TABLE public.employees
+  ADD CONSTRAINT employees_employee_number_format_check
+  CHECK (employee_number ~ '^EMP-[0-9]{6,}$');
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_employee_number
+  ON public.employees(employee_number);
+
+ALTER TABLE public.employees
+  ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES public.internal_users(id) ON DELETE SET NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_user_id
+  ON public.employees(user_id)
+  WHERE user_id IS NOT NULL;
+
+CREATE OR REPLACE FUNCTION public.ensure_internal_user_employee(_user_id uuid)
+RETURNS public.employees
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  user_row public.internal_users;
+  employee_row public.employees;
+  matching_count integer;
+BEGIN
+  SELECT * INTO user_row FROM public.internal_users WHERE id = _user_id;
+  IF user_row.id IS NULL THEN RAISE EXCEPTION 'Internal user does not exist'; END IF;
+
+  SELECT * INTO employee_row
+  FROM public.employees
+  WHERE user_id = _user_id
+  FOR UPDATE;
+  IF employee_row.id IS NOT NULL THEN RETURN employee_row; END IF;
+
+  SELECT COUNT(*) INTO matching_count
+  FROM public.employees
+  WHERE user_id IS NULL
+    AND lower(btrim(full_name)) = lower(btrim(user_row.full_name));
+
+  IF matching_count = 1 THEN
+    UPDATE public.employees
+    SET user_id = _user_id
+    WHERE user_id IS NULL
+      AND lower(btrim(full_name)) = lower(btrim(user_row.full_name))
+    RETURNING * INTO employee_row;
+    RETURN employee_row;
+  END IF;
+
+  INSERT INTO public.employees(
+    user_id, full_name, first_name, middle_name, last_name, job_title, division, section
+  )
+  VALUES (
+    _user_id,
+    user_row.full_name,
+    split_part(btrim(user_row.full_name), ' ', 1),
+    '',
+    CASE
+      WHEN position(' ' IN btrim(user_row.full_name)) > 0
+      THEN reverse(split_part(reverse(btrim(user_row.full_name)), ' ', 1))
+      ELSE btrim(user_row.full_name)
+    END,
+    COALESCE(user_row.job_title, ''),
+    '',
+    ''
+  )
+  RETURNING * INTO employee_row;
+  RETURN employee_row;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.ensure_internal_user_employee(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.ensure_internal_user_employee(uuid) TO service_role;
+
+DO $$
+DECLARE
+  user_row record;
+BEGIN
+  FOR user_row IN SELECT id FROM public.internal_users ORDER BY created_at, id LOOP
+    PERFORM public.ensure_internal_user_employee(user_row.id);
+  END LOOP;
+END $$;
+
+INSERT INTO public.audit_logs(action, module, entity_type, entity_id, employee_id, new_value, result)
+SELECT
+  'INTERNAL_USER_EMPLOYEE_LINKED',
+  'User Management',
+  'internal_user',
+  u.id,
+  e.id,
+  jsonb_build_object('employee_number', e.employee_number),
+  'SUCCESS'
+FROM public.internal_users u
+JOIN public.employees e ON e.user_id = u.id
+WHERE e.created_at >= (SELECT COALESCE(MIN(created_at), now()) FROM public.internal_users);

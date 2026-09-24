@@ -33,6 +33,35 @@ export type Database = {
   };
   public: {
     Tables: {
+      system_settings: {
+        Row: {
+          email_otp_enabled: boolean;
+          id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          email_otp_enabled?: boolean;
+          id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          email_otp_enabled?: boolean;
+          id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "system_settings_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_logs: {
         Row: {
           action: string;
