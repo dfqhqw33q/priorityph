@@ -115,9 +115,8 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
     const sessionId = String(authenticated.claims.session_id ?? "");
     if (!sessionId) throw new Error("Unauthorized: Session identity unavailable");
     const { supabaseAdmin } = await import("./client.server");
-    const { data: verification } = await (
-      supabaseAdmin.from("email_mfa_challenges" as never) as any
-    )
+    const { data: verification } = await supabaseAdmin
+      .from("email_mfa_challenges")
       .select("verified_at, expires_at")
       .eq("user_id", authenticated.userId)
       .eq("session_id", sessionId)

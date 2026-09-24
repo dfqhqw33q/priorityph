@@ -1056,6 +1056,47 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+        email_mfa_challenges: {
+          Row: {
+            attempts: number;
+            created_at: string;
+            expires_at: string;
+            id: string;
+            otp_hash: string;
+            session_id: string;
+            user_id: string;
+            verified_at: string | null;
+          };
+          Insert: {
+            attempts?: number;
+            created_at?: string;
+            expires_at: string;
+            id?: string;
+            otp_hash: string;
+            session_id: string;
+            user_id: string;
+            verified_at?: string | null;
+          };
+          Update: {
+            attempts?: number;
+            created_at?: string;
+            expires_at?: string;
+            id?: string;
+            otp_hash?: string;
+            session_id?: string;
+            user_id?: string;
+            verified_at?: string | null;
+          };
+          Relationships: [
+            {
+              foreignKeyName: "email_mfa_challenges_user_id_fkey";
+              columns: ["user_id"];
+              isOneToOne: false;
+              referencedRelation: "internal_users";
+              referencedColumns: ["id"];
+            },
+          ];
+        };
             foreignKeyName: "internal_user_signatures_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;

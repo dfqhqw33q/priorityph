@@ -363,7 +363,8 @@ export const beginEmailMfa = createServerFn({ method: "POST" })
     const sessionId = String(authenticated.claims.session_id ?? "");
     if (!sessionId) throw new Error("MFA could not be started for this session");
     await enforceRateLimit(`mfa-send:${authenticated.userId}:${sessionId}`, 300, 5);
-    const { data: recentChallenge } = await (admin.from("email_mfa_challenges" as never) as any)
+    const { data: recentChallenge } = await admin
+      .from("email_mfa_challenges")
       .select("created_at")
       .eq("user_id", authenticated.userId)
       .eq("session_id", sessionId)
@@ -379,7 +380,7 @@ export const beginEmailMfa = createServerFn({ method: "POST" })
     if (!profile) throw new Error("Your internal account could not be found");
     const otp = generateEmailOtp();
     const otpHash = await hashEmailOtp(otp);
-    const challengeTable = admin.from("email_mfa_challenges" as never) as any;
+    const challengeTable = admin.from("email_mfa_challenges");
     await challengeTable.delete().eq("user_id", authenticated.userId).eq("session_id", sessionId);
     const { data: challenge, error } = await challengeTable
       .insert({
@@ -429,7 +430,7 @@ export const verifyEmailMfa = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const sessionId = String(authenticated.claims.session_id ?? "");
     await enforceRateLimit(`mfa-verify:${authenticated.userId}:${sessionId}`, 300, 10);
-    const challengeTable = admin.from("email_mfa_challenges" as never) as any;
+    const challengeTable = admin.from("email_mfa_challenges");
     const { data: challenge } = await challengeTable
       .select("id, otp_hash, attempts, expires_at, verified_at")
       .eq("id", data.challengeId)
