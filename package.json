@@ -51,7 +51,7 @@
     "@tanstack/react-router": "1.170.41",
     "@tanstack/react-start": "1.168.60",
     "@tanstack/react-table": "^9.1.2",
-    "@tanstack/router-plugin": "1.168.23",
+    "@tanstack/router-plugin": "1.168.42",
     "chromium-bidi": "^0.8.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
