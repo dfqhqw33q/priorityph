@@ -37,6 +37,7 @@ import {
   ratingFor,
 } from "@/features/performance-management/components/rating-matrix";
 import { EvaluationProgressStepper } from "@/features/performance-management/components/evaluation-progress-stepper";
+import { useStepUp } from "@/components/layout/step-up-provider";
 import { useAccess } from "@/hooks/use-access";
 import { getEvaluation } from "@/lib/evaluations.functions";
 import { saveEvaluationSignature, saveRaterStep2 } from "@/lib/evaluation-workflow.functions";
@@ -293,6 +294,7 @@ function SupervisorReviewPageFromRoute() {
 function SupervisorReviewPageInner({ evaluationId }: { evaluationId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { runSensitiveAction } = useStepUp();
   const { can } = useAccess();
   const fetchEvaluation = useServerFn(getEvaluation);
   const fetchHistory = useServerFn(getEvaluationHistory);
@@ -617,18 +619,23 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId: string }) {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      return submitStep2({
-        data: {
-          evaluationId,
-          version: detail?.version ?? 1,
-          ratings: ratingPayload(),
-          remarks,
-          ...step2,
-          date: step2["date"] || currentDate,
-          submit: true,
-          signature,
-        },
-      });
+      return runSensitiveAction(
+        "submit or finalize an evaluation",
+        () =>
+          submitStep2({
+            data: {
+              evaluationId,
+              version: detail?.version ?? 1,
+              ratings: ratingPayload(),
+              remarks,
+              ...step2,
+              date: step2["date"] || currentDate,
+              submit: true,
+              signature,
+            },
+          }),
+        true,
+      );
     },
     onSuccess: async () => {
       toast.success("Step 2 submitted for Reviewing Supervisor review");

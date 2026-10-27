@@ -70,11 +70,7 @@ export const getMyAccountSettings = createServerFn({ method: "GET" })
         .order("occurred_at", { ascending: false })
         .limit(10),
       admin.from("employees").select("employee_number").eq("user_id", context.userId).maybeSingle(),
-      admin
-        .from("system_settings")
-        .select("email_otp_enabled")
-        .eq("id", "auth")
-        .maybeSingle(),
+      admin.from("system_settings").select("email_otp_enabled").eq("id", "auth").maybeSingle(),
       admin.auth.admin.getUserById(context.userId),
     ]);
     if (!profile) throw new Error("Your internal account could not be found");
@@ -469,8 +465,14 @@ export const verifyEmailMfa = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const authenticated = await authenticateSupabaseRequest();
-    const { enforceRateLimit, getAdmin, getActorRoles, hashEmailOtp, isEmailOtpEnabled, writeAudit } =
-      await import("./server-core.server");
+    const {
+      enforceRateLimit,
+      getAdmin,
+      getActorRoles,
+      hashEmailOtp,
+      isEmailOtpEnabled,
+      writeAudit,
+    } = await import("./server-core.server");
     if (!(await isEmailOtpEnabled())) return { ok: true };
     const admin = await getAdmin();
     const sessionId = String(authenticated.claims.session_id ?? "");

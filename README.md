@@ -109,16 +109,16 @@ On PowerShell systems where script shims are blocked, use `npm.cmd` and `npx.cmd
 
 Create a local `.env` file. It is ignored by Git. Do not commit service keys, access tokens, or AI keys.
 
-| Variable                        | Used by                  | Description                                                        |
-| ------------------------------- | ------------------------ | ------------------------------------------------------------------ |
-| `VITE_SUPABASE_URL`             | Browser client           | Supabase project URL exposed at build time                         |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser client           | Supabase publishable key exposed at build time                     |
-| `SUPABASE_URL`                  | SSR and server functions | Supabase project URL                                               |
-| `SUPABASE_PUBLISHABLE_KEY`      | SSR auth client          | Supabase publishable key                                           |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Server-only admin client | Service-role key; never expose to the browser                      |
-| `OPENROUTER_API_KEY`            | AI server functions      | OpenRouter credential; server-only, never expose to the browser    |
-| `OPENROUTER_MODEL`              | AI server functions      | OpenRouter model identifier; defaults to `minimax/minimax-m3:free` |
-| `AI_PROVIDER`                   | AI server functions      | Set to `mock` only for non-production local testing                |
+| Variable                        | Used by                  | Description                                                           |
+| ------------------------------- | ------------------------ | --------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`             | Browser client           | Supabase project URL exposed at build time                            |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser client           | Supabase publishable key exposed at build time                        |
+| `SUPABASE_URL`                  | SSR and server functions | Supabase project URL                                                  |
+| `SUPABASE_PUBLISHABLE_KEY`      | SSR auth client          | Supabase publishable key                                              |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Server-only admin client | Service-role key; never expose to the browser                         |
+| `OPENROUTER_API_KEY`            | AI server functions      | OpenRouter credential; server-only, never expose to the browser       |
+| `OPENROUTER_MODEL`              | AI server functions      | OpenRouter model identifier; defaults to `google/gemma-4-31b-it:free` |
+| `AI_PROVIDER`                   | AI server functions      | Set to `mock` only for non-production local testing                   |
 
 The browser and deployed server must point to the same Supabase project. The repository runbook identifies the linked project in `SUPABASE-RESET-AND-SEED.md`; credentials are intentionally not reproduced here.
 

@@ -96,7 +96,8 @@ export function AccountSettingsPage() {
       toast.success(`Email OTP ${enabled ? "enabled" : "disabled"}`);
       await queryClient.invalidateQueries({ queryKey: ["account-settings"] });
     },
-    onError: (error: Error) => toast.error(userErrorMessage(error, "Email OTP setting update failed")),
+    onError: (error: Error) =>
+      toast.error(userErrorMessage(error, "Email OTP setting update failed")),
   });
 
   async function requestEmailChange() {
@@ -237,9 +238,7 @@ export function AccountSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Email and verification</CardTitle>
-              <CardDescription>
-                Email confirmation is required for address changes.
-              </CardDescription>
+              <CardDescription>Email confirmation is required for address changes.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">

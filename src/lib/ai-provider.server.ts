@@ -50,8 +50,8 @@ function timeoutSignal(milliseconds: number): AbortSignal {
   return AbortSignal.timeout ? AbortSignal.timeout(milliseconds) : new AbortController().signal;
 }
 
-async function callOpenRouter(apiKey: string, prompt: string, json: boolean): Promise<string> {
-  const model = process.env["OPENROUTER_MODEL"] || "minimax/minimax-m3:free";
+async function callOpenRouter(apiKey: string, prompt: string): Promise<string> {
+  const model = process.env["OPENROUTER_MODEL"] || "google/gemma-4-31b-it:free";
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -69,12 +69,20 @@ async function callOpenRouter(apiKey: string, prompt: string, json: boolean): Pr
         },
         { role: "user", content: prompt },
       ],
-      ...(json ? { response_format: { type: "json_object" } } : {}),
     }),
   });
   if (response.status === 429)
     throw new AiUnavailableError("AI is rate limited. Try again shortly.");
-  if (!response.ok) throw new AiUnavailableError("OpenRouter AI request failed.");
+  if (response.status === 401 || response.status === 403)
+    throw new AiUnavailableError("OpenRouter rejected its API key. Check OPENROUTER_API_KEY.");
+  if (response.status === 402)
+    throw new AiUnavailableError("OpenRouter has no available credits for the configured model.");
+  if (response.status === 404)
+    throw new AiUnavailableError(
+      `The configured OpenRouter model "${model}" is unavailable. Check OPENROUTER_MODEL.`,
+    );
+  if (!response.ok)
+    throw new AiUnavailableError(`OpenRouter AI request failed (HTTP ${response.status}).`);
   const payload = (await response.json()) as {
     choices?: Array<{
       message?: { content?: string | Array<{ type?: string; text?: string }> };
@@ -110,7 +118,7 @@ export async function generateAiText(
   const provider = getAiProviderName();
   if (provider === "openrouter") {
     try {
-      return await callOpenRouter(process.env["OPENROUTER_API_KEY"]!, prompt, json);
+      return await callOpenRouter(process.env["OPENROUTER_API_KEY"]!, prompt);
     } catch (error) {
       if (error instanceof DOMException && error.name === "TimeoutError")
         throw new AiUnavailableError("AI timed out. You can complete the field manually.");
