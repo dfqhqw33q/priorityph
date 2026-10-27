@@ -47,6 +47,13 @@ GRANT EXECUTE ON FUNCTION public.clear_expired_security_elevations() TO service_
 ALTER TABLE public.security_elevations
   ADD COLUMN IF NOT EXISTS action_key text NOT NULL DEFAULT 'legacy';
 
+ALTER TABLE public.security_elevations
+  DROP CONSTRAINT IF EXISTS security_elevations_pkey;
+
+ALTER TABLE public.security_elevations
+  ADD CONSTRAINT security_elevations_pkey
+  PRIMARY KEY (user_id, session_id, action_key);
+
 CREATE INDEX IF NOT EXISTS idx_security_elevations_action
   ON public.security_elevations(user_id, session_id, action_key, expires_at);
 

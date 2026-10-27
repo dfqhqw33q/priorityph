@@ -144,7 +144,15 @@ export async function requireStepUp(
       _fresh: fresh,
     } as never,
   );
-  if (error || data !== true) {
+  if (error) {
+    console.error("[security] failed to consume step-up elevation", {
+      userId,
+      action,
+      message: error.message,
+    });
+    throw new AuthorizationError("Step-up verification could not be validated. Please retry.");
+  }
+  if (data !== true) {
     throw new AuthorizationError(`Step-up authentication required for ${action}`);
   }
   return true;

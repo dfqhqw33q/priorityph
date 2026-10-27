@@ -50,7 +50,12 @@ export function StepUpProvider({ children }: { children: ReactNode }) {
     if (!critical && !security.stepUpRequired && elevated) return callback();
     if (!critical && !security.stepUpRequired && !elevated) return callback();
     return new Promise<T | undefined>((resolve, reject) => {
-      setPending({ action, callback: callback as () => Promise<unknown>, resolve, reject });
+      setPending({
+        action,
+        callback: callback as () => Promise<unknown>,
+        resolve: (value) => resolve(value as T | undefined),
+        reject,
+      });
       setPassword("");
       setError(null);
     });
@@ -86,7 +91,7 @@ export function StepUpProvider({ children }: { children: ReactNode }) {
   return (
     <StepUpContext.Provider value={{ runSensitiveAction }}>
       {children}
-      <Dialog open={pending !== null} onOpenChange={(open) => !open && cancel()}>
+      <Dialog open={pending !== null} onOpenChange={(open) => !open && !submitting && cancel()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Security verification required</DialogTitle>

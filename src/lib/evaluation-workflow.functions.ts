@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { SUBMIT_EVALUATION_ACTION } from "./security.constants";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   committeeReviewSchema,
@@ -503,7 +504,7 @@ export const saveRaterStep2 = createServerFn({ method: "POST" })
       await requireStepUp(
         context.userId,
         String(context.claims.session_id ?? ""),
-        "submit or finalize an evaluation",
+        SUBMIT_EVALUATION_ACTION,
         true,
       );
     const admin = await getAdmin();
@@ -638,7 +639,7 @@ export const submitReviewingSupervisor = createServerFn({ method: "POST" })
       await requireStepUp(
         context.userId,
         String(context.claims.session_id ?? ""),
-        "submit or finalize an evaluation",
+        SUBMIT_EVALUATION_ACTION,
         true,
       );
     if (data.submit && !data.signature)
@@ -715,7 +716,7 @@ export const submitPersonnelProcessing = createServerFn({ method: "POST" })
       await requireStepUp(
         context.userId,
         String(context.claims.session_id ?? ""),
-        "submit or finalize an evaluation",
+        SUBMIT_EVALUATION_ACTION,
         true,
       );
     if (data.submit && !data.signature)
@@ -795,7 +796,7 @@ export const submitCommitteeReview = createServerFn({ method: "POST" })
       await requireStepUp(
         context.userId,
         String(context.claims.session_id ?? ""),
-        "submit or finalize an evaluation",
+        SUBMIT_EVALUATION_ACTION,
         true,
       );
     if (data.submit && !data.signature)
@@ -857,7 +858,7 @@ export const approveEvaluation = createServerFn({ method: "POST" })
     await requireStepUp(
       context.userId,
       String(context.claims.session_id ?? ""),
-      "submit or finalize an evaluation",
+      SUBMIT_EVALUATION_ACTION,
       true,
     );
     if (!data.approve && !data.reason)

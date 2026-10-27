@@ -302,14 +302,24 @@ export const beginStepUpAuthentication = createServerFn({ method: "POST" })
       throw validationError("Identity verification failed");
     }
     const table = admin.from("security_elevations" as never);
-    const { error: elevationError } = await table.upsert({
-      user_id: context.userId,
-      session_id: sessionId,
-      action_key: data.action,
-      elevated_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
-    } as never);
-    if (elevationError) throw validationError("Could not establish elevated access");
+    const { error: elevationError } = await table.upsert(
+      {
+        user_id: context.userId,
+        session_id: sessionId,
+        action_key: data.action,
+        elevated_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
+      } as never,
+      { onConflict: "user_id,session_id,action_key" } as never,
+    );
+    if (elevationError) {
+      console.error("[security] failed to persist step-up elevation", {
+        userId: context.userId,
+        action: data.action,
+        message: elevationError.message,
+      });
+      throw validationError("Could not establish elevated access");
+    }
     await writeAudit({
       actorUserId: context.userId,
       actorRole: roles,
@@ -317,6 +327,7 @@ export const beginStepUpAuthentication = createServerFn({ method: "POST" })
       module: "Authentication",
       entityType: "internal_user",
       entityId: context.userId,
+      newValue: { action: data.action },
     });
     return { ok: true, expiresInSeconds: 600 };
   });

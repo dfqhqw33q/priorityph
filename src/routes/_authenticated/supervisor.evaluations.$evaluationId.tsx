@@ -46,6 +46,7 @@ import { recordRaterAiAction, suggestRaterFields } from "@/lib/ai.functions";
 import { SignatureField } from "@/features/performance-management/components/signature-field";
 import { TextShimmer } from "@/components/loading-ui/text-shimmer";
 import { userErrorMessage } from "@/lib/validation";
+import { SUBMIT_EVALUATION_ACTION } from "@/lib/security.constants";
 
 export const Route = createFileRoute("/_authenticated/supervisor/evaluations/$evaluationId")({
   head: () => ({
@@ -620,7 +621,7 @@ function SupervisorReviewPageInner({ evaluationId }: { evaluationId: string }) {
   const submitMutation = useMutation({
     mutationFn: async () => {
       return runSensitiveAction(
-        "submit or finalize an evaluation",
+        SUBMIT_EVALUATION_ACTION,
         () =>
           submitStep2({
             data: {

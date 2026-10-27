@@ -74,6 +74,7 @@ import {
   type CommitteeTrainingRecommendation,
 } from "@/lib/ai.functions";
 import type { EvaluationDetail } from "@/lib/domain";
+import { SUBMIT_EVALUATION_ACTION } from "@/lib/security.constants";
 
 type Stage = "RATER" | "REVIEWING_SUPERVISOR" | "PERSONNEL" | "COMMITTEE" | "PRESIDENT";
 type ReviewSuggestion = { suggestion: string; provider: "openrouter" | "development-mock" };
@@ -637,9 +638,7 @@ export function EvaluationStageDetail({
           },
         });
       };
-      return submit
-        ? runSensitiveAction("submit or finalize an evaluation", execute, true)
-        : execute();
+      return submit ? runSensitiveAction(SUBMIT_EVALUATION_ACTION, execute, true) : execute();
     },
     onSuccess: async (_result, submit) => {
       if (!submit) {
