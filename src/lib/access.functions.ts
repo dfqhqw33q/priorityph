@@ -253,30 +253,46 @@ export const getMyAccess = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const userId = context.userId;
 
-    const [{ data: user }, { data: roleRows }] = await Promise.all([
-      admin
-        .from("internal_users")
-        .select("id, email, full_name, job_title, is_active, is_locked, must_change_password")
-        .eq("id", userId)
-        .maybeSingle(),
-      admin.from("user_roles").select("role").eq("user_id", userId),
-    ]);
+    const [{ data: user, error: userError }, { data: roleRows, error: roleError }] =
+      await Promise.all([
+        admin
+          .from("internal_users")
+          .select("id, email, full_name, job_title, is_active, is_locked, must_change_password")
+          .eq("id", userId)
+          .maybeSingle(),
+        admin.from("user_roles").select("role").eq("user_id", userId),
+      ]);
+    if (userError) throw new Error(`Could not load your account access: ${userError.message}`);
+    if (roleError) throw new Error(`Could not load your account roles: ${roleError.message}`);
     if (!user) return null;
 
     const roles = (roleRows ?? []).map((row) => normalizeRole(row.role));
     if (roles.length !== 1 || roles.some((role) => role === null)) return null;
     const assignedRoles = roles.filter((role): role is AppRole => role !== null);
+    const assignedRoleCodes = (roleRows ?? []).map((row) => row.role);
     const { data: authUser, error: authUserError } = await admin.auth.admin.getUserById(userId);
     if (authUserError) throw new Error("Could not verify the authenticated account.");
 
     let permissions: Permission[] = [];
     if (user.is_active && !user.is_locked) {
-      const { data: permRows } = await admin
-        .from("role_permissions")
-        .select("permission_code")
-        .in("role_code", assignedRoles);
+      const [
+        { data: rolePermissionRows, error: rolePermissionError },
+        { data: userPermissionRows, error: userPermissionError },
+      ] = await Promise.all([
+        admin.from("role_permissions").select("permission_code").in("role_code", assignedRoleCodes),
+        admin
+          .from("user_permissions")
+          .select("permission_code")
+          .eq("user_id", userId)
+          .is("revoked_at", null),
+      ]);
+      if (rolePermissionError || userPermissionError)
+        throw new Error("Could not verify account permissions.");
       permissions = Array.from(
-        new Set((permRows ?? []).map((r) => r.permission_code as Permission)),
+        new Set([
+          ...(rolePermissionRows ?? []).map((row) => row.permission_code as Permission),
+          ...(userPermissionRows ?? []).map((row) => row.permission_code as Permission),
+        ]),
       );
     }
 

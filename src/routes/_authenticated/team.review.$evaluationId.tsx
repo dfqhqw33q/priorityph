@@ -159,27 +159,10 @@ function SupervisorEvaluationReviewPage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold">Employee self-evaluation</h2>
-          <p className="text-sm text-muted-foreground">
-            This submitted assessment is read-only. Your ratings are saved separately.
-          </p>
-        </div>
-        <EvaluationForm
-          template={detail.template}
-          values={detail.employeeRatings}
-          disabled
-          onRatingChange={() => undefined}
-          onCommentChange={() => undefined}
-          onEvidenceChange={() => undefined}
-        />
-      </section>
-
-      <section className="space-y-4">
-        <div>
           <h2 className="text-xl font-semibold">Your independent Supervisor evaluation</h2>
           <p className="text-sm text-muted-foreground">
-            Rate each category independently. Matching the employee's rating is allowed, but your
-            assessment is stored separately.
+            Compare the employee's self-assessment as you rate each category. Matching the
+            employee's rating is allowed, but your assessment is stored separately.
           </p>
         </div>
         {locked ? (
@@ -190,6 +173,7 @@ function SupervisorEvaluationReviewPage() {
         <EvaluationForm
           template={detail.template}
           values={values}
+          comparisonValues={detail.employeeRatings}
           disabled={locked || saveMutation.isPending}
           onRatingChange={(categoryId, rating) =>
             setValues((current) => ({

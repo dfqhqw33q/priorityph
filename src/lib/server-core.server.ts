@@ -153,8 +153,23 @@ export async function enforceRateLimit(
 
 export async function getActorRoles(userId: string): Promise<string[]> {
   const admin = await getAdmin();
-  const { data } = await admin.from("user_roles").select("role").eq("user_id", userId);
+  const { data, error } = await admin.from("user_roles").select("role").eq("user_id", userId);
+  if (error) throw new Error(`Could not load actor roles: ${error.message}`);
   return (data ?? []).map((row) => row.role);
+}
+
+export async function hasPermission(userId: string, permission: string): Promise<boolean> {
+  const admin = await getAdmin();
+  const { data, error } = await admin.rpc(
+    "has_permission" as never,
+    { _user_id: userId, _permission: permission } as never,
+  );
+  if (error) throw new AuthorizationError("Account permissions could not be verified");
+  return data === true;
+}
+
+export async function requirePermission(userId: string, permission: string): Promise<void> {
+  if (!(await hasPermission(userId, permission))) throw new AuthorizationError();
 }
 
 export function safeMessage(error: unknown, fallback: string): string {

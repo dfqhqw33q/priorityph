@@ -45,7 +45,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { recordLoginEvent } from "@/lib/access.functions";
-import { ROLE_LABELS, normalizeRole, type AppRole } from "@/lib/domain";
+import { ROLE_LABELS, normalizeRole, type AppRole, type Permission } from "@/lib/domain";
 import { useAccess } from "@/hooks/use-access";
 import { StepUpProvider } from "@/components/layout/step-up-provider";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,19 +54,43 @@ type NavItem = {
   to: string;
   label: string;
   icon?: LucideIcon;
+  permission?: Permission;
 };
 
 type NavSection = NavItem & {
   children?: NavItem[];
 };
 
-const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
+const SHARED_ROLES: AppRole[] = [
+  "EMPLOYEE",
+  "SUPERVISOR",
+  "DEPARTMENT_HEAD",
+  "HR",
+  "ADMINISTRATOR",
+  "PRESIDENT",
+  "REVIEWING_SUPERVISOR",
+  "COMMITTEE",
+];
+const ROUTE_ACCESS: Array<{
+  prefix: string;
+  roles: AppRole[];
+  permission?: Permission;
+}> = [
   { prefix: "/performance", roles: ["EMPLOYEE"] },
   { prefix: "/team", roles: ["SUPERVISOR"] },
-  { prefix: "/profile", roles: ["EMPLOYEE", "SUPERVISOR"] },
-  { prefix: "/notifications", roles: ["EMPLOYEE", "SUPERVISOR"] },
-  { prefix: "/help", roles: ["EMPLOYEE", "SUPERVISOR"] },
-  { prefix: "/account/password", roles: ["EMPLOYEE", "SUPERVISOR"] },
+  { prefix: "/department", roles: ["DEPARTMENT_HEAD"], permission: "performance.department.view" },
+  { prefix: "/hr/cycles", roles: ["HR"], permission: "performance.cycles.view" },
+  { prefix: "/hr/assignments", roles: ["HR"], permission: "performance.assignments.manage" },
+  { prefix: "/hr/profiles", roles: ["HR"], permission: "performance.profiles.manage" },
+  { prefix: "/hr/monitoring", roles: ["HR"], permission: "performance.monitoring.view" },
+  { prefix: "/hr/approvals", roles: ["HR"], permission: "performance.hr_validation.view" },
+  { prefix: "/hr/returned", roles: ["HR"], permission: "performance.hr_validation.view" },
+  { prefix: "/hr/finalized", roles: ["HR"], permission: "performance.history.view" },
+  { prefix: "/hr", roles: ["HR"], permission: "performance.monitoring.view" },
+  { prefix: "/profile", roles: SHARED_ROLES },
+  { prefix: "/notifications", roles: SHARED_ROLES },
+  { prefix: "/help", roles: SHARED_ROLES },
+  { prefix: "/account/password", roles: SHARED_ROLES },
 ];
 
 function routeAccess(pathname: string) {
@@ -116,6 +140,117 @@ const NAV: Array<{ role: AppRole; sections: NavSection[] }> = [
       { to: "/notifications", label: "Notifications", icon: Bell },
     ],
   },
+  {
+    role: "DEPARTMENT_HEAD",
+    sections: [
+      { to: "/department", label: "Department Dashboard", icon: Gauge },
+      {
+        to: "/department/performance",
+        label: "Department Performance",
+        icon: BriefcaseBusiness,
+        permission: "performance.department.view",
+        children: [
+          {
+            to: "/department/pending",
+            label: "Pending Performance Approvals",
+            permission: "performance.department_approval.view",
+          },
+          {
+            to: "/department/approved",
+            label: "Approved Evaluations",
+            permission: "performance.department_history.view",
+          },
+          {
+            to: "/department/returned",
+            label: "Returned Evaluations",
+            permission: "performance.department_approval.view",
+          },
+          {
+            to: "/department/history",
+            label: "Department Evaluation History",
+            permission: "performance.department_history.view",
+          },
+        ],
+      },
+      { to: "/department/competencies", label: "Competency & Gap Overview", icon: Activity },
+      {
+        to: "/department/learning",
+        label: "Learning & Training Overview",
+        icon: BriefcaseBusiness,
+      },
+      { to: "/department/succession", label: "Succession Planning", icon: Users },
+      { to: "/department/recognition", label: "Recognition Overview", icon: ClipboardCheck },
+      { to: "/department/reports", label: "Department Reports", icon: Activity },
+      { to: "/department/delegated", label: "Delegated Approvals", icon: ClipboardCheck },
+      { to: "/notifications", label: "Notifications", icon: Bell },
+      { to: "/profile", label: "My Profile", icon: UserRound },
+    ],
+  },
+  {
+    role: "HR",
+    sections: [
+      { to: "/hr", label: "Dashboard", icon: Gauge },
+      { to: "/hr/employees", label: "Employee Management", icon: Users },
+      {
+        to: "/hr/monitoring",
+        label: "Performance Management",
+        icon: BriefcaseBusiness,
+        permission: "performance.monitoring.view",
+        children: [
+          { to: "/hr/cycles", label: "Evaluation Cycles", permission: "performance.cycles.view" },
+          {
+            to: "/hr/assignments",
+            label: "Evaluation Assignments",
+            permission: "performance.assignments.manage",
+          },
+          {
+            to: "/hr/profiles",
+            label: "Evaluation Profiles",
+            permission: "performance.profiles.manage",
+          },
+          {
+            to: "/hr/monitoring",
+            label: "Performance Monitoring",
+            permission: "performance.monitoring.view",
+          },
+          {
+            to: "/hr/finalized",
+            label: "Evaluation History",
+            permission: "performance.history.view",
+          },
+        ],
+      },
+      { to: "/hr/competencies", label: "Competency Management", icon: Activity },
+      { to: "/hr/succession", label: "Succession Planning", icon: Users },
+      { to: "/hr/recognition", label: "Social Recognition", icon: ClipboardCheck },
+      { to: "/hr/reports", label: "HR Reports & Analytics", icon: Activity },
+      {
+        to: "/hr/approvals",
+        label: "Approval Center",
+        icon: ClipboardCheck,
+        permission: "performance.hr_validation.view",
+        children: [
+          {
+            to: "/hr/approvals",
+            label: "Pending HR Validation",
+            permission: "performance.hr_validation.view",
+          },
+          {
+            to: "/hr/returned",
+            label: "Returned for Correction",
+            permission: "performance.hr_validation.view",
+          },
+          {
+            to: "/hr/finalized",
+            label: "Finalized Evaluations",
+            permission: "performance.history.view",
+          },
+        ],
+      },
+      { to: "/notifications", label: "Notifications", icon: Bell },
+      { to: "/profile", label: "My Profile", icon: UserRound },
+    ],
+  },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
@@ -129,6 +264,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
   const group = NAV.find((item) => accessRoles.has(item.role));
   if (!group) return null;
+  const hasPermission = (permission?: Permission) =>
+    permission === undefined || access?.permissions.includes(permission) === true;
 
   const navigate = () => {
     onNavigate?.();
@@ -136,56 +273,59 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   };
   return (
     <SidebarMenu>
-      {group.sections.map((section) => {
-        const Icon = section.icon;
-        const active = section.children
-          ? pathname === section.to || pathname.startsWith(`${section.to}/`)
-          : pathname === section.to;
-        if (!section.children) {
+      {group.sections
+        .filter((section) => hasPermission(section.permission))
+        .map((section) => {
+          const Icon = section.icon;
+          const children = section.children?.filter((child) => hasPermission(child.permission));
+          const active = children?.length
+            ? pathname === section.to || pathname.startsWith(`${section.to}/`)
+            : pathname === section.to;
+          if (!children?.length) {
+            return (
+              <SidebarMenuItem key={section.label}>
+                <SidebarMenuButton asChild isActive={active} tooltip={section.label}>
+                  <Link to={section.to} onClick={navigate}>
+                    {Icon ? <Icon className="size-4" /> : null}
+                    <span>{section.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          }
           return (
             <SidebarMenuItem key={section.label}>
-              <SidebarMenuButton asChild isActive={active} tooltip={section.label}>
-                <Link to={section.to} onClick={navigate}>
-                  {Icon ? <Icon className="size-4" /> : null}
-                  <span>{section.label}</span>
-                </Link>
-              </SidebarMenuButton>
+              <Collapsible defaultOpen={active} className="group/collapsible">
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="w-full" tooltip={section.label}>
+                    {Icon ? <Icon className="size-4" /> : null}
+                    <span>{section.label}</span>
+                    <span className="ml-auto text-xs" aria-hidden="true">
+                      ›
+                    </span>
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {children.map((child) => {
+                      const childActive =
+                        pathname === child.to || pathname.startsWith(`${child.to}/`);
+                      return (
+                        <SidebarMenuSubItem key={child.label}>
+                          <SidebarMenuSubButton asChild isActive={childActive}>
+                            <Link to={child.to} onClick={navigate}>
+                              {child.label}
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </Collapsible>
             </SidebarMenuItem>
           );
-        }
-        return (
-          <SidebarMenuItem key={section.label}>
-            <Collapsible defaultOpen={active} className="group/collapsible">
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="w-full" tooltip={section.label}>
-                  {Icon ? <Icon className="size-4" /> : null}
-                  <span>{section.label}</span>
-                  <span className="ml-auto text-xs" aria-hidden="true">
-                    ›
-                  </span>
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {section.children.map((child) => {
-                    const childActive =
-                      pathname === child.to || pathname.startsWith(`${child.to}/`);
-                    return (
-                      <SidebarMenuSubItem key={child.label}>
-                        <SidebarMenuSubButton asChild isActive={childActive}>
-                          <Link to={child.to} onClick={navigate}>
-                            {child.label}
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    );
-                  })}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarMenuItem>
-        );
-      })}
+        })}
     </SidebarMenu>
   );
 }
@@ -204,6 +344,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
   const hasAnyRequiredRole = (requiredRoles: AppRole[]) =>
     requiredRoles.some((role) => normalizedRoles.has(role));
+  const hasRequiredPermission =
+    !accessRule?.permission || access?.permissions.includes(accessRule.permission) === true;
   const passwordChangeRequired =
     !isLoading &&
     !isError &&
@@ -217,7 +359,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       access.isLocked ||
       accessRule === null ||
       normalizedRoles.size !== 1 ||
-      !hasAnyRequiredRole(accessRule.roles));
+      !hasAnyRequiredRole(accessRule.roles) ||
+      !hasRequiredPermission);
 
   useEffect(() => {
     if (accessDenied) navigate({ to: "/unauthorized", replace: true });

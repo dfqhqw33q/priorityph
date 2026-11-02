@@ -111,11 +111,21 @@ export async function authenticateSupabaseRequest() {
     .select("role")
     .eq("user_id", data.claims.sub);
   if (roleError) throw new Error("Unauthorized: Account roles could not be verified");
+  const allowedPortalRoles = [
+    "EMPLOYEE",
+    "SUPERVISOR",
+    "DEPARTMENT_HEAD",
+    "HR",
+    "ADMINISTRATOR",
+    "PRESIDENT",
+    "REVIEWING_SUPERVISOR",
+    "COMMITTEE",
+  ];
   if (
     roleAssignments?.length !== 1 ||
-    !["EMPLOYEE", "SUPERVISOR"].includes(roleAssignments[0]?.role ?? "")
+    !allowedPortalRoles.includes(roleAssignments[0]?.role ?? "")
   ) {
-    throw new Error("Unauthorized: Account must have exactly one Employee or Supervisor role");
+    throw new Error("Unauthorized: Account must have exactly one supported portal role");
   }
 
   if (roleAssignments[0]?.role === "EMPLOYEE") {
