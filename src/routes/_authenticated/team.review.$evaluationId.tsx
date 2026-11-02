@@ -34,7 +34,7 @@ import {
 } from "@/lib/supervisor-evaluation.functions";
 import { calculateWeightedScore } from "@/lib/performance-management";
 
-export const Route = createFileRoute("/_authenticated/team/evaluations/$evaluationId")({
+export const Route = createFileRoute("/_authenticated/team/review/$evaluationId")({
   component: SupervisorEvaluationReviewPage,
 });
 
@@ -111,12 +111,12 @@ function SupervisorEvaluationReviewPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        breadcrumbs={["Performance Management", "Pending Evaluations", "Review"]}
+        breadcrumbs={["Performance Management", "Employee Evaluations", "Review"]}
         title={`Evaluation: ${detail.employee.fullName}`}
         description="Review the employee's submitted self-assessment and record your independent ratings."
         actions={
           <Button asChild variant="outline">
-            <Link to="/team/pending">Back to pending evaluations</Link>
+            <Link to="/team/evaluations">Back to employee evaluations</Link>
           </Button>
         }
       />

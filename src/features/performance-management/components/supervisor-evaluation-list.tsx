@@ -78,10 +78,7 @@ export function SupervisorEvaluationList({
                   "COMPLETED",
                 ].includes(evaluation.status) ? (
                   <Button asChild size="sm" variant="outline">
-                    <Link
-                      to="/team/evaluations/$evaluationId"
-                      params={{ evaluationId: evaluation.id }}
-                    >
+                    <Link to="/team/review/$evaluationId" params={{ evaluationId: evaluation.id }}>
                       {evaluation.supervisorStatus === "SUBMITTED" ||
                       evaluation.supervisorStatus === "COMPLETED" ||
                       evaluation.status === "COMPLETED"
