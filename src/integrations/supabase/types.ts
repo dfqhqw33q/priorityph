@@ -6,6 +6,7 @@ type PortalTable<Row, Insert> = {
   Update: Partial<Insert>;
   Relationships: [];
 };
+type LearningTable<Row> = PortalTable<Row, Partial<Row>>;
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -40,6 +41,149 @@ export type Database = {
   };
   public: {
     Tables: {
+      learning_courses: LearningTable<{
+        id: string;
+        code: string;
+        version: number;
+        title: string;
+        description: string;
+        category: string;
+        format: string;
+        duration_minutes: number;
+        target_roles: string[];
+        objectives: string[];
+        content_blocks: Json;
+        completion_criteria: string;
+        review_due_on: string | null;
+        version_notes: string;
+        prerequisites: string[];
+        status: string;
+        created_by: string;
+        reviewed_by: string | null;
+        reviewed_at: string | null;
+        created_at: string;
+        updated_at: string;
+      }>;
+      learning_course_competencies: LearningTable<{
+        course_id: string;
+        competency_definition_id: string;
+      }>;
+      learning_paths: LearningTable<{
+        id: string;
+        name: string;
+        description: string;
+        target_job_position_id: string | null;
+        version: number;
+        status: string;
+        created_by: string;
+        created_at: string;
+        updated_at: string;
+      }>;
+      learning_path_courses: LearningTable<{
+        path_id: string;
+        course_id: string;
+        sequence_number: number;
+        required: boolean;
+      }>;
+      learning_quizzes: LearningTable<{
+        id: string;
+        course_id: string;
+        version: number;
+        title: string;
+        questions: Json;
+        pass_threshold: number;
+        attempt_limit: number;
+        status: string;
+        created_by: string;
+        created_at: string;
+      }>;
+      learning_assignments: LearningTable<{
+        id: string;
+        employee_id: string;
+        course_id: string;
+        plan_id: string | null;
+        assigned_by: string;
+        assigned_at: string;
+        due_at: string | null;
+        status: string;
+        progress_percent: number;
+        completed_at: string | null;
+        created_at: string;
+      }>;
+      development_plans: LearningTable<{
+        id: string;
+        employee_id: string;
+        assessment_id: string;
+        requirement_item_id: string;
+        recommendation_id: string | null;
+        title: string;
+        activity_type: string;
+        activity_description: string;
+        owner_user_id: string | null;
+        target_date: string | null;
+        success_criteria: string;
+        status: string;
+        approval_user_id: string | null;
+        approved_at: string | null;
+        decision_reason: string | null;
+        followup_assessment_id: string | null;
+        created_by: string;
+        created_at: string;
+        updated_at: string;
+      }>;
+      operations_ai_recommendations: LearningTable<{
+        id: string;
+        employee_id: string;
+        assessment_id: string;
+        requirement_item_id: string;
+        model_name: string;
+        model_version: string;
+        rationale: string;
+        activity_title: string;
+        activity_type: string;
+        mapped_course_id: string | null;
+        verification_method: string;
+        source_references: Json;
+        status: string;
+        reviewer_user_id: string | null;
+        reviewer_decision: string | null;
+        decision_reason: string | null;
+        reviewed_at: string | null;
+        created_at: string;
+      }>;
+      training_sessions: LearningTable<{
+        id: string;
+        course_id: string | null;
+        plan_id: string | null;
+        title: string;
+        trainer_user_id: string | null;
+        starts_at: string;
+        ends_at: string;
+        venue: string;
+        capacity: number | null;
+        status: string;
+        created_by: string;
+        created_at: string;
+      }>;
+      training_attendance: LearningTable<{
+        id: string;
+        session_id: string;
+        employee_id: string;
+        status: string;
+        attendance_notes: string;
+        recorded_by: string | null;
+        recorded_at: string | null;
+        created_at: string;
+      }>;
+      learning_quiz_attempts: LearningTable<{
+        id: string;
+        quiz_id: string;
+        employee_id: string;
+        score: number | null;
+        passed: boolean | null;
+        submitted_at: string;
+        reviewed_by: string | null;
+      }>;
       competency_definitions: PortalTable<
         {
           active: boolean;

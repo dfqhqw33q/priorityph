@@ -35,6 +35,6 @@ export function roleLandingPath(roles: string[]): string {
   if (normalized.includes("SUPERVISOR")) return "/team";
   if (normalized.includes("DEPARTMENT_HEAD")) return "/department";
   if (normalized.includes("HR")) return "/hr";
-  if (normalized.includes("OPERATIONS_MANAGER")) return "/operations/competencies";
+  if (normalized.includes("OPERATIONS_MANAGER")) return "/operations";
   return "/unauthorized";
 }

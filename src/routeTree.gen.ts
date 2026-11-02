@@ -36,6 +36,8 @@ import { Route as AuthenticatedHrFinalizedRouteImport } from './routes/_authenti
 import { Route as AuthenticatedHrMonitoringRouteImport } from './routes/_authenticated/hr.monitoring'
 import { Route as AuthenticatedHrProfilesRouteImport } from './routes/_authenticated/hr.profiles'
 import { Route as AuthenticatedHrReturnedRouteImport } from './routes/_authenticated/hr.returned'
+import { Route as AuthenticatedOperationsIndexRouteImport } from './routes/_authenticated/operations.index'
+import { Route as AuthenticatedOperationsModuleRouteImport } from './routes/_authenticated/operations.$module'
 import { Route as AuthenticatedOperationsCompetenciesRouteImport } from './routes/_authenticated/operations.competencies'
 import { Route as AuthenticatedPerformanceIndexRouteImport } from './routes/_authenticated/performance.index'
 import { Route as AuthenticatedPerformanceCompetenciesRouteImport } from './routes/_authenticated/performance.competencies'
@@ -201,6 +203,18 @@ const AuthenticatedHrReturnedRoute = AuthenticatedHrReturnedRouteImport.update({
   path: '/hr/returned',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOperationsIndexRoute =
+  AuthenticatedOperationsIndexRouteImport.update({
+    id: '/operations/',
+    path: '/operations/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOperationsModuleRoute =
+  AuthenticatedOperationsModuleRouteImport.update({
+    id: '/operations/$module',
+    path: '/operations/$module',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOperationsCompetenciesRoute =
   AuthenticatedOperationsCompetenciesRouteImport.update({
     id: '/operations/competencies',
@@ -328,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/hr/monitoring': typeof AuthenticatedHrMonitoringRoute
   '/hr/profiles': typeof AuthenticatedHrProfilesRoute
   '/hr/returned': typeof AuthenticatedHrReturnedRoute
+  '/operations/$module': typeof AuthenticatedOperationsModuleRoute
   '/operations/competencies': typeof AuthenticatedOperationsCompetenciesRoute
   '/performance/competencies': typeof AuthenticatedPerformanceCompetenciesRoute
   '/performance/current': typeof AuthenticatedPerformanceCurrentRoute
@@ -341,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/team/pending': typeof AuthenticatedTeamPendingRoute
   '/department/': typeof AuthenticatedDepartmentIndexRoute
   '/hr/': typeof AuthenticatedHrIndexRoute
+  '/operations/': typeof AuthenticatedOperationsIndexRoute
   '/performance/': typeof AuthenticatedPerformanceIndexRoute
   '/team/': typeof AuthenticatedTeamIndexRoute
   '/department/review/$evaluationId': typeof AuthenticatedDepartmentReviewEvaluationIdRoute
@@ -373,6 +389,7 @@ export interface FileRoutesByTo {
   '/hr/monitoring': typeof AuthenticatedHrMonitoringRoute
   '/hr/profiles': typeof AuthenticatedHrProfilesRoute
   '/hr/returned': typeof AuthenticatedHrReturnedRoute
+  '/operations/$module': typeof AuthenticatedOperationsModuleRoute
   '/operations/competencies': typeof AuthenticatedOperationsCompetenciesRoute
   '/performance/competencies': typeof AuthenticatedPerformanceCompetenciesRoute
   '/performance/current': typeof AuthenticatedPerformanceCurrentRoute
@@ -386,6 +403,7 @@ export interface FileRoutesByTo {
   '/team/pending': typeof AuthenticatedTeamPendingRoute
   '/department': typeof AuthenticatedDepartmentIndexRoute
   '/hr': typeof AuthenticatedHrIndexRoute
+  '/operations': typeof AuthenticatedOperationsIndexRoute
   '/performance': typeof AuthenticatedPerformanceIndexRoute
   '/team': typeof AuthenticatedTeamIndexRoute
   '/department/review/$evaluationId': typeof AuthenticatedDepartmentReviewEvaluationIdRoute
@@ -420,6 +438,7 @@ export interface FileRoutesById {
   '/_authenticated/hr/monitoring': typeof AuthenticatedHrMonitoringRoute
   '/_authenticated/hr/profiles': typeof AuthenticatedHrProfilesRoute
   '/_authenticated/hr/returned': typeof AuthenticatedHrReturnedRoute
+  '/_authenticated/operations/$module': typeof AuthenticatedOperationsModuleRoute
   '/_authenticated/operations/competencies': typeof AuthenticatedOperationsCompetenciesRoute
   '/_authenticated/performance/competencies': typeof AuthenticatedPerformanceCompetenciesRoute
   '/_authenticated/performance/current': typeof AuthenticatedPerformanceCurrentRoute
@@ -433,6 +452,7 @@ export interface FileRoutesById {
   '/_authenticated/team/pending': typeof AuthenticatedTeamPendingRoute
   '/_authenticated/department/': typeof AuthenticatedDepartmentIndexRoute
   '/_authenticated/hr/': typeof AuthenticatedHrIndexRoute
+  '/_authenticated/operations/': typeof AuthenticatedOperationsIndexRoute
   '/_authenticated/performance/': typeof AuthenticatedPerformanceIndexRoute
   '/_authenticated/team/': typeof AuthenticatedTeamIndexRoute
   '/_authenticated/department/review/$evaluationId': typeof AuthenticatedDepartmentReviewEvaluationIdRoute
@@ -467,6 +487,7 @@ export interface FileRouteTypes {
     | '/hr/monitoring'
     | '/hr/profiles'
     | '/hr/returned'
+    | '/operations/$module'
     | '/operations/competencies'
     | '/performance/competencies'
     | '/performance/current'
@@ -480,6 +501,7 @@ export interface FileRouteTypes {
     | '/team/pending'
     | '/department/'
     | '/hr/'
+    | '/operations/'
     | '/performance/'
     | '/team/'
     | '/department/review/$evaluationId'
@@ -512,6 +534,7 @@ export interface FileRouteTypes {
     | '/hr/monitoring'
     | '/hr/profiles'
     | '/hr/returned'
+    | '/operations/$module'
     | '/operations/competencies'
     | '/performance/competencies'
     | '/performance/current'
@@ -525,6 +548,7 @@ export interface FileRouteTypes {
     | '/team/pending'
     | '/department'
     | '/hr'
+    | '/operations'
     | '/performance'
     | '/team'
     | '/department/review/$evaluationId'
@@ -558,6 +582,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hr/monitoring'
     | '/_authenticated/hr/profiles'
     | '/_authenticated/hr/returned'
+    | '/_authenticated/operations/$module'
     | '/_authenticated/operations/competencies'
     | '/_authenticated/performance/competencies'
     | '/_authenticated/performance/current'
@@ -571,6 +596,7 @@ export interface FileRouteTypes {
     | '/_authenticated/team/pending'
     | '/_authenticated/department/'
     | '/_authenticated/hr/'
+    | '/_authenticated/operations/'
     | '/_authenticated/performance/'
     | '/_authenticated/team/'
     | '/_authenticated/department/review/$evaluationId'
@@ -780,6 +806,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHrReturnedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/operations/': {
+      id: '/_authenticated/operations/'
+      path: '/operations'
+      fullPath: '/operations/'
+      preLoaderRoute: typeof AuthenticatedOperationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/operations/$module': {
+      id: '/_authenticated/operations/$module'
+      path: '/operations/$module'
+      fullPath: '/operations/$module'
+      preLoaderRoute: typeof AuthenticatedOperationsModuleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/operations/competencies': {
       id: '/_authenticated/operations/competencies'
       path: '/operations/competencies'
@@ -921,6 +961,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHrMonitoringRoute: typeof AuthenticatedHrMonitoringRoute
   AuthenticatedHrProfilesRoute: typeof AuthenticatedHrProfilesRoute
   AuthenticatedHrReturnedRoute: typeof AuthenticatedHrReturnedRoute
+  AuthenticatedOperationsModuleRoute: typeof AuthenticatedOperationsModuleRoute
   AuthenticatedOperationsCompetenciesRoute: typeof AuthenticatedOperationsCompetenciesRoute
   AuthenticatedPerformanceCompetenciesRoute: typeof AuthenticatedPerformanceCompetenciesRoute
   AuthenticatedPerformanceCurrentRoute: typeof AuthenticatedPerformanceCurrentRoute
@@ -934,6 +975,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamPendingRoute: typeof AuthenticatedTeamPendingRoute
   AuthenticatedDepartmentIndexRoute: typeof AuthenticatedDepartmentIndexRoute
   AuthenticatedHrIndexRoute: typeof AuthenticatedHrIndexRoute
+  AuthenticatedOperationsIndexRoute: typeof AuthenticatedOperationsIndexRoute
   AuthenticatedPerformanceIndexRoute: typeof AuthenticatedPerformanceIndexRoute
   AuthenticatedTeamIndexRoute: typeof AuthenticatedTeamIndexRoute
   AuthenticatedDepartmentReviewEvaluationIdRoute: typeof AuthenticatedDepartmentReviewEvaluationIdRoute
@@ -962,6 +1004,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHrMonitoringRoute: AuthenticatedHrMonitoringRoute,
   AuthenticatedHrProfilesRoute: AuthenticatedHrProfilesRoute,
   AuthenticatedHrReturnedRoute: AuthenticatedHrReturnedRoute,
+  AuthenticatedOperationsModuleRoute: AuthenticatedOperationsModuleRoute,
   AuthenticatedOperationsCompetenciesRoute:
     AuthenticatedOperationsCompetenciesRoute,
   AuthenticatedPerformanceCompetenciesRoute:
@@ -978,6 +1021,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamPendingRoute: AuthenticatedTeamPendingRoute,
   AuthenticatedDepartmentIndexRoute: AuthenticatedDepartmentIndexRoute,
   AuthenticatedHrIndexRoute: AuthenticatedHrIndexRoute,
+  AuthenticatedOperationsIndexRoute: AuthenticatedOperationsIndexRoute,
   AuthenticatedPerformanceIndexRoute: AuthenticatedPerformanceIndexRoute,
   AuthenticatedTeamIndexRoute: AuthenticatedTeamIndexRoute,
   AuthenticatedDepartmentReviewEvaluationIdRoute:

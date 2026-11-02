@@ -70,6 +70,12 @@ try {
       full_name = 'Manual Test HR Administrator'
       job_title = 'HR Administrator'
       role = 'HR'
+    },
+    @{
+      email = 'operationsmanagerpriorityph@gmail.com'
+      full_name = 'Manual Test Operations Manager'
+      job_title = 'Operations Manager'
+      role = 'OPERATIONS_MANAGER'
     }
   )
 
@@ -138,6 +144,7 @@ try {
   $supervisor = $usersByEmail['supervisorpriorityph@gmail.com']
   $employee = $usersByEmail['employeepriorityph@gmail.com']
   $departmentHead = $usersByEmail['departmentheadpriorityph@gmail.com']
+  $operationsManager = $usersByEmail['operationsmanagerpriorityph@gmail.com']
   $supervisorEmployee = Invoke-RestMethod `
     -Method Post `
     -Uri "$supabaseUrl/rest/v1/rpc/ensure_internal_user_employee" `
@@ -150,8 +157,18 @@ try {
     -Headers $headers `
     -ContentType 'application/json' `
     -Body (@{ _user_id = $employee.id } | ConvertTo-Json)
+  $operationsManagerEmployee = Invoke-RestMethod `
+    -Method Post `
+    -Uri "$supabaseUrl/rest/v1/rpc/ensure_internal_user_employee" `
+    -Headers $headers `
+    -ContentType 'application/json' `
+    -Body (@{ _user_id = $operationsManager.id } | ConvertTo-Json)
 
-  if (-not $supervisorEmployee.id -or -not $driverEmployee.id) {
+  if (
+    -not $supervisorEmployee.id -or
+    -not $driverEmployee.id -or
+    -not $operationsManagerEmployee.id
+  ) {
     throw 'Could not create or resolve employee records for the test accounts.'
   }
 
@@ -207,6 +224,20 @@ try {
     -Headers ($headers + @{ Prefer = 'return=minimal' }) `
     -ContentType 'application/json' `
     -Body $driverUpdate | Out-Null
+
+  $operationsManagerUpdate = @{
+    job_title = 'Operations Manager'
+    employment_status = 'ACTIVE'
+    division = 'Operations'
+    section = 'Delivery'
+    department_id = $departmentId
+  } | ConvertTo-Json
+  Invoke-RestMethod `
+    -Method Patch `
+    -Uri "$supabaseUrl/rest/v1/employees?id=eq.$($operationsManagerEmployee.id)" `
+    -Headers ($headers + @{ Prefer = 'return=minimal' }) `
+    -ContentType 'application/json' `
+    -Body $operationsManagerUpdate | Out-Null
 
   $activeDepartmentHeads = @(Invoke-RestMethod `
     -Method Get `
@@ -293,13 +324,19 @@ try {
     -Method Get `
     -Uri "$supabaseUrl/rest/v1/employees?user_id=eq.$($employee.id)&select=department_id" `
     -Headers $headers
+  $operationsManagerDepartment = Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/rest/v1/employees?user_id=eq.$($operationsManager.id)&select=department_id" `
+    -Headers $headers
   if (
     @($supervisorDepartment).Count -ne 1 -or
     @($driverDepartment).Count -ne 1 -or
+    @($operationsManagerDepartment).Count -ne 1 -or
     $supervisorDepartment.department_id -ne $departmentId -or
-    $driverDepartment.department_id -ne $departmentId
+    $driverDepartment.department_id -ne $departmentId -or
+    $operationsManagerDepartment.department_id -ne $departmentId
   ) {
-    throw 'Could not verify the Supervisor and Driver share the Operations / Delivery department.'
+    throw 'Could not verify the Supervisor, Driver, and Operations Manager share the Operations / Delivery department.'
   }
   $hrPermissions = @(Invoke-RestMethod `
     -Method Get `
@@ -314,7 +351,21 @@ try {
       throw "HR is missing the required permission: $permission."
     }
   }
-  Write-Output "Driver and Supervisor assigned to Operations / Delivery; Department Head assigned to the same department."
+  $operationsManagerPermissions = @(Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/rest/v1/role_permissions?role_code=eq.OPERATIONS_MANAGER&select=permission_code" `
+    -Headers $headers)
+  foreach ($permission in @(
+      'competencies.framework.view',
+      'competencies.assessments.view',
+      'competencies.gaps.view'
+    )) {
+    if (@($operationsManagerPermissions | Where-Object { $_.permission_code -eq $permission }).Count -eq 0) {
+      throw "Operations Manager is missing the required permission: $permission."
+    }
+  }
+  Write-Output "Driver, Supervisor, and Operations Manager assigned to Operations / Delivery; Department Head assigned to the same department."
+  Write-Output 'Operations Manager has competency framework, assessment history, and competency-gap viewing permissions.'
   Write-Output "HR Administrator has HR validation view, return, and finalize permissions. Active period: $periodName"
   Write-Output 'Temporary credentials were not printed or written to disk.'
 } finally {

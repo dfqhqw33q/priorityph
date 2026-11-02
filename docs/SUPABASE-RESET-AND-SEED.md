@@ -6,7 +6,7 @@ Supabase URL: `https://nrurkkaroggdhjmtltzh.supabase.co`
 
 ## What this runbook does
 
-The reset is destructive: it drops and rebuilds the linked database, applies the migrations present in this repository, and runs `supabase/seed.sql` if that file exists. It does not merely add the latest migration. The account seeder then creates or updates four Supabase Auth users, gives each exactly one portal role, assigns the test Department Head to the same department as the Driver and Supervisor, and creates an active manual-test evaluation period.
+The reset is destructive: it drops and rebuilds the linked database, applies the migrations present in this repository, and runs `supabase/seed.sql` if that file exists. It does not merely add the latest migration. The account seeder then creates or updates five Supabase Auth users, gives each exactly one portal role, assigns the test Department Head and Operations Manager to the same department as the Driver and Supervisor, and creates an active manual-test evaluation period.
 
 The account seeder does not disable MFA or change global security settings. It uses the project reference, URL, and service-role key from `.env`; those values must match the Supabase CLI project link.
 
@@ -60,14 +60,15 @@ The standalone seeder reads the password with `Read-Host -AsSecureString`. It do
 
 ## Manual-test accounts
 
-| Portal           | Email                                | Seeded record/assignment                       |
-| ---------------- | ------------------------------------ | ---------------------------------------------- |
-| Supervisor       | `supervisorpriorityph@gmail.com`     | Manual Test Supervisor; Operations / Delivery  |
-| Employee         | `employeepriorityph@gmail.com`       | Manual Test Driver; assigned to the Supervisor |
-| Department Head  | `departmentheadpriorityph@gmail.com` | Assigned to Operations / Delivery              |
-| HR Administrator | `hradminpriorityph@gmail.com`        | HR validation permissions                      |
+| Portal             | Email                                   | Seeded record/assignment                               |
+| ------------------ | --------------------------------------- | ------------------------------------------------------ |
+| Supervisor         | `supervisorpriorityph@gmail.com`        | Manual Test Supervisor; Operations / Delivery          |
+| Employee           | `employeepriorityph@gmail.com`          | Manual Test Driver; assigned to the Supervisor         |
+| Department Head    | `departmentheadpriorityph@gmail.com`    | Assigned to Operations / Delivery                      |
+| HR Administrator   | `hradminpriorityph@gmail.com`           | HR validation permissions                              |
+| Operations Manager | `operationsmanagerpriorityph@gmail.com` | Assigned to Operations / Delivery; competency-gap view |
 
-All four test accounts use the temporary password entered when the seeder prompts. The seeder confirms each user has exactly one role, verifies the Supervisor/Driver department and Department Head assignment, and creates an active evaluation period for the Driver test.
+All five test accounts use the temporary password entered when the seeder prompts. The seeder confirms each user has exactly one role, verifies the shared test department and Department Head assignment, checks the Operations Manager competency permissions, and creates an active evaluation period for the Driver test.
 
 The test accounts are disposable. Do not use these credentials for production or real employee data. Change the password after testing or remove the test accounts from Supabase Auth after the test environment is no longer needed.
 
