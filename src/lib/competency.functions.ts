@@ -49,9 +49,10 @@ const requirementsSchema = z.object({
 });
 
 const assessmentSchema = z.object({
+  draftId: z.string().uuid().nullable(),
+  supersedesAssessmentId: z.string().uuid().nullable(),
   employeeId: z.string().uuid(),
   competencyDefinitionId: z.string().uuid(),
-  isReassessment: z.boolean(),
   assessedLevel: z.number().int().min(1).max(5),
   assessmentMethod: z.string().trim().min(2).max(100),
   evidenceNotes: z.string().trim().min(10).max(4000),
@@ -161,6 +162,7 @@ export type CompetencyWorkspaceData = {
     assessedOn: string;
     nextAssessmentOn: string | null;
     status: string;
+    supersedesAssessmentId: string | null;
     evidenceValidatedBy: string | null;
     evidenceValidatedAt: string | null;
     approvalUserId: string | null;
@@ -173,7 +175,28 @@ export type CompetencyWorkspaceData = {
       reference: string | null;
     }>;
   }>;
-  finalizedEvaluations: Array<{ id: string; employeeId: string; period: string }>;
+  drafts: Array<{
+    id: string;
+    employeeId: string;
+    competencyDefinitionId: string;
+    supersedesAssessmentId: string | null;
+    assessedLevel: number;
+    assessmentMethod: string;
+    evidenceNotes: string;
+    assessedOn: string;
+    nextAssessmentOn: string | null;
+    sourceEvaluationId: string | null;
+    sourceAttachmentId: string | null;
+    evidenceReference: string | null;
+    status: string;
+    updatedAt: string;
+  }>;
+  finalizedEvaluations: Array<{
+    id: string;
+    employeeId: string;
+    period: string;
+    attachments: Array<{ id: string; fileName: string }>;
+  }>;
   history: Array<{
     id: string;
     assessmentId: string | null;
@@ -279,6 +302,7 @@ export const getCompetencyWorkspace = createServerFn({ method: "GET" })
       { data: departments, error: departmentsError },
       { data: allRequirementSets, error: requirementSetsError },
       { data: allAssessments, error: assessmentsError },
+      { data: allDrafts, error: draftsError },
     ] = await Promise.all([
       admin
         .from("competency_definitions")
@@ -315,10 +339,19 @@ export const getCompetencyWorkspace = createServerFn({ method: "GET" })
         ? admin
             .from("competency_assessments")
             .select(
-              "id, employee_id, employee_number_snapshot, employee_name_snapshot, job_position_id, job_position_name_snapshot, department_id, department_label_snapshot, assigned_supervisor_user_id, department_head_user_id, competency_definition_id, requirement_item_id, assessor_user_id, assessor_role, version, assessed_level, assessment_method, evidence_notes, assessed_on, next_assessment_on, status, evidence_validated_by, evidence_validated_at, approval_user_id, approved_at, decision_reason",
+              "id, employee_id, employee_number_snapshot, employee_name_snapshot, job_position_id, job_position_name_snapshot, department_id, department_label_snapshot, assigned_supervisor_user_id, department_head_user_id, competency_definition_id, requirement_item_id, assessor_user_id, assessor_role, version, assessed_level, assessment_method, evidence_notes, assessed_on, next_assessment_on, status, evidence_validated_by, evidence_validated_at, approval_user_id, approved_at, decision_reason, supersedes_assessment_id",
             )
             .in("employee_id", employeeIds)
             .order("assessed_on", { ascending: false })
+        : Promise.resolve({ data: [], error: null }),
+      employeeIds.length
+        ? admin
+            .from("competency_assessment_drafts")
+            .select(
+              "id, employee_id, competency_definition_id, supersedes_assessment_id, assessed_level, assessment_method, evidence_notes, assessed_on, next_assessment_on, source_evaluation_id, source_attachment_id, evidence_reference, status, updated_at",
+            )
+            .in("employee_id", employeeIds)
+            .order("updated_at", { ascending: false })
         : Promise.resolve({ data: [], error: null }),
     ]);
     if (definitionsError)
@@ -332,6 +365,8 @@ export const getCompetencyWorkspace = createServerFn({ method: "GET" })
       );
     if (assessmentsError)
       throw new Error(`Could not load competency assessments: ${assessmentsError.message}`);
+    if (draftsError)
+      throw new Error(`Could not load competency assessment drafts: ${draftsError.message}`);
 
     const visibleSets =
       role === "HR" || role === "OPERATIONS_MANAGER"
@@ -366,10 +401,12 @@ export const getCompetencyWorkspace = createServerFn({ method: "GET" })
 
     const assessments = allAssessments ?? [];
     const assessmentIds = assessments.map((assessment) => assessment.id);
+    const draftIds = (allDrafts ?? []).map((draft) => draft.id);
     const requirementSetIds = visibleSets.map((set) => set.id);
     const [
       { data: evidenceRows, error: evidenceError },
       { data: assessmentEvents, error: assessmentEventsError },
+      { data: draftEvents, error: draftEventsError },
       { data: requirementEvents, error: requirementEventsError },
       { data: definitionEvents, error: definitionEventsError },
       { data: finalizedRows, error: finalizedError },
@@ -389,6 +426,14 @@ export const getCompetencyWorkspace = createServerFn({ method: "GET" })
               "id, assessment_id, requirement_set_id, competency_definition_id, actor_user_id, action, previous_status, new_status, reason, occurred_at",
             )
             .in("assessment_id", assessmentIds)
+        : Promise.resolve({ data: [], error: null }),
+      draftIds.length
+        ? admin
+            .from("competency_workflow_events")
+            .select(
+              "id, assessment_id, assessment_draft_id, requirement_set_id, competency_definition_id, actor_user_id, action, previous_status, new_status, reason, occurred_at",
+            )
+            .in("assessment_draft_id", draftIds)
         : Promise.resolve({ data: [], error: null }),
       requirementSetIds.length
         ? admin
@@ -421,6 +466,8 @@ export const getCompetencyWorkspace = createServerFn({ method: "GET" })
       throw new Error(`Could not load supporting evidence: ${evidenceError.message}`);
     if (assessmentEventsError)
       throw new Error(`Could not load assessment audit history: ${assessmentEventsError.message}`);
+    if (draftEventsError)
+      throw new Error(`Could not load draft audit history: ${draftEventsError.message}`);
     if (requirementEventsError)
       throw new Error(
         `Could not load requirement audit history: ${requirementEventsError.message}`,
@@ -431,6 +478,18 @@ export const getCompetencyWorkspace = createServerFn({ method: "GET" })
       );
     if (finalizedError)
       throw new Error(`Could not load finalized evaluation references: ${finalizedError.message}`);
+    const finalizedEvaluationIds = (finalizedRows ?? []).map((row) => row.id);
+    const { data: finalizedAttachments, error: finalizedAttachmentsError } =
+      finalizedEvaluationIds.length
+        ? await admin
+            .from("evaluation_attachments")
+            .select("id, employee_evaluation_id, file_name")
+            .in("employee_evaluation_id", finalizedEvaluationIds)
+        : { data: [], error: null };
+    if (finalizedAttachmentsError)
+      throw new Error(
+        `Could not load finalized evaluation attachments: ${finalizedAttachmentsError.message}`,
+      );
     const periodIds = [...new Set((finalizedRows ?? []).map((row) => row.evaluation_period_id))];
     const { data: periods, error: periodsError } = periodIds.length
       ? await admin.from("evaluation_periods").select("id, name").in("id", periodIds)
@@ -531,6 +590,7 @@ export const getCompetencyWorkspace = createServerFn({ method: "GET" })
         assessedOn: assessment.assessed_on,
         nextAssessmentOn: assessment.next_assessment_on,
         status: assessment.status,
+        supersedesAssessmentId: assessment.supersedes_assessment_id,
         evidenceValidatedBy: assessment.evidence_validated_by,
         evidenceValidatedAt: assessment.evidence_validated_at,
         approvalUserId: assessment.approval_user_id,
@@ -545,13 +605,33 @@ export const getCompetencyWorkspace = createServerFn({ method: "GET" })
             reference: evidence.evidence_reference,
           })),
       })),
+      drafts: (allDrafts ?? []).map((draft) => ({
+        id: draft.id,
+        employeeId: draft.employee_id,
+        competencyDefinitionId: draft.competency_definition_id,
+        supersedesAssessmentId: draft.supersedes_assessment_id,
+        assessedLevel: draft.assessed_level,
+        assessmentMethod: draft.assessment_method,
+        evidenceNotes: draft.evidence_notes,
+        assessedOn: draft.assessed_on,
+        nextAssessmentOn: draft.next_assessment_on,
+        sourceEvaluationId: draft.source_evaluation_id,
+        sourceAttachmentId: draft.source_attachment_id,
+        evidenceReference: draft.evidence_reference,
+        status: draft.status,
+        updatedAt: draft.updated_at,
+      })),
       finalizedEvaluations: (finalizedRows ?? []).map((evaluation) => ({
         id: evaluation.id,
         employeeId: evaluation.employee_id,
         period: periodNameById.get(evaluation.evaluation_period_id) ?? "Finalized evaluation",
+        attachments: (finalizedAttachments ?? [])
+          .filter((attachment) => attachment.employee_evaluation_id === evaluation.id)
+          .map((attachment) => ({ id: attachment.id, fileName: attachment.file_name })),
       })),
       history: [
         ...(assessmentEvents ?? []),
+        ...(draftEvents ?? []),
         ...(requirementEvents ?? []),
         ...(definitionEvents ?? []),
       ]
@@ -583,6 +663,7 @@ function emptyWorkspace(
     definitions: [],
     requirementSets: [],
     assessments: [],
+    drafts: [],
     finalizedEvaluations: [],
     history: [],
   };
@@ -649,19 +730,18 @@ export const decideCompetencyRequirements = createServerFn({ method: "POST" })
     return { status: result };
   });
 
-export const submitCompetencyAssessment = createServerFn({ method: "POST" })
+export const saveCompetencyAssessmentDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => assessmentSchema.parse(input))
   .handler(async ({ context, data }) => {
-    await requirePermission(
-      context.userId,
-      data.isReassessment ? "competencies.reassess" : "competencies.assess",
-    );
+    await requirePermission(context.userId, "competencies.assess");
     const admin = await getAdmin();
-    const { data: id, error } = await admin.rpc("submit_competency_assessment", {
+    const { data: id, error } = await admin.rpc("save_competency_assessment_draft", {
       _actor: context.userId,
+      _draft_id: data.draftId,
       _employee_id: data.employeeId,
       _competency_definition_id: data.competencyDefinitionId,
+      _supersedes_assessment_id: data.supersedesAssessmentId,
       _assessed_level: data.assessedLevel,
       _assessment_method: data.assessmentMethod,
       _evidence_notes: data.evidenceNotes,
@@ -670,6 +750,20 @@ export const submitCompetencyAssessment = createServerFn({ method: "POST" })
       _source_evaluation_id: data.sourceEvaluationId,
       _source_attachment_id: data.sourceAttachmentId,
       _evidence_reference: data.evidenceReference,
+    });
+    if (error) throw new Error(`Could not save competency assessment draft: ${error.message}`);
+    return { id };
+  });
+
+export const submitCompetencyAssessmentDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => z.object({ draftId: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    await requirePermission(context.userId, "competencies.assess");
+    const admin = await getAdmin();
+    const { data: id, error } = await admin.rpc("submit_competency_assessment_draft", {
+      _actor: context.userId,
+      _draft_id: data.draftId,
     });
     if (error) throw new Error(`Could not submit competency assessment: ${error.message}`);
     return { id };

@@ -21,7 +21,8 @@ import {
   decideCompetencyRequirements,
   getCompetencyWorkspace,
   saveCompetencyDefinition,
-  submitCompetencyAssessment,
+  saveCompetencyAssessmentDraft,
+  submitCompetencyAssessmentDraft,
   validateCompetencyEvidence,
   type CompetencyWorkspaceData,
 } from "@/lib/competency.functions";
@@ -177,6 +178,17 @@ function CompetencyTable({
       latestApproved.set(key, assessment);
     }
   }
+  const latestAssessmentByKey = new Map<string, CompetencyWorkspaceData["assessments"][number]>();
+  for (const assessment of data.assessments) {
+    const key = `${assessment.employeeId}:${assessment.competencyDefinitionId}`;
+    const latest = latestAssessmentByKey.get(key);
+    if (!latest || assessment.version > latest.version) latestAssessmentByKey.set(key, assessment);
+  }
+  const draftByKey = new Map(
+    data.drafts
+      .filter((draft) => draft.status === "DRAFT")
+      .map((draft) => [`${draft.employeeId}:${draft.competencyDefinitionId}`, draft]),
+  );
 
   const assessmentsToShow = data.assessments.filter((assessment) => {
     if (view === "evidence") return assessment.status === "SUBMITTED";
@@ -319,6 +331,10 @@ function CompetencyTable({
       return set.items.map((item) => {
         const definition = definitionById.get(item.competencyDefinitionId);
         const assessment = latestApproved.get(`${employee.id}:${item.competencyDefinitionId}`);
+        const latestActivity = latestAssessmentByKey.get(
+          `${employee.id}:${item.competencyDefinitionId}`,
+        );
+        const draft = draftByKey.get(`${employee.id}:${item.competencyDefinitionId}`);
         const current = assessment?.assessedLevel ?? null;
         const gap = current === null ? null : Math.max(0, item.requiredLevel - current);
         return {
@@ -326,6 +342,8 @@ function CompetencyTable({
           item,
           definition,
           assessment,
+          latestActivity,
+          draft,
           current,
           gap,
           mandatoryOutstanding:
@@ -358,7 +376,7 @@ function CompetencyTable({
       <div className="space-y-3">
         <SearchBox value={search} onChange={onSearch} label="Search competency matrix" />
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
-          <table className="w-full min-w-[1000px] text-left text-sm">
+          <table className="w-full min-w-[1200px] text-left text-sm">
             <thead className="border-b border-border text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-3 py-3">Employee / position</th>
@@ -369,6 +387,8 @@ function CompetencyTable({
                 <th className="px-3 py-3">Numeric gap</th>
                 <th className="px-3 py-3">Mandatory qualification</th>
                 <th className="px-3 py-3">Assessment status</th>
+                <th className="px-3 py-3">Last assessed</th>
+                <th className="px-3 py-3">Next assessment</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -395,9 +415,12 @@ function CompetencyTable({
                       : "Not mandatory"}
                   </td>
                   <td className="px-3 py-3">
-                    {row.assessment
-                      ? `${row.assessment.assessedOn} · ${row.assessment.assessorId.slice(0, 8)}`
-                      : "Unassessed"}
+                    {row.latestActivity?.status.replaceAll("_", " ") ??
+                      (row.draft ? "Draft" : "Unassessed")}
+                  </td>
+                  <td className="px-3 py-3">{row.assessment?.assessedOn ?? "Not assessed"}</td>
+                  <td className="px-3 py-3">
+                    {row.assessment?.nextAssessmentOn ?? "Not scheduled"}
                   </td>
                 </tr>
               ))}
@@ -420,7 +443,7 @@ function CompetencyTable({
     view === "development" ||
     view === "reassess"
   ) {
-    if (!visibleAssessments.length)
+    if (!visibleAssessments.length && !(view === "history" && data.history.length))
       return (
         <div className="space-y-3">
           <SearchBox value={search} onChange={onSearch} label="Search assessments" />
@@ -466,7 +489,9 @@ function CompetencyTable({
                   <p>Assessed level: {assessment.assessedLevel}</p>
                   <p>Method: {assessment.assessmentMethod}</p>
                   <p>Assessed: {assessment.assessedOn}</p>
-                  <p>Assessor: {assessment.assessorRole}</p>
+                  <p>
+                    Assessor: {assessment.assessorRole} · {assessment.assessorId}
+                  </p>
                   <p>
                     Evidence: {assessment.evidenceValidatedAt ? "Validated" : "Pending validation"}
                   </p>
@@ -482,7 +507,12 @@ function CompetencyTable({
                       ? ` · finalized evaluation ${finalizedEvaluation?.period ?? evidence.sourceEvaluationId}`
                       : ""}
                     {evidence.sourceAttachmentId
-                      ? ` · attachment ${evidence.sourceAttachmentId}`
+                      ? ` · attachment ${
+                          data.finalizedEvaluations
+                            .flatMap((evaluation) => evaluation.attachments)
+                            .find((attachment) => attachment.id === evidence.sourceAttachmentId)
+                            ?.fileName ?? evidence.sourceAttachmentId
+                        }`
                       : ""}
                   </p>
                 ))}
@@ -598,7 +628,8 @@ export function CompetencyWorkspace() {
   const saveDefinition = useServerFn(saveCompetencyDefinition);
   const createRequirements = useServerFn(createCompetencyRequirements);
   const decideRequirements = useServerFn(decideCompetencyRequirements);
-  const submitAssessment = useServerFn(submitCompetencyAssessment);
+  const saveAssessmentDraft = useServerFn(saveCompetencyAssessmentDraft);
+  const submitAssessmentDraft = useServerFn(submitCompetencyAssessmentDraft);
   const validateEvidence = useServerFn(validateCompetencyEvidence);
   const decideAssessment = useServerFn(decideCompetencyAssessment);
   const query = useQuery({
@@ -633,6 +664,8 @@ export function CompetencyWorkspace() {
     ],
   });
   const [assessmentForm, setAssessmentForm] = useState({
+    draftId: "",
+    supersedesAssessmentId: "",
     employeeId: "",
     competencyDefinitionId: "",
     assessedLevel: "3",
@@ -641,6 +674,7 @@ export function CompetencyWorkspace() {
     assessedOn: new Date().toISOString().slice(0, 10),
     nextAssessmentOn: "",
     sourceEvaluationId: "",
+    sourceAttachmentId: "",
     evidenceReference: "",
   });
 
@@ -693,30 +727,58 @@ export function CompetencyWorkspace() {
     onError: (error) => toast.error(error.message),
   });
   const assessmentMutation = useMutation({
-    mutationFn: () =>
-      submitAssessment({
+    mutationFn: async () => {
+      const { id } = await saveAssessmentDraft({
         data: {
+          draftId: assessmentForm.draftId || null,
+          supersedesAssessmentId: assessmentForm.supersedesAssessmentId || null,
           employeeId: assessmentForm.employeeId,
           competencyDefinitionId: assessmentForm.competencyDefinitionId,
-          isReassessment:
-            activeView === "reassess" ||
-            (query.data?.assessments.some(
-              (assessment) =>
-                assessment.employeeId === assessmentForm.employeeId &&
-                assessment.competencyDefinitionId === assessmentForm.competencyDefinitionId,
-            ) ??
-              false),
           assessedLevel: Number(assessmentForm.assessedLevel),
           assessmentMethod: assessmentForm.assessmentMethod,
           evidenceNotes: assessmentForm.evidenceNotes,
           assessedOn: assessmentForm.assessedOn,
           nextAssessmentOn: assessmentForm.nextAssessmentOn || null,
           sourceEvaluationId: assessmentForm.sourceEvaluationId || null,
-          sourceAttachmentId: null,
+          sourceAttachmentId: assessmentForm.sourceAttachmentId || null,
+          evidenceReference: assessmentForm.evidenceReference || null,
+        },
+      });
+      await submitAssessmentDraft({ data: { draftId: id } });
+      return id;
+    },
+    onSuccess: () => {
+      setAssessmentForm((current) => ({
+        ...current,
+        draftId: "",
+        supersedesAssessmentId: "",
+      }));
+      return refresh("Assessment submitted for evidence validation and independent review.");
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  const saveDraftMutation = useMutation({
+    mutationFn: () =>
+      saveAssessmentDraft({
+        data: {
+          draftId: assessmentForm.draftId || null,
+          supersedesAssessmentId: assessmentForm.supersedesAssessmentId || null,
+          employeeId: assessmentForm.employeeId,
+          competencyDefinitionId: assessmentForm.competencyDefinitionId,
+          assessedLevel: Number(assessmentForm.assessedLevel),
+          assessmentMethod: assessmentForm.assessmentMethod,
+          evidenceNotes: assessmentForm.evidenceNotes,
+          assessedOn: assessmentForm.assessedOn,
+          nextAssessmentOn: assessmentForm.nextAssessmentOn || null,
+          sourceEvaluationId: assessmentForm.sourceEvaluationId || null,
+          sourceAttachmentId: assessmentForm.sourceAttachmentId || null,
           evidenceReference: assessmentForm.evidenceReference || null,
         },
       }),
-    onSuccess: () => refresh("Competency assessment submitted for validation."),
+    onSuccess: ({ id }) => {
+      setAssessmentForm((current) => ({ ...current, draftId: id }));
+      void refresh("Competency assessment draft saved.");
+    },
     onError: (error) => toast.error(error.message),
   });
   const decideRequirementMutation = useMutation({
@@ -762,15 +824,32 @@ export function CompetencyWorkspace() {
 
   const currentViews = useMemo(() => (query.data ? viewsForRole(query.data) : []), [query.data]);
   const selectableEmployees = query.data?.employees ?? [];
-  const eligibleDefinitions = (query.data?.definitions ?? []).filter((definition) =>
-    (query.data?.requirementSets ?? []).some(
+  const selectedEmployee = selectableEmployees.find(
+    (employee) => employee.id === assessmentForm.employeeId,
+  );
+  const selectedRequirementSet = (query.data?.requirementSets ?? [])
+    .filter(
       (set) =>
+        set.positionId === selectedEmployee?.positionId &&
         set.status === "APPROVED" &&
-        set.items.some((item) => item.competencyDefinitionId === definition.id),
-    ),
+        set.effectiveFrom <= assessmentForm.assessedOn,
+    )
+    .sort((left, right) => right.version - left.version)[0];
+  const selectedRequirements = selectedRequirementSet?.items ?? [];
+  const eligibleDefinitions = (query.data?.definitions ?? []).filter((definition) =>
+    selectedRequirements.some((item) => item.competencyDefinitionId === definition.id),
+  );
+  const selectedDefinition = eligibleDefinitions.find(
+    (definition) => definition.id === assessmentForm.competencyDefinitionId,
+  );
+  const selectedRequirement = selectedRequirements.find(
+    (item) => item.competencyDefinitionId === assessmentForm.competencyDefinitionId,
   );
   const finalizedEvaluations = (query.data?.finalizedEvaluations ?? []).filter(
     (evaluation) => evaluation.employeeId === assessmentForm.employeeId,
+  );
+  const selectedEvaluation = finalizedEvaluations.find(
+    (evaluation) => evaluation.id === assessmentForm.sourceEvaluationId,
   );
 
   if (query.isPending) return <LoadingState label="Loading competency management" />;
@@ -1244,8 +1323,140 @@ export function CompetencyWorkspace() {
         </Card>
       ) : null}
 
-      {(["assess", "reassess"].includes(activeView) && data.permissions.assess) ||
-      (activeView === "reassess" && data.permissions.reassess) ? (
+      {data.role === "SUPERVISOR" &&
+      ["assess", "reassess"].includes(activeView) &&
+      data.permissions.assess ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Assessment tasks</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {data.drafts
+              .filter((draft) => draft.status === "DRAFT")
+              .map((draft) => (
+                <div
+                  key={draft.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {data.employees.find((employee) => employee.id === draft.employeeId)?.name ??
+                        "Employee"}{" "}
+                      ·{" "}
+                      {data.definitions.find(
+                        (definition) => definition.id === draft.competencyDefinitionId,
+                      )?.name ?? "Competency"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Saved draft · updated {new Date(draft.updatedAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setAssessmentForm({
+                        draftId: draft.id,
+                        supersedesAssessmentId: draft.supersedesAssessmentId ?? "",
+                        employeeId: draft.employeeId,
+                        competencyDefinitionId: draft.competencyDefinitionId,
+                        assessedLevel: String(draft.assessedLevel),
+                        assessmentMethod: draft.assessmentMethod,
+                        evidenceNotes: draft.evidenceNotes,
+                        assessedOn: draft.assessedOn,
+                        nextAssessmentOn: draft.nextAssessmentOn ?? "",
+                        sourceEvaluationId: draft.sourceEvaluationId ?? "",
+                        sourceAttachmentId: draft.sourceAttachmentId ?? "",
+                        evidenceReference: draft.evidenceReference ?? "",
+                      });
+                      setView(draft.supersedesAssessmentId ? "reassess" : "assess");
+                    }}
+                  >
+                    Continue draft
+                  </Button>
+                </div>
+              ))}
+            {data.assessments
+              .filter((assessment) => ["NEEDS_EVIDENCE", "RETURNED"].includes(assessment.status))
+              .map((assessment) => (
+                <div
+                  key={assessment.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {assessment.employeeNameSnapshot} ·{" "}
+                      {data.definitions.find(
+                        (definition) => definition.id === assessment.competencyDefinitionId,
+                      )?.name ?? "Competency"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {assessment.status.replaceAll("_", " ")} · version {assessment.version}
+                      {assessment.decisionReason ? ` · ${assessment.decisionReason}` : ""}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const evidence = assessment.evidence[assessment.evidence.length - 1];
+                      setAssessmentForm({
+                        draftId: "",
+                        supersedesAssessmentId: assessment.id,
+                        employeeId: assessment.employeeId,
+                        competencyDefinitionId: assessment.competencyDefinitionId,
+                        assessedLevel: String(assessment.assessedLevel),
+                        assessmentMethod: assessment.assessmentMethod,
+                        evidenceNotes: assessment.evidenceNotes,
+                        assessedOn: assessment.assessedOn,
+                        nextAssessmentOn: assessment.nextAssessmentOn ?? "",
+                        sourceEvaluationId: evidence?.sourceEvaluationId ?? "",
+                        sourceAttachmentId: evidence?.sourceAttachmentId ?? "",
+                        evidenceReference: evidence?.reference ?? "",
+                      });
+                      setView(assessment.version > 1 ? "reassess" : "assess");
+                    }}
+                  >
+                    Continue assessment
+                  </Button>
+                </div>
+              ))}
+            {!data.drafts.some((draft) => draft.status === "DRAFT") &&
+            !data.assessments.some((assessment) =>
+              ["NEEDS_EVIDENCE", "RETURNED"].includes(assessment.status),
+            ) ? (
+              <p className="text-sm text-muted-foreground">
+                No draft or returned assessment tasks need action.
+              </p>
+            ) : null}
+            {data.assessments.some((assessment) => assessment.status === "SUBMITTED") ? (
+              <p className="text-sm text-muted-foreground">
+                Submitted assessments appear in Evidence Validation. Only a separate authorized
+                Department Head or HR reviewer can confirm the result.
+              </p>
+            ) : null}
+            <p className="text-sm text-muted-foreground">
+              Submitted:{" "}
+              {data.assessments.filter((assessment) => assessment.status === "SUBMITTED").length}
+              {" · "}Reassessments due:{" "}
+              {
+                data.assessments.filter(
+                  (assessment) =>
+                    assessment.status === "APPROVED" &&
+                    assessment.nextAssessmentOn !== null &&
+                    assessment.nextAssessmentOn <= new Date().toISOString().slice(0, 10),
+                ).length
+              }
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {["assess", "reassess"].includes(activeView) &&
+      data.permissions.assess &&
+      (activeView !== "reassess" || data.permissions.reassess) ? (
         <Card>
           <CardHeader>
             <CardTitle>
@@ -1255,7 +1466,7 @@ export function CompetencyWorkspace() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {selectableEmployees.length && eligibleDefinitions.length ? (
+            {selectableEmployees.length ? (
               <form
                 className="grid gap-4 md:grid-cols-2"
                 onSubmit={(event) => onSubmit(event, () => assessmentMutation.mutate())}
@@ -1264,9 +1475,17 @@ export function CompetencyWorkspace() {
                   label="Employee"
                   required
                   value={assessmentForm.employeeId}
-                  onChange={(employeeId) =>
-                    setAssessmentForm({ ...assessmentForm, employeeId, sourceEvaluationId: "" })
-                  }
+                  onChange={(employeeId) => {
+                    setAssessmentForm({
+                      ...assessmentForm,
+                      employeeId,
+                      competencyDefinitionId: "",
+                      draftId: "",
+                      supersedesAssessmentId: "",
+                      sourceEvaluationId: "",
+                      sourceAttachmentId: "",
+                    });
+                  }}
                 >
                   <option value="">Select an assigned employee</option>
                   {selectableEmployees.map((employee) => (
@@ -1279,9 +1498,25 @@ export function CompetencyWorkspace() {
                   label="Competency"
                   required
                   value={assessmentForm.competencyDefinitionId}
-                  onChange={(competencyDefinitionId) =>
-                    setAssessmentForm({ ...assessmentForm, competencyDefinitionId })
-                  }
+                  onChange={(competencyDefinitionId) => {
+                    const requirement = selectedRequirements.find(
+                      (item) => item.competencyDefinitionId === competencyDefinitionId,
+                    );
+                    const previousAssessment = data.assessments
+                      .filter(
+                        (assessment) =>
+                          assessment.employeeId === assessmentForm.employeeId &&
+                          assessment.competencyDefinitionId === competencyDefinitionId,
+                      )
+                      .sort((left, right) => right.version - left.version)[0];
+                    setAssessmentForm({
+                      ...assessmentForm,
+                      competencyDefinitionId,
+                      assessmentMethod: requirement?.assessmentMethod ?? "",
+                      draftId: "",
+                      supersedesAssessmentId: previousAssessment?.id ?? "",
+                    });
+                  }}
                 >
                   <option value="">Select an approved required competency</option>
                   {eligibleDefinitions.map((definition) => (
@@ -1290,6 +1525,61 @@ export function CompetencyWorkspace() {
                     </option>
                   ))}
                 </SelectField>
+                {selectedEmployee ? (
+                  <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm md:col-span-2">
+                    <p className="font-medium">
+                      {selectedEmployee.name} · {selectedEmployee.position}
+                    </p>
+                    {selectedRequirementSet ? (
+                      <p className="text-muted-foreground">
+                        Approved position requirement version {selectedRequirementSet.version} ·
+                        effective {selectedRequirementSet.effectiveFrom}
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        No approved competency requirements are available for this position. Ask the
+                        HR Administrator to create and approve the Job Competency Requirements
+                        version before assessing.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+                {selectedDefinition && selectedRequirement ? (
+                  <div className="space-y-3 rounded-lg border border-border p-4 text-sm md:col-span-2">
+                    <div>
+                      <p className="font-semibold">{selectedDefinition.name}</p>
+                      <p className="text-muted-foreground">
+                        {selectedDefinition.category} · {selectedDefinition.description}
+                      </p>
+                    </div>
+                    <p>
+                      Required level: {selectedRequirement.requiredLevel} —{" "}
+                      {selectedDefinition.levels.find(
+                        (level) => level.level === selectedRequirement.requiredLevel,
+                      )?.label ?? "Level"}
+                      {selectedRequirement.mandatoryQualification
+                        ? ` · Mandatory qualification: ${selectedRequirement.qualificationLabel ?? "Required"}`
+                        : ""}
+                    </p>
+                    <p>Evidence requirement: {selectedRequirement.evidenceRequirement}</p>
+                    <div>
+                      <p className="font-medium">Observable criteria</p>
+                      <ul className="list-disc pl-5 text-muted-foreground">
+                        {selectedDefinition.criteria.map((criterion) => (
+                          <li key={criterion}>{criterion}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium">Proficiency scale</p>
+                      {selectedDefinition.levels.map((level) => (
+                        <p key={level.level} className="text-muted-foreground">
+                          {level.level} — {level.label}: {level.definition}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 <SelectField
                   label="Assessed current level"
                   required
@@ -1306,16 +1596,7 @@ export function CompetencyWorkspace() {
                 </SelectField>
                 <label className={fieldClass()}>
                   Assessment method
-                  <Input
-                    required
-                    value={assessmentForm.assessmentMethod}
-                    onChange={(event) =>
-                      setAssessmentForm({
-                        ...assessmentForm,
-                        assessmentMethod: event.currentTarget.value,
-                      })
-                    }
-                  />
+                  <Input required readOnly value={assessmentForm.assessmentMethod} />
                 </label>
                 <label className={fieldClass()}>
                   Assessment date
@@ -1362,7 +1643,11 @@ export function CompetencyWorkspace() {
                   label="Related finalized performance evaluation (optional)"
                   value={assessmentForm.sourceEvaluationId}
                   onChange={(sourceEvaluationId) =>
-                    setAssessmentForm({ ...assessmentForm, sourceEvaluationId })
+                    setAssessmentForm({
+                      ...assessmentForm,
+                      sourceEvaluationId,
+                      sourceAttachmentId: "",
+                    })
                   }
                 >
                   <option value="">No linked performance evaluation</option>
@@ -1372,6 +1657,22 @@ export function CompetencyWorkspace() {
                     </option>
                   ))}
                 </SelectField>
+                {selectedEvaluation?.attachments.length ? (
+                  <SelectField
+                    label="Supporting file from selected finalized evaluation (optional)"
+                    value={assessmentForm.sourceAttachmentId}
+                    onChange={(sourceAttachmentId) =>
+                      setAssessmentForm({ ...assessmentForm, sourceAttachmentId })
+                    }
+                  >
+                    <option value="">No supporting file selected</option>
+                    {selectedEvaluation.attachments.map((attachment) => (
+                      <option key={attachment.id} value={attachment.id}>
+                        {attachment.fileName}
+                      </option>
+                    ))}
+                  </SelectField>
+                ) : null}
                 <label className={fieldClass()}>
                   Evidence reference (optional)
                   <Input
@@ -1385,17 +1686,29 @@ export function CompetencyWorkspace() {
                   />
                 </label>
                 <p className="text-xs text-muted-foreground md:col-span-2">
-                  Only finalized evaluations for this employee can be linked. Their performance
-                  score is never converted into a competency rating. Submission creates an immutable
-                  assessment version requiring evidence validation and review.
+                  Finalized evaluation references and existing attachments can be linked as
+                  evidence; performance scores never become competency ratings. Save Draft keeps the
+                  assessment editable. Submission locks that version; a returned item can be updated
+                  with additional evidence before resubmission.
                 </p>
-                <Button
-                  type="submit"
-                  disabled={assessmentMutation.isPending}
-                  className="md:col-span-2"
-                >
-                  Submit assessment
-                </Button>
+                <div className="flex flex-wrap gap-2 md:col-span-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={
+                      saveDraftMutation.isPending ||
+                      !assessmentForm.employeeId ||
+                      !assessmentForm.competencyDefinitionId ||
+                      assessmentForm.evidenceNotes.trim().length < 10
+                    }
+                    onClick={() => saveDraftMutation.mutate()}
+                  >
+                    {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
+                  </Button>
+                  <Button type="submit" disabled={assessmentMutation.isPending}>
+                    {assessmentMutation.isPending ? "Submitting..." : "Submit for Validation"}
+                  </Button>
+                </div>
               </form>
             ) : (
               <EmptyState

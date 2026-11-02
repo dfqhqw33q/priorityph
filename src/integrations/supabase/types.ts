@@ -241,6 +241,7 @@ export type Database = {
           id: string;
           job_position_id: string;
           status: string;
+          supersedes_assessment_id: string | null;
           version: number;
         },
         {
@@ -253,6 +254,7 @@ export type Database = {
           id?: string;
           job_position_id: string;
           status?: string;
+          supersedes_assessment_id?: string | null;
           version: number;
         }
       >;
@@ -306,6 +308,7 @@ export type Database = {
           next_assessment_on: string | null;
           requirement_item_id: string;
           status: string;
+          supersedes_assessment_id: string | null;
           version: number;
         },
         {
@@ -335,6 +338,7 @@ export type Database = {
           next_assessment_on?: string | null;
           requirement_item_id: string;
           status?: string;
+          supersedes_assessment_id?: string | null;
           version: number;
         }
       >;
@@ -358,11 +362,52 @@ export type Database = {
           source_evaluation_id?: string | null;
         }
       >;
+      competency_assessment_drafts: PortalTable<
+        {
+          assessed_level: number;
+          assessed_on: string;
+          assessment_method: string;
+          assessor_user_id: string;
+          competency_definition_id: string;
+          created_at: string;
+          employee_id: string;
+          evidence_notes: string;
+          evidence_reference: string | null;
+          id: string;
+          next_assessment_on: string | null;
+          requirement_item_id: string;
+          source_attachment_id: string | null;
+          source_evaluation_id: string | null;
+          status: string;
+          supersedes_assessment_id: string | null;
+          updated_at: string;
+        },
+        {
+          assessed_level: number;
+          assessed_on: string;
+          assessment_method: string;
+          assessor_user_id: string;
+          competency_definition_id: string;
+          created_at?: string;
+          employee_id: string;
+          evidence_notes: string;
+          evidence_reference?: string | null;
+          id?: string;
+          next_assessment_on?: string | null;
+          requirement_item_id: string;
+          source_attachment_id?: string | null;
+          source_evaluation_id?: string | null;
+          status?: string;
+          supersedes_assessment_id?: string | null;
+          updated_at?: string;
+        }
+      >;
       competency_workflow_events: PortalTable<
         {
           action: string;
           actor_user_id: string | null;
           assessment_id: string | null;
+          assessment_draft_id: string | null;
           competency_definition_id: string | null;
           details: Json;
           id: string;
@@ -376,6 +421,7 @@ export type Database = {
           action: string;
           actor_user_id?: string | null;
           assessment_id?: string | null;
+          assessment_draft_id?: string | null;
           competency_definition_id?: string | null;
           details?: Json;
           id?: string;
@@ -3417,6 +3463,28 @@ export type Database = {
           _source_attachment_id: string | null;
           _source_evaluation_id: string | null;
         };
+        Returns: string;
+      };
+      save_competency_assessment_draft: {
+        Args: {
+          _actor: string;
+          _assessed_level: number;
+          _assessed_on: string;
+          _assessment_method: string;
+          _competency_definition_id: string;
+          _draft_id: string | null;
+          _employee_id: string;
+          _evidence_notes: string;
+          _evidence_reference: string | null;
+          _next_assessment_on: string | null;
+          _source_attachment_id: string | null;
+          _source_evaluation_id: string | null;
+          _supersedes_assessment_id: string | null;
+        };
+        Returns: string;
+      };
+      submit_competency_assessment_draft: {
+        Args: { _actor: string; _draft_id: string };
         Returns: string;
       };
       validate_competency_assessment_evidence: {
