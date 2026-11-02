@@ -15,13 +15,12 @@ export const Route = createFileRoute("/")({
       { title: "Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content:
-          "Annual employee performance evaluation workflow for HR, supervisors and the President, with QR-based employee self-assessment.",
+        content: "Internal performance management portal for employees and supervisors.",
       },
       { property: "og:title", content: "Priority Handling Logistics, Inc." },
       {
         property: "og:description",
-        content: "Annual employee performance evaluation workflow with QR-based self-assessment.",
+        content: "Internal performance management portal for employees and supervisors.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

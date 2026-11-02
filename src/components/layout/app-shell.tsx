@@ -3,23 +3,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, type ReactNode } from "react";
 import {
-  ClipboardList,
-  FileClock,
-  Gauge,
   Activity,
+  Bell,
   BriefcaseBusiness,
-  Handshake,
-  History,
-  Medal,
-  Settings,
-  Shield,
-  Users,
-  UserCog,
-  BadgeCheck,
-  BrainCircuit,
-  GraduationCap,
+  CircleHelp,
+  ClipboardCheck,
+  Gauge,
   LogOut,
-  User,
+  UserRound,
+  Users,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -52,109 +45,28 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { recordLoginEvent } from "@/lib/access.functions";
-import { ROLE_LABELS, type AppRole, type Permission } from "@/lib/domain";
+import { ROLE_LABELS, normalizeRole, type AppRole } from "@/lib/domain";
 import { useAccess } from "@/hooks/use-access";
-import { NotificationCenter } from "@/components/layout/notification-center";
 import { StepUpProvider } from "@/components/layout/step-up-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type NavItem = {
-  to?: string;
+  to: string;
   label: string;
-  icon?: typeof Gauge | undefined;
-  permission?: Permission;
-  roles?: AppRole[];
+  icon?: LucideIcon;
 };
 
-type NavCategory = NavItem & { children: NavItem[]; direct?: boolean };
+type NavSection = NavItem & {
+  children?: NavItem[];
+};
 
-const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[]; permission?: Permission }> = [
-  { prefix: "/admin/users", roles: ["ADMINISTRATOR"], permission: "users.view" },
-  { prefix: "/admin/roles", roles: ["ADMINISTRATOR"], permission: "roles.manage" },
-  { prefix: "/admin/employees", roles: ["ADMINISTRATOR"], permission: "employees.view" },
-  { prefix: "/admin/audit-logs", roles: ["ADMINISTRATOR"], permission: "audit.view" },
-  { prefix: "/admin", roles: ["ADMINISTRATOR"], permission: "users.view" },
-  { prefix: "/president/employees", roles: ["PRESIDENT"], permission: "evaluations.view_201" },
-  { prefix: "/hr/employees", roles: ["HR"], permission: "evaluations.view_201" },
-  { prefix: "/hr/competency", roles: ["HR"], permission: "evaluations.view_201" },
-  { prefix: "/hr/development-records", roles: ["HR"], permission: "learning.view" },
-  { prefix: "/hr/training", roles: ["HR"], permission: "training.view" },
-  { prefix: "/hr/succession", roles: ["HR"], permission: "succession.view" },
-  { prefix: "/hr/recognition", roles: ["HR"], permission: "recognition.view" },
-  {
-    prefix: "/hr/evaluation-history",
-    roles: ["HR", "PRESIDENT"],
-  },
-  {
-    prefix: "/supervisor/returned",
-    roles: ["SUPERVISOR"],
-  },
-  {
-    prefix: "/reviewing-supervisor/returned",
-    roles: ["REVIEWING_SUPERVISOR"],
-  },
-  {
-    prefix: "/committee/returned",
-    roles: ["COMMITTEE"],
-  },
-  {
-    prefix: "/president/returned",
-    roles: ["PRESIDENT"],
-  },
-  {
-    prefix: "/hr/returned",
-    roles: ["HR"],
-  },
-  {
-    prefix: "/supervisor/completed",
-    roles: ["SUPERVISOR"],
-  },
-  {
-    prefix: "/supervisor/drafts",
-    roles: ["SUPERVISOR"],
-  },
-  {
-    prefix: "/reviewing-supervisor/completed",
-    roles: ["REVIEWING_SUPERVISOR"],
-  },
-  {
-    prefix: "/reviewing-supervisor/drafts",
-    roles: ["REVIEWING_SUPERVISOR"],
-  },
-  {
-    prefix: "/committee/completed",
-    roles: ["COMMITTEE"],
-  },
-  {
-    prefix: "/committee/drafts",
-    roles: ["COMMITTEE"],
-  },
-  {
-    prefix: "/president/completed",
-    roles: ["PRESIDENT"],
-  },
-  {
-    prefix: "/president/drafts",
-    roles: ["PRESIDENT"],
-  },
-  {
-    prefix: "/hr/completed",
-    roles: ["HR"],
-  },
-  {
-    prefix: "/hr/drafts",
-    roles: ["HR"],
-  },
-  { prefix: "/hr", roles: ["HR"], permission: "cycles.view" },
-  { prefix: "/supervisor", roles: ["SUPERVISOR"], permission: "evaluations.view_step1" },
-  { prefix: "/president", roles: ["PRESIDENT"], permission: "president.view" },
-  {
-    prefix: "/reviewing-supervisor",
-    roles: ["REVIEWING_SUPERVISOR"],
-    permission: "evaluations.review_step3",
-  },
-  { prefix: "/personnel", roles: ["HR"], permission: "personnel.process" },
-  { prefix: "/committee", roles: ["COMMITTEE"], permission: "committee.review" },
+const ROUTE_ACCESS: Array<{ prefix: string; roles: AppRole[] }> = [
+  { prefix: "/performance", roles: ["EMPLOYEE"] },
+  { prefix: "/team", roles: ["SUPERVISOR"] },
+  { prefix: "/profile", roles: ["EMPLOYEE", "SUPERVISOR"] },
+  { prefix: "/notifications", roles: ["EMPLOYEE", "SUPERVISOR"] },
+  { prefix: "/help", roles: ["EMPLOYEE", "SUPERVISOR"] },
+  { prefix: "/account/password", roles: ["EMPLOYEE", "SUPERVISOR"] },
 ];
 
 function routeAccess(pathname: string) {
@@ -164,295 +76,90 @@ function routeAccess(pathname: string) {
   );
 }
 
-const ROLE_DEFAULT_OPEN_ACCORDIONS: AppRole[] = [
-  "HR",
-  "SUPERVISOR",
-  "REVIEWING_SUPERVISOR",
-  "COMMITTEE",
-  "PRESIDENT",
-  "ADMINISTRATOR",
-];
-
-const NAV: Array<{
-  roles: AppRole[];
-  direct: NavItem[];
-  categories: NavCategory[];
-  secondary?: NavItem[];
-  bottom?: NavItem[];
-}> = [
+const NAV: Array<{ role: AppRole; sections: NavSection[] }> = [
   {
-    roles: ["HR"],
-    direct: [{ to: "/hr", label: "Dashboard", icon: Gauge, permission: "cycles.view" }],
-    bottom: [
+    role: "EMPLOYEE",
+    sections: [
+      { to: "/performance", label: "Dashboard", icon: Gauge },
+      { to: "/profile", label: "My Profile", icon: UserRound },
       {
-        to: "/hr/evaluation-history",
-        label: "Reports",
-        icon: FileClock,
-        permission: "evaluations.view_201",
+        to: "/performance/current",
+        label: "My Performance",
+        icon: ClipboardCheck,
+        children: [
+          { to: "/performance/current", label: "Current Evaluation" },
+          { to: "/performance/self-evaluation", label: "Self-Evaluation" },
+          { to: "/performance/history", label: "Evaluation History" },
+        ],
       },
-      { to: "/account/settings", label: "Settings", icon: Settings },
+      { to: "/notifications", label: "Notifications", icon: Bell },
+      { to: "/help", label: "Help & Support", icon: CircleHelp },
     ],
-    categories: [
+  },
+  {
+    role: "SUPERVISOR",
+    sections: [
+      { to: "/team", label: "Dashboard", icon: Gauge },
+      { to: "/profile", label: "My Profile", icon: UserRound },
+      { to: "/team/employees", label: "My Team", icon: Users },
       {
-        label: "Employees",
-        icon: Users,
-        children: [{ to: "/hr/employees", label: "201 Files", permission: "evaluations.view_201" }],
-      },
-      {
-        label: "Evaluations",
-        icon: ClipboardList,
-        children: [
-          { to: "/personnel", label: "To Review", permission: "personnel.process" },
-          { to: "/hr/returned", label: "Returned", permission: "evaluations.view_201" },
-          { to: "/hr/completed", label: "Completed", permission: "evaluations.view_201" },
-          { to: "/hr/drafts", label: "Drafts", permission: "evaluations.view_201" },
-        ],
-      },
-      {
-        label: "Performance",
-        icon: ClipboardList,
-        children: [
-          { to: "/hr/cycles", label: "Cycle", permission: "cycles.view" },
-          { to: "/hr/evaluation-history", label: "History", permission: "evaluations.view_201" },
-        ],
-      },
-      {
-        label: "Competency",
-        icon: BrainCircuit,
-        direct: true,
-        children: [{ to: "/hr/competency", label: "Profiles", permission: "evaluations.view_201" }],
-      },
-      {
-        label: "Learning",
-        icon: GraduationCap,
-        direct: true,
-        children: [
-          {
-            to: "/hr/development-records",
-            label: "Development Records",
-            permission: "learning.view",
-          },
-        ],
-      },
-      {
-        label: "Training",
+        to: "/team/pending",
+        label: "Performance Management",
         icon: BriefcaseBusiness,
-        direct: true,
         children: [
-          { to: "/hr/training", label: "Training Management", permission: "training.view" },
+          { to: "/team/pending", label: "Pending Evaluations" },
+          { to: "/team/evaluations", label: "Employee Evaluations" },
+          { to: "/team/completed", label: "Completed Evaluations" },
+          { to: "/team/history", label: "Evaluation History" },
         ],
       },
-      {
-        label: "Planning",
-        icon: Handshake,
-        direct: true,
-        children: [{ to: "/hr/succession", label: "Succession", permission: "succession.view" }],
-      },
-      {
-        label: "Recognition",
-        icon: Medal,
-        direct: true,
-        children: [{ to: "/hr/recognition", label: "Recognition", permission: "recognition.view" }],
-      },
-    ],
-  },
-  {
-    roles: ["SUPERVISOR"],
-    direct: [
-      { to: "/supervisor", label: "Dashboard", icon: Gauge, permission: "evaluations.view_step1" },
-    ],
-    categories: [
-      {
-        label: "Evaluations",
-        icon: ClipboardList,
-        children: [
-          {
-            to: "/supervisor/evaluations",
-            label: "To Review",
-            permission: "evaluations.view_step1",
-          },
-          { to: "/supervisor/returned", label: "Returned" },
-          { to: "/supervisor/completed", label: "Completed" },
-          { to: "/supervisor/drafts", label: "Drafts" },
-        ],
-      },
-    ],
-  },
-  {
-    roles: ["REVIEWING_SUPERVISOR"],
-    direct: [
-      {
-        to: "/reviewing-supervisor",
-        label: "Dashboard",
-        icon: Gauge,
-        permission: "evaluations.review_step3",
-      },
-    ],
-    categories: [
-      {
-        label: "Evaluations",
-        icon: ClipboardList,
-        children: [
-          {
-            to: "/reviewing-supervisor/evaluations",
-            label: "To Review",
-            permission: "evaluations.review_step3",
-          },
-          { to: "/reviewing-supervisor/returned", label: "Returned" },
-          { to: "/reviewing-supervisor/completed", label: "Completed" },
-          { to: "/reviewing-supervisor/drafts", label: "Drafts" },
-        ],
-      },
-    ],
-  },
-  {
-    roles: ["COMMITTEE"],
-    direct: [{ to: "/committee", label: "Dashboard", icon: Gauge, permission: "committee.review" }],
-    categories: [
-      {
-        label: "Evaluations",
-        icon: ClipboardList,
-        children: [
-          { to: "/committee/evaluations", label: "To Review", permission: "committee.review" },
-          { to: "/committee/returned", label: "Returned" },
-          { to: "/committee/completed", label: "Completed" },
-          { to: "/committee/drafts", label: "Drafts" },
-        ],
-      },
-    ],
-  },
-  {
-    roles: ["PRESIDENT"],
-    direct: [{ to: "/president", label: "Dashboard", icon: Gauge, permission: "president.view" }],
-    secondary: [{ to: "/hr/evaluation-history", label: "History", icon: History }],
-    categories: [
-      {
-        label: "Approvals",
-        icon: BadgeCheck,
-        children: [
-          { to: "/president/evaluations", label: "Pending", permission: "president.view" },
-          { to: "/president/returned", label: "Returned" },
-          { to: "/president/completed", label: "Completed" },
-          { to: "/president/drafts", label: "Drafts" },
-        ],
-      },
-      {
-        label: "Employees",
-        icon: Users,
-        children: [
-          {
-            to: "/president/employees",
-            label: "Digital 201 Files",
-            permission: "evaluations.view_201",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    roles: ["ADMINISTRATOR"],
-    direct: [
-      { to: "/admin", label: "Dashboard", icon: Shield, permission: "users.view" },
-      { to: "/admin/audit-logs", label: "Audit Logs", icon: FileClock, permission: "audit.view" },
-    ],
-    categories: [
-      {
-        label: "Users",
-        icon: UserCog,
-        children: [
-          { to: "/admin/users", label: "User List", permission: "users.view" },
-          { to: "/admin/roles", label: "Roles & Permissions", permission: "roles.manage" },
-        ],
-      },
-      {
-        label: "Employees",
-        icon: Users,
-        children: [
-          { to: "/admin/employee-profiles", label: "Profiles", permission: "employees.manage" },
-        ],
-      },
+      { to: "/notifications", label: "Notifications", icon: Bell },
     ],
   },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
-  const { access, can } = useAccess();
+  const { access } = useAccess();
   const { isMobile, setOpenMobile } = useSidebar();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const group = NAV.find((item) => item.roles.some((role) => (access?.roles ?? []).includes(role)));
+  const accessRoles = new Set(
+    (access?.roles ?? [])
+      .map((role) => normalizeRole(role))
+      .filter((role): role is AppRole => Boolean(role)),
+  );
+  const group = NAV.find((item) => accessRoles.has(item.role));
   if (!group) return null;
 
-  const allowed = (item: NavItem) => !item.permission || can(item.permission);
   const navigate = () => {
     onNavigate?.();
     if (isMobile) setOpenMobile(false);
   };
-  const direct = group.direct.filter(allowed);
-  const categories = group.categories
-    .map((category) => ({ ...category, children: category.children.filter(allowed) }))
-    .filter((category) => category.children.length > 0);
-  const secondary = (group.secondary ?? []).filter(allowed);
-  const bottom = (group.bottom ?? []).filter(allowed);
-  const isDefaultOpenRole = group.roles.some((role) => ROLE_DEFAULT_OPEN_ACCORDIONS.includes(role));
-
-  const renderItem = (item: NavItem, active = false) => {
-    const Icon = item.icon;
-    if (!item.to)
-      return (
-        <SidebarMenuButton type="button" tooltip={item.label}>
-          {Icon ? <Icon className="size-4" /> : null}
-          <span>{item.label}</span>
-        </SidebarMenuButton>
-      );
-    return (
-      <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-        <Link to={item.to} onClick={navigate}>
-          {Icon ? <Icon className="size-4" /> : null}
-          <span>{item.label}</span>
-        </Link>
-      </SidebarMenuButton>
-    );
-  };
-
-  const isCurrentRoute = (to?: string) => Boolean(to && pathname === to);
-
-  const primaryItems = (
-    <>
-      {direct.map((item) => (
-        <SidebarMenuItem key={item.label}>
-          {renderItem(item, isCurrentRoute(item.to))}
-        </SidebarMenuItem>
-      ))}
-      {categories.map((category) => {
-        if (category.direct && category.children.length === 1) {
-          const child = category.children[0];
-          if (!child) return null;
-          const { icon: childIcon, ...childWithoutIcon } = child;
+  return (
+    <SidebarMenu>
+      {group.sections.map((section) => {
+        const Icon = section.icon;
+        const active = section.children
+          ? pathname === section.to || pathname.startsWith(`${section.to}/`)
+          : pathname === section.to;
+        if (!section.children) {
           return (
-            <SidebarMenuItem key={category.label}>
-              {renderItem(
-                {
-                  ...childWithoutIcon,
-                  label: category.label,
-                  ...((category.icon ?? childIcon) ? { icon: category.icon ?? childIcon } : {}),
-                },
-                Boolean(child.to && (pathname === child.to || pathname.startsWith(`${child.to}/`))),
-              )}
+            <SidebarMenuItem key={section.label}>
+              <SidebarMenuButton asChild isActive={active} tooltip={section.label}>
+                <Link to={section.to} onClick={navigate}>
+                  {Icon ? <Icon className="size-4" /> : null}
+                  <span>{section.label}</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           );
         }
-        const activeChild = category.children.some(
-          (child) => child.to && (pathname === child.to || pathname.startsWith(`${child.to}/`)),
-        );
-        const CategoryIcon = category.icon;
-        const shouldDefaultOpen = isDefaultOpenRole || activeChild;
         return (
-          <SidebarMenuItem key={category.label}>
-            <Collapsible defaultOpen={shouldDefaultOpen} className="group/collapsible">
+          <SidebarMenuItem key={section.label}>
+            <Collapsible defaultOpen={active} className="group/collapsible">
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="w-full" tooltip={category.label}>
-                  {CategoryIcon ? <CategoryIcon className="size-4" /> : null}
-                  <span>{category.label}</span>
+                <SidebarMenuButton className="w-full" tooltip={section.label}>
+                  {Icon ? <Icon className="size-4" /> : null}
+                  <span>{section.label}</span>
                   <span className="ml-auto text-xs" aria-hidden="true">
                     ›
                   </span>
@@ -460,21 +167,16 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {category.children.map((child) => {
-                    const childActive = Boolean(
-                      child.to && (pathname === child.to || pathname.startsWith(`${child.to}/`)),
-                    );
+                  {section.children.map((child) => {
+                    const childActive =
+                      pathname === child.to || pathname.startsWith(`${child.to}/`);
                     return (
                       <SidebarMenuSubItem key={child.label}>
-                        {child.to ? (
-                          <SidebarMenuSubButton asChild isActive={childActive}>
-                            <Link to={child.to} onClick={navigate}>
-                              {child.label}
-                            </Link>
-                          </SidebarMenuSubButton>
-                        ) : (
-                          <SidebarMenuSubButton>{child.label}</SidebarMenuSubButton>
-                        )}
+                        <SidebarMenuSubButton asChild isActive={childActive}>
+                          <Link to={child.to} onClick={navigate}>
+                            {child.label}
+                          </Link>
+                        </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     );
                   })}
@@ -484,31 +186,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           </SidebarMenuItem>
         );
       })}
-    </>
-  );
-
-  return (
-    <>
-      <SidebarMenu>{primaryItems}</SidebarMenu>
-      {secondary.length > 0 ? (
-        <SidebarMenu className="border-t border-sidebar-border pt-3">
-          {secondary.map((item) => (
-            <SidebarMenuItem key={item.label}>
-              {renderItem(item, isCurrentRoute(item.to))}
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      ) : null}
-      {bottom.length > 0 ? (
-        <SidebarMenu className="border-t border-sidebar-border pt-3">
-          {bottom.map((item) => (
-            <SidebarMenuItem key={item.label}>
-              {renderItem(item, isCurrentRoute(item.to))}
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      ) : null}
-    </>
+    </SidebarMenu>
   );
 }
 
@@ -519,6 +197,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const logEvent = useServerFn(recordLoginEvent);
   const accessRule = routeAccess(pathname);
+  const normalizedRoles = new Set(
+    (access?.roles ?? [])
+      .map((role) => normalizeRole(role))
+      .filter((role): role is AppRole => Boolean(role)),
+  );
+  const hasAnyRequiredRole = (requiredRoles: AppRole[]) =>
+    requiredRoles.some((role) => normalizedRoles.has(role));
   const passwordChangeRequired =
     !isLoading &&
     !isError &&
@@ -530,47 +215,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     (access === null ||
       !access.isActive ||
       access.isLocked ||
-      (accessRule !== null &&
-        (!accessRule.roles.some((role) => access.roles.includes(role)) ||
-          (accessRule.permission !== undefined &&
-            !access.permissions.includes(accessRule.permission)))));
+      accessRule === null ||
+      normalizedRoles.size !== 1 ||
+      !hasAnyRequiredRole(accessRule.roles));
 
   useEffect(() => {
     if (accessDenied) navigate({ to: "/unauthorized", replace: true });
     else if (passwordChangeRequired) navigate({ to: "/account/password", replace: true });
   }, [accessDenied, navigate, passwordChangeRequired]);
-
-  useEffect(() => {
-    if (!access?.userId) return;
-    const refreshDashboardQueries = () => {
-      void Promise.all(
-        [
-          "supervisor-stats",
-          "reviewing-supervisor-stats",
-          "committee-stats",
-          "president-stats",
-          "hr-stats",
-          "admin-stats",
-        ].map((queryKey) => queryClient.invalidateQueries({ queryKey: [queryKey] })),
-      );
-    };
-    const channel = supabase
-      .channel(`evaluation-dashboard-refresh:${access.userId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "evaluations" },
-        refreshDashboardQueries,
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "evaluation_events" },
-        refreshDashboardQueries,
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [access?.userId, queryClient]);
 
   if (isLoading) {
     return (
@@ -665,7 +317,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
               <SidebarTrigger className="md:hidden" aria-label="Open sidebar" />
               <div className="ml-auto flex items-center gap-3">
-                <NotificationCenter />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -676,7 +327,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     >
                       <Avatar className="size-8">
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          <User className="size-4" />
+                          <UserRound className="size-4" />
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -689,13 +340,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                           "No role assigned"}
                       </p>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild className="gap-2">
-                      <Link to="/account/settings">
-                        <User className="size-4" />
-                        Profile and account settings
-                      </Link>
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="gap-2">
                       <LogOut className="size-4" />

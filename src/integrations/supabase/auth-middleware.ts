@@ -106,6 +106,41 @@ export async function authenticateSupabaseRequest() {
     throw new Error("Unauthorized: Account is inactive or locked");
   }
 
+  const { data: roleAssignments, error: roleError } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", data.claims.sub);
+  if (roleError) throw new Error("Unauthorized: Account roles could not be verified");
+  if (
+    roleAssignments?.length !== 1 ||
+    !["EMPLOYEE", "SUPERVISOR"].includes(roleAssignments[0]?.role ?? "")
+  ) {
+    throw new Error("Unauthorized: Account must have exactly one Employee or Supervisor role");
+  }
+
+  if (roleAssignments[0]?.role === "EMPLOYEE") {
+    const { data: employee, error: employeeError } = await supabase
+      .from("employees")
+      .select("employment_status, assigned_supervisor_user_id")
+      .eq("user_id", data.claims.sub)
+      .maybeSingle();
+    if (
+      employeeError ||
+      !employee ||
+      employee.employment_status !== "ACTIVE" ||
+      !employee.assigned_supervisor_user_id
+    ) {
+      throw new Error("Unauthorized: Active employee profile with an assigned supervisor required");
+    }
+
+    const { data: supervisorRole, error: supervisorError } = await supabase.rpc("has_role", {
+      _user_id: employee.assigned_supervisor_user_id,
+      _role: "SUPERVISOR",
+    });
+    if (supervisorError || !supervisorRole)
+      throw new Error("Unauthorized: Active assigned Supervisor account required");
+  }
+
   return { supabase, userId: data.claims.sub, claims: data.claims };
 }
 
@@ -130,14 +165,14 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
 
     const { supabaseAdmin } = await import("./client.server");
     const { data: securitySession } = await supabaseAdmin
-      .from("security_sessions" as never)
+      .from("security_sessions")
       .select("expires_at")
       .eq("user_id", authenticated.userId)
       .eq("session_id", sessionId)
       .maybeSingle();
     if (securitySession?.expires_at && new Date(String(securitySession.expires_at)) <= new Date()) {
       await supabaseAdmin
-        .from("security_sessions" as never)
+        .from("security_sessions")
         .delete()
         .eq("user_id", authenticated.userId)
         .eq("session_id", sessionId);

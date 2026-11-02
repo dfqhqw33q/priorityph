@@ -1,20 +1,22 @@
 # Database Migration Standards
 
-This directory is the source-controlled definition of the PostgreSQL database used by the Supabase-backed application. The active baseline is organized by database responsibility and is intended to be reproducible from an empty disposable development database.
+This directory contains the retained database foundation, reusable security/storage/notification migrations, and the new Employee and Supervisor portal migrations. Standalone local SQL migrations for the retired multi-stage evaluation, scoring/AI, learning/succession/recognition, and workflow-processing features have been removed from the active migration directory. No database tables or records were dropped as part of this cleanup.
 
-## Current Baseline
+The configured Supabase project has a separate migration history; it did not report the removed local `20260924...` migration versions. Do not remove or rewrite migration files that are recorded as applied in any other retained, shared, staging, or production project. Use a forward-only migration to change a live schema.
 
-The directory contains five SQL migrations:
+## Employee and Supervisor Portal Schema
 
-| Migration                                                     | Responsibility                                                                                                                                                                                              |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `20260909150000_core_schema_rbac.sql`                         | Core enums, users, roles, permissions, employees, evaluation templates, cycles, evaluations, ratings, events, audit records, authorization functions, protection triggers, grants, RLS, and reference data. |
-| `20260909150100_evaluation_workflow_scoring.sql`              | President review templates and responses, scoring rules and results, notification events, finalization fields, AI fields, and phase-two workflow records and permissions.                                   |
-| `20260909150200_documents_access_signatures.sql`              | Employee documents, private `employee-files` storage access, profile verification, public submission tracking, email delivery tracking, and internal signatures.                                            |
-| `20260909150300_learning_training_succession_recognition.sql` | Development records, training recommendations and records, succession profiles, and recognition candidates and records.                                                                                     |
-| `20260909150400_notifications_reporting_performance.sql`      | Per-user notifications, notification fan-out, reporting summary function, and application performance indexes.                                                                                              |
+The local portal migrations are not currently compatible with the configured Supabase project and must not be applied there. The live project uses `profiles`, `positions`, `reporting_relationships`, `evaluation_cycles`, `evaluation_profile_versions`, `evaluation_profile_factors`, `evaluation_assignments`, `evaluation_factor_responses`, and `notifications`. The pending local portal migrations instead reference `internal_users` and introduce a parallel evaluation schema. Reconcile the migrations and application queries against the live tables before deployment, reusing suitable existing structures and preserving all existing records. No live migration has been applied as part of this work.
 
-The files are flattened consolidated migrations. There are no migration fragments or include directives beneath `supabase/migrations`. The SQL preserves the existing database behavior, including reference data, constraints, indexes, functions, triggers, grants, RLS policies, storage policies, and realtime notification configuration.
+The pending local migration files currently describe:
+
+| Migration                                           | Responsibility                                                                                                                                                                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `20261102100000_add_employee_portal_role.sql`       | Adds the Employee role to the existing role enum.                                                                                                                                                                                |
+| `20261102100100_employee_supervisor_foundation.sql` | Adds employee supervisor assignment and hire date, role permissions, assignment validation, and scoped employee reads.                                                                                                           |
+| `20261102100200_performance_management_schema.sql`  | Adds job positions, periods, versioned position templates, the Driver template and rating scale, separate employee/supervisor evaluations and ratings, evidence, comments, audit history, immutable template snapshots, and RLS. |
+
+The new migrations do not drop legacy tables or delete existing records. No employee accounts or evaluation records are fabricated. Employee job-position links and supervisor assignments must be provisioned from real employee data before evaluations can be created.
 
 ## Naming
 

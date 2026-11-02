@@ -1,5 +1,12 @@
 ﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
+type PortalTable<Row, Insert> = {
+  Row: Row;
+  Insert: Insert;
+  Update: Partial<Insert>;
+  Relationships: [];
+};
+
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -419,15 +426,282 @@ export type Database = {
           },
         ];
       };
+      evaluation_audit_logs: PortalTable<
+        {
+          actor_user_id: string | null;
+          action: string;
+          employee_evaluation_id: string;
+          id: string;
+          new_value: Json | null;
+          occurred_at: string;
+          previous_value: Json | null;
+        },
+        {
+          actor_user_id?: string | null;
+          action: string;
+          employee_evaluation_id: string;
+          id?: string;
+          new_value?: Json | null;
+          occurred_at?: string;
+          previous_value?: Json | null;
+        }
+      >;
+      evaluation_attachments: PortalTable<
+        {
+          content_type: string;
+          created_at: string;
+          employee_evaluation_id: string | null;
+          file_name: string;
+          file_size: number;
+          id: string;
+          storage_path: string;
+          supervisor_evaluation_id: string | null;
+          uploaded_by: string;
+        },
+        {
+          content_type: string;
+          created_at?: string;
+          employee_evaluation_id?: string | null;
+          file_name: string;
+          file_size: number;
+          id?: string;
+          storage_path: string;
+          supervisor_evaluation_id?: string | null;
+          uploaded_by: string;
+        }
+      >;
+      evaluation_comments: PortalTable<
+        {
+          author_user_id: string;
+          body: string;
+          created_at: string;
+          employee_evaluation_id: string | null;
+          id: string;
+          supervisor_evaluation_id: string | null;
+        },
+        {
+          author_user_id: string;
+          body: string;
+          created_at?: string;
+          employee_evaluation_id?: string | null;
+          id?: string;
+          supervisor_evaluation_id?: string | null;
+        }
+      >;
+      evaluation_evidence_requirements: PortalTable<
+        {
+          category_id: string;
+          description: string;
+          id: string;
+          is_required: boolean;
+          position: number;
+        },
+        {
+          category_id: string;
+          description: string;
+          id?: string;
+          is_required?: boolean;
+          position: number;
+        }
+      >;
+      evaluation_indicators: PortalTable<
+        { category_id: string; id: string; label: string; position: number },
+        { category_id: string; id?: string; label: string; position: number }
+      >;
+      evaluation_periods: PortalTable<
+        {
+          created_at: string;
+          created_by: string | null;
+          ends_on: string;
+          id: string;
+          name: string;
+          submission_deadline: string | null;
+          starts_on: string;
+          status: string;
+          updated_at: string;
+        },
+        {
+          created_at?: string;
+          created_by?: string | null;
+          ends_on: string;
+          id?: string;
+          name: string;
+          submission_deadline?: string | null;
+          starts_on: string;
+          status?: string;
+          updated_at?: string;
+        }
+      >;
+      evaluation_rating_scale: PortalTable<
+        { description: string; label: string; rating: number },
+        { description: string; label: string; rating: number }
+      >;
+      evaluation_template_categories: PortalTable<
+        {
+          created_at: string;
+          id: string;
+          name: string;
+          position: number;
+          template_id: string;
+          weight: number;
+        },
+        {
+          created_at?: string;
+          id?: string;
+          name: string;
+          position: number;
+          template_id: string;
+          weight: number;
+        }
+      >;
+      job_positions: PortalTable<
+        {
+          created_at: string;
+          description: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          updated_at: string;
+        },
+        {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          updated_at?: string;
+        }
+      >;
+      employee_evaluation_ratings: PortalTable<
+        {
+          category_id: string;
+          comments: string;
+          created_at: string;
+          evidence: string;
+          employee_evaluation_id: string;
+          id: string;
+          rating: number | null;
+          updated_at: string;
+        },
+        {
+          category_id: string;
+          comments?: string;
+          created_at?: string;
+          evidence?: string;
+          employee_evaluation_id: string;
+          id?: string;
+          rating?: number | null;
+          updated_at?: string;
+        }
+      >;
+      employee_evaluations: PortalTable<
+        {
+          created_at: string;
+          employee_id: string;
+          evaluation_period_id: string;
+          id: string;
+          status: string;
+          submitted_at: string | null;
+          template_id: string;
+          template_snapshot: Json;
+          template_version_snapshot: number;
+          updated_at: string;
+          weighted_score: number | null;
+        },
+        {
+          created_at?: string;
+          employee_id: string;
+          evaluation_period_id: string;
+          id?: string;
+          status?: string;
+          submitted_at?: string | null;
+          template_id: string;
+          template_snapshot?: Json;
+          template_version_snapshot?: number;
+          updated_at?: string;
+          weighted_score?: number | null;
+        }
+      >;
+      supervisor_evaluation_ratings: PortalTable<
+        {
+          category_id: string;
+          comments: string;
+          created_at: string;
+          evidence: string;
+          id: string;
+          rating: number | null;
+          supervisor_evaluation_id: string;
+          updated_at: string;
+        },
+        {
+          category_id: string;
+          comments?: string;
+          created_at?: string;
+          evidence?: string;
+          id?: string;
+          rating?: number | null;
+          supervisor_evaluation_id: string;
+          updated_at?: string;
+        }
+      >;
+      supervisor_evaluations: PortalTable<
+        {
+          created_at: string;
+          employee_evaluation_id: string;
+          id: string;
+          overall_comments: string;
+          status: string;
+          submitted_at: string | null;
+          supervisor_user_id: string;
+          updated_at: string;
+          weighted_score: number | null;
+        },
+        {
+          created_at?: string;
+          employee_evaluation_id: string;
+          id?: string;
+          overall_comments?: string;
+          status?: string;
+          submitted_at?: string | null;
+          supervisor_user_id: string;
+          updated_at?: string;
+          weighted_score?: number | null;
+        }
+      >;
+      performance_notifications: PortalTable<
+        {
+          created_at: string;
+          employee_evaluation_id: string | null;
+          event_type: string;
+          id: string;
+          message: string;
+          read_at: string | null;
+          recipient_user_id: string;
+          title: string;
+        },
+        {
+          created_at?: string;
+          employee_evaluation_id?: string | null;
+          event_type: string;
+          id?: string;
+          message?: string;
+          read_at?: string | null;
+          recipient_user_id: string;
+          title: string;
+        }
+      >;
       employees: {
         Row: {
+          assigned_supervisor_user_id: string | null;
           created_at: string;
           division: string;
           employee_number: string;
           employment_status: Database["public"]["Enums"]["employment_status"];
           first_name: string;
           full_name: string;
+          hire_date: string | null;
           id: string;
+          job_position_id: string | null;
           user_id: string | null;
           job_title: string;
           last_name: string;
@@ -436,13 +710,16 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          assigned_supervisor_user_id?: string | null;
           created_at?: string;
           division?: string;
           employee_number?: never;
           employment_status?: Database["public"]["Enums"]["employment_status"];
           first_name?: string;
           full_name: string;
+          hire_date?: string | null;
           id?: string;
+          job_position_id?: string | null;
           user_id?: string | null;
           job_title?: string;
           last_name?: string;
@@ -451,13 +728,16 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          assigned_supervisor_user_id?: string | null;
           created_at?: string;
           division?: string;
           employee_number?: string;
           employment_status?: Database["public"]["Enums"]["employment_status"];
           first_name?: string;
           full_name?: string;
+          hire_date?: string | null;
           id?: string;
+          job_position_id?: string | null;
           user_id?: string | null;
           job_title?: string;
           last_name?: string;
@@ -465,7 +745,29 @@ export type Database = {
           section?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "employees_assigned_supervisor_user_id_fkey";
+            columns: ["assigned_supervisor_user_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "employees_job_position_id_fkey";
+            columns: ["job_position_id"];
+            isOneToOne: false;
+            referencedRelation: "job_positions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "employees_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       evaluation_criteria: {
         Row: {
@@ -816,27 +1118,45 @@ export type Database = {
       evaluation_templates: {
         Row: {
           created_at: string;
+          created_by: string | null;
           description: string;
+          effective_from: string | null;
+          effective_to: string | null;
           id: string;
           is_active: boolean;
+          job_position_id: string | null;
           name: string;
+          status: string;
           updated_at: string;
+          version: number;
         };
         Insert: {
           created_at?: string;
+          created_by?: string | null;
           description?: string;
+          effective_from?: string | null;
+          effective_to?: string | null;
           id?: string;
           is_active?: boolean;
+          job_position_id?: string | null;
           name: string;
+          status?: string;
           updated_at?: string;
+          version?: number;
         };
         Update: {
           created_at?: string;
+          created_by?: string | null;
           description?: string;
+          effective_from?: string | null;
+          effective_to?: string | null;
           id?: string;
           is_active?: boolean;
+          job_position_id?: string | null;
           name?: string;
+          status?: string;
           updated_at?: string;
+          version?: number;
         };
         Relationships: [];
       };
@@ -1293,6 +1613,47 @@ export type Database = {
         };
         Relationships: [];
       };
+      email_mfa_challenges: {
+        Row: {
+          attempts: number;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          otp_hash: string;
+          session_id: string;
+          user_id: string;
+          verified_at: string | null;
+        };
+        Insert: {
+          attempts?: number;
+          created_at?: string;
+          expires_at: string;
+          id?: string;
+          otp_hash: string;
+          session_id: string;
+          user_id: string;
+          verified_at?: string | null;
+        };
+        Update: {
+          attempts?: number;
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          otp_hash?: string;
+          session_id?: string;
+          user_id?: string;
+          verified_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "email_mfa_challenges_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       permissions: {
         Row: {
           code: string;
@@ -1313,6 +1674,117 @@ export type Database = {
           module?: string;
         };
         Relationships: [];
+      };
+      rate_limit_buckets: {
+        Row: {
+          attempts: number;
+          bucket_key: string;
+          window_started_at: string;
+        };
+        Insert: {
+          attempts?: number;
+          bucket_key: string;
+          window_started_at?: string;
+        };
+        Update: {
+          attempts?: number;
+          bucket_key?: string;
+          window_started_at?: string;
+        };
+        Relationships: [];
+      };
+      security_elevations: {
+        Row: {
+          action_key: string;
+          elevated_at: string;
+          expires_at: string;
+          session_id: string;
+          user_id: string;
+        };
+        Insert: {
+          action_key?: string;
+          elevated_at?: string;
+          expires_at: string;
+          session_id: string;
+          user_id: string;
+        };
+        Update: {
+          action_key?: string;
+          elevated_at?: string;
+          expires_at?: string;
+          session_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "security_elevations_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      security_idempotency_requests: {
+        Row: {
+          action: string;
+          actor_user_id: string;
+          created_at: string;
+          request_key: string;
+          resource_id: string | null;
+        };
+        Insert: {
+          action: string;
+          actor_user_id: string;
+          created_at?: string;
+          request_key: string;
+          resource_id?: string | null;
+        };
+        Update: {
+          action?: string;
+          actor_user_id?: string;
+          created_at?: string;
+          request_key?: string;
+          resource_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "security_idempotency_requests_actor_user_id_fkey";
+            columns: ["actor_user_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      security_sessions: {
+        Row: {
+          expires_at: string;
+          last_activity_at: string;
+          session_id: string;
+          user_id: string;
+        };
+        Insert: {
+          expires_at: string;
+          last_activity_at?: string;
+          session_id: string;
+          user_id: string;
+        };
+        Update: {
+          expires_at?: string;
+          last_activity_at?: string;
+          session_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "security_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       personnel_processing: {
         Row: {
@@ -2336,11 +2808,24 @@ export type Database = {
         };
         Returns: boolean;
       };
+      has_portal_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"];
+          _user_id: string;
+        };
+        Returns: boolean;
+      };
       is_account_usable: { Args: { _user_id: string }; Returns: boolean };
     };
     Enums: {
       app_role:
-        "ADMINISTRATOR" | "PRESIDENT" | "HR" | "SUPERVISOR" | "REVIEWING_SUPERVISOR" | "COMMITTEE";
+        | "ADMINISTRATOR"
+        | "PRESIDENT"
+        | "HR"
+        | "SUPERVISOR"
+        | "REVIEWING_SUPERVISOR"
+        | "COMMITTEE"
+        | "EMPLOYEE";
       calculation_status: "PENDING" | "CALCULATED" | "INVALID";
       cycle_status: "DRAFT" | "ACTIVE" | "CLOSED" | "DISABLED";
       employment_status: "ACTIVE" | "INACTIVE";
@@ -2486,6 +2971,7 @@ export const Constants = {
         "SUPERVISOR",
         "REVIEWING_SUPERVISOR",
         "COMMITTEE",
+        "EMPLOYEE",
       ],
       calculation_status: ["PENDING", "CALCULATED", "INVALID"],
       cycle_status: ["DRAFT", "ACTIVE", "CLOSED", "DISABLED"],

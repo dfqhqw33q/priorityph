@@ -9,7 +9,6 @@ import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PasswordField } from "@/components/shared/password-field";
-import { PageHeader } from "@/components/shared/shared-ui";
 import { changeMyPassword } from "@/lib/access.functions";
 import { resetPasswordSchema } from "@/lib/schemas";
 import { roleLandingPath } from "@/lib/domain";
@@ -47,10 +46,12 @@ function ChangePasswordPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Account settings"
-        description="Update your password and keep your account secure."
-      />
+      <div>
+        <h1 className="text-2xl font-semibold">Change password</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Update your password and keep your account secure.
+        </p>
+      </div>
 
       <div className="grid gap-6">
         <Card>

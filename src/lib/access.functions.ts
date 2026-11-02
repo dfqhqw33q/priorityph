@@ -5,9 +5,13 @@ import {
   authenticateSupabaseRequest,
   requireSupabaseAuth,
 } from "@/integrations/supabase/auth-middleware";
-import { accountPasswordChangeSchema, bootstrapAdminSchema, resetPasswordSchema } from "./schemas";
+import {
+  accountPasswordChangeSchema,
+  bootstrapInternalUserSchema,
+  resetPasswordSchema,
+} from "./schemas";
 import { validatePassword } from "./password-policy";
-import type { AppRole, Permission } from "./domain";
+import { normalizeRole, type AppRole, type Permission } from "./domain";
 
 export type AccessProfile = {
   userId: string;
@@ -21,80 +25,6 @@ export type AccessProfile = {
   roles: AppRole[];
   permissions: Permission[];
 };
-
-export type AccountSettings = {
-  userId: string;
-  fullName: string;
-  email: string;
-  jobTitle: string | null;
-  isActive: boolean;
-  isLocked: boolean;
-  mustChangePassword: boolean;
-  lastLoginAt: string | null;
-  roles: AppRole[];
-  employeeNumber: string | null;
-  otpRequired: boolean;
-  recentSecurityActivity: Array<{
-    action: string;
-    result: string;
-    occurredAt: string;
-  }>;
-};
-
-export const getMyAccountSettings = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<AccountSettings> => {
-    const { getAdmin } = await import("./server-core.server");
-    const admin = await getAdmin();
-    const [
-      { data: profile },
-      { data: roles },
-      { data: activity },
-      { data: employee },
-      { data: otpSetting },
-      authUserResult,
-    ] = await Promise.all([
-      admin
-        .from("internal_users")
-        .select(
-          "id, full_name, email, job_title, is_active, is_locked, must_change_password, last_login_at",
-        )
-        .eq("id", context.userId)
-        .maybeSingle(),
-      admin.from("user_roles").select("role").eq("user_id", context.userId),
-      admin
-        .from("audit_logs")
-        .select("action, result, occurred_at")
-        .eq("actor_user_id", context.userId)
-        .eq("module", "Authentication")
-        .order("occurred_at", { ascending: false })
-        .limit(10),
-      admin.from("employees").select("employee_number").eq("user_id", context.userId).maybeSingle(),
-      admin.from("system_settings").select("email_otp_enabled").eq("id", "auth").maybeSingle(),
-      admin.auth.admin.getUserById(context.userId),
-    ]);
-    if (!profile) throw new Error("Your internal account could not be found");
-    const authUser = authUserResult.data.user;
-    return {
-      userId: profile.id,
-      fullName: profile.full_name,
-      email: profile.email,
-      emailConfirmedAt: authUser?.email_confirmed_at ?? null,
-      jobTitle: profile.job_title,
-      isActive: profile.is_active,
-      isLocked: profile.is_locked,
-      mustChangePassword: profile.must_change_password,
-      lastLoginAt: profile.last_login_at,
-      roles: (roles ?? []).map((row) => row.role as AppRole),
-      employeeNumber: employee?.employee_number ?? null,
-      otpRequired: otpSetting?.email_otp_enabled ?? true,
-      recentSecurityActivity: (activity ?? []).map((row) => ({
-        action: row.action,
-        result: row.result,
-        occurredAt: row.occurred_at,
-      })),
-    };
-  });
 
 export const syncMyConfirmedEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -125,40 +55,6 @@ export const syncMyConfirmedEmail = createServerFn({ method: "POST" })
       entityId: context.userId,
     });
     return { updated: true };
-  });
-
-export const updateEmailOtpSetting = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => z.object({ enabled: z.boolean() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { getAdmin, getActorRoles, writeAudit, validationError } =
-      await import("./server-core.server");
-    const admin = await getAdmin();
-    const roles = await getActorRoles(context.userId);
-    if (!roles.includes("ADMINISTRATOR")) {
-      throw validationError("Only administrators can change the email OTP setting");
-    }
-    const { data: previous } = await admin
-      .from("system_settings")
-      .select("email_otp_enabled")
-      .eq("id", "auth")
-      .maybeSingle();
-    const { error } = await admin
-      .from("system_settings")
-      .update({ email_otp_enabled: data.enabled, updated_by: context.userId })
-      .eq("id", "auth");
-    if (error) throw validationError("Could not update the email OTP setting");
-    await writeAudit({
-      actorUserId: context.userId,
-      actorRole: roles.join(","),
-      action: "EMAIL_OTP_SETTING_UPDATED",
-      module: "Authentication",
-      entityType: "system_setting",
-      entityId: "auth",
-      previousValue: previous,
-      newValue: { email_otp_enabled: data.enabled },
-    });
-    return { enabled: data.enabled };
   });
 
 export const updateMyProfile = createServerFn({ method: "POST" })
@@ -301,7 +197,7 @@ export const beginStepUpAuthentication = createServerFn({ method: "POST" })
       });
       throw validationError("Identity verification failed");
     }
-    const table = admin.from("security_elevations" as never);
+    const table = admin.from("security_elevations");
     const { error: elevationError } = await table.upsert(
       {
         user_id: context.userId,
@@ -367,14 +263,18 @@ export const getMyAccess = createServerFn({ method: "GET" })
     ]);
     if (!user) return null;
 
-    const roles = (roleRows ?? []).map((r) => r.role as AppRole);
+    const roles = (roleRows ?? []).map((row) => normalizeRole(row.role));
+    if (roles.length !== 1 || roles.some((role) => role === null)) return null;
+    const assignedRoles = roles.filter((role): role is AppRole => role !== null);
+    const { data: authUser, error: authUserError } = await admin.auth.admin.getUserById(userId);
+    if (authUserError) throw new Error("Could not verify the authenticated account.");
 
     let permissions: Permission[] = [];
-    if (roles.length > 0 && user.is_active && !user.is_locked) {
+    if (user.is_active && !user.is_locked) {
       const { data: permRows } = await admin
         .from("role_permissions")
         .select("permission_code")
-        .in("role_code", roles);
+        .in("role_code", assignedRoles);
       permissions = Array.from(
         new Set((permRows ?? []).map((r) => r.permission_code as Permission)),
       );
@@ -383,12 +283,13 @@ export const getMyAccess = createServerFn({ method: "GET" })
     return {
       userId,
       email: user.email,
+      emailConfirmedAt: authUser.user?.email_confirmed_at ?? null,
       fullName: user.full_name,
       jobTitle: user.job_title,
       isActive: user.is_active,
       isLocked: user.is_locked,
       mustChangePassword: user.must_change_password,
-      roles,
+      roles: assignedRoles,
       permissions,
     };
   });
@@ -734,9 +635,9 @@ export const needsBootstrap = createServerFn({ method: "GET" }).handler(async ()
   return { needsBootstrap: (count ?? 0) === 0 };
 });
 
-/** One-time creation of the first Administrator. Refuses once any internal user exists. */
-export const bootstrapAdministrator = createServerFn({ method: "POST" })
-  .validator((input: unknown) => bootstrapAdminSchema.parse(input))
+/** One-time creation of the first Supervisor. Refuses once any internal user exists. */
+export const bootstrapFirstSupervisor = createServerFn({ method: "POST" })
+  .validator((input: unknown) => bootstrapInternalUserSchema.parse(input))
   .handler(async ({ data }) => {
     const { getAdmin, writeAudit, validationError, safeMessage } =
       await import("./server-core.server");
@@ -767,23 +668,23 @@ export const bootstrapAdministrator = createServerFn({ method: "POST" })
       });
       if (profileError) throw new Error(profileError.message);
       const { data: employee, error: employeeError } = await admin.rpc(
-        "ensure_internal_user_employee" as never,
-        { _user_id: userId } as never,
+        "ensure_internal_user_employee",
+        { _user_id: userId },
       );
       if (employeeError || !employee) throw new Error("Could not create the employee record");
       const { error: roleError } = await admin
         .from("user_roles")
-        .insert({ user_id: userId, role: "ADMINISTRATOR" });
+        .insert({ user_id: userId, role: "SUPERVISOR" });
       if (roleError) throw new Error(roleError.message);
 
       await writeAudit({
         actorUserId: userId,
-        actorRole: "ADMINISTRATOR",
-        action: "BOOTSTRAP_ADMINISTRATOR_CREATED",
-        module: "User Management",
+        actorRole: "SUPERVISOR",
+        action: "BOOTSTRAP_SUPERVISOR_CREATED",
+        module: "Authentication",
         entityType: "internal_user",
         entityId: userId,
-        newValue: { email: data.email, roles: ["ADMINISTRATOR"] },
+        newValue: { email: data.email, roles: ["SUPERVISOR"] },
       });
       return { ok: true, employeeNumber: employee.employee_number };
     } catch (error) {

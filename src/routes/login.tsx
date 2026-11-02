@@ -32,12 +32,12 @@ export const Route = createFileRoute("/login")({
       { title: "Sign in — Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Secure sign-in for HR, supervisors, the President and administrators.",
+        content: "Secure sign-in for internal employees and supervisors.",
       },
       { property: "og:title", content: "Sign in — Priority Handling Logistics, Inc." },
       {
         property: "og:description",
-        content: "Secure sign-in for internal evaluation system users.",
+        content: "Secure sign-in for the internal performance management portal.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

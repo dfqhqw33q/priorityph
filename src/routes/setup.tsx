@@ -11,8 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordField } from "@/components/shared/password-field";
-import { bootstrapAdministrator, needsBootstrap } from "@/lib/access.functions";
-import { bootstrapAdminSchema } from "@/lib/schemas";
+import { bootstrapFirstSupervisor, needsBootstrap } from "@/lib/access.functions";
+import { bootstrapInternalUserSchema } from "@/lib/schemas";
 
 export const Route = createFileRoute("/setup")({
   ssr: false,
@@ -21,10 +21,10 @@ export const Route = createFileRoute("/setup")({
       { title: "Initial setup — Priority Handling Logistics, Inc." },
       {
         name: "description",
-        content: "Create the first Administrator account for the evaluation system.",
+        content: "Create the first Supervisor account for the internal performance portal.",
       },
       { property: "og:title", content: "Initial setup" },
-      { property: "og:description", content: "Create the first Administrator account." },
+      { property: "og:description", content: "Create the first Supervisor account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
@@ -33,17 +33,17 @@ export const Route = createFileRoute("/setup")({
   component: SetupPage,
 });
 
-type Values = z.infer<typeof bootstrapAdminSchema>;
+type Values = z.infer<typeof bootstrapInternalUserSchema>;
 
 function SetupPage() {
   const navigate = useNavigate();
   const check = useServerFn(needsBootstrap);
-  const bootstrap = useServerFn(bootstrapAdministrator);
+  const bootstrap = useServerFn(bootstrapFirstSupervisor);
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [pending, setPending] = useState(false);
 
   const form = useForm<Values>({
-    resolver: zodResolver(bootstrapAdminSchema),
+    resolver: zodResolver(bootstrapInternalUserSchema),
     defaultValues: { email: "", fullName: "", password: "" },
   });
 
@@ -57,7 +57,7 @@ function SetupPage() {
     setPending(true);
     try {
       await bootstrap({ data: values });
-      toast.success("Administrator created. You can sign in now.");
+      toast.success("Supervisor account created. You can sign in now.");
       navigate({ to: "/login" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Initial setup failed");
@@ -71,7 +71,7 @@ function SetupPage() {
       <Card className="w-full max-w-md border border-border bg-card shadow-lg">
         <CardHeader>
           <CardTitle>Initial setup</CardTitle>
-          <CardDescription>Create the first Administrator account.</CardDescription>
+          <CardDescription>Create the first Supervisor account.</CardDescription>
         </CardHeader>
         <CardContent>
           {allowed === false ? (
@@ -111,7 +111,7 @@ function SetupPage() {
                 ) : null}
               </div>
               <Button type="submit" className="w-full" disabled={pending || allowed === null}>
-                {pending ? "Creating…" : "Create Administrator"}
+                {pending ? "Creating…" : "Create Supervisor"}
               </Button>
             </form>
           )}
