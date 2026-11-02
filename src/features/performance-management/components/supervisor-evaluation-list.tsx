@@ -1,4 +1,7 @@
+import { Link } from "@tanstack/react-router";
+
 import { EmptyState, StatusBadge } from "@/components/shared/portal-ui";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -33,6 +36,9 @@ export function SupervisorEvaluationList({
             <TableHead>Submitted</TableHead>
             <TableHead className="text-right">Self score</TableHead>
             <TableHead>Supervisor review</TableHead>
+            <TableHead>
+              <span className="sr-only">Action</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -62,6 +68,30 @@ export function SupervisorEvaluationList({
                 {evaluation.supervisorStatus
                   ? evaluation.supervisorStatus.replaceAll("_", " ")
                   : "Not started"}
+              </TableCell>
+              <TableCell className="text-right">
+                {[
+                  "SUBMITTED",
+                  "PENDING_SUPERVISOR_REVIEW",
+                  "SUPERVISOR_IN_PROGRESS",
+                  "SUPERVISOR_SUBMITTED",
+                  "COMPLETED",
+                ].includes(evaluation.status) ? (
+                  <Button asChild size="sm" variant="outline">
+                    <Link
+                      to="/team/evaluations/$evaluationId"
+                      params={{ evaluationId: evaluation.id }}
+                    >
+                      {evaluation.supervisorStatus === "SUBMITTED" ||
+                      evaluation.supervisorStatus === "COMPLETED" ||
+                      evaluation.status === "COMPLETED"
+                        ? "View review"
+                        : "Open review"}
+                    </Link>
+                  </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Awaiting employee</span>
+                )}
               </TableCell>
             </TableRow>
           ))}

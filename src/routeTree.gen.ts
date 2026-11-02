@@ -30,6 +30,7 @@ import { Route as AuthenticatedTeamEmployeesRouteImport } from './routes/_authen
 import { Route as AuthenticatedTeamEvaluationsRouteImport } from './routes/_authenticated/team.evaluations'
 import { Route as AuthenticatedTeamHistoryRouteImport } from './routes/_authenticated/team.history'
 import { Route as AuthenticatedTeamPendingRouteImport } from './routes/_authenticated/team.pending'
+import { Route as AuthenticatedTeamEvaluationsEvaluationIdRouteImport } from './routes/_authenticated/team.evaluations.$evaluationId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -146,6 +147,12 @@ const AuthenticatedTeamPendingRoute =
     path: '/team/pending',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTeamEvaluationsEvaluationIdRoute =
+  AuthenticatedTeamEvaluationsEvaluationIdRouteImport.update({
+    id: '/$evaluationId',
+    path: '/$evaluationId',
+    getParentRoute: () => AuthenticatedTeamEvaluationsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -163,11 +170,12 @@ export interface FileRoutesByFullPath {
   '/performance/self-evaluation': typeof AuthenticatedPerformanceSelfEvaluationRoute
   '/team/completed': typeof AuthenticatedTeamCompletedRoute
   '/team/employees': typeof AuthenticatedTeamEmployeesRoute
-  '/team/evaluations': typeof AuthenticatedTeamEvaluationsRoute
+  '/team/evaluations': typeof AuthenticatedTeamEvaluationsRouteWithChildren
   '/team/history': typeof AuthenticatedTeamHistoryRoute
   '/team/pending': typeof AuthenticatedTeamPendingRoute
   '/performance/': typeof AuthenticatedPerformanceIndexRoute
   '/team/': typeof AuthenticatedTeamIndexRoute
+  '/team/evaluations/$evaluationId': typeof AuthenticatedTeamEvaluationsEvaluationIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -185,11 +193,12 @@ export interface FileRoutesByTo {
   '/performance/self-evaluation': typeof AuthenticatedPerformanceSelfEvaluationRoute
   '/team/completed': typeof AuthenticatedTeamCompletedRoute
   '/team/employees': typeof AuthenticatedTeamEmployeesRoute
-  '/team/evaluations': typeof AuthenticatedTeamEvaluationsRoute
+  '/team/evaluations': typeof AuthenticatedTeamEvaluationsRouteWithChildren
   '/team/history': typeof AuthenticatedTeamHistoryRoute
   '/team/pending': typeof AuthenticatedTeamPendingRoute
   '/performance': typeof AuthenticatedPerformanceIndexRoute
   '/team': typeof AuthenticatedTeamIndexRoute
+  '/team/evaluations/$evaluationId': typeof AuthenticatedTeamEvaluationsEvaluationIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -209,11 +218,12 @@ export interface FileRoutesById {
   '/_authenticated/performance/self-evaluation': typeof AuthenticatedPerformanceSelfEvaluationRoute
   '/_authenticated/team/completed': typeof AuthenticatedTeamCompletedRoute
   '/_authenticated/team/employees': typeof AuthenticatedTeamEmployeesRoute
-  '/_authenticated/team/evaluations': typeof AuthenticatedTeamEvaluationsRoute
+  '/_authenticated/team/evaluations': typeof AuthenticatedTeamEvaluationsRouteWithChildren
   '/_authenticated/team/history': typeof AuthenticatedTeamHistoryRoute
   '/_authenticated/team/pending': typeof AuthenticatedTeamPendingRoute
   '/_authenticated/performance/': typeof AuthenticatedPerformanceIndexRoute
   '/_authenticated/team/': typeof AuthenticatedTeamIndexRoute
+  '/_authenticated/team/evaluations/$evaluationId': typeof AuthenticatedTeamEvaluationsEvaluationIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/team/pending'
     | '/performance/'
     | '/team/'
+    | '/team/evaluations/$evaluationId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/team/pending'
     | '/performance'
     | '/team'
+    | '/team/evaluations/$evaluationId'
   id:
     | '__root__'
     | '/'
@@ -283,6 +295,7 @@ export interface FileRouteTypes {
     | '/_authenticated/team/pending'
     | '/_authenticated/performance/'
     | '/_authenticated/team/'
+    | '/_authenticated/team/evaluations/$evaluationId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -444,8 +457,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamPendingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/team/evaluations/$evaluationId': {
+      id: '/_authenticated/team/evaluations/$evaluationId'
+      path: '/$evaluationId'
+      fullPath: '/team/evaluations/$evaluationId'
+      preLoaderRoute: typeof AuthenticatedTeamEvaluationsEvaluationIdRouteImport
+      parentRoute: typeof AuthenticatedTeamEvaluationsRoute
+    }
   }
 }
+
+interface AuthenticatedTeamEvaluationsRouteChildren {
+  AuthenticatedTeamEvaluationsEvaluationIdRoute: typeof AuthenticatedTeamEvaluationsEvaluationIdRoute
+}
+
+const AuthenticatedTeamEvaluationsRouteChildren: AuthenticatedTeamEvaluationsRouteChildren =
+  {
+    AuthenticatedTeamEvaluationsEvaluationIdRoute:
+      AuthenticatedTeamEvaluationsEvaluationIdRoute,
+  }
+
+const AuthenticatedTeamEvaluationsRouteWithChildren =
+  AuthenticatedTeamEvaluationsRoute._addFileChildren(
+    AuthenticatedTeamEvaluationsRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
@@ -457,7 +492,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPerformanceSelfEvaluationRoute: typeof AuthenticatedPerformanceSelfEvaluationRoute
   AuthenticatedTeamCompletedRoute: typeof AuthenticatedTeamCompletedRoute
   AuthenticatedTeamEmployeesRoute: typeof AuthenticatedTeamEmployeesRoute
-  AuthenticatedTeamEvaluationsRoute: typeof AuthenticatedTeamEvaluationsRoute
+  AuthenticatedTeamEvaluationsRoute: typeof AuthenticatedTeamEvaluationsRouteWithChildren
   AuthenticatedTeamHistoryRoute: typeof AuthenticatedTeamHistoryRoute
   AuthenticatedTeamPendingRoute: typeof AuthenticatedTeamPendingRoute
   AuthenticatedPerformanceIndexRoute: typeof AuthenticatedPerformanceIndexRoute
@@ -475,7 +510,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPerformanceSelfEvaluationRoute,
   AuthenticatedTeamCompletedRoute: AuthenticatedTeamCompletedRoute,
   AuthenticatedTeamEmployeesRoute: AuthenticatedTeamEmployeesRoute,
-  AuthenticatedTeamEvaluationsRoute: AuthenticatedTeamEvaluationsRoute,
+  AuthenticatedTeamEvaluationsRoute:
+    AuthenticatedTeamEvaluationsRouteWithChildren,
   AuthenticatedTeamHistoryRoute: AuthenticatedTeamHistoryRoute,
   AuthenticatedTeamPendingRoute: AuthenticatedTeamPendingRoute,
   AuthenticatedPerformanceIndexRoute: AuthenticatedPerformanceIndexRoute,
