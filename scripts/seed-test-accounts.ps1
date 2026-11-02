@@ -1,92 +1,215 @@
-param([string]$Email)
+param([System.Security.SecureString]$Password)
 
 $ErrorActionPreference = 'Stop'
 
-$projectRef = if ($env:SUPABASE_PROJECT_REF) {
-  $env:SUPABASE_PROJECT_REF
-} elseif ($env:VITE_SUPABASE_URL -match '^https://([^.]+)\.supabase\.co') {
-  $Matches[1]
-} else {
-  'opgphfvdqdhxicrebfuk'
-}
-$supabaseUrl = "https://$projectRef.supabase.co"
-$password = 'Phase2Test!2026'
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$envFile = Join-Path $repoRoot '.env'
+if (-not (Test-Path $envFile)) { throw "Missing environment file: $envFile" }
 
-$serviceKey = $env:SUPABASE_SERVICE_ROLE_KEY
-if ([string]::IsNullOrWhiteSpace($serviceKey)) {
-  $keyJson = (& npx.cmd supabase projects api-keys --project-ref $projectRef --reveal --output json | Out-String)
-  $serviceKey = (($keyJson | ConvertFrom-Json) | Where-Object { $_.name -eq 'service_role' }).api_key
-}
-if ([string]::IsNullOrWhiteSpace($serviceKey)) { throw 'Could not obtain the Supabase service-role key.' }
-
-$headers = @{ apikey = $serviceKey; Authorization = "Bearer $serviceKey" }
-
-if (-not $Email) {
-  $mfaHeaders = $headers + @{ Prefer = 'return=minimal' }
-  Invoke-RestMethod -Method Patch -Uri "$supabaseUrl/rest/v1/system_settings?id=eq.auth" -Headers $mfaHeaders -ContentType 'application/json' -Body (@{ email_otp_enabled = $false } | ConvertTo-Json) | Out-Null
-  Write-Output 'Email OTP: disabled for the default test seed.'
-}
-
-# Credential delivery is disabled for test seeding. To restore it later, uncomment
-# this block and the Send-CredentialEmail call below.
-# $brevoApiKey = $env:BREVO_API_KEY
-# $emailFrom = $env:EMAIL_FROM
-# if ([string]::IsNullOrWhiteSpace($brevoApiKey) -or [string]::IsNullOrWhiteSpace($emailFrom) -or $emailFrom -notmatch '@') {
-#   throw 'Credential delivery requires BREVO_API_KEY and EMAIL_FROM environment variables.'
-# }
-#
-# function Send-CredentialEmail($account, $password) {
-#   $body = @{
-#     sender = @{ name = 'Priority Handling Logistics'; email = $emailFrom }
-#     to = @(@{ email = $account.email; name = $account.full_name })
-#     subject = 'Your Priority Handling account credentials'
-#     htmlContent = "<p>Hello $($account.full_name),</p><p>Your Priority Handling account has been created.</p><p>Email: <strong>$($account.email)</strong></p><p>Temporary password: <strong>$password</strong></p><p>Keep these credentials private.</p>"
-#     textContent = "Your Priority Handling account has been created.`n`nEmail: $($account.email)`nTemporary password: $password`n`nKeep these credentials private."
-#   } | ConvertTo-Json -Depth 8
-#   $mailHeaders = @{ Accept = 'application/json'; 'Content-Type' = 'application/json'; 'api-key' = $brevoApiKey }
-#   Invoke-RestMethod -Method Post -Uri 'https://api.brevo.com/v3/smtp/email' -Headers $mailHeaders -ContentType 'application/json' -Body $body | Out-Null
-# }
-
-$accounts = @(
-  @{ email = 'presidentpriorityph@gmail.com'; full_name = 'Satoshi Sesh'; job_title = 'President'; role = 'PRESIDENT'; previous_email = 'satoshesh@gmail.com' },
-  @{ email = 'jayyliteral@gmail.com'; full_name = 'Bonifacio Raili'; job_title = 'Administrator'; role = 'ADMINISTRATOR'; previous_email = 'adminpriorityph@gmail.com' },
-  @{ email = 'hrpriorityph@gmail.com'; full_name = 'Yang Lionheart'; job_title = 'Human Resources'; role = 'HR'; previous_email = 'yang.lionheart777@gmail.com' },
-  @{ email = 'supervisorpriorityph@gmail.com'; full_name = 'Kenshin'; job_title = 'Supervisor'; role = 'SUPERVISOR'; previous_email = 'hkenshin975@gmail.com' },
-  @{ email = 'revsupervisorpriorityph@gmail.com'; full_name = 'Boni Dumpp'; job_title = 'Reviewing Supervisor'; role = 'REVIEWING_SUPERVISOR'; previous_email = 'boni.dumpp@gmail.com' },
-  @{ email = 'committeepriorityph@gmail.com'; full_name = 'Jay Literalz'; job_title = 'Committee Member'; role = 'COMMITTEE' }
-)
-if ($Email) { $accounts = @($accounts | Where-Object { $_.email -eq $Email }) }
-if ($Email -and $accounts.Count -eq 0) { throw "No seeded account matches $Email." }
-
-$existing = Invoke-RestMethod -Method Get -Uri "$supabaseUrl/auth/v1/admin/users?per_page=1000" -Headers $headers
-foreach ($account in $accounts) {
-  $match = @($existing.users | Where-Object { $_.email -eq $account.email }) | Select-Object -First 1
-  if (-not $match -and $account.previous_email) {
-    $match = @($existing.users | Where-Object { $_.email -eq $account.previous_email }) | Select-Object -First 1
+$envValues = @{}
+Get-Content $envFile | ForEach-Object {
+  if ($_ -match '^\s*(SUPABASE_PROJECT_ID|SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY)\s*=\s*(.*)\s*$') {
+    $name = $Matches[1]
+    $value = $Matches[2].Trim()
+    if ($value -match '^"(.*)"$') { $value = $Matches[1] }
+    if ($value -match "^'(.*)'$") { $value = $Matches[1] }
+    $envValues[$name] = $value
   }
-  $body = @{ email = $account.email; password = $password; email_confirm = $true; user_metadata = @{ full_name = $account.full_name } } | ConvertTo-Json -Depth 5
-  if ($match) {
-    $user = Invoke-RestMethod -Method Put -Uri "$supabaseUrl/auth/v1/admin/users/$($match.id)" -Headers $headers -ContentType 'application/json' -Body $body
+}
+
+$projectRef = $envValues['SUPABASE_PROJECT_ID']
+$supabaseUrl = $envValues['SUPABASE_URL'].TrimEnd('/')
+$serviceKey = $envValues['SUPABASE_SERVICE_ROLE_KEY']
+if (
+  [string]::IsNullOrWhiteSpace($projectRef) -or
+  [string]::IsNullOrWhiteSpace($supabaseUrl) -or
+  [string]::IsNullOrWhiteSpace($serviceKey)
+) {
+  throw 'Missing SUPABASE_PROJECT_ID, SUPABASE_URL, or SUPABASE_SERVICE_ROLE_KEY in .env'
+}
+
+$urlProjectRef = [regex]::Match($supabaseUrl, '^https://([^.]+)\.supabase\.co$').Groups[1].Value
+$linkedRefPath = Join-Path $repoRoot 'supabase\.temp\project-ref'
+$linkedProjectRef = if (Test-Path $linkedRefPath) { (Get-Content $linkedRefPath -Raw).Trim() } else { '' }
+if ($urlProjectRef -ne $projectRef -or ($linkedProjectRef -and $linkedProjectRef -ne $projectRef)) {
+  throw 'SUPABASE_PROJECT_ID, SUPABASE_URL, and the linked Supabase project must all match.'
+}
+
+if (-not $Password) {
+  $Password = Read-Host 'Temporary password for both manual-test accounts' -AsSecureString
+}
+
+$passwordPointer = [IntPtr]::Zero
+try {
+  $passwordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
+  $passwordPlain = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
+  if ($passwordPlain.Length -lt 12) { throw 'The test password must be at least 12 characters.' }
+
+  $headers = @{ apikey = $serviceKey; Authorization = "Bearer $serviceKey" }
+  $accounts = @(
+    @{
+      email = 'supervisorpriorityph@gmail.com'
+      full_name = 'Manual Test Supervisor'
+      job_title = 'Supervisor'
+      role = 'SUPERVISOR'
+    },
+    @{
+      email = 'employeepriorityph@gmail.com'
+      full_name = 'Manual Test Driver'
+      job_title = 'Driver'
+      role = 'EMPLOYEE'
+    }
+  )
+
+  $existingUsers = Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/auth/v1/admin/users?per_page=1000" `
+    -Headers $headers
+  $usersByEmail = @{}
+
+  foreach ($account in $accounts) {
+    $match = @($existingUsers.users | Where-Object { $_.email -ieq $account.email }) |
+      Select-Object -First 1
+    $authBody = @{
+      email = $account.email
+      password = $passwordPlain
+      email_confirm = $true
+      user_metadata = @{ full_name = $account.full_name }
+    } | ConvertTo-Json -Depth 5
+
+    if ($match) {
+      $user = Invoke-RestMethod `
+        -Method Put `
+        -Uri "$supabaseUrl/auth/v1/admin/users/$($match.id)" `
+        -Headers $headers `
+        -ContentType 'application/json' `
+        -Body $authBody
+    } else {
+      $user = Invoke-RestMethod `
+        -Method Post `
+        -Uri "$supabaseUrl/auth/v1/admin/users" `
+        -Headers $headers `
+        -ContentType 'application/json' `
+        -Body $authBody
+    }
+
+    $usersByEmail[$account.email] = $user
+    $profileBody = @{
+      id = $user.id
+      email = $account.email
+      full_name = $account.full_name
+      job_title = $account.job_title
+      is_active = $true
+      is_locked = $false
+      must_change_password = $false
+    } | ConvertTo-Json -Depth 5
+    Invoke-RestMethod `
+      -Method Post `
+      -Uri "$supabaseUrl/rest/v1/internal_users" `
+      -Headers ($headers + @{ Prefer = 'resolution=merge-duplicates,return=minimal' }) `
+      -ContentType 'application/json' `
+      -Body $profileBody | Out-Null
+
+    Invoke-RestMethod `
+      -Method Delete `
+      -Uri "$supabaseUrl/rest/v1/user_roles?user_id=eq.$($user.id)" `
+      -Headers $headers | Out-Null
+    $roleBody = @{ user_id = $user.id; role = $account.role } | ConvertTo-Json
+    Invoke-RestMethod `
+      -Method Post `
+      -Uri "$supabaseUrl/rest/v1/user_roles" `
+      -Headers ($headers + @{ Prefer = 'return=minimal' }) `
+      -ContentType 'application/json' `
+      -Body $roleBody | Out-Null
+  }
+
+  $supervisor = $usersByEmail['supervisorpriorityph@gmail.com']
+  $employee = $usersByEmail['employeepriorityph@gmail.com']
+  $supervisorEmployee = Invoke-RestMethod `
+    -Method Post `
+    -Uri "$supabaseUrl/rest/v1/rpc/ensure_internal_user_employee" `
+    -Headers $headers `
+    -ContentType 'application/json' `
+    -Body (@{ _user_id = $supervisor.id } | ConvertTo-Json)
+  $driverEmployee = Invoke-RestMethod `
+    -Method Post `
+    -Uri "$supabaseUrl/rest/v1/rpc/ensure_internal_user_employee" `
+    -Headers $headers `
+    -ContentType 'application/json' `
+    -Body (@{ _user_id = $employee.id } | ConvertTo-Json)
+
+  if (-not $supervisorEmployee.id -or -not $driverEmployee.id) {
+    throw 'Could not create or resolve employee records for the test accounts.'
+  }
+
+  $driverPosition = Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/rest/v1/job_positions?name=eq.Driver&select=id" `
+    -Headers $headers
+  if (-not $driverPosition -or -not $driverPosition[0].id) {
+    throw 'The Driver position is missing. Apply the performance-management migration before seeding.'
+  }
+
+  $driverUpdate = @{
+    job_title = 'Driver'
+    job_position_id = $driverPosition[0].id
+    employment_status = 'ACTIVE'
+    assigned_supervisor_user_id = $supervisor.id
+  } | ConvertTo-Json
+  Invoke-RestMethod `
+    -Method Patch `
+    -Uri "$supabaseUrl/rest/v1/employees?id=eq.$($driverEmployee.id)" `
+    -Headers ($headers + @{ Prefer = 'return=minimal' }) `
+    -ContentType 'application/json' `
+    -Body $driverUpdate | Out-Null
+
+  $today = (Get-Date).Date
+  $periodName = "Driver Manual Test $($today.ToString('yyyy-MM-dd'))"
+  $encodedPeriodName = [uri]::EscapeDataString($periodName)
+  $periodMatches = Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/rest/v1/evaluation_periods?name=eq.$encodedPeriodName&select=id" `
+    -Headers $headers
+  $periodBody = @{
+    name = $periodName
+    starts_on = $today.ToString('yyyy-MM-dd')
+    ends_on = $today.AddDays(30).ToString('yyyy-MM-dd')
+    submission_deadline = $today.AddDays(14).ToString('yyyy-MM-dd')
+    status = 'ACTIVE'
+  } | ConvertTo-Json
+  if ($periodMatches.Count -gt 0) {
+    Invoke-RestMethod `
+      -Method Patch `
+      -Uri "$supabaseUrl/rest/v1/evaluation_periods?id=eq.$($periodMatches[0].id)" `
+      -Headers ($headers + @{ Prefer = 'return=minimal' }) `
+      -ContentType 'application/json' `
+      -Body $periodBody | Out-Null
   } else {
-    $user = Invoke-RestMethod -Method Post -Uri "$supabaseUrl/auth/v1/admin/users" -Headers $headers -ContentType 'application/json' -Body $body
+    Invoke-RestMethod `
+      -Method Post `
+      -Uri "$supabaseUrl/rest/v1/evaluation_periods" `
+      -Headers ($headers + @{ Prefer = 'return=minimal' }) `
+      -ContentType 'application/json' `
+      -Body $periodBody | Out-Null
   }
 
-  $profile = @{ id = $user.id; email = $account.email; full_name = $account.full_name; job_title = $account.job_title; is_active = $true; is_locked = $false; must_change_password = $false } | ConvertTo-Json
-  Invoke-RestMethod -Method Post -Uri "$supabaseUrl/rest/v1/internal_users" -Headers ($headers + @{ Prefer = 'resolution=merge-duplicates' }) -ContentType 'application/json' -Body $profile | Out-Null
-  $employee = Invoke-RestMethod -Method Post -Uri "$supabaseUrl/rest/v1/rpc/ensure_internal_user_employee" -Headers ($headers + @{ 'Content-Type' = 'application/json' }) -ContentType 'application/json' -Body (@{ _user_id = $user.id } | ConvertTo-Json)
-  if ([string]::IsNullOrWhiteSpace($employee.employee_number)) { throw "Could not resolve an Employee ID for $($account.email)." }
-  $roleRow = @{ user_id = $user.id; role = $account.role } | ConvertTo-Json
-  $roleHeaders = $headers + @{ Prefer = 'return=minimal' }
-  $roleUrl = "$supabaseUrl/rest/v1/user_roles?user_id=eq.$($user.id)&select=id"
-  $existingRole = @(Invoke-RestMethod -Method Get -Uri $roleUrl -Headers $headers) | Select-Object -First 1
-  if ($existingRole) {
-    Invoke-RestMethod -Method Patch -Uri "$supabaseUrl/rest/v1/user_roles?id=eq.$($existingRole.id)" -Headers $roleHeaders -ContentType 'application/json' -Body (@{ role = $account.role } | ConvertTo-Json) | Out-Null
-  } else {
-    Invoke-RestMethod -Method Post -Uri "$supabaseUrl/rest/v1/user_roles" -Headers $roleHeaders -ContentType 'application/json' -Body $roleRow | Out-Null
+  foreach ($account in $accounts) {
+    $user = $usersByEmail[$account.email]
+    $roles = Invoke-RestMethod `
+      -Method Get `
+      -Uri "$supabaseUrl/rest/v1/user_roles?user_id=eq.$($user.id)&select=role" `
+      -Headers $headers
+    if ($roles.Count -ne 1 -or $roles[0].role -ne $account.role) {
+      throw "Could not verify the single $($account.role) role for $($account.email)."
+    }
+    Write-Output "$($account.role): $($account.email) provisioned"
   }
-  # Send-CredentialEmail $account $password
-  Write-Output "$($account.role): $($account.email) provisioned (credentials were not emailed)"
-  Write-Output "$($account.role): $($account.email) provisioned as $($employee.employee_number)"
+
+  Write-Output "Driver employee assigned to supervisor. Active period: $periodName"
+  Write-Output 'Temporary credentials were not printed or written to disk.'
+} finally {
+  if ($passwordPointer -ne [IntPtr]::Zero) {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPointer)
+  }
+  $passwordPlain = $null
 }
-
-Write-Output 'All seeded test accounts are ready.'

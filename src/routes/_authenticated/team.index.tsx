@@ -47,16 +47,23 @@ function SupervisorDashboard() {
         <SummaryCard label="Assigned employees" value={dashboardQuery.data.assignedEmployees} />
         <SummaryCard
           label="Pending self-evaluations"
-          value="—"
-          description="Available in Phase 2."
+          value={dashboardQuery.data.pendingSelfEvaluations}
+          description="Saved drafts awaiting employee submission."
         />
         <SummaryCard
           label="Awaiting supervisor review"
-          value="—"
-          description="Available in Phase 2."
+          value={dashboardQuery.data.awaitingSupervisorReview}
+          description="Submitted evaluations from your assigned team."
         />
-        <SummaryCard label="Completed evaluations" value="—" description="Available in Phase 2." />
-        <SummaryCard label="Overdue evaluations" value="—" description="Available in Phase 2." />
+        <SummaryCard
+          label="Completed evaluations"
+          value={dashboardQuery.data.completedEvaluations}
+        />
+        <SummaryCard
+          label="Overdue evaluations"
+          value="—"
+          description="Overdue tracking is not available yet."
+        />
       </div>
 
       {teamQuery.data.length === 0 ? (

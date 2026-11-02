@@ -40,6 +40,9 @@ supabase/.temp/
 *.docx
 /testing/
 /docs/
+!/docs/
+/docs/*
+!/docs/SUPABASE-RESET-AND-SEED.md
 
 .vercel
 .env*

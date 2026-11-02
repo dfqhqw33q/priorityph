@@ -1,12 +1,12 @@
 # Database Migration Standards
 
-This directory contains the retained database foundation, reusable security/storage/notification migrations, and the new Employee and Supervisor portal migrations. Standalone local SQL migrations for the retired multi-stage evaluation, scoring/AI, learning/succession/recognition, and workflow-processing features have been removed from the active migration directory. No database tables or records were dropped as part of this cleanup.
+This directory contains the retained database foundation, reusable security/storage migrations, and the new Employee and Supervisor portal migrations. Standalone local SQL migrations for the retired multi-stage evaluation, scoring/AI, learning/succession/recognition, notification/reporting, and workflow-processing features have been removed from the active migration directory. No database tables or records were dropped as part of this cleanup.
 
-The configured Supabase project has a separate migration history; it did not report the removed local `20260924...` migration versions. Do not remove or rewrite migration files that are recorded as applied in any other retained, shared, staging, or production project. Use a forward-only migration to change a live schema.
+The linked project reference is `nrurkkaroggdhjmtltzh`. Its remote migration ledger still contains historical `20260924...` versions removed from this local folder. A linked reset is destructive and rebuilds from the migrations present locally, so inspect the migration history and confirm the target is disposable before running one. No linked reset, migration, or account seeding has been performed as part of this update.
 
 ## Employee and Supervisor Portal Schema
 
-The local portal migrations are not currently compatible with the configured Supabase project and must not be applied there. The live project uses `profiles`, `positions`, `reporting_relationships`, `evaluation_cycles`, `evaluation_profile_versions`, `evaluation_profile_factors`, `evaluation_assignments`, `evaluation_factor_responses`, and `notifications`. The pending local portal migrations instead reference `internal_users` and introduce a parallel evaluation schema. Reconcile the migrations and application queries against the live tables before deployment, reusing suitable existing structures and preserving all existing records. No live migration has been applied as part of this work.
+The pending local portal migrations use the retained repository schema and are intended to run after the local foundation migrations. Before applying these migrations to a database that contains data, verify its actual schema and migration history. Preserve applied migration files and existing records in retained, shared, staging, and production environments.
 
 The pending local migration files currently describe:
 
@@ -61,11 +61,11 @@ Never remove or weaken a constraint merely to make a migration easier. Any chang
 
 ## Indexes
 
-Every index must have a demonstrated application query or integrity purpose. Before adding one, inspect existing indexes for duplication. Do not add speculative indexes or indexes solely because they are commonly recommended. Preserve indexes used by evaluation queues, employee and evaluation lookups, notifications, audit history, documents, signatures, and downstream HR modules when they remain required.
+Every index must have a demonstrated application query or integrity purpose. Before adding one, inspect existing indexes for duplication. Do not add speculative indexes or indexes solely because they are commonly recommended. Preserve indexes used by employee and evaluation lookups, audit history, documents, signatures, and downstream HR modules when they remain required.
 
 ## Functions and Triggers
 
-The current database uses authorization, timestamp, finalization-protection, document-version, notification fan-out, and reporting functions, together with triggers that invoke them. Before changing a function or trigger:
+The retained database uses authorization, timestamp, finalization-protection, and document-version functions, together with triggers that invoke them. Before changing a function or trigger:
 
 1. Identify its callers and dependent policies or triggers.
 2. Preserve its security mode and fixed search path where present.
@@ -85,11 +85,11 @@ Row Level Security is a required part of this database. The repository contains 
 - Protect confidential employee, evaluation, audit, signature, and HR data.
 - Never commit passwords, service-role keys, tokens, private keys, or other secrets to SQL files.
 
-Storage access must preserve the private `employee-files` bucket behavior. Realtime configuration must preserve the existing notification publication membership and fan-out behavior.
+Storage access must preserve the private `employee-files` bucket behavior.
 
 ## Data Changes
 
-Treat data-changing statements as migrations with operational impact, not harmless schema declarations. The baseline contains reference-data inserts, role and permission mappings, evaluation templates and criteria, scoring configuration, workflow backfills, and notification backfill behavior.
+Treat data-changing statements as migrations with operational impact, not harmless schema declarations. The baseline contains reference-data inserts, role and permission mappings, evaluation templates and criteria, scoring configuration, and workflow backfills.
 
 - Give every `INSERT`, `UPDATE`, or `DELETE` a clear purpose.
 - Make reference-data inserts idempotent where appropriate.

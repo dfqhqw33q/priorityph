@@ -29,6 +29,27 @@ export type MyPortalProfile = {
 
 export type SupervisorTeamMember = PortalEmployeeProfile;
 
+export type SupervisorEvaluation = {
+  id: string;
+  employeeId: string;
+  employeeNumber: string;
+  employeeName: string;
+  position: string;
+  department: string;
+  periodName: string;
+  status: string;
+  submittedAt: string | null;
+  employeeScore: number | null;
+  supervisorStatus: string | null;
+  supervisorScore: number | null;
+};
+
+const SUPERVISOR_REVIEW_STATUSES = [
+  "SUBMITTED",
+  "PENDING_SUPERVISOR_REVIEW",
+  "SUPERVISOR_IN_PROGRESS",
+];
+
 async function getAuthorizedRole(
   admin: AdminClient,
   userId: string,
@@ -50,6 +71,84 @@ async function getAuthorizedRole(
 
 function departmentName(division: string, section: string): string {
   return [division, section].filter((part) => part.trim()).join(" / ") || "Not specified";
+}
+
+async function loadSupervisorEvaluations(
+  admin: AdminClient,
+  supervisorUserId: string,
+): Promise<SupervisorEvaluation[]> {
+  const { data: employees, error: employeeError } = await admin
+    .from("employees")
+    .select("id, employee_number, full_name, job_title, division, section")
+    .eq("assigned_supervisor_user_id", supervisorUserId)
+    .eq("employment_status", "ACTIVE");
+  if (employeeError)
+    throw new Error(`Could not load employees assigned to you: ${employeeError.message}`);
+  if (!employees?.length) return [];
+
+  const { data: evaluations, error: evaluationError } = await admin
+    .from("employee_evaluations")
+    .select(
+      "id, employee_id, evaluation_period_id, status, submitted_at, weighted_score, updated_at",
+    )
+    .in(
+      "employee_id",
+      employees.map((employee) => employee.id),
+    )
+    .order("updated_at", { ascending: false });
+  if (evaluationError)
+    throw new Error(
+      `Could not load your assigned employee evaluations: ${evaluationError.message}`,
+    );
+  if (!evaluations?.length) return [];
+
+  const periodIds = [...new Set(evaluations.map((evaluation) => evaluation.evaluation_period_id))];
+  const evaluationIds = evaluations.map((evaluation) => evaluation.id);
+  const [
+    { data: periods, error: periodError },
+    { data: supervisorEvaluations, error: supervisorError },
+  ] = await Promise.all([
+    admin.from("evaluation_periods").select("id, name").in("id", periodIds),
+    admin
+      .from("supervisor_evaluations")
+      .select("employee_evaluation_id, status, weighted_score")
+      .in("employee_evaluation_id", evaluationIds),
+  ]);
+  if (periodError)
+    throw new Error(`Could not load evaluation period names: ${periodError.message}`);
+  if (supervisorError)
+    throw new Error(`Could not load supervisor review status: ${supervisorError.message}`);
+
+  const employeeById = new Map(employees.map((employee) => [employee.id, employee]));
+  const periodById = new Map((periods ?? []).map((period) => [period.id, period.name]));
+  const supervisorEvaluationById = new Map(
+    (supervisorEvaluations ?? []).map((evaluation) => [
+      evaluation.employee_evaluation_id,
+      evaluation,
+    ]),
+  );
+
+  return evaluations.flatMap((evaluation) => {
+    const employee = employeeById.get(evaluation.employee_id);
+    if (!employee) return [];
+    const supervisorEvaluation = supervisorEvaluationById.get(evaluation.id);
+    return [
+      {
+        id: evaluation.id,
+        employeeId: employee.id,
+        employeeNumber: employee.employee_number,
+        employeeName: employee.full_name,
+        position: employee.job_title || "Not specified",
+        department: departmentName(employee.division, employee.section),
+        periodName: periodById.get(evaluation.evaluation_period_id) ?? "Evaluation period",
+        status: evaluation.status,
+        submittedAt: evaluation.submitted_at,
+        employeeScore: evaluation.weighted_score,
+        supervisorStatus: supervisorEvaluation?.status ?? null,
+        supervisorScore: supervisorEvaluation?.weighted_score ?? null,
+      },
+    ];
+  });
 }
 
 export const getMyPortalProfile = createServerFn({ method: "GET" })
@@ -179,13 +278,36 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
     const { getAdmin } = await import("@/lib/server-core.server");
     const admin = await getAdmin();
     await getAuthorizedRole(admin, context.userId, "SUPERVISOR");
-    const { count, error } = await admin
-      .from("employees")
-      .select("id", { count: "exact", head: true })
-      .eq("assigned_supervisor_user_id", context.userId);
-    if (error) throw new Error(`Could not load your team summary: ${error.message}`);
+    const [teamResult, evaluations] = await Promise.all([
+      admin
+        .from("employees")
+        .select("id", { count: "exact", head: true })
+        .eq("assigned_supervisor_user_id", context.userId)
+        .eq("employment_status", "ACTIVE"),
+      loadSupervisorEvaluations(admin, context.userId),
+    ]);
+    if (teamResult.error)
+      throw new Error(`Could not load your team summary: ${teamResult.error.message}`);
     return {
-      assignedEmployees: count ?? 0,
-      evaluationMetricsAvailable: false,
+      assignedEmployees: teamResult.count ?? 0,
+      pendingSelfEvaluations: evaluations.filter((evaluation) =>
+        ["DRAFT", "IN_PROGRESS"].includes(evaluation.status),
+      ).length,
+      awaitingSupervisorReview: evaluations.filter((evaluation) =>
+        SUPERVISOR_REVIEW_STATUSES.includes(evaluation.status),
+      ).length,
+      completedEvaluations: evaluations.filter((evaluation) =>
+        ["COMPLETED", "SUPERVISOR_SUBMITTED"].includes(evaluation.status),
+      ).length,
+      evaluations,
     };
+  });
+
+export const getSupervisorEvaluations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<SupervisorEvaluation[]> => {
+    const { getAdmin } = await import("@/lib/server-core.server");
+    const admin = await getAdmin();
+    await getAuthorizedRole(admin, context.userId, "SUPERVISOR");
+    return loadSupervisorEvaluations(admin, context.userId);
   });
