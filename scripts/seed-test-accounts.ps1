@@ -49,11 +49,11 @@ if (-not $Email) {
 
 $accounts = @(
   @{ email = 'presidentpriorityph@gmail.com'; full_name = 'Satoshi Sesh'; job_title = 'President'; role = 'PRESIDENT'; previous_email = 'satoshesh@gmail.com' },
-  @{ email = 'adminpriorityph@gmail.com'; full_name = 'Bonifacio Raili'; job_title = 'Administrator'; role = 'ADMINISTRATOR'; previous_email = 'bonifacioraili994@gmail.com' },
+  @{ email = 'jayyliteral@gmail.com'; full_name = 'Bonifacio Raili'; job_title = 'Administrator'; role = 'ADMINISTRATOR'; previous_email = 'adminpriorityph@gmail.com' },
   @{ email = 'hrpriorityph@gmail.com'; full_name = 'Yang Lionheart'; job_title = 'Human Resources'; role = 'HR'; previous_email = 'yang.lionheart777@gmail.com' },
   @{ email = 'supervisorpriorityph@gmail.com'; full_name = 'Kenshin'; job_title = 'Supervisor'; role = 'SUPERVISOR'; previous_email = 'hkenshin975@gmail.com' },
   @{ email = 'revsupervisorpriorityph@gmail.com'; full_name = 'Boni Dumpp'; job_title = 'Reviewing Supervisor'; role = 'REVIEWING_SUPERVISOR'; previous_email = 'boni.dumpp@gmail.com' },
-  @{ email = 'committeepriorityph@gmail.com'; full_name = 'Jay Literalz'; job_title = 'Committee Member'; role = 'COMMITTEE'; previous_email = 'jayyliteral@gmail.com' }
+  @{ email = 'committeepriorityph@gmail.com'; full_name = 'Jay Literalz'; job_title = 'Committee Member'; role = 'COMMITTEE' }
 )
 if ($Email) { $accounts = @($accounts | Where-Object { $_.email -eq $Email }) }
 if ($Email -and $accounts.Count -eq 0) { throw "No seeded account matches $Email." }

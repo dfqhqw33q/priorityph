@@ -467,7 +467,7 @@ export const beginEmailMfa = createServerFn({ method: "POST" })
       entityId: authenticated.userId,
       result: "SUCCESS",
     });
-    return { challengeId: challenge.id, expiresInSeconds: 300 };
+    return { required: true, challengeId: challenge.id, expiresInSeconds: 300 };
   });
 
 export const verifyEmailMfa = createServerFn({ method: "POST" })
