@@ -30,6 +30,7 @@ import {
 } from "@/features/performance-management/components/evaluation-form";
 import {
   getSupervisorEvaluationDetail,
+  returnSelfEvaluationToEmployee,
   saveSupervisorEvaluation,
 } from "@/lib/supervisor-evaluation.functions";
 import { calculateWeightedScore } from "@/lib/performance-management";
@@ -42,6 +43,7 @@ function SupervisorEvaluationReviewPage() {
   const { evaluationId } = Route.useParams();
   const loadEvaluation = useServerFn(getSupervisorEvaluationDetail);
   const saveEvaluation = useServerFn(saveSupervisorEvaluation);
+  const returnEvaluation = useServerFn(returnSelfEvaluationToEmployee);
   const queryClient = useQueryClient();
   const [values, setValues] = useState<EvaluationFormValues>({
     ratings: {},
@@ -49,6 +51,8 @@ function SupervisorEvaluationReviewPage() {
     evidence: {},
   });
   const [confirmSubmission, setConfirmSubmission] = useState(false);
+  const [confirmReturn, setConfirmReturn] = useState(false);
+  const [returnReason, setReturnReason] = useState("");
   const query = useQuery({
     queryKey: ["supervisor-evaluation-detail", evaluationId],
     queryFn: () => loadEvaluation({ data: { evaluationId } }),
@@ -79,6 +83,20 @@ function SupervisorEvaluationReviewPage() {
     },
     onError: (error) => toast.error(error.message || "Could not save your evaluation."),
   });
+  const returnMutation = useMutation({
+    mutationFn: () => returnEvaluation({ data: { evaluationId, reason: returnReason.trim() } }),
+    onSuccess: async () => {
+      toast.success("Self-evaluation returned to the employee for correction.");
+      setConfirmReturn(false);
+      setReturnReason("");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["supervisor-evaluation-detail", evaluationId] }),
+        queryClient.invalidateQueries({ queryKey: ["supervisor-evaluations"] }),
+        queryClient.invalidateQueries({ queryKey: ["supervisor-dashboard"] }),
+      ]);
+    },
+    onError: (error) => toast.error(error.message || "Could not return the self-evaluation."),
+  });
 
   useEffect(() => {
     if (!query.data) return;
@@ -106,6 +124,16 @@ function SupervisorEvaluationReviewPage() {
     (detail.supervisorEvaluation &&
       ["SUBMITTED", "COMPLETED"].includes(detail.supervisorEvaluation.status)),
   );
+  const canReturnToEmployee =
+    !locked &&
+    [
+      "SUBMITTED",
+      "PENDING_SUPERVISOR_REVIEW",
+      "SUPERVISOR_IN_PROGRESS",
+      "RETURNED_BY_DEPARTMENT_HEAD",
+      "RETURNED_BY_HR",
+      "REOPENED",
+    ].includes(detail.evaluation.status);
   const score = calculateWeightedScore(detail.template, values.ratings);
 
   return (
@@ -120,6 +148,45 @@ function SupervisorEvaluationReviewPage() {
           </Button>
         }
       />
+
+      <AlertDialog
+        open={confirmReturn}
+        onOpenChange={(open) => {
+          setConfirmReturn(open);
+          if (!open) setReturnReason("");
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Return this self-evaluation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The employee will be notified and can revise their self-assessment. Your reason is
+              required and will be preserved in the approval history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <label className="block space-y-1 text-sm">
+            <span>Correction reason (required)</span>
+            <textarea
+              className="min-h-24 w-full rounded-md border border-input bg-background p-3"
+              maxLength={4000}
+              value={returnReason}
+              onChange={(event) => setReturnReason(event.currentTarget.value)}
+            />
+          </label>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={returnMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={returnMutation.isPending || !returnReason.trim()}
+              onClick={(event) => {
+                event.preventDefault();
+                returnMutation.mutate();
+              }}
+            >
+              {returnMutation.isPending ? "Returning..." : "Confirm return"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Card>
         <CardHeader>
@@ -196,16 +263,27 @@ function SupervisorEvaluationReviewPage() {
         />
         {!locked ? (
           <div className="flex flex-wrap justify-end gap-3">
+            {canReturnToEmployee ? (
+              <Button
+                variant="outline"
+                disabled={saveMutation.isPending || returnMutation.isPending}
+                onClick={() => setConfirmReturn(true)}
+              >
+                Return self-evaluation to employee
+              </Button>
+            ) : null}
             <Button
               variant="outline"
-              disabled={saveMutation.isPending}
+              disabled={saveMutation.isPending || returnMutation.isPending}
               onClick={() => saveMutation.mutate("DRAFT")}
             >
               {saveMutation.isPending ? "Saving..." : "Save draft"}
             </Button>
             <AlertDialog open={confirmSubmission} onOpenChange={setConfirmSubmission}>
               <AlertDialogTrigger asChild>
-                <Button disabled={saveMutation.isPending}>Review and submit</Button>
+                <Button disabled={saveMutation.isPending || returnMutation.isPending}>
+                  Review and submit
+                </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>

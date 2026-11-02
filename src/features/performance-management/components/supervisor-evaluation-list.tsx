@@ -75,6 +75,12 @@ export function SupervisorEvaluationList({
                   "PENDING_SUPERVISOR_REVIEW",
                   "SUPERVISOR_IN_PROGRESS",
                   "SUPERVISOR_SUBMITTED",
+                  "RETURNED_BY_DEPARTMENT_HEAD",
+                  "RETURNED_BY_HR",
+                  "REOPENED",
+                  "PENDING_DEPARTMENT_HEAD_APPROVAL",
+                  "PENDING_HR_VALIDATION",
+                  "FINALIZED",
                   "COMPLETED",
                 ].includes(evaluation.status) ? (
                   <Button asChild size="sm" variant="outline">

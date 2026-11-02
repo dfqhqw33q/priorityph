@@ -21,9 +21,13 @@ function PendingEvaluationsPage() {
   if (query.isError) return <ErrorState message={query.error.message} />;
 
   const pendingEvaluations = query.data.filter((evaluation) =>
-    ["SUBMITTED", "PENDING_SUPERVISOR_REVIEW", "SUPERVISOR_IN_PROGRESS"].includes(
-      evaluation.status,
-    ),
+    [
+      "SUBMITTED",
+      "PENDING_SUPERVISOR_REVIEW",
+      "SUPERVISOR_IN_PROGRESS",
+      "RETURNED_BY_DEPARTMENT_HEAD",
+      "RETURNED_BY_HR",
+    ].includes(evaluation.status),
   );
 
   return (

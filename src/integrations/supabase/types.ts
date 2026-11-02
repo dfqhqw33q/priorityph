@@ -596,10 +596,19 @@ export type Database = {
       >;
       employee_evaluations: PortalTable<
         {
+          assigned_supervisor_user_id: string | null;
           created_at: string;
+          department_label_snapshot: string;
+          department_head_user_id: string | null;
+          department_id: string | null;
           employee_id: string;
+          employee_name_snapshot: string;
+          employee_number_snapshot: string;
           evaluation_period_id: string;
+          finalized_at: string | null;
+          finalized_by: string | null;
           id: string;
+          job_title_snapshot: string;
           status: string;
           submitted_at: string | null;
           template_id: string;
@@ -609,10 +618,19 @@ export type Database = {
           weighted_score: number | null;
         },
         {
+          assigned_supervisor_user_id?: string | null;
           created_at?: string;
+          department_label_snapshot?: string;
+          department_head_user_id?: string | null;
+          department_id?: string | null;
           employee_id: string;
+          employee_name_snapshot?: string;
+          employee_number_snapshot?: string;
           evaluation_period_id: string;
+          finalized_at?: string | null;
+          finalized_by?: string | null;
           id?: string;
+          job_title_snapshot?: string;
           status?: string;
           submitted_at?: string | null;
           template_id: string;
@@ -671,6 +689,7 @@ export type Database = {
       performance_notifications: PortalTable<
         {
           created_at: string;
+          dedupe_key: string | null;
           employee_evaluation_id: string | null;
           event_type: string;
           id: string;
@@ -681,6 +700,7 @@ export type Database = {
         },
         {
           created_at?: string;
+          dedupe_key?: string | null;
           employee_evaluation_id?: string | null;
           event_type: string;
           id?: string;
@@ -690,10 +710,135 @@ export type Database = {
           title: string;
         }
       >;
+      performance_departments: PortalTable<
+        {
+          created_at: string;
+          division: string;
+          id: string;
+          is_active: boolean;
+          label: string;
+          section: string;
+        },
+        {
+          created_at?: string;
+          division?: string;
+          id?: string;
+          is_active?: boolean;
+          label: string;
+          section?: string;
+        }
+      >;
+      department_head_assignments: PortalTable<
+        {
+          assigned_at: string;
+          assigned_by: string | null;
+          department_id: string;
+          id: string;
+          is_active: boolean;
+          user_id: string;
+        },
+        {
+          assigned_at?: string;
+          assigned_by?: string | null;
+          department_id: string;
+          id?: string;
+          is_active?: boolean;
+          user_id: string;
+        }
+      >;
+      supervisor_evaluation_submissions: PortalTable<
+        {
+          assessment_snapshot: Json;
+          id: string;
+          submission_number: number;
+          submitted_at: string;
+          submitted_by: string;
+          supervisor_evaluation_id: string;
+          weighted_score: number;
+        },
+        {
+          assessment_snapshot: Json;
+          id?: string;
+          submission_number: number;
+          submitted_at?: string;
+          submitted_by: string;
+          supervisor_evaluation_id: string;
+          weighted_score: number;
+        }
+      >;
+      employee_evaluation_submissions: PortalTable<
+        {
+          assessment_snapshot: Json;
+          employee_evaluation_id: string;
+          id: string;
+          submission_number: number;
+          submitted_at: string;
+          submitted_by: string;
+          weighted_score: number;
+        },
+        {
+          assessment_snapshot: Json;
+          employee_evaluation_id: string;
+          id?: string;
+          submission_number: number;
+          submitted_at?: string;
+          submitted_by: string;
+          weighted_score: number;
+        }
+      >;
+      performance_workflow_events: PortalTable<
+        {
+          action: string;
+          actor_role: string;
+          actor_user_id: string | null;
+          decision: string | null;
+          details: Json;
+          employee_evaluation_id: string;
+          id: string;
+          new_status: string;
+          occurred_at: string;
+          previous_status: string;
+          reason: string | null;
+          responsible_user_id: string | null;
+        },
+        {
+          action: string;
+          actor_role: string;
+          actor_user_id?: string | null;
+          decision?: string | null;
+          details?: Json;
+          employee_evaluation_id: string;
+          id?: string;
+          new_status: string;
+          occurred_at?: string;
+          previous_status: string;
+          reason?: string | null;
+          responsible_user_id?: string | null;
+        }
+      >;
+      user_permissions: PortalTable<
+        {
+          granted_at: string;
+          granted_by: string | null;
+          permission_code: string;
+          reason: string;
+          revoked_at: string | null;
+          user_id: string;
+        },
+        {
+          granted_at?: string;
+          granted_by?: string | null;
+          permission_code: string;
+          reason: string;
+          revoked_at?: string | null;
+          user_id: string;
+        }
+      >;
       employees: {
         Row: {
           assigned_supervisor_user_id: string | null;
           created_at: string;
+          department_id: string | null;
           division: string;
           employee_number: string;
           employment_status: Database["public"]["Enums"]["employment_status"];
@@ -712,6 +857,7 @@ export type Database = {
         Insert: {
           assigned_supervisor_user_id?: string | null;
           created_at?: string;
+          department_id?: string | null;
           division?: string;
           employee_number?: never;
           employment_status?: Database["public"]["Enums"]["employment_status"];
@@ -730,6 +876,7 @@ export type Database = {
         Update: {
           assigned_supervisor_user_id?: string | null;
           created_at?: string;
+          department_id?: string | null;
           division?: string;
           employee_number?: string;
           employment_status?: Database["public"]["Enums"]["employment_status"];
@@ -758,6 +905,13 @@ export type Database = {
             columns: ["job_position_id"];
             isOneToOne: false;
             referencedRelation: "job_positions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "employees_department_id_fkey";
+            columns: ["department_id"];
+            isOneToOne: false;
+            referencedRelation: "performance_departments";
             referencedColumns: ["id"];
           },
           {
@@ -2801,6 +2955,64 @@ export type Database = {
         Args: { _permission: string; _user_id: string };
         Returns: boolean;
       };
+      department_head_decide_performance: {
+        Args: {
+          _actor_user_id: string;
+          _decision: string;
+          _evaluation_id: string;
+          _reason?: string | null;
+        };
+        Returns: string;
+      };
+      hr_decide_performance: {
+        Args: {
+          _actor_user_id: string;
+          _checklist?: Json;
+          _decision: string;
+          _evaluation_id: string;
+          _reason?: string | null;
+          _responsible_party?: string | null;
+        };
+        Returns: string;
+      };
+      reopen_performance_evaluation: {
+        Args: {
+          _actor_user_id: string;
+          _evaluation_id: string;
+          _reason: string;
+          _responsible_party: string;
+        };
+        Returns: string;
+      };
+      submit_supervisor_performance: {
+        Args: {
+          _actor_user_id: string;
+          _assessment_snapshot: Json;
+          _evaluation_id: string;
+          _weighted_score: number;
+        };
+        Returns: string;
+      };
+      submit_employee_performance: {
+        Args: { _actor_user_id: string; _evaluation_id: string };
+        Returns: string;
+      };
+      supervisor_return_self_evaluation: {
+        Args: {
+          _actor_user_id: string;
+          _evaluation_id: string;
+          _reason: string;
+        };
+        Returns: string;
+      };
+      assign_performance_department_head: {
+        Args: {
+          _actor_user_id: string;
+          _department_head_user_id: string;
+          _department_id: string;
+        };
+        Returns: undefined;
+      };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];
@@ -2825,7 +3037,8 @@ export type Database = {
         | "SUPERVISOR"
         | "REVIEWING_SUPERVISOR"
         | "COMMITTEE"
-        | "EMPLOYEE";
+        | "EMPLOYEE"
+        | "DEPARTMENT_HEAD";
       calculation_status: "PENDING" | "CALCULATED" | "INVALID";
       cycle_status: "DRAFT" | "ACTIVE" | "CLOSED" | "DISABLED";
       employment_status: "ACTIVE" | "INACTIVE";
@@ -2972,6 +3185,7 @@ export const Constants = {
         "REVIEWING_SUPERVISOR",
         "COMMITTEE",
         "EMPLOYEE",
+        "DEPARTMENT_HEAD",
       ],
       calculation_status: ["PENDING", "CALCULATED", "INVALID"],
       cycle_status: ["DRAFT", "ACTIVE", "CLOSED", "DISABLED"],

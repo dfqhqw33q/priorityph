@@ -104,24 +104,75 @@ export const getMyEvaluationFramework = createServerFn({ method: "GET" })
     if (templateError)
       throw new Error(`Could not load your evaluation template: ${templateError.message}`);
 
-    const period = activePeriods?.[0] ?? null;
+    const { data: possibleCorrection, error: correctionLoadError } = await admin
+      .from("employee_evaluations")
+      .select("id, status, weighted_score, submitted_at, evaluation_period_id, template_id")
+      .eq("employee_id", employee.id)
+      .in("status", ["RETURNED_BY_HR", "REOPENED"])
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (correctionLoadError)
+      throw new Error(`Could not load a returned evaluation: ${correctionLoadError.message}`);
+    let correctionEvaluation: typeof possibleCorrection = null;
+    if (possibleCorrection) {
+      const { data: correctionEvent, error: correctionEventError } = await admin
+        .from("performance_workflow_events")
+        .select("responsible_user_id")
+        .eq("employee_evaluation_id", possibleCorrection.id)
+        .in("action", ["HR_RETURNED", "EVALUATION_REOPENED"])
+        .order("occurred_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (correctionEventError)
+        throw new Error(
+          `Could not verify the returned evaluation: ${correctionEventError.message}`,
+        );
+      if (correctionEvent?.responsible_user_id === context.userId)
+        correctionEvaluation = possibleCorrection;
+    }
+
+    const period = correctionEvaluation
+      ? await admin
+          .from("evaluation_periods")
+          .select("id, name, starts_on, ends_on, submission_deadline")
+          .eq("id", correctionEvaluation.evaluation_period_id)
+          .maybeSingle()
+          .then(({ data, error }) => {
+            if (error) throw new Error(`Could not load the correction period: ${error.message}`);
+            return data;
+          })
+      : (activePeriods?.[0] ?? null);
+    const { data: correctionTemplate, error: correctionTemplateError } = correctionEvaluation
+      ? await admin
+          .from("evaluation_templates")
+          .select("id, name, job_position_id, version, effective_from, effective_to, status")
+          .eq("id", correctionEvaluation.template_id)
+          .maybeSingle()
+      : { data: null, error: null };
+    if (correctionTemplateError)
+      throw new Error(`Could not load the correction profile: ${correctionTemplateError.message}`);
     const templateRow =
+      correctionTemplate ??
       templates?.find(
         (template) =>
           template.effective_from !== null &&
           template.effective_from <= today &&
           (template.effective_to === null || template.effective_to >= today),
-      ) ?? null;
+      ) ??
+      null;
 
     if (!templateRow) {
-      const { data: evaluation, error: evaluationError } = period
-        ? await admin
-            .from("employee_evaluations")
-            .select("id, status, weighted_score, submitted_at")
-            .eq("employee_id", employee.id)
-            .eq("evaluation_period_id", period.id)
-            .maybeSingle()
-        : { data: null, error: null };
+      const { data: evaluation, error: evaluationError } = correctionEvaluation
+        ? { data: correctionEvaluation, error: null }
+        : period
+          ? await admin
+              .from("employee_evaluations")
+              .select("id, status, weighted_score, submitted_at")
+              .eq("employee_id", employee.id)
+              .eq("evaluation_period_id", period.id)
+              .maybeSingle()
+          : { data: null, error: null };
       if (evaluationError)
         throw new Error(`Could not load your current evaluation: ${evaluationError.message}`);
       return {
@@ -206,14 +257,16 @@ export const getMyEvaluationFramework = createServerFn({ method: "GET" })
     if (Math.abs(weightTotal - 100) >= 0.0001)
       throw new Error("The active evaluation template categories must total exactly 100%.");
 
-    const { data: evaluation, error: evaluationError } = period
-      ? await admin
-          .from("employee_evaluations")
-          .select("id, status, weighted_score, submitted_at")
-          .eq("employee_id", employee.id)
-          .eq("evaluation_period_id", period.id)
-          .maybeSingle()
-      : { data: null, error: null };
+    const { data: evaluation, error: evaluationError } = correctionEvaluation
+      ? { data: correctionEvaluation, error: null }
+      : period
+        ? await admin
+            .from("employee_evaluations")
+            .select("id, status, weighted_score, submitted_at")
+            .eq("employee_id", employee.id)
+            .eq("evaluation_period_id", period.id)
+            .maybeSingle()
+        : { data: null, error: null };
     if (evaluationError)
       throw new Error(`Could not load your current evaluation: ${evaluationError.message}`);
 

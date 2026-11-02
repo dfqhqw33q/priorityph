@@ -20,6 +20,22 @@ import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedAccountPasswordRouteImport } from './routes/_authenticated/account.password'
+import { Route as AuthenticatedDepartmentIndexRouteImport } from './routes/_authenticated/department.index'
+import { Route as AuthenticatedDepartmentModuleRouteImport } from './routes/_authenticated/department.$module'
+import { Route as AuthenticatedDepartmentApprovedRouteImport } from './routes/_authenticated/department.approved'
+import { Route as AuthenticatedDepartmentHistoryRouteImport } from './routes/_authenticated/department.history'
+import { Route as AuthenticatedDepartmentPendingRouteImport } from './routes/_authenticated/department.pending'
+import { Route as AuthenticatedDepartmentPerformanceRouteImport } from './routes/_authenticated/department.performance'
+import { Route as AuthenticatedDepartmentReturnedRouteImport } from './routes/_authenticated/department.returned'
+import { Route as AuthenticatedHrIndexRouteImport } from './routes/_authenticated/hr.index'
+import { Route as AuthenticatedHrModuleRouteImport } from './routes/_authenticated/hr.$module'
+import { Route as AuthenticatedHrApprovalsRouteImport } from './routes/_authenticated/hr.approvals'
+import { Route as AuthenticatedHrAssignmentsRouteImport } from './routes/_authenticated/hr.assignments'
+import { Route as AuthenticatedHrCyclesRouteImport } from './routes/_authenticated/hr.cycles'
+import { Route as AuthenticatedHrFinalizedRouteImport } from './routes/_authenticated/hr.finalized'
+import { Route as AuthenticatedHrMonitoringRouteImport } from './routes/_authenticated/hr.monitoring'
+import { Route as AuthenticatedHrProfilesRouteImport } from './routes/_authenticated/hr.profiles'
+import { Route as AuthenticatedHrReturnedRouteImport } from './routes/_authenticated/hr.returned'
 import { Route as AuthenticatedPerformanceIndexRouteImport } from './routes/_authenticated/performance.index'
 import { Route as AuthenticatedPerformanceCurrentRouteImport } from './routes/_authenticated/performance.current'
 import { Route as AuthenticatedPerformanceHistoryRouteImport } from './routes/_authenticated/performance.history'
@@ -30,6 +46,9 @@ import { Route as AuthenticatedTeamEmployeesRouteImport } from './routes/_authen
 import { Route as AuthenticatedTeamEvaluationsRouteImport } from './routes/_authenticated/team.evaluations'
 import { Route as AuthenticatedTeamHistoryRouteImport } from './routes/_authenticated/team.history'
 import { Route as AuthenticatedTeamPendingRouteImport } from './routes/_authenticated/team.pending'
+import { Route as AuthenticatedDepartmentReviewEvaluationIdRouteImport } from './routes/_authenticated/department.review.$evaluationId'
+import { Route as AuthenticatedHrReviewEvaluationIdRouteImport } from './routes/_authenticated/hr.review.$evaluationId'
+import { Route as AuthenticatedPerformanceResultsEvaluationIdRouteImport } from './routes/_authenticated/performance.results.$evaluationId'
 import { Route as AuthenticatedTeamReviewEvaluationIdRouteImport } from './routes/_authenticated/team.review.$evaluationId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -88,6 +107,97 @@ const AuthenticatedAccountPasswordRoute =
     path: '/account/password',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDepartmentIndexRoute =
+  AuthenticatedDepartmentIndexRouteImport.update({
+    id: '/department/',
+    path: '/department/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDepartmentModuleRoute =
+  AuthenticatedDepartmentModuleRouteImport.update({
+    id: '/department/$module',
+    path: '/department/$module',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDepartmentApprovedRoute =
+  AuthenticatedDepartmentApprovedRouteImport.update({
+    id: '/department/approved',
+    path: '/department/approved',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDepartmentHistoryRoute =
+  AuthenticatedDepartmentHistoryRouteImport.update({
+    id: '/department/history',
+    path: '/department/history',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDepartmentPendingRoute =
+  AuthenticatedDepartmentPendingRouteImport.update({
+    id: '/department/pending',
+    path: '/department/pending',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDepartmentPerformanceRoute =
+  AuthenticatedDepartmentPerformanceRouteImport.update({
+    id: '/department/performance',
+    path: '/department/performance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDepartmentReturnedRoute =
+  AuthenticatedDepartmentReturnedRouteImport.update({
+    id: '/department/returned',
+    path: '/department/returned',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrIndexRoute = AuthenticatedHrIndexRouteImport.update({
+  id: '/hr/',
+  path: '/hr/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHrModuleRoute = AuthenticatedHrModuleRouteImport.update({
+  id: '/hr/$module',
+  path: '/hr/$module',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHrApprovalsRoute =
+  AuthenticatedHrApprovalsRouteImport.update({
+    id: '/hr/approvals',
+    path: '/hr/approvals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrAssignmentsRoute =
+  AuthenticatedHrAssignmentsRouteImport.update({
+    id: '/hr/assignments',
+    path: '/hr/assignments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrCyclesRoute = AuthenticatedHrCyclesRouteImport.update({
+  id: '/hr/cycles',
+  path: '/hr/cycles',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHrFinalizedRoute =
+  AuthenticatedHrFinalizedRouteImport.update({
+    id: '/hr/finalized',
+    path: '/hr/finalized',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrMonitoringRoute =
+  AuthenticatedHrMonitoringRouteImport.update({
+    id: '/hr/monitoring',
+    path: '/hr/monitoring',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrProfilesRoute = AuthenticatedHrProfilesRouteImport.update({
+  id: '/hr/profiles',
+  path: '/hr/profiles',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHrReturnedRoute = AuthenticatedHrReturnedRouteImport.update({
+  id: '/hr/returned',
+  path: '/hr/returned',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPerformanceIndexRoute =
   AuthenticatedPerformanceIndexRouteImport.update({
     id: '/performance/',
@@ -147,6 +257,24 @@ const AuthenticatedTeamPendingRoute =
     path: '/team/pending',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDepartmentReviewEvaluationIdRoute =
+  AuthenticatedDepartmentReviewEvaluationIdRouteImport.update({
+    id: '/department/review/$evaluationId',
+    path: '/department/review/$evaluationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHrReviewEvaluationIdRoute =
+  AuthenticatedHrReviewEvaluationIdRouteImport.update({
+    id: '/hr/review/$evaluationId',
+    path: '/hr/review/$evaluationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceResultsEvaluationIdRoute =
+  AuthenticatedPerformanceResultsEvaluationIdRouteImport.update({
+    id: '/performance/results/$evaluationId',
+    path: '/performance/results/$evaluationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTeamReviewEvaluationIdRoute =
   AuthenticatedTeamReviewEvaluationIdRouteImport.update({
     id: '/team/review/$evaluationId',
@@ -165,6 +293,20 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/account/password': typeof AuthenticatedAccountPasswordRoute
+  '/department/$module': typeof AuthenticatedDepartmentModuleRoute
+  '/department/approved': typeof AuthenticatedDepartmentApprovedRoute
+  '/department/history': typeof AuthenticatedDepartmentHistoryRoute
+  '/department/pending': typeof AuthenticatedDepartmentPendingRoute
+  '/department/performance': typeof AuthenticatedDepartmentPerformanceRoute
+  '/department/returned': typeof AuthenticatedDepartmentReturnedRoute
+  '/hr/$module': typeof AuthenticatedHrModuleRoute
+  '/hr/approvals': typeof AuthenticatedHrApprovalsRoute
+  '/hr/assignments': typeof AuthenticatedHrAssignmentsRoute
+  '/hr/cycles': typeof AuthenticatedHrCyclesRoute
+  '/hr/finalized': typeof AuthenticatedHrFinalizedRoute
+  '/hr/monitoring': typeof AuthenticatedHrMonitoringRoute
+  '/hr/profiles': typeof AuthenticatedHrProfilesRoute
+  '/hr/returned': typeof AuthenticatedHrReturnedRoute
   '/performance/current': typeof AuthenticatedPerformanceCurrentRoute
   '/performance/history': typeof AuthenticatedPerformanceHistoryRoute
   '/performance/self-evaluation': typeof AuthenticatedPerformanceSelfEvaluationRoute
@@ -173,8 +315,13 @@ export interface FileRoutesByFullPath {
   '/team/evaluations': typeof AuthenticatedTeamEvaluationsRoute
   '/team/history': typeof AuthenticatedTeamHistoryRoute
   '/team/pending': typeof AuthenticatedTeamPendingRoute
+  '/department/': typeof AuthenticatedDepartmentIndexRoute
+  '/hr/': typeof AuthenticatedHrIndexRoute
   '/performance/': typeof AuthenticatedPerformanceIndexRoute
   '/team/': typeof AuthenticatedTeamIndexRoute
+  '/department/review/$evaluationId': typeof AuthenticatedDepartmentReviewEvaluationIdRoute
+  '/hr/review/$evaluationId': typeof AuthenticatedHrReviewEvaluationIdRoute
+  '/performance/results/$evaluationId': typeof AuthenticatedPerformanceResultsEvaluationIdRoute
   '/team/review/$evaluationId': typeof AuthenticatedTeamReviewEvaluationIdRoute
 }
 export interface FileRoutesByTo {
@@ -188,6 +335,20 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/account/password': typeof AuthenticatedAccountPasswordRoute
+  '/department/$module': typeof AuthenticatedDepartmentModuleRoute
+  '/department/approved': typeof AuthenticatedDepartmentApprovedRoute
+  '/department/history': typeof AuthenticatedDepartmentHistoryRoute
+  '/department/pending': typeof AuthenticatedDepartmentPendingRoute
+  '/department/performance': typeof AuthenticatedDepartmentPerformanceRoute
+  '/department/returned': typeof AuthenticatedDepartmentReturnedRoute
+  '/hr/$module': typeof AuthenticatedHrModuleRoute
+  '/hr/approvals': typeof AuthenticatedHrApprovalsRoute
+  '/hr/assignments': typeof AuthenticatedHrAssignmentsRoute
+  '/hr/cycles': typeof AuthenticatedHrCyclesRoute
+  '/hr/finalized': typeof AuthenticatedHrFinalizedRoute
+  '/hr/monitoring': typeof AuthenticatedHrMonitoringRoute
+  '/hr/profiles': typeof AuthenticatedHrProfilesRoute
+  '/hr/returned': typeof AuthenticatedHrReturnedRoute
   '/performance/current': typeof AuthenticatedPerformanceCurrentRoute
   '/performance/history': typeof AuthenticatedPerformanceHistoryRoute
   '/performance/self-evaluation': typeof AuthenticatedPerformanceSelfEvaluationRoute
@@ -196,8 +357,13 @@ export interface FileRoutesByTo {
   '/team/evaluations': typeof AuthenticatedTeamEvaluationsRoute
   '/team/history': typeof AuthenticatedTeamHistoryRoute
   '/team/pending': typeof AuthenticatedTeamPendingRoute
+  '/department': typeof AuthenticatedDepartmentIndexRoute
+  '/hr': typeof AuthenticatedHrIndexRoute
   '/performance': typeof AuthenticatedPerformanceIndexRoute
   '/team': typeof AuthenticatedTeamIndexRoute
+  '/department/review/$evaluationId': typeof AuthenticatedDepartmentReviewEvaluationIdRoute
+  '/hr/review/$evaluationId': typeof AuthenticatedHrReviewEvaluationIdRoute
+  '/performance/results/$evaluationId': typeof AuthenticatedPerformanceResultsEvaluationIdRoute
   '/team/review/$evaluationId': typeof AuthenticatedTeamReviewEvaluationIdRoute
 }
 export interface FileRoutesById {
@@ -213,6 +379,20 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/account/password': typeof AuthenticatedAccountPasswordRoute
+  '/_authenticated/department/$module': typeof AuthenticatedDepartmentModuleRoute
+  '/_authenticated/department/approved': typeof AuthenticatedDepartmentApprovedRoute
+  '/_authenticated/department/history': typeof AuthenticatedDepartmentHistoryRoute
+  '/_authenticated/department/pending': typeof AuthenticatedDepartmentPendingRoute
+  '/_authenticated/department/performance': typeof AuthenticatedDepartmentPerformanceRoute
+  '/_authenticated/department/returned': typeof AuthenticatedDepartmentReturnedRoute
+  '/_authenticated/hr/$module': typeof AuthenticatedHrModuleRoute
+  '/_authenticated/hr/approvals': typeof AuthenticatedHrApprovalsRoute
+  '/_authenticated/hr/assignments': typeof AuthenticatedHrAssignmentsRoute
+  '/_authenticated/hr/cycles': typeof AuthenticatedHrCyclesRoute
+  '/_authenticated/hr/finalized': typeof AuthenticatedHrFinalizedRoute
+  '/_authenticated/hr/monitoring': typeof AuthenticatedHrMonitoringRoute
+  '/_authenticated/hr/profiles': typeof AuthenticatedHrProfilesRoute
+  '/_authenticated/hr/returned': typeof AuthenticatedHrReturnedRoute
   '/_authenticated/performance/current': typeof AuthenticatedPerformanceCurrentRoute
   '/_authenticated/performance/history': typeof AuthenticatedPerformanceHistoryRoute
   '/_authenticated/performance/self-evaluation': typeof AuthenticatedPerformanceSelfEvaluationRoute
@@ -221,8 +401,13 @@ export interface FileRoutesById {
   '/_authenticated/team/evaluations': typeof AuthenticatedTeamEvaluationsRoute
   '/_authenticated/team/history': typeof AuthenticatedTeamHistoryRoute
   '/_authenticated/team/pending': typeof AuthenticatedTeamPendingRoute
+  '/_authenticated/department/': typeof AuthenticatedDepartmentIndexRoute
+  '/_authenticated/hr/': typeof AuthenticatedHrIndexRoute
   '/_authenticated/performance/': typeof AuthenticatedPerformanceIndexRoute
   '/_authenticated/team/': typeof AuthenticatedTeamIndexRoute
+  '/_authenticated/department/review/$evaluationId': typeof AuthenticatedDepartmentReviewEvaluationIdRoute
+  '/_authenticated/hr/review/$evaluationId': typeof AuthenticatedHrReviewEvaluationIdRoute
+  '/_authenticated/performance/results/$evaluationId': typeof AuthenticatedPerformanceResultsEvaluationIdRoute
   '/_authenticated/team/review/$evaluationId': typeof AuthenticatedTeamReviewEvaluationIdRoute
 }
 export interface FileRouteTypes {
@@ -238,6 +423,20 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile'
     | '/account/password'
+    | '/department/$module'
+    | '/department/approved'
+    | '/department/history'
+    | '/department/pending'
+    | '/department/performance'
+    | '/department/returned'
+    | '/hr/$module'
+    | '/hr/approvals'
+    | '/hr/assignments'
+    | '/hr/cycles'
+    | '/hr/finalized'
+    | '/hr/monitoring'
+    | '/hr/profiles'
+    | '/hr/returned'
     | '/performance/current'
     | '/performance/history'
     | '/performance/self-evaluation'
@@ -246,8 +445,13 @@ export interface FileRouteTypes {
     | '/team/evaluations'
     | '/team/history'
     | '/team/pending'
+    | '/department/'
+    | '/hr/'
     | '/performance/'
     | '/team/'
+    | '/department/review/$evaluationId'
+    | '/hr/review/$evaluationId'
+    | '/performance/results/$evaluationId'
     | '/team/review/$evaluationId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -261,6 +465,20 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile'
     | '/account/password'
+    | '/department/$module'
+    | '/department/approved'
+    | '/department/history'
+    | '/department/pending'
+    | '/department/performance'
+    | '/department/returned'
+    | '/hr/$module'
+    | '/hr/approvals'
+    | '/hr/assignments'
+    | '/hr/cycles'
+    | '/hr/finalized'
+    | '/hr/monitoring'
+    | '/hr/profiles'
+    | '/hr/returned'
     | '/performance/current'
     | '/performance/history'
     | '/performance/self-evaluation'
@@ -269,8 +487,13 @@ export interface FileRouteTypes {
     | '/team/evaluations'
     | '/team/history'
     | '/team/pending'
+    | '/department'
+    | '/hr'
     | '/performance'
     | '/team'
+    | '/department/review/$evaluationId'
+    | '/hr/review/$evaluationId'
+    | '/performance/results/$evaluationId'
     | '/team/review/$evaluationId'
   id:
     | '__root__'
@@ -285,6 +508,20 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
     | '/_authenticated/account/password'
+    | '/_authenticated/department/$module'
+    | '/_authenticated/department/approved'
+    | '/_authenticated/department/history'
+    | '/_authenticated/department/pending'
+    | '/_authenticated/department/performance'
+    | '/_authenticated/department/returned'
+    | '/_authenticated/hr/$module'
+    | '/_authenticated/hr/approvals'
+    | '/_authenticated/hr/assignments'
+    | '/_authenticated/hr/cycles'
+    | '/_authenticated/hr/finalized'
+    | '/_authenticated/hr/monitoring'
+    | '/_authenticated/hr/profiles'
+    | '/_authenticated/hr/returned'
     | '/_authenticated/performance/current'
     | '/_authenticated/performance/history'
     | '/_authenticated/performance/self-evaluation'
@@ -293,8 +530,13 @@ export interface FileRouteTypes {
     | '/_authenticated/team/evaluations'
     | '/_authenticated/team/history'
     | '/_authenticated/team/pending'
+    | '/_authenticated/department/'
+    | '/_authenticated/hr/'
     | '/_authenticated/performance/'
     | '/_authenticated/team/'
+    | '/_authenticated/department/review/$evaluationId'
+    | '/_authenticated/hr/review/$evaluationId'
+    | '/_authenticated/performance/results/$evaluationId'
     | '/_authenticated/team/review/$evaluationId'
   fileRoutesById: FileRoutesById
 }
@@ -387,6 +629,118 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountPasswordRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/department/': {
+      id: '/_authenticated/department/'
+      path: '/department'
+      fullPath: '/department/'
+      preLoaderRoute: typeof AuthenticatedDepartmentIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/department/$module': {
+      id: '/_authenticated/department/$module'
+      path: '/department/$module'
+      fullPath: '/department/$module'
+      preLoaderRoute: typeof AuthenticatedDepartmentModuleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/department/approved': {
+      id: '/_authenticated/department/approved'
+      path: '/department/approved'
+      fullPath: '/department/approved'
+      preLoaderRoute: typeof AuthenticatedDepartmentApprovedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/department/history': {
+      id: '/_authenticated/department/history'
+      path: '/department/history'
+      fullPath: '/department/history'
+      preLoaderRoute: typeof AuthenticatedDepartmentHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/department/pending': {
+      id: '/_authenticated/department/pending'
+      path: '/department/pending'
+      fullPath: '/department/pending'
+      preLoaderRoute: typeof AuthenticatedDepartmentPendingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/department/performance': {
+      id: '/_authenticated/department/performance'
+      path: '/department/performance'
+      fullPath: '/department/performance'
+      preLoaderRoute: typeof AuthenticatedDepartmentPerformanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/department/returned': {
+      id: '/_authenticated/department/returned'
+      path: '/department/returned'
+      fullPath: '/department/returned'
+      preLoaderRoute: typeof AuthenticatedDepartmentReturnedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/': {
+      id: '/_authenticated/hr/'
+      path: '/hr'
+      fullPath: '/hr/'
+      preLoaderRoute: typeof AuthenticatedHrIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/$module': {
+      id: '/_authenticated/hr/$module'
+      path: '/hr/$module'
+      fullPath: '/hr/$module'
+      preLoaderRoute: typeof AuthenticatedHrModuleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/approvals': {
+      id: '/_authenticated/hr/approvals'
+      path: '/hr/approvals'
+      fullPath: '/hr/approvals'
+      preLoaderRoute: typeof AuthenticatedHrApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/assignments': {
+      id: '/_authenticated/hr/assignments'
+      path: '/hr/assignments'
+      fullPath: '/hr/assignments'
+      preLoaderRoute: typeof AuthenticatedHrAssignmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/cycles': {
+      id: '/_authenticated/hr/cycles'
+      path: '/hr/cycles'
+      fullPath: '/hr/cycles'
+      preLoaderRoute: typeof AuthenticatedHrCyclesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/finalized': {
+      id: '/_authenticated/hr/finalized'
+      path: '/hr/finalized'
+      fullPath: '/hr/finalized'
+      preLoaderRoute: typeof AuthenticatedHrFinalizedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/monitoring': {
+      id: '/_authenticated/hr/monitoring'
+      path: '/hr/monitoring'
+      fullPath: '/hr/monitoring'
+      preLoaderRoute: typeof AuthenticatedHrMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/profiles': {
+      id: '/_authenticated/hr/profiles'
+      path: '/hr/profiles'
+      fullPath: '/hr/profiles'
+      preLoaderRoute: typeof AuthenticatedHrProfilesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/returned': {
+      id: '/_authenticated/hr/returned'
+      path: '/hr/returned'
+      fullPath: '/hr/returned'
+      preLoaderRoute: typeof AuthenticatedHrReturnedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/performance/': {
       id: '/_authenticated/performance/'
       path: '/performance'
@@ -457,6 +811,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamPendingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/department/review/$evaluationId': {
+      id: '/_authenticated/department/review/$evaluationId'
+      path: '/department/review/$evaluationId'
+      fullPath: '/department/review/$evaluationId'
+      preLoaderRoute: typeof AuthenticatedDepartmentReviewEvaluationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hr/review/$evaluationId': {
+      id: '/_authenticated/hr/review/$evaluationId'
+      path: '/hr/review/$evaluationId'
+      fullPath: '/hr/review/$evaluationId'
+      preLoaderRoute: typeof AuthenticatedHrReviewEvaluationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/results/$evaluationId': {
+      id: '/_authenticated/performance/results/$evaluationId'
+      path: '/performance/results/$evaluationId'
+      fullPath: '/performance/results/$evaluationId'
+      preLoaderRoute: typeof AuthenticatedPerformanceResultsEvaluationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/team/review/$evaluationId': {
       id: '/_authenticated/team/review/$evaluationId'
       path: '/team/review/$evaluationId'
@@ -472,6 +847,20 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedAccountPasswordRoute: typeof AuthenticatedAccountPasswordRoute
+  AuthenticatedDepartmentModuleRoute: typeof AuthenticatedDepartmentModuleRoute
+  AuthenticatedDepartmentApprovedRoute: typeof AuthenticatedDepartmentApprovedRoute
+  AuthenticatedDepartmentHistoryRoute: typeof AuthenticatedDepartmentHistoryRoute
+  AuthenticatedDepartmentPendingRoute: typeof AuthenticatedDepartmentPendingRoute
+  AuthenticatedDepartmentPerformanceRoute: typeof AuthenticatedDepartmentPerformanceRoute
+  AuthenticatedDepartmentReturnedRoute: typeof AuthenticatedDepartmentReturnedRoute
+  AuthenticatedHrModuleRoute: typeof AuthenticatedHrModuleRoute
+  AuthenticatedHrApprovalsRoute: typeof AuthenticatedHrApprovalsRoute
+  AuthenticatedHrAssignmentsRoute: typeof AuthenticatedHrAssignmentsRoute
+  AuthenticatedHrCyclesRoute: typeof AuthenticatedHrCyclesRoute
+  AuthenticatedHrFinalizedRoute: typeof AuthenticatedHrFinalizedRoute
+  AuthenticatedHrMonitoringRoute: typeof AuthenticatedHrMonitoringRoute
+  AuthenticatedHrProfilesRoute: typeof AuthenticatedHrProfilesRoute
+  AuthenticatedHrReturnedRoute: typeof AuthenticatedHrReturnedRoute
   AuthenticatedPerformanceCurrentRoute: typeof AuthenticatedPerformanceCurrentRoute
   AuthenticatedPerformanceHistoryRoute: typeof AuthenticatedPerformanceHistoryRoute
   AuthenticatedPerformanceSelfEvaluationRoute: typeof AuthenticatedPerformanceSelfEvaluationRoute
@@ -480,8 +869,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamEvaluationsRoute: typeof AuthenticatedTeamEvaluationsRoute
   AuthenticatedTeamHistoryRoute: typeof AuthenticatedTeamHistoryRoute
   AuthenticatedTeamPendingRoute: typeof AuthenticatedTeamPendingRoute
+  AuthenticatedDepartmentIndexRoute: typeof AuthenticatedDepartmentIndexRoute
+  AuthenticatedHrIndexRoute: typeof AuthenticatedHrIndexRoute
   AuthenticatedPerformanceIndexRoute: typeof AuthenticatedPerformanceIndexRoute
   AuthenticatedTeamIndexRoute: typeof AuthenticatedTeamIndexRoute
+  AuthenticatedDepartmentReviewEvaluationIdRoute: typeof AuthenticatedDepartmentReviewEvaluationIdRoute
+  AuthenticatedHrReviewEvaluationIdRoute: typeof AuthenticatedHrReviewEvaluationIdRoute
+  AuthenticatedPerformanceResultsEvaluationIdRoute: typeof AuthenticatedPerformanceResultsEvaluationIdRoute
   AuthenticatedTeamReviewEvaluationIdRoute: typeof AuthenticatedTeamReviewEvaluationIdRoute
 }
 
@@ -490,6 +884,21 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedAccountPasswordRoute: AuthenticatedAccountPasswordRoute,
+  AuthenticatedDepartmentModuleRoute: AuthenticatedDepartmentModuleRoute,
+  AuthenticatedDepartmentApprovedRoute: AuthenticatedDepartmentApprovedRoute,
+  AuthenticatedDepartmentHistoryRoute: AuthenticatedDepartmentHistoryRoute,
+  AuthenticatedDepartmentPendingRoute: AuthenticatedDepartmentPendingRoute,
+  AuthenticatedDepartmentPerformanceRoute:
+    AuthenticatedDepartmentPerformanceRoute,
+  AuthenticatedDepartmentReturnedRoute: AuthenticatedDepartmentReturnedRoute,
+  AuthenticatedHrModuleRoute: AuthenticatedHrModuleRoute,
+  AuthenticatedHrApprovalsRoute: AuthenticatedHrApprovalsRoute,
+  AuthenticatedHrAssignmentsRoute: AuthenticatedHrAssignmentsRoute,
+  AuthenticatedHrCyclesRoute: AuthenticatedHrCyclesRoute,
+  AuthenticatedHrFinalizedRoute: AuthenticatedHrFinalizedRoute,
+  AuthenticatedHrMonitoringRoute: AuthenticatedHrMonitoringRoute,
+  AuthenticatedHrProfilesRoute: AuthenticatedHrProfilesRoute,
+  AuthenticatedHrReturnedRoute: AuthenticatedHrReturnedRoute,
   AuthenticatedPerformanceCurrentRoute: AuthenticatedPerformanceCurrentRoute,
   AuthenticatedPerformanceHistoryRoute: AuthenticatedPerformanceHistoryRoute,
   AuthenticatedPerformanceSelfEvaluationRoute:
@@ -499,8 +908,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamEvaluationsRoute: AuthenticatedTeamEvaluationsRoute,
   AuthenticatedTeamHistoryRoute: AuthenticatedTeamHistoryRoute,
   AuthenticatedTeamPendingRoute: AuthenticatedTeamPendingRoute,
+  AuthenticatedDepartmentIndexRoute: AuthenticatedDepartmentIndexRoute,
+  AuthenticatedHrIndexRoute: AuthenticatedHrIndexRoute,
   AuthenticatedPerformanceIndexRoute: AuthenticatedPerformanceIndexRoute,
   AuthenticatedTeamIndexRoute: AuthenticatedTeamIndexRoute,
+  AuthenticatedDepartmentReviewEvaluationIdRoute:
+    AuthenticatedDepartmentReviewEvaluationIdRoute,
+  AuthenticatedHrReviewEvaluationIdRoute:
+    AuthenticatedHrReviewEvaluationIdRoute,
+  AuthenticatedPerformanceResultsEvaluationIdRoute:
+    AuthenticatedPerformanceResultsEvaluationIdRoute,
   AuthenticatedTeamReviewEvaluationIdRoute:
     AuthenticatedTeamReviewEvaluationIdRoute,
 }

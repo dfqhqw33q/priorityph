@@ -48,6 +48,9 @@ const SUPERVISOR_REVIEW_STATUSES = [
   "SUBMITTED",
   "PENDING_SUPERVISOR_REVIEW",
   "SUPERVISOR_IN_PROGRESS",
+  "RETURNED_BY_DEPARTMENT_HEAD",
+  "RETURNED_BY_HR",
+  "REOPENED",
 ];
 
 async function getAuthorizedRole(
@@ -77,33 +80,61 @@ async function loadSupervisorEvaluations(
   admin: AdminClient,
   supervisorUserId: string,
 ): Promise<SupervisorEvaluation[]> {
-  const { data: employees, error: employeeError } = await admin
-    .from("employees")
-    .select("id, employee_number, full_name, job_title, division, section")
-    .eq("assigned_supervisor_user_id", supervisorUserId)
-    .eq("employment_status", "ACTIVE");
-  if (employeeError)
-    throw new Error(`Could not load employees assigned to you: ${employeeError.message}`);
-  if (!employees?.length) return [];
-
   const { data: evaluations, error: evaluationError } = await admin
     .from("employee_evaluations")
     .select(
-      "id, employee_id, evaluation_period_id, status, submitted_at, weighted_score, updated_at",
+      "id, employee_id, evaluation_period_id, status, submitted_at, weighted_score, updated_at, assigned_supervisor_user_id, employee_name_snapshot, employee_number_snapshot, job_title_snapshot, department_label_snapshot",
     )
-    .in(
-      "employee_id",
-      employees.map((employee) => employee.id),
-    )
+    .eq("assigned_supervisor_user_id", supervisorUserId)
     .order("updated_at", { ascending: false });
   if (evaluationError)
     throw new Error(
       `Could not load your assigned employee evaluations: ${evaluationError.message}`,
     );
   if (!evaluations?.length) return [];
+  let visibleEvaluations = evaluations;
+  const correctionEvaluations = evaluations.filter((evaluation) =>
+    ["RETURNED_BY_HR", "REOPENED"].includes(evaluation.status),
+  );
+  if (correctionEvaluations.length) {
+    const { data: correctionEvents, error: correctionError } = await admin
+      .from("performance_workflow_events")
+      .select("employee_evaluation_id, responsible_user_id, action, occurred_at")
+      .in(
+        "employee_evaluation_id",
+        correctionEvaluations.map((evaluation) => evaluation.id),
+      )
+      .in("action", ["HR_RETURNED", "HR_CORRECTION_REASSIGNED", "EVALUATION_REOPENED"])
+      .order("occurred_at", { ascending: false });
+    if (correctionError)
+      throw new Error(
+        `Could not verify reviewer correction assignments: ${correctionError.message}`,
+      );
+    const latestCorrectionByEvaluation = new Map<string, string | null>();
+    for (const event of correctionEvents ?? []) {
+      if (!latestCorrectionByEvaluation.has(event.employee_evaluation_id))
+        latestCorrectionByEvaluation.set(event.employee_evaluation_id, event.responsible_user_id);
+    }
+    visibleEvaluations = evaluations.filter(
+      (evaluation) =>
+        !["RETURNED_BY_HR", "REOPENED"].includes(evaluation.status) ||
+        latestCorrectionByEvaluation.get(evaluation.id) === supervisorUserId,
+    );
+  }
+  if (!visibleEvaluations.length) return [];
 
-  const periodIds = [...new Set(evaluations.map((evaluation) => evaluation.evaluation_period_id))];
-  const evaluationIds = evaluations.map((evaluation) => evaluation.id);
+  const employeeIds = [...new Set(visibleEvaluations.map((evaluation) => evaluation.employee_id))];
+  const { data: employees, error: employeeError } = await admin
+    .from("employees")
+    .select("id")
+    .in("id", employeeIds);
+  if (employeeError)
+    throw new Error(`Could not load evaluation employee records: ${employeeError.message}`);
+
+  const periodIds = [
+    ...new Set(visibleEvaluations.map((evaluation) => evaluation.evaluation_period_id)),
+  ];
+  const evaluationIds = visibleEvaluations.map((evaluation) => evaluation.id);
   const [
     { data: periods, error: periodError },
     { data: supervisorEvaluations, error: supervisorError },
@@ -119,7 +150,6 @@ async function loadSupervisorEvaluations(
   if (supervisorError)
     throw new Error(`Could not load supervisor review status: ${supervisorError.message}`);
 
-  const employeeById = new Map(employees.map((employee) => [employee.id, employee]));
   const periodById = new Map((periods ?? []).map((period) => [period.id, period.name]));
   const supervisorEvaluationById = new Map(
     (supervisorEvaluations ?? []).map((evaluation) => [
@@ -128,18 +158,17 @@ async function loadSupervisorEvaluations(
     ]),
   );
 
-  return evaluations.flatMap((evaluation) => {
-    const employee = employeeById.get(evaluation.employee_id);
-    if (!employee) return [];
+  return visibleEvaluations.flatMap((evaluation) => {
+    if (!employees?.some((employee) => employee.id === evaluation.employee_id)) return [];
     const supervisorEvaluation = supervisorEvaluationById.get(evaluation.id);
     return [
       {
         id: evaluation.id,
-        employeeId: employee.id,
-        employeeNumber: employee.employee_number,
-        employeeName: employee.full_name,
-        position: employee.job_title || "Not specified",
-        department: departmentName(employee.division, employee.section),
+        employeeId: evaluation.employee_id,
+        employeeNumber: evaluation.employee_number_snapshot || "Unknown ID",
+        employeeName: evaluation.employee_name_snapshot || "Unknown employee",
+        position: evaluation.job_title_snapshot || "Not specified",
+        department: evaluation.department_label_snapshot || "Not specified",
         periodName: periodById.get(evaluation.evaluation_period_id) ?? "Evaluation period",
         status: evaluation.status,
         submittedAt: evaluation.submitted_at,
@@ -269,7 +298,61 @@ export const getEmployeeDashboard = createServerFn({ method: "GET" })
     const { getAdmin } = await import("@/lib/server-core.server");
     const admin = await getAdmin();
     await getAuthorizedRole(admin, context.userId, "EMPLOYEE");
-    return { currentEvaluationAssigned: false };
+    const { data: employee, error: employeeError } = await admin
+      .from("employees")
+      .select("id")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (employeeError)
+      throw new Error(`Could not load your employee record: ${employeeError.message}`);
+    if (!employee) throw new Error("Your account is not linked to an employee record.");
+    const { data: evaluation, error: evaluationError } = await admin
+      .from("employee_evaluations")
+      .select("id, evaluation_period_id, status, weighted_score, submitted_at")
+      .eq("employee_id", employee.id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (evaluationError)
+      throw new Error(`Could not load your current evaluation: ${evaluationError.message}`);
+    if (!evaluation)
+      return {
+        currentEvaluationAssigned: false,
+        evaluationId: null,
+        status: null,
+        submissionDeadline: null,
+        periodName: null,
+        employeeScore: null,
+        supervisorStatus: null,
+      };
+    const [
+      { data: period, error: periodError },
+      { data: supervisorEvaluation, error: supervisorError },
+    ] = await Promise.all([
+      admin
+        .from("evaluation_periods")
+        .select("name, submission_deadline")
+        .eq("id", evaluation.evaluation_period_id)
+        .maybeSingle(),
+      admin
+        .from("supervisor_evaluations")
+        .select("status")
+        .eq("employee_evaluation_id", evaluation.id)
+        .maybeSingle(),
+    ]);
+    if (periodError)
+      throw new Error(`Could not load the evaluation deadline: ${periodError.message}`);
+    if (supervisorError)
+      throw new Error(`Could not load Supervisor review status: ${supervisorError.message}`);
+    return {
+      currentEvaluationAssigned: true,
+      evaluationId: evaluation.id,
+      status: evaluation.status,
+      submissionDeadline: period?.submission_deadline ?? null,
+      periodName: period?.name ?? null,
+      employeeScore: evaluation.weighted_score,
+      supervisorStatus: supervisorEvaluation?.status ?? null,
+    };
   });
 
 export const getSupervisorDashboard = createServerFn({ method: "GET" })
@@ -297,7 +380,15 @@ export const getSupervisorDashboard = createServerFn({ method: "GET" })
         SUPERVISOR_REVIEW_STATUSES.includes(evaluation.status),
       ).length,
       completedEvaluations: evaluations.filter((evaluation) =>
-        ["COMPLETED", "SUPERVISOR_SUBMITTED"].includes(evaluation.status),
+        [
+          "COMPLETED",
+          "SUPERVISOR_SUBMITTED",
+          "PENDING_DEPARTMENT_HEAD_APPROVAL",
+          "PENDING_HR_VALIDATION",
+          "RETURNED_BY_DEPARTMENT_HEAD",
+          "RETURNED_BY_HR",
+          "FINALIZED",
+        ].includes(evaluation.status),
       ).length,
       evaluations,
     };

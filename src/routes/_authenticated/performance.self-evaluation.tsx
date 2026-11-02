@@ -83,7 +83,10 @@ function SelfEvaluationPage() {
 
   const { template, period, position, evaluation } = query.data;
   const readOnly = Boolean(
-    evaluation && !["DRAFT", "IN_PROGRESS", "RETURNED_FOR_REVISION"].includes(evaluation.status),
+    evaluation &&
+    !["DRAFT", "IN_PROGRESS", "RETURNED_FOR_REVISION", "RETURNED_BY_HR", "REOPENED"].includes(
+      evaluation.status,
+    ),
   );
   const canEdit = Boolean(template && period && !readOnly);
   const score = template ? calculateWeightedScore(template, values.ratings) : null;
@@ -136,10 +139,12 @@ function SelfEvaluationPage() {
               cannot be saved or submitted.
             </div>
           ) : null}
-          {evaluation?.status === "RETURNED_FOR_REVISION" ? (
+          {["RETURNED_FOR_REVISION", "RETURNED_BY_HR", "REOPENED"].includes(
+            evaluation?.status ?? "",
+          ) ? (
             <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
-              Your supervisor returned this evaluation for revision. Update the self-assessment and
-              submit it again.
+              This evaluation was returned for correction. Review the return notification for the
+              reason, update the self-assessment, and submit it again.
             </div>
           ) : null}
           {readOnly ? (

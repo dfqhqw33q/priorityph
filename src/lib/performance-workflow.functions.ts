@@ -38,7 +38,9 @@ export const saveMyEvaluation = createServerFn({ method: "POST" })
 
     const { data: employee, error: employeeError } = await admin
       .from("employees")
-      .select("id, job_position_id, job_title, employment_status, assigned_supervisor_user_id")
+      .select(
+        "id, job_position_id, job_title, employment_status, assigned_supervisor_user_id, department_id",
+      )
       .eq("user_id", context.userId)
       .maybeSingle();
     if (employeeError)
@@ -56,15 +58,10 @@ export const saveMyEvaluation = createServerFn({ method: "POST" })
       .from("evaluation_periods")
       .select("id, name, starts_on, ends_on, submission_deadline, status")
       .eq("id", data.periodId)
-      .eq("status", "ACTIVE")
-      .lte("starts_on", today)
-      .gte("ends_on", today)
       .maybeSingle();
     if (periodError)
       throw new Error(`Could not verify the evaluation period: ${periodError.message}`);
     if (!period) throw new Error("This evaluation period is not currently open.");
-    if (period.submission_deadline && period.submission_deadline < today)
-      throw new Error("The submission deadline for this evaluation period has passed.");
 
     const { data: existing, error: existingError } = await admin
       .from("employee_evaluations")
@@ -73,7 +70,38 @@ export const saveMyEvaluation = createServerFn({ method: "POST" })
       .eq("evaluation_period_id", period.id)
       .maybeSingle();
     if (existingError) throw new Error(`Could not load your evaluation: ${existingError.message}`);
-    if (existing && !["DRAFT", "IN_PROGRESS", "RETURNED_FOR_REVISION"].includes(existing.status)) {
+    const correctionStatus =
+      existing?.status === "RETURNED_BY_HR" || existing?.status === "REOPENED";
+    if (
+      !period ||
+      (!correctionStatus &&
+        (period.status !== "ACTIVE" ||
+          period.starts_on > today ||
+          period.ends_on < today ||
+          (period.submission_deadline && period.submission_deadline < today)))
+    ) {
+      throw new Error("This evaluation period is not currently open.");
+    }
+    if (existing && correctionStatus) {
+      const { data: correctionEvent, error: correctionError } = await admin
+        .from("performance_workflow_events")
+        .select("responsible_user_id")
+        .eq("employee_evaluation_id", existing.id)
+        .in("action", ["HR_RETURNED", "EVALUATION_REOPENED"])
+        .order("occurred_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (correctionError)
+        throw new Error(`Could not verify the correction assignment: ${correctionError.message}`);
+      if (correctionEvent?.responsible_user_id !== context.userId)
+        throw new Error("This correction was assigned to a different reviewer.");
+    }
+    if (
+      existing &&
+      !["DRAFT", "IN_PROGRESS", "RETURNED_FOR_REVISION", "RETURNED_BY_HR", "REOPENED"].includes(
+        existing.status,
+      )
+    ) {
       throw new Error("This evaluation has been submitted and is locked for employee editing.");
     }
 
@@ -172,6 +200,8 @@ export const saveMyEvaluation = createServerFn({ method: "POST" })
           employee_id: employee.id,
           evaluation_period_id: period.id,
           template_id: templateId,
+          assigned_supervisor_user_id: employee.assigned_supervisor_user_id,
+          department_id: employee.department_id,
         })
         .select("id")
         .single();
@@ -202,63 +232,54 @@ export const saveMyEvaluation = createServerFn({ method: "POST" })
       throw new Error(`Could not save your evaluation ratings: ${ratingsError.message}`);
 
     const previousStatus = existing?.status ?? "DRAFT";
-    let nextStatus = previousStatus;
-    let submittedAt = existing?.submitted_at ?? null;
     if (data.action === "SUBMIT") {
-      nextStatus = "SUBMITTED";
-      submittedAt = new Date().toISOString();
-    } else if (previousStatus === "DRAFT") {
-      nextStatus = "IN_PROGRESS";
+      const { data: submittedStatus, error: submissionError } = await admin.rpc(
+        "submit_employee_performance",
+        { _evaluation_id: evaluationId, _actor_user_id: context.userId },
+      );
+      if (submissionError)
+        throw new Error(`Could not submit your self-evaluation: ${submissionError.message}`);
+      if (submittedStatus !== "SUBMITTED")
+        throw new Error("The self-evaluation submission returned an unexpected status.");
+      const { data: submittedEvaluation, error: submittedEvaluationError } = await admin
+        .from("employee_evaluations")
+        .select("status, submitted_at, weighted_score")
+        .eq("id", evaluationId)
+        .single();
+      if (submittedEvaluationError)
+        throw new Error(
+          `The evaluation was submitted, but its final status could not be loaded: ${submittedEvaluationError.message}`,
+        );
+      return {
+        id: evaluationId,
+        status: submittedEvaluation.status,
+        submittedAt: submittedEvaluation.submitted_at,
+        weightedScore: submittedEvaluation.weighted_score,
+      };
     }
 
+    const nextStatus =
+      previousStatus === "DRAFT" || previousStatus === "REOPENED" ? "IN_PROGRESS" : previousStatus;
     const { error: updateError } = await admin
       .from("employee_evaluations")
-      .update({
-        status: nextStatus,
-        weighted_score: score.score,
-        submitted_at: submittedAt,
-      })
+      .update({ status: nextStatus, weighted_score: score.score })
       .eq("id", evaluationId);
     if (updateError)
-      throw new Error(`Could not update your evaluation status: ${updateError.message}`);
-
-    const action =
-      data.action === "SUBMIT"
-        ? previousStatus === "RETURNED_FOR_REVISION"
-          ? "SELF_EVALUATION_RESUBMITTED"
-          : "SELF_EVALUATION_SUBMITTED"
-        : "SELF_EVALUATION_DRAFT_SAVED";
+      throw new Error(`Could not save your evaluation draft: ${updateError.message}`);
     const { error: auditError } = await admin.from("evaluation_audit_logs").insert({
       employee_evaluation_id: evaluationId,
       actor_user_id: context.userId,
-      action,
+      action: "SELF_EVALUATION_DRAFT_SAVED",
       previous_value: { status: previousStatus },
       new_value: { status: nextStatus, weighted_score: score.score },
     });
     if (auditError)
-      throw new Error(
-        `Your evaluation was saved, but its audit event failed: ${auditError.message}`,
-      );
+      throw new Error(`Your draft was saved, but its audit event failed: ${auditError.message}`);
 
-    if (data.action === "SUBMIT") {
-      const { error: notificationError } = await admin.from("performance_notifications").insert({
-        recipient_user_id: employee.assigned_supervisor_user_id,
-        employee_evaluation_id: evaluationId,
-        event_type:
-          previousStatus === "RETURNED_FOR_REVISION"
-            ? "EMPLOYEE_RESUBMITTED"
-            : "EMPLOYEE_SUBMITTED",
-        title:
-          previousStatus === "RETURNED_FOR_REVISION"
-            ? "Employee resubmitted an evaluation"
-            : "Employee submitted a self-evaluation",
-        message: `A self-evaluation for ${period.name} is ready for supervisor review.`,
-      });
-      if (notificationError)
-        throw new Error(
-          `Your evaluation was submitted, but the supervisor notification failed: ${notificationError.message}`,
-        );
-    }
-
-    return { id: evaluationId, status: nextStatus, submittedAt, weightedScore: score.score };
+    return {
+      id: evaluationId,
+      status: nextStatus,
+      submittedAt: existing?.submitted_at ?? null,
+      weightedScore: score.score,
+    };
   });

@@ -16,6 +16,10 @@ const supervisorEvaluationSchema = z.object({
   comments: z.record(z.string(), z.string().max(4000)),
   evidence: z.record(z.string(), z.string().max(4000)),
 });
+const returnEmployeeSchema = z.object({
+  evaluationId: z.string().uuid(),
+  reason: z.string().trim().min(1).max(4000),
+});
 
 export type SupervisorEvaluationDetail = {
   evaluation: {
@@ -76,7 +80,7 @@ async function getAssignedEvaluation(
   const { data: evaluation, error: evaluationError } = await admin
     .from("employee_evaluations")
     .select(
-      "id, employee_id, evaluation_period_id, template_id, status, submitted_at, weighted_score",
+      "id, employee_id, evaluation_period_id, template_id, status, submitted_at, weighted_score, assigned_supervisor_user_id, department_id, department_head_user_id",
     )
     .eq("id", evaluationId)
     .maybeSingle();
@@ -95,8 +99,8 @@ async function getAssignedEvaluation(
     throw new Error(`Could not verify the employee assignment: ${employeeError.message}`);
   if (
     !employee ||
-    employee.employment_status !== "ACTIVE" ||
-    employee.assigned_supervisor_user_id !== supervisorUserId
+    (evaluation.assigned_supervisor_user_id ?? employee.assigned_supervisor_user_id) !==
+      supervisorUserId
   ) {
     throw new Error("This evaluation is not assigned to your Supervisor account.");
   }
@@ -212,10 +216,30 @@ export const getSupervisorEvaluationDetail = createServerFn({ method: "GET" })
         "PENDING_SUPERVISOR_REVIEW",
         "SUPERVISOR_IN_PROGRESS",
         "SUPERVISOR_SUBMITTED",
+        "RETURNED_BY_DEPARTMENT_HEAD",
+        "RETURNED_BY_HR",
+        "REOPENED",
+        "PENDING_DEPARTMENT_HEAD_APPROVAL",
+        "PENDING_HR_VALIDATION",
+        "FINALIZED",
         "COMPLETED",
       ].includes(evaluation.status)
     ) {
       throw new Error("The employee must submit this evaluation before Supervisor review.");
+    }
+    if (evaluation.status === "RETURNED_BY_HR" || evaluation.status === "REOPENED") {
+      const { data: returnEvent, error: returnError } = await admin
+        .from("performance_workflow_events")
+        .select("responsible_user_id")
+        .eq("employee_evaluation_id", evaluation.id)
+        .in("action", ["HR_RETURNED", "HR_CORRECTION_REASSIGNED", "EVALUATION_REOPENED"])
+        .order("occurred_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (returnError)
+        throw new Error(`Could not verify the correction assignment: ${returnError.message}`);
+      if (returnEvent?.responsible_user_id !== context.userId)
+        throw new Error("This HR correction was assigned to a different reviewer.");
     }
 
     const [template, periodResult, employeeRatingsResult, supervisorEvaluationResult] =
@@ -303,17 +327,32 @@ export const saveSupervisorEvaluation = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const admin = await getAdminClient();
     await requireSupervisor(admin, context.userId);
-    const { evaluation, employee } = await getAssignedEvaluation(
-      admin,
-      context.userId,
-      data.evaluationId,
-    );
+    const { evaluation } = await getAssignedEvaluation(admin, context.userId, data.evaluationId);
     if (
-      !["SUBMITTED", "PENDING_SUPERVISOR_REVIEW", "SUPERVISOR_IN_PROGRESS"].includes(
-        evaluation.status,
-      )
+      ![
+        "SUBMITTED",
+        "PENDING_SUPERVISOR_REVIEW",
+        "SUPERVISOR_IN_PROGRESS",
+        "RETURNED_BY_DEPARTMENT_HEAD",
+        "RETURNED_BY_HR",
+        "REOPENED",
+      ].includes(evaluation.status)
     ) {
       throw new Error("This evaluation is not available for Supervisor scoring.");
+    }
+    if (evaluation.status === "RETURNED_BY_HR" || evaluation.status === "REOPENED") {
+      const { data: returnEvent, error: returnError } = await admin
+        .from("performance_workflow_events")
+        .select("responsible_user_id")
+        .eq("employee_evaluation_id", evaluation.id)
+        .in("action", ["HR_RETURNED", "HR_CORRECTION_REASSIGNED", "EVALUATION_REOPENED"])
+        .order("occurred_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (returnError)
+        throw new Error(`Could not verify the correction assignment: ${returnError.message}`);
+      if (returnEvent?.responsible_user_id !== context.userId)
+        throw new Error("This HR correction was assigned to a different reviewer.");
     }
 
     const template = await loadEvaluationTemplate(admin, evaluation.template_id);
@@ -405,66 +444,80 @@ export const saveSupervisorEvaluation = createServerFn({ method: "POST" })
         evidence: data.evidence[category.id] ?? previous?.evidence ?? "",
       };
     });
+
     const { error: ratingsError } = await admin
       .from("supervisor_evaluation_ratings")
       .upsert(ratingRows, { onConflict: "supervisor_evaluation_id,category_id" });
     if (ratingsError)
       throw new Error(`Could not save your Supervisor ratings: ${ratingsError.message}`);
 
-    const submittedAt = data.action === "SUBMIT" ? new Date().toISOString() : null;
-    const { error: supervisorUpdateError } = await admin
-      .from("supervisor_evaluations")
-      .update({
-        status: data.action === "SUBMIT" ? "SUBMITTED" : "IN_PROGRESS",
-        weighted_score: data.action === "SUBMIT" ? score.score : null,
-        submitted_at: submittedAt,
-      })
-      .eq("id", supervisorEvaluationId);
-    if (supervisorUpdateError)
-      throw new Error(
-        `Could not update your Supervisor evaluation: ${supervisorUpdateError.message}`,
-      );
-
+    let status = "IN_PROGRESS";
+    let submittedAt: string | null = null;
     if (data.action === "SUBMIT") {
-      const { error: evaluationUpdateError } = await admin
-        .from("employee_evaluations")
-        .update({ status: "SUPERVISOR_SUBMITTED" })
-        .eq("id", evaluation.id);
-      if (evaluationUpdateError)
+      const { data: workflowStatus, error: workflowError } = await admin.rpc(
+        "submit_supervisor_performance",
+        {
+          _evaluation_id: evaluation.id,
+          _actor_user_id: context.userId,
+          _weighted_score: score.score!,
+          _assessment_snapshot: {
+            overallComments: "",
+            ratings: ratingRows.map((row) => ({
+              categoryId: row.category_id,
+              rating: row.rating,
+              comments: row.comments,
+              evidence: row.evidence,
+            })),
+          },
+        },
+      );
+      if (workflowError)
+        throw new Error(`Could not submit the Supervisor evaluation: ${workflowError.message}`);
+      status = workflowStatus;
+      submittedAt = new Date().toISOString();
+    } else {
+      const { error: supervisorUpdateError } = await admin
+        .from("supervisor_evaluations")
+        .update({ status: "IN_PROGRESS", weighted_score: null, submitted_at: null })
+        .eq("id", supervisorEvaluationId);
+      if (supervisorUpdateError)
         throw new Error(
-          `Supervisor ratings were saved, but status could not be updated: ${evaluationUpdateError.message}`,
+          `Could not save your Supervisor evaluation: ${supervisorUpdateError.message}`,
         );
-
-      const { error: auditError } = await admin.from("evaluation_audit_logs").insert({
-        employee_evaluation_id: evaluation.id,
-        actor_user_id: context.userId,
-        action: "SUPERVISOR_EVALUATION_SUBMITTED",
-        previous_value: { status: evaluation.status },
-        new_value: { status: "SUPERVISOR_SUBMITTED", weighted_score: score.score },
-      });
-      if (auditError)
-        throw new Error(
-          `Supervisor evaluation was submitted, but audit logging failed: ${auditError.message}`,
-        );
-
-      if (employee.user_id) {
-        const { error: notificationError } = await admin.from("performance_notifications").insert({
-          recipient_user_id: employee.user_id,
-          employee_evaluation_id: evaluation.id,
-          event_type: "SUPERVISOR_SUBMITTED",
-          title: "Supervisor evaluation submitted",
-          message: `Your supervisor completed the evaluation for ${evaluation.id}.`,
-        });
-        if (notificationError)
-          throw new Error(
-            `Supervisor evaluation was submitted, but employee notification failed: ${notificationError.message}`,
-          );
-      }
     }
 
     return {
-      status: data.action === "SUBMIT" ? "SUPERVISOR_SUBMITTED" : "IN_PROGRESS",
+      status,
       weightedScore: data.action === "SUBMIT" ? score.score : null,
       submittedAt,
     };
+  });
+
+export const returnSelfEvaluationToEmployee = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => returnEmployeeSchema.parse(input))
+  .handler(async ({ context, data }) => {
+    const admin = await getAdminClient();
+    await requireSupervisor(admin, context.userId);
+    const { evaluation } = await getAssignedEvaluation(admin, context.userId, data.evaluationId);
+    if (["RETURNED_BY_HR", "REOPENED"].includes(evaluation.status)) {
+      const { data: correctionEvent, error } = await admin
+        .from("performance_workflow_events")
+        .select("responsible_user_id")
+        .eq("employee_evaluation_id", evaluation.id)
+        .in("action", ["HR_RETURNED", "HR_CORRECTION_REASSIGNED", "EVALUATION_REOPENED"])
+        .order("occurred_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw new Error(`Could not verify the correction assignment: ${error.message}`);
+      if (correctionEvent?.responsible_user_id !== context.userId)
+        throw new Error("This correction was assigned to a different reviewer.");
+    }
+    const { data: status, error } = await admin.rpc("supervisor_return_self_evaluation", {
+      _evaluation_id: data.evaluationId,
+      _actor_user_id: context.userId,
+      _reason: data.reason,
+    });
+    if (error) throw new Error(`Could not return the self-evaluation: ${error.message}`);
+    return { status };
   });

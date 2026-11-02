@@ -51,18 +51,24 @@ function EmployeeDashboard() {
         />
         <SummaryCard
           label="Evaluation deadline"
-          value="—"
-          description="Available with an assigned evaluation."
+          value={dashboardQuery.data.submissionDeadline ?? "—"}
+          description={dashboardQuery.data.periodName ?? "No active cycle assigned."}
         />
         <SummaryCard
-          label="Last evaluation score"
-          value="—"
-          description="Evaluation history is not available yet."
+          label="Employee weighted score"
+          value={
+            dashboardQuery.data.employeeScore === null
+              ? "—"
+              : `${Number(dashboardQuery.data.employeeScore).toFixed(2)} / 5.00`
+          }
+          description="Employee score only; it is not combined with the Supervisor score."
         />
         <SummaryCard
           label="Supervisor review"
-          value="—"
-          description="Available when a self-evaluation is submitted."
+          value={dashboardQuery.data.supervisorStatus?.replaceAll("_", " ") ?? "Not started"}
+          description={
+            dashboardQuery.data.status?.replaceAll("_", " ") ?? "No evaluation assigned."
+          }
         />
       </div>
 
@@ -95,10 +101,36 @@ function EmployeeDashboard() {
             <CardTitle>Evaluation overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <EmptyState
-              title="No current evaluation assigned"
-              description="Your self-evaluation will appear here when a performance period is assigned to your employee record."
-            />
+            {dashboardQuery.data.currentEvaluationAssigned ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  {dashboardQuery.data.periodName} ·{" "}
+                  {dashboardQuery.data.status?.replaceAll("_", " ")}
+                </p>
+                <a
+                  href={
+                    dashboardQuery.data.status &&
+                    [
+                      "DRAFT",
+                      "IN_PROGRESS",
+                      "RETURNED_FOR_REVISION",
+                      "RETURNED_BY_HR",
+                      "REOPENED",
+                    ].includes(dashboardQuery.data.status)
+                      ? "/performance/self-evaluation"
+                      : `/performance/results/${dashboardQuery.data.evaluationId}`
+                  }
+                  className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                >
+                  Open current evaluation
+                </a>
+              </div>
+            ) : (
+              <EmptyState
+                title="No current evaluation assigned"
+                description="Your self-evaluation will appear here when a performance period is assigned to your employee record."
+              />
+            )}
           </CardContent>
         </Card>
       </div>
