@@ -36,11 +36,14 @@ import { Route as AuthenticatedHrFinalizedRouteImport } from './routes/_authenti
 import { Route as AuthenticatedHrMonitoringRouteImport } from './routes/_authenticated/hr.monitoring'
 import { Route as AuthenticatedHrProfilesRouteImport } from './routes/_authenticated/hr.profiles'
 import { Route as AuthenticatedHrReturnedRouteImport } from './routes/_authenticated/hr.returned'
+import { Route as AuthenticatedOperationsCompetenciesRouteImport } from './routes/_authenticated/operations.competencies'
 import { Route as AuthenticatedPerformanceIndexRouteImport } from './routes/_authenticated/performance.index'
+import { Route as AuthenticatedPerformanceCompetenciesRouteImport } from './routes/_authenticated/performance.competencies'
 import { Route as AuthenticatedPerformanceCurrentRouteImport } from './routes/_authenticated/performance.current'
 import { Route as AuthenticatedPerformanceHistoryRouteImport } from './routes/_authenticated/performance.history'
 import { Route as AuthenticatedPerformanceSelfEvaluationRouteImport } from './routes/_authenticated/performance.self-evaluation'
 import { Route as AuthenticatedTeamIndexRouteImport } from './routes/_authenticated/team.index'
+import { Route as AuthenticatedTeamCompetenciesRouteImport } from './routes/_authenticated/team.competencies'
 import { Route as AuthenticatedTeamCompletedRouteImport } from './routes/_authenticated/team.completed'
 import { Route as AuthenticatedTeamEmployeesRouteImport } from './routes/_authenticated/team.employees'
 import { Route as AuthenticatedTeamEvaluationsRouteImport } from './routes/_authenticated/team.evaluations'
@@ -198,10 +201,22 @@ const AuthenticatedHrReturnedRoute = AuthenticatedHrReturnedRouteImport.update({
   path: '/hr/returned',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOperationsCompetenciesRoute =
+  AuthenticatedOperationsCompetenciesRouteImport.update({
+    id: '/operations/competencies',
+    path: '/operations/competencies',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPerformanceIndexRoute =
   AuthenticatedPerformanceIndexRouteImport.update({
     id: '/performance/',
     path: '/performance/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceCompetenciesRoute =
+  AuthenticatedPerformanceCompetenciesRouteImport.update({
+    id: '/performance/competencies',
+    path: '/performance/competencies',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPerformanceCurrentRoute =
@@ -227,6 +242,12 @@ const AuthenticatedTeamIndexRoute = AuthenticatedTeamIndexRouteImport.update({
   path: '/team/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeamCompetenciesRoute =
+  AuthenticatedTeamCompetenciesRouteImport.update({
+    id: '/team/competencies',
+    path: '/team/competencies',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTeamCompletedRoute =
   AuthenticatedTeamCompletedRouteImport.update({
     id: '/team/completed',
@@ -307,9 +328,12 @@ export interface FileRoutesByFullPath {
   '/hr/monitoring': typeof AuthenticatedHrMonitoringRoute
   '/hr/profiles': typeof AuthenticatedHrProfilesRoute
   '/hr/returned': typeof AuthenticatedHrReturnedRoute
+  '/operations/competencies': typeof AuthenticatedOperationsCompetenciesRoute
+  '/performance/competencies': typeof AuthenticatedPerformanceCompetenciesRoute
   '/performance/current': typeof AuthenticatedPerformanceCurrentRoute
   '/performance/history': typeof AuthenticatedPerformanceHistoryRoute
   '/performance/self-evaluation': typeof AuthenticatedPerformanceSelfEvaluationRoute
+  '/team/competencies': typeof AuthenticatedTeamCompetenciesRoute
   '/team/completed': typeof AuthenticatedTeamCompletedRoute
   '/team/employees': typeof AuthenticatedTeamEmployeesRoute
   '/team/evaluations': typeof AuthenticatedTeamEvaluationsRoute
@@ -349,9 +373,12 @@ export interface FileRoutesByTo {
   '/hr/monitoring': typeof AuthenticatedHrMonitoringRoute
   '/hr/profiles': typeof AuthenticatedHrProfilesRoute
   '/hr/returned': typeof AuthenticatedHrReturnedRoute
+  '/operations/competencies': typeof AuthenticatedOperationsCompetenciesRoute
+  '/performance/competencies': typeof AuthenticatedPerformanceCompetenciesRoute
   '/performance/current': typeof AuthenticatedPerformanceCurrentRoute
   '/performance/history': typeof AuthenticatedPerformanceHistoryRoute
   '/performance/self-evaluation': typeof AuthenticatedPerformanceSelfEvaluationRoute
+  '/team/competencies': typeof AuthenticatedTeamCompetenciesRoute
   '/team/completed': typeof AuthenticatedTeamCompletedRoute
   '/team/employees': typeof AuthenticatedTeamEmployeesRoute
   '/team/evaluations': typeof AuthenticatedTeamEvaluationsRoute
@@ -393,9 +420,12 @@ export interface FileRoutesById {
   '/_authenticated/hr/monitoring': typeof AuthenticatedHrMonitoringRoute
   '/_authenticated/hr/profiles': typeof AuthenticatedHrProfilesRoute
   '/_authenticated/hr/returned': typeof AuthenticatedHrReturnedRoute
+  '/_authenticated/operations/competencies': typeof AuthenticatedOperationsCompetenciesRoute
+  '/_authenticated/performance/competencies': typeof AuthenticatedPerformanceCompetenciesRoute
   '/_authenticated/performance/current': typeof AuthenticatedPerformanceCurrentRoute
   '/_authenticated/performance/history': typeof AuthenticatedPerformanceHistoryRoute
   '/_authenticated/performance/self-evaluation': typeof AuthenticatedPerformanceSelfEvaluationRoute
+  '/_authenticated/team/competencies': typeof AuthenticatedTeamCompetenciesRoute
   '/_authenticated/team/completed': typeof AuthenticatedTeamCompletedRoute
   '/_authenticated/team/employees': typeof AuthenticatedTeamEmployeesRoute
   '/_authenticated/team/evaluations': typeof AuthenticatedTeamEvaluationsRoute
@@ -437,9 +467,12 @@ export interface FileRouteTypes {
     | '/hr/monitoring'
     | '/hr/profiles'
     | '/hr/returned'
+    | '/operations/competencies'
+    | '/performance/competencies'
     | '/performance/current'
     | '/performance/history'
     | '/performance/self-evaluation'
+    | '/team/competencies'
     | '/team/completed'
     | '/team/employees'
     | '/team/evaluations'
@@ -479,9 +512,12 @@ export interface FileRouteTypes {
     | '/hr/monitoring'
     | '/hr/profiles'
     | '/hr/returned'
+    | '/operations/competencies'
+    | '/performance/competencies'
     | '/performance/current'
     | '/performance/history'
     | '/performance/self-evaluation'
+    | '/team/competencies'
     | '/team/completed'
     | '/team/employees'
     | '/team/evaluations'
@@ -522,9 +558,12 @@ export interface FileRouteTypes {
     | '/_authenticated/hr/monitoring'
     | '/_authenticated/hr/profiles'
     | '/_authenticated/hr/returned'
+    | '/_authenticated/operations/competencies'
+    | '/_authenticated/performance/competencies'
     | '/_authenticated/performance/current'
     | '/_authenticated/performance/history'
     | '/_authenticated/performance/self-evaluation'
+    | '/_authenticated/team/competencies'
     | '/_authenticated/team/completed'
     | '/_authenticated/team/employees'
     | '/_authenticated/team/evaluations'
@@ -741,11 +780,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHrReturnedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/operations/competencies': {
+      id: '/_authenticated/operations/competencies'
+      path: '/operations/competencies'
+      fullPath: '/operations/competencies'
+      preLoaderRoute: typeof AuthenticatedOperationsCompetenciesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/performance/': {
       id: '/_authenticated/performance/'
       path: '/performance'
       fullPath: '/performance/'
       preLoaderRoute: typeof AuthenticatedPerformanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/competencies': {
+      id: '/_authenticated/performance/competencies'
+      path: '/performance/competencies'
+      fullPath: '/performance/competencies'
+      preLoaderRoute: typeof AuthenticatedPerformanceCompetenciesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/performance/current': {
@@ -774,6 +827,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team/'
       preLoaderRoute: typeof AuthenticatedTeamIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/team/competencies': {
+      id: '/_authenticated/team/competencies'
+      path: '/team/competencies'
+      fullPath: '/team/competencies'
+      preLoaderRoute: typeof AuthenticatedTeamCompetenciesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/team/completed': {
@@ -861,9 +921,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHrMonitoringRoute: typeof AuthenticatedHrMonitoringRoute
   AuthenticatedHrProfilesRoute: typeof AuthenticatedHrProfilesRoute
   AuthenticatedHrReturnedRoute: typeof AuthenticatedHrReturnedRoute
+  AuthenticatedOperationsCompetenciesRoute: typeof AuthenticatedOperationsCompetenciesRoute
+  AuthenticatedPerformanceCompetenciesRoute: typeof AuthenticatedPerformanceCompetenciesRoute
   AuthenticatedPerformanceCurrentRoute: typeof AuthenticatedPerformanceCurrentRoute
   AuthenticatedPerformanceHistoryRoute: typeof AuthenticatedPerformanceHistoryRoute
   AuthenticatedPerformanceSelfEvaluationRoute: typeof AuthenticatedPerformanceSelfEvaluationRoute
+  AuthenticatedTeamCompetenciesRoute: typeof AuthenticatedTeamCompetenciesRoute
   AuthenticatedTeamCompletedRoute: typeof AuthenticatedTeamCompletedRoute
   AuthenticatedTeamEmployeesRoute: typeof AuthenticatedTeamEmployeesRoute
   AuthenticatedTeamEvaluationsRoute: typeof AuthenticatedTeamEvaluationsRoute
@@ -899,10 +962,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHrMonitoringRoute: AuthenticatedHrMonitoringRoute,
   AuthenticatedHrProfilesRoute: AuthenticatedHrProfilesRoute,
   AuthenticatedHrReturnedRoute: AuthenticatedHrReturnedRoute,
+  AuthenticatedOperationsCompetenciesRoute:
+    AuthenticatedOperationsCompetenciesRoute,
+  AuthenticatedPerformanceCompetenciesRoute:
+    AuthenticatedPerformanceCompetenciesRoute,
   AuthenticatedPerformanceCurrentRoute: AuthenticatedPerformanceCurrentRoute,
   AuthenticatedPerformanceHistoryRoute: AuthenticatedPerformanceHistoryRoute,
   AuthenticatedPerformanceSelfEvaluationRoute:
     AuthenticatedPerformanceSelfEvaluationRoute,
+  AuthenticatedTeamCompetenciesRoute: AuthenticatedTeamCompetenciesRoute,
   AuthenticatedTeamCompletedRoute: AuthenticatedTeamCompletedRoute,
   AuthenticatedTeamEmployeesRoute: AuthenticatedTeamEmployeesRoute,
   AuthenticatedTeamEvaluationsRoute: AuthenticatedTeamEvaluationsRoute,

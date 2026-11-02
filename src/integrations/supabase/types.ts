@@ -40,6 +40,208 @@ export type Database = {
   };
   public: {
     Tables: {
+      competency_definitions: PortalTable<
+        {
+          active: boolean;
+          assessment_methods: string[];
+          category: string;
+          code: string;
+          created_at: string;
+          created_by: string;
+          description: string;
+          evidence_requirements: string[];
+          id: string;
+          mandatory_qualification: boolean;
+          name: string;
+          observable_criteria: string[];
+          version: number;
+        },
+        {
+          active?: boolean;
+          assessment_methods: string[];
+          category: string;
+          code: string;
+          created_at?: string;
+          created_by: string;
+          description: string;
+          evidence_requirements: string[];
+          id?: string;
+          mandatory_qualification?: boolean;
+          name: string;
+          observable_criteria: string[];
+          version: number;
+        }
+      >;
+      competency_proficiency_levels: PortalTable<
+        {
+          competency_definition_id: string;
+          label: string;
+          level: number;
+          observable_definition: string;
+        },
+        {
+          competency_definition_id: string;
+          label: string;
+          level: number;
+          observable_definition: string;
+        }
+      >;
+      competency_requirement_sets: PortalTable<
+        {
+          approved_at: string | null;
+          approved_by: string | null;
+          created_at: string;
+          created_by: string;
+          decision_reason: string | null;
+          effective_from: string;
+          id: string;
+          job_position_id: string;
+          status: string;
+          version: number;
+        },
+        {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          created_at?: string;
+          created_by: string;
+          decision_reason?: string | null;
+          effective_from: string;
+          id?: string;
+          job_position_id: string;
+          status?: string;
+          version: number;
+        }
+      >;
+      competency_requirement_items: PortalTable<
+        {
+          assessment_method: string;
+          competency_definition_id: string;
+          evidence_requirement: string;
+          id: string;
+          mandatory_qualification: boolean;
+          qualification_label: string | null;
+          required_level: number;
+          requirement_set_id: string;
+        },
+        {
+          assessment_method: string;
+          competency_definition_id: string;
+          evidence_requirement: string;
+          id?: string;
+          mandatory_qualification?: boolean;
+          qualification_label?: string | null;
+          required_level: number;
+          requirement_set_id: string;
+        }
+      >;
+      competency_assessments: PortalTable<
+        {
+          approval_user_id: string | null;
+          approved_at: string | null;
+          assessed_level: number;
+          assessed_on: string;
+          assessor_user_id: string;
+          assessor_role: string;
+          assessment_method: string;
+          assigned_supervisor_user_id: string | null;
+          competency_definition_id: string;
+          created_at: string;
+          department_head_user_id: string | null;
+          department_id: string | null;
+          department_label_snapshot: string;
+          decision_reason: string | null;
+          employee_id: string;
+          employee_name_snapshot: string;
+          employee_number_snapshot: string;
+          evidence_notes: string;
+          evidence_validated_at: string | null;
+          evidence_validated_by: string | null;
+          id: string;
+          job_position_id: string;
+          job_position_name_snapshot: string;
+          next_assessment_on: string | null;
+          requirement_item_id: string;
+          status: string;
+          version: number;
+        },
+        {
+          approval_user_id?: string | null;
+          approved_at?: string | null;
+          assessed_level: number;
+          assessed_on: string;
+          assessor_user_id: string;
+          assessor_role: string;
+          assessment_method: string;
+          assigned_supervisor_user_id: string | null;
+          competency_definition_id: string;
+          created_at?: string;
+          department_head_user_id?: string | null;
+          department_id?: string | null;
+          department_label_snapshot?: string;
+          decision_reason?: string | null;
+          employee_id: string;
+          employee_name_snapshot: string;
+          employee_number_snapshot: string;
+          evidence_notes: string;
+          evidence_validated_at?: string | null;
+          evidence_validated_by?: string | null;
+          id?: string;
+          job_position_id: string;
+          job_position_name_snapshot: string;
+          next_assessment_on?: string | null;
+          requirement_item_id: string;
+          status?: string;
+          version: number;
+        }
+      >;
+      competency_assessment_evidence: PortalTable<
+        {
+          added_by: string;
+          assessment_id: string;
+          created_at: string;
+          evidence_reference: string | null;
+          id: string;
+          source_attachment_id: string | null;
+          source_evaluation_id: string | null;
+        },
+        {
+          added_by: string;
+          assessment_id: string;
+          created_at?: string;
+          evidence_reference?: string | null;
+          id?: string;
+          source_attachment_id?: string | null;
+          source_evaluation_id?: string | null;
+        }
+      >;
+      competency_workflow_events: PortalTable<
+        {
+          action: string;
+          actor_user_id: string | null;
+          assessment_id: string | null;
+          competency_definition_id: string | null;
+          details: Json;
+          id: string;
+          new_status: string | null;
+          occurred_at: string;
+          previous_status: string | null;
+          reason: string | null;
+          requirement_set_id: string | null;
+        },
+        {
+          action: string;
+          actor_user_id?: string | null;
+          assessment_id?: string | null;
+          competency_definition_id?: string | null;
+          details?: Json;
+          id?: string;
+          new_status?: string | null;
+          occurred_at?: string;
+          previous_status?: string | null;
+          reason?: string | null;
+          requirement_set_id?: string | null;
+        }
+      >;
       system_settings: {
         Row: {
           email_otp_enabled: boolean;
@@ -3028,17 +3230,68 @@ export type Database = {
         Returns: boolean;
       };
       is_account_usable: { Args: { _user_id: string }; Returns: boolean };
+      can_access_competency_employee: { Args: { _employee_id: string }; Returns: boolean };
+      save_competency_definition: {
+        Args: {
+          _actor: string;
+          _assessment_methods: string[];
+          _category: string;
+          _code: string;
+          _description: string;
+          _evidence_requirements: string[];
+          _levels: Json;
+          _mandatory_qualification: boolean;
+          _name: string;
+          _observable_criteria: string[];
+        };
+        Returns: string;
+      };
+      create_competency_requirement_set: {
+        Args: { _actor: string; _effective_from: string; _items: Json; _job_position_id: string };
+        Returns: string;
+      };
+      decide_competency_requirement_set: {
+        Args: {
+          _actor: string;
+          _approve: boolean;
+          _reason: string | null;
+          _requirement_set_id: string;
+        };
+        Returns: string;
+      };
+      submit_competency_assessment: {
+        Args: {
+          _actor: string;
+          _assessment_method: string;
+          _assessed_level: number;
+          _assessed_on: string;
+          _competency_definition_id: string;
+          _employee_id: string;
+          _evidence_notes: string;
+          _evidence_reference: string | null;
+          _next_assessment_on: string | null;
+          _source_attachment_id: string | null;
+          _source_evaluation_id: string | null;
+        };
+        Returns: string;
+      };
+      validate_competency_assessment_evidence: {
+        Args: { _actor: string; _assessment_id: string; _reason: string | null; _valid: boolean };
+        Returns: undefined;
+      };
+      decide_competency_assessment: {
+        Args: { _actor: string; _approve: boolean; _assessment_id: string; _reason: string | null };
+        Returns: string;
+      };
     };
     Enums: {
       app_role:
         | "ADMINISTRATOR"
-        | "PRESIDENT"
         | "HR"
         | "SUPERVISOR"
-        | "REVIEWING_SUPERVISOR"
-        | "COMMITTEE"
         | "EMPLOYEE"
-        | "DEPARTMENT_HEAD";
+        | "DEPARTMENT_HEAD"
+        | "OPERATIONS_MANAGER";
       calculation_status: "PENDING" | "CALCULATED" | "INVALID";
       cycle_status: "DRAFT" | "ACTIVE" | "CLOSED" | "DISABLED";
       employment_status: "ACTIVE" | "INACTIVE";
@@ -3179,13 +3432,11 @@ export const Constants = {
     Enums: {
       app_role: [
         "ADMINISTRATOR",
-        "PRESIDENT",
         "HR",
         "SUPERVISOR",
-        "REVIEWING_SUPERVISOR",
-        "COMMITTEE",
         "EMPLOYEE",
         "DEPARTMENT_HEAD",
+        "OPERATIONS_MANAGER",
       ],
       calculation_status: ["PENDING", "CALCULATED", "INVALID"],
       cycle_status: ["DRAFT", "ACTIVE", "CLOSED", "DISABLED"],

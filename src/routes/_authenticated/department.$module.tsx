@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { EmptyState, PageHeader } from "@/components/shared/portal-ui";
+import { CompetencyWorkspace } from "@/features/competency-management/components/competency-workspace";
 
 const moduleLabels: Record<string, string> = {
   competencies: "Competency & Gap Overview",
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/department/$module")({
 
 function DepartmentModulePage() {
   const { module } = Route.useParams();
+  if (module === "competencies") return <CompetencyWorkspace />;
   const title = moduleLabels[module] ?? "Department Workspace";
   return (
     <div className="space-y-6">

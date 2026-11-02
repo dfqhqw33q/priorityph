@@ -27,6 +27,28 @@ Approval queues, detail pages, search, status filtering, sorting, pagination, re
 
 The performance-management cycle, assignment, profile, monitoring, Department Head approval, HR validation, finalized, and returned queues are working pages. Other modules are not claimed as implemented by this workflow change.
 
+## Competency management
+
+Competency management is implemented in the existing authenticated shell for HR (`/hr/competencies`), Supervisors (`/team/competencies`), Department Heads (`/department/competencies`), Employees (`/performance/competencies`), and the separately assignable Operations Manager (`/operations/competencies`).
+
+- HR creates versioned definitions with observable criteria, five proficiency descriptions, methods, evidence rules, and a separate mandatory-qualification flag. HR submits versioned position requirement sets; a different authorized HR account approves or returns them.
+- Supervisors assess only employees assigned to them, attach notes and references to existing finalized evaluation/evidence records, validate evidence, and submit new immutable assessment versions for review. Department Heads approve assessments only in their assigned department; HR has authorized oversight.
+- Employees see only their own competency records and development needs. Department Heads see only assigned departments. Operations Managers receive competency-gap access for development planning, but assessment/reassessment requires an additional explicit permission.
+- Numeric gaps are `max(0, required level - latest approved current level)`. Missing assessments display as **Unassessed**, not zero. Mandatory qualifications are reported separately. Neither finalized performance scores nor course completion create or raise competency assessments.
+- Assessments snapshot employee, position, department, assigned Supervisor, and assessor role at the time of assessment. Approved requirement versions, assessment records, evidence references, approval decisions, and workflow events preserve history. Performance evaluation attachments are referenced rather than copied.
+
+Forward-only migrations:
+
+1. `20261102100900_add_operations_manager_role.sql` adds the assignable `OPERATIONS_MANAGER` role. It does not assign that role to any account.
+2. `20261102101000_competency_management.sql` adds competency definitions, proficiency levels, versioned job requirements, immutable assessments/evidence/events, permission codes, decision functions, and row-level read policies.
+3. `20261102101100_remove_legacy_approval_roles.sql` removes legacy President, Reviewing Supervisor, and Committee role assignments and catalog entries, prevents reassignment, and revokes their obsolete user-level permissions.
+
+The six assignable business roles are `EMPLOYEE`, `SUPERVISOR`, `DEPARTMENT_HEAD`, `HR`, `ADMINISTRATOR`, and `OPERATIONS_MANAGER`. These map to Employee, Supervisor, Department Head, HR Administrator, Administrator, and Operations Manager. The legacy President, Reviewing Supervisor, and Committee role assignments are retired. Existing historical evaluation data and its legacy schema labels are retained; they are not used as assignable roles or in active portal authorization. The distinction between Super Admin and Admin in the broader specification remains unresolved.
+
+HR, Supervisor, Department Head, Employee, and Operations Manager role permissions are scoped to their described competency responsibilities. `competencies.assess`, `competencies.evidence.validate`, `competencies.assessments.approve`, and `competencies.reassess` are not granted to Operations Manager by default; grant them individually through the existing audited `user_permissions` process when an account is qualified and authorized. No new role grants performance approval rights.
+
+The competency migration has not been applied to a database. A read-only count against the configured database found one existing finalized performance evaluation; the competency workflow links to existing finalized records by foreign key and does not copy or modify them. Qualification expiry/certificate lifecycle tracking, file upload, CSV export, and pagination remain out of scope for this first competency increment.
+
 ## Permissions and account setup
 
 Authorization is checked by authenticated server functions and enforced again by database workflow functions and Supabase RLS. Department Heads are scoped to evaluations assigned to their stable department ID. Employee and Supervisor assessments remain separate. RLS and server operations use the saved employee, supervisor, department, Department Head, and profile-version relationships rather than department names as the approval key.

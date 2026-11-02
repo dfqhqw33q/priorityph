@@ -67,18 +67,33 @@ const SHARED_ROLES: AppRole[] = [
   "DEPARTMENT_HEAD",
   "HR",
   "ADMINISTRATOR",
-  "PRESIDENT",
-  "REVIEWING_SUPERVISOR",
-  "COMMITTEE",
+  "OPERATIONS_MANAGER",
 ];
 const ROUTE_ACCESS: Array<{
   prefix: string;
   roles: AppRole[];
   permission?: Permission;
 }> = [
+  {
+    prefix: "/performance/competencies",
+    roles: ["EMPLOYEE"],
+    permission: "competencies.assessments.view",
+  },
   { prefix: "/performance", roles: ["EMPLOYEE"] },
+  {
+    prefix: "/team/competencies",
+    roles: ["SUPERVISOR"],
+    permission: "competencies.framework.view",
+  },
   { prefix: "/team", roles: ["SUPERVISOR"] },
+  { prefix: "/operations", roles: ["OPERATIONS_MANAGER"], permission: "competencies.gaps.view" },
+  {
+    prefix: "/department/competencies",
+    roles: ["DEPARTMENT_HEAD"],
+    permission: "competencies.gaps.view",
+  },
   { prefix: "/department", roles: ["DEPARTMENT_HEAD"], permission: "performance.department.view" },
+  { prefix: "/hr/competencies", roles: ["HR"], permission: "competencies.framework.view" },
   { prefix: "/hr/cycles", roles: ["HR"], permission: "performance.cycles.view" },
   { prefix: "/hr/assignments", roles: ["HR"], permission: "performance.assignments.manage" },
   { prefix: "/hr/profiles", roles: ["HR"], permission: "performance.profiles.manage" },
@@ -116,6 +131,12 @@ const NAV: Array<{ role: AppRole; sections: NavSection[] }> = [
           { to: "/performance/history", label: "Evaluation History" },
         ],
       },
+      {
+        to: "/performance/competencies",
+        label: "My Competencies",
+        icon: Activity,
+        permission: "competencies.assessments.view",
+      },
       { to: "/notifications", label: "Notifications", icon: Bell },
       { to: "/help", label: "Help & Support", icon: CircleHelp },
     ],
@@ -126,6 +147,12 @@ const NAV: Array<{ role: AppRole; sections: NavSection[] }> = [
       { to: "/team", label: "Dashboard", icon: Gauge },
       { to: "/profile", label: "My Profile", icon: UserRound },
       { to: "/team/employees", label: "My Team", icon: Users },
+      {
+        to: "/team/competencies",
+        label: "Competency Management",
+        icon: Activity,
+        permission: "competencies.framework.view",
+      },
       {
         to: "/team/pending",
         label: "Performance Management",
@@ -172,7 +199,12 @@ const NAV: Array<{ role: AppRole; sections: NavSection[] }> = [
           },
         ],
       },
-      { to: "/department/competencies", label: "Competency & Gap Overview", icon: Activity },
+      {
+        to: "/department/competencies",
+        label: "Competency & Gap Overview",
+        icon: Activity,
+        permission: "competencies.gaps.view",
+      },
       {
         to: "/department/learning",
         label: "Learning & Training Overview",
@@ -220,7 +252,12 @@ const NAV: Array<{ role: AppRole; sections: NavSection[] }> = [
           },
         ],
       },
-      { to: "/hr/competencies", label: "Competency Management", icon: Activity },
+      {
+        to: "/hr/competencies",
+        label: "Competency Management",
+        icon: Activity,
+        permission: "competencies.framework.view",
+      },
       { to: "/hr/succession", label: "Succession Planning", icon: Users },
       { to: "/hr/recognition", label: "Social Recognition", icon: ClipboardCheck },
       { to: "/hr/reports", label: "HR Reports & Analytics", icon: Activity },
@@ -246,6 +283,19 @@ const NAV: Array<{ role: AppRole; sections: NavSection[] }> = [
             permission: "performance.history.view",
           },
         ],
+      },
+      { to: "/notifications", label: "Notifications", icon: Bell },
+      { to: "/profile", label: "My Profile", icon: UserRound },
+    ],
+  },
+  {
+    role: "OPERATIONS_MANAGER",
+    sections: [
+      {
+        to: "/operations/competencies",
+        label: "Competency Gaps",
+        icon: Activity,
+        permission: "competencies.gaps.view",
       },
       { to: "/notifications", label: "Notifications", icon: Bell },
       { to: "/profile", label: "My Profile", icon: UserRound },

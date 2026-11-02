@@ -117,9 +117,7 @@ export async function authenticateSupabaseRequest() {
     "DEPARTMENT_HEAD",
     "HR",
     "ADMINISTRATOR",
-    "PRESIDENT",
-    "REVIEWING_SUPERVISOR",
-    "COMMITTEE",
+    "OPERATIONS_MANAGER",
   ];
   if (
     roleAssignments?.length !== 1 ||

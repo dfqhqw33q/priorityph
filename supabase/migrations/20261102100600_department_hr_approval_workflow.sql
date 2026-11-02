@@ -86,6 +86,11 @@ INSERT INTO public.roles(code, name, description)
 VALUES ('DEPARTMENT_HEAD', 'Department Head', 'Approves performance evaluations for assigned departments')
 ON CONFLICT (code) DO NOTHING;
 
+ALTER TABLE public.permissions
+  DROP CONSTRAINT permissions_code_check,
+  ADD CONSTRAINT permissions_code_check
+    CHECK (code ~ '^[a-z_]+(\.[a-z0-9_]+)+$');
+
 INSERT INTO public.permissions(code, module, description) VALUES
   ('performance.cycles.view', 'Performance Management', 'View evaluation cycles'),
   ('performance.cycles.create', 'Performance Management', 'Create evaluation cycles'),

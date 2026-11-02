@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { EmptyState, PageHeader } from "@/components/shared/portal-ui";
+import { CompetencyWorkspace } from "@/features/competency-management/components/competency-workspace";
 
 const moduleLabels: Record<string, string> = {
   employees: "Employee Management",
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/hr/$module")({
 
 function HrModulePage() {
   const { module } = Route.useParams();
+  if (module === "competencies") return <CompetencyWorkspace />;
   const title = moduleLabels[module] ?? "HR Workspace";
   return (
     <div className="space-y-6">

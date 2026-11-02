@@ -58,6 +58,18 @@ try {
       full_name = 'Manual Test Driver'
       job_title = 'Driver'
       role = 'EMPLOYEE'
+    },
+    @{
+      email = 'departmentheadpriorityph@gmail.com'
+      full_name = 'Manual Test Department Head'
+      job_title = 'Department Head'
+      role = 'DEPARTMENT_HEAD'
+    },
+    @{
+      email = 'hradminpriorityph@gmail.com'
+      full_name = 'Manual Test HR Administrator'
+      job_title = 'HR Administrator'
+      role = 'HR'
     }
   )
 
@@ -125,6 +137,7 @@ try {
 
   $supervisor = $usersByEmail['supervisorpriorityph@gmail.com']
   $employee = $usersByEmail['employeepriorityph@gmail.com']
+  $departmentHead = $usersByEmail['departmentheadpriorityph@gmail.com']
   $supervisorEmployee = Invoke-RestMethod `
     -Method Post `
     -Uri "$supabaseUrl/rest/v1/rpc/ensure_internal_user_employee" `
@@ -150,11 +163,43 @@ try {
     throw 'The Driver position is missing. Apply the performance-management migration before seeding.'
   }
 
+  $department = Invoke-RestMethod `
+    -Method Post `
+    -Uri "$supabaseUrl/rest/v1/performance_departments?on_conflict=division%2Csection&select=id" `
+    -Headers ($headers + @{ Prefer = 'resolution=merge-duplicates,return=representation' }) `
+    -ContentType 'application/json' `
+    -Body (@{
+      division = 'Operations'
+      section = 'Delivery'
+      label = 'Operations / Delivery'
+    } | ConvertTo-Json)
+  $departmentId = @($department) | Select-Object -ExpandProperty id -First 1
+  if ([string]::IsNullOrWhiteSpace($departmentId)) {
+    throw 'Could not create or resolve the Operations / Delivery department.'
+  }
+
+  $supervisorUpdate = @{
+    job_title = 'Supervisor'
+    employment_status = 'ACTIVE'
+    division = 'Operations'
+    section = 'Delivery'
+    department_id = $departmentId
+  } | ConvertTo-Json
+  Invoke-RestMethod `
+    -Method Patch `
+    -Uri "$supabaseUrl/rest/v1/employees?id=eq.$($supervisorEmployee.id)" `
+    -Headers ($headers + @{ Prefer = 'return=minimal' }) `
+    -ContentType 'application/json' `
+    -Body $supervisorUpdate | Out-Null
+
   $driverUpdate = @{
     job_title = 'Driver'
     job_position_id = $driverPosition[0].id
     employment_status = 'ACTIVE'
     assigned_supervisor_user_id = $supervisor.id
+    division = 'Operations'
+    section = 'Delivery'
+    department_id = $departmentId
   } | ConvertTo-Json
   Invoke-RestMethod `
     -Method Patch `
@@ -162,6 +207,34 @@ try {
     -Headers ($headers + @{ Prefer = 'return=minimal' }) `
     -ContentType 'application/json' `
     -Body $driverUpdate | Out-Null
+
+  $activeDepartmentHeads = @(Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/rest/v1/department_head_assignments?department_id=eq.$departmentId&is_active=eq.true&select=user_id" `
+    -Headers $headers)
+  $activeDepartmentHeads = @(
+    $activeDepartmentHeads | Where-Object { $_.user_id }
+  )
+  $conflictingDepartmentHeads = @(
+    $activeDepartmentHeads | Where-Object { $_.user_id -ne $departmentHead.id }
+  )
+  if (
+    $conflictingDepartmentHeads.Count -gt 0
+  ) {
+    throw 'Operations / Delivery already has another active Department Head; refusing to replace the assignment.'
+  }
+  if (@($activeDepartmentHeads | Where-Object { $_.user_id -eq $departmentHead.id }).Count -eq 0) {
+    Invoke-RestMethod `
+      -Method Post `
+      -Uri "$supabaseUrl/rest/v1/department_head_assignments?on_conflict=department_id%2Cuser_id" `
+      -Headers ($headers + @{ Prefer = 'resolution=merge-duplicates,return=minimal' }) `
+      -ContentType 'application/json' `
+      -Body (@{
+        department_id = $departmentId
+        user_id = $departmentHead.id
+        is_active = $true
+      } | ConvertTo-Json) | Out-Null
+  }
 
   $today = (Get-Date).Date
   $periodName = "Driver Manual Test $($today.ToString('yyyy-MM-dd'))"
@@ -205,7 +278,44 @@ try {
     Write-Output "$($account.role): $($account.email) provisioned"
   }
 
-  Write-Output "Driver employee assigned to supervisor. Active period: $periodName"
+  $departmentHeadAssignments = @(Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/rest/v1/department_head_assignments?department_id=eq.$departmentId&user_id=eq.$($departmentHead.id)&is_active=eq.true&select=user_id" `
+    -Headers $headers)
+  if ($departmentHeadAssignments.Count -ne 1) {
+    throw 'Could not verify the Department Head assignment for Operations / Delivery.'
+  }
+  $supervisorDepartment = Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/rest/v1/employees?user_id=eq.$($supervisor.id)&select=department_id" `
+    -Headers $headers
+  $driverDepartment = Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/rest/v1/employees?user_id=eq.$($employee.id)&select=department_id" `
+    -Headers $headers
+  if (
+    @($supervisorDepartment).Count -ne 1 -or
+    @($driverDepartment).Count -ne 1 -or
+    $supervisorDepartment.department_id -ne $departmentId -or
+    $driverDepartment.department_id -ne $departmentId
+  ) {
+    throw 'Could not verify the Supervisor and Driver share the Operations / Delivery department.'
+  }
+  $hrPermissions = @(Invoke-RestMethod `
+    -Method Get `
+    -Uri "$supabaseUrl/rest/v1/role_permissions?role_code=eq.HR&select=permission_code" `
+    -Headers $headers)
+  foreach ($permission in @(
+      'performance.hr_validation.view',
+      'performance.hr_validation.return',
+      'performance.hr_validation.finalize'
+    )) {
+    if (@($hrPermissions | Where-Object { $_.permission_code -eq $permission }).Count -eq 0) {
+      throw "HR is missing the required permission: $permission."
+    }
+  }
+  Write-Output "Driver and Supervisor assigned to Operations / Delivery; Department Head assigned to the same department."
+  Write-Output "HR Administrator has HR validation view, return, and finalize permissions. Active period: $periodName"
   Write-Output 'Temporary credentials were not printed or written to disk.'
 } finally {
   if ($passwordPointer -ne [IntPtr]::Zero) {
